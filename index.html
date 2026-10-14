@@ -203,6 +203,8 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 .rc-s{margin-top:6px;font:600 15px/1.2 var(--cond);letter-spacing:.1em;text-transform:uppercase;opacity:.85}
 @keyframes recPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-10deg)}9%{opacity:1;transform:translate(-50%,-50%) scale(1.14) rotate(-1deg)}15%{transform:translate(-50%,-50%) scale(.97) rotate(-3deg)}21%{transform:translate(-50%,-50%) scale(1) rotate(-2deg)}86%{opacity:1;transform:translate(-50%,-50%) scale(1.02) rotate(-2deg)}100%{opacity:0;transform:translate(-50%,-64%) scale(.94) rotate(-2deg)}}
 @keyframes recSpin{to{transform:rotate(360deg)}}@keyframes recShine{from{left:-80px}to{left:110%}}@keyframes recBlink{50%{opacity:.35}}
+.stChip{flex:none;margin-left:10px;height:28px;padding:0 11px;border-radius:999px;background:var(--g1);color:#fff;font:600 12px var(--cond);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.sht{flex-wrap:wrap;gap:4px}
 .stLvl{background:linear-gradient(135deg,#2f6b35,#4a9a4c);color:#fff;border-radius:20px;padding:12px 14px;margin-bottom:10px}
 .stLvl b{display:block;font:700 24px/1.05 var(--cond);text-transform:uppercase}.stLvl span{font:600 12px var(--cond);letter-spacing:.1em;text-transform:uppercase;opacity:.85}
 .stBar{height:7px;border-radius:4px;background:rgba(255,255,255,.28);margin-top:8px;overflow:hidden}.stBar i{display:block;height:100%;background:#ffe85a;border-radius:4px}
@@ -4247,7 +4249,7 @@ function impact(tImp) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
-  G.preRolled = false; W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
+  G.preRolled = false; G.camD0 = null; G.frameE = 0; W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
@@ -4417,8 +4419,11 @@ function updateCamera(dt) {
       G.settleT += dt;
       if (G.preRolled) {
         // the pre-roll has already started the move: carry on from where the camera is, same easing, no second motion
-        const k = 1 - Math.exp(-dt * (isPutt() ? 3 : 2.2)); cam.position.lerp(camTmp, k); G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 4));
-        if ((cam.position.distanceTo(camTmp) < .2 && G.settleT > .25) || G.settleT > 2.4) enterAddress();
+        const k = 1 - Math.exp(-dt * (isPutt() ? 3 : 2.2)); cam.position.lerp(camTmp, k);
+        // the ball stays in the middle of the screen for the whole move; the framing eases to the address view only as the camera arrives
+        const rem = cam.position.distanceTo(camTmp); G.frameE += (smooth(1.6, .1, rem) - G.frameE) * (1 - Math.exp(-dt * 2.6));
+        _pl.copy(W.ball.position).lerp(lookTmp, G.frameE); G.camLook.copy(_pl);
+        if ((rem < .15 && G.frameE > .97) || G.settleT > 3) enterAddress();
       } else {
         const u = easeInOut(clamp(G.settleT / 1.4, 0, 1));
         cam.position.lerpVectors(G.camFrom, camTmp, u); G.camLook.lerpVectors(G.lookFrom, lookTmp, u);
@@ -4441,14 +4446,14 @@ function updateCamera(dt) {
     if (sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && hgt < 1.2) {
       const rem = sr.duration - G.playT, w = easeInOut(clamp(1 - rem, 0, 1)); // slow ease into the move
       if (w > .001) {
-        G.preRolled = true;
         const f = sr.final, fy = C.h(f.x, f.z), yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z)), onG = restsOnGreen(sr);
         addressCamFor(_pc, _pl, f.x, fy, f.z, yaw, onG, false);
+        if (!G.preRolled) { G.preRolled = true; G.camD0 = Math.max(1, cam.position.distanceTo(_pc)); }
         camTmp.lerp(_pc, w); lookTmp.lerp(b, w); // the camera moves round behind the stopping ball but keeps looking at it
       }
     }
     cam.position.lerp(camTmp, 1 - Math.exp(-dt * (putt ? 3 : 1.7)));
-    G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 5));
+    G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * (G.preRolled ? 14 : 5))); // (tight while the camera moves round the resting ball)
     cam.lookAt(G.camLook);
     if (G.shake > 0) { G.shake -= dt; cam.position.x += (Math.random() - .5) * .06; cam.position.y += (Math.random() - .5) * .06; }
     return;
@@ -4460,7 +4465,7 @@ function updateCamera(dt) {
   }
 }
 function enterAddress() {
-  G.preRolled = false; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
+  G.preRolled = false; G.camD0 = null; G.frameE = 0; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
   if (!settings.aimed) $('aimHint').classList.add('on');
@@ -4853,7 +4858,14 @@ function readoutNote(text, cls) {
 }
 /* ---------- sheets ---------- */
 function sheetOpen() { return !!document.querySelector('.sheet.on'); }
-function openSheet(id) { closeSheets(true); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); }
+function openSheet(id) { closeSheets(true); addStatsChip(id); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); }
+// every menu screen except the main menu (where Stats is a button) and Stats itself carries a small Stats shortcut with the player's level in its header
+function addStatsChip(id) {
+  if (id === 'menuSheet' || id === 'statsSheet') return;
+  const h = $(id).querySelector('.sht'); if (!h) return; let c = h.querySelector('.stChip');
+  if (!c) { c = document.createElement('button'); c.className = 'stChip'; c.onclick = e => { e.stopPropagation(); openStats(); }; h.appendChild(c); }
+  let li = 0; LEVELS.forEach((l, i) => { if (ST.holes >= l[0]) li = i; }); c.textContent = '📊 ' + LEVELS[li][1];
+}
 function closeSheets(keepScrim) { document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
 function openBag() {
   if (G.state !== 'address' && G.state !== 'settle') return;
