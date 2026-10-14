@@ -1866,7 +1866,9 @@ function realGreen(RA, sd, ww, hh, i0, j0, cx, cz) {
   const det = Sxx * Szz - Sxz * Sxz, gx = det > 1e-6 ? (Sxh * Szz - Szh * Sxz) / det : 0, gz = det > 1e-6 ? (Szh * Sxx - Sxh * Sxz) / det : 0;
   return { h: (X, Z) => { const pl = mh + gx * (X - cx) + gz * (Z - cz); return pl + .5 * (sm(X, Z) - pl); } };
 }
-function tierGreen(RA, sd, ww, hh, i0, j0, cx, cz, maxS) {
+// where the step sits, as the share of the green below it (hole 3: close to the front, a small lower tier in front of the main plateau)
+const TIER_CUT = { 2: .3 };
+function tierGreen(RA, sd, ww, hh, i0, j0, cx, cz, maxS, fixCut) {
   const f = tierGreen.f, res = f.res, x0 = f.x0, z0 = f.z0, zBase = f.zBase;
   const raH = altiH(RA);
   const P = [];
@@ -1883,15 +1885,15 @@ function tierGreen(RA, sd, ww, hh, i0, j0, cx, cz, maxS) {
   const S = P.map(p => ({ s: p[0] * ex + p[1] * ez, p })).sort((a, b) => a.s - b.s), n = S.length;
   // the split: the position along the fall line that leaves the two sides best described by one plane each
   let best = 1e18, cut = n >> 1;
-  for (let m = Math.floor(n * .25); m <= Math.floor(n * .75); m += 3) {
+  for (let m = Math.floor(n * (fixCut ? fixCut : .25)); m <= Math.floor(n * (fixCut ? fixCut : .75)); m += 3) {
     const a = plane(S.slice(0, m).map(q => q.p)), b = plane(S.slice(m).map(q => q.p)); let e = 0;
     for (let k = 0; k < n; k++) { const p = S[k].p, pl = k < m ? a : b, d = p[2] - pl.at(p[0], p[1]); e += d * d; }
     if (e < best) { best = e; cut = m; }
   }
   const sc = (S[cut - 1].s + S[cut].s) / 2, lo = plane(S.slice(0, cut).map(q => q.p)), hi = plane(S.slice(cut).map(q => q.p));
-  const step = hi.at(ex * sc, ez * sc) - lo.at(ex * sc, ez * sc), want = Math.max(.5, Math.min(1, Math.abs(step))), add = (step < 0 ? -1 : 1) * want - step;
+  const step = hi.at(ex * sc, ez * sc) - lo.at(ex * sc, ez * sc), want = Math.max(.5, Math.min(.8, Math.abs(step))), add = (step < 0 ? -1 : 1) * want - step;
   const W2 = 1.25; // half-width of the slope between the levels
-  return { step: step + add, split: sc, h: (X, Z) => {
+  return { step: step + add, split: sc, frac: cut / n, h: (X, Z) => {
     const x = X - cx, z = Z - cz, t = smooth(-W2, W2, x * ex + z * ez - sc);
     return lerp(lo.at(x, z), hi.at(x, z) + add, t);
   } };
@@ -2006,7 +2008,7 @@ function makeRealCourse(idx, pin) {
         return (lat[k] * (1 - fa) + lat[k + 1] * fa) * (1 - fb) + (lat[k + na] * (1 - fa) + lat[k + na + 1] * fa) * fb;
       };
       // the hole's own green follows the real elevation lattice; the double-plateau ones are rebuilt as two levels
-      if (GREEN_ALTI[idx] && Math.hypot(cx - gX0, cz - gZ0) < 30) tier = TIER_HOLES.includes(idx) ? tierGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz, maxS) : realGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz);
+      if (GREEN_ALTI[idx] && Math.hypot(cx - gX0, cz - gZ0) < 30) tier = TIER_HOLES.includes(idx) ? tierGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz, maxS, TIER_CUT[idx]) : realGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz);
     }
     const top = (X, Z) => {
       if (tier) return tier.h(X, Z) + (amp ? .4 * amp * Math.sin((X - cx) * .19 + p0) * Math.cos((Z - cz) * .15 + p1) : 0);
@@ -2142,8 +2144,10 @@ function makeRealCourse(idx, pin) {
     const off = [[-.45, 0], [.45, 0], [0, .42], [0, -.42]][((pin | 0) % 4 + 4) % 4];
     const thr = Math.max(mn * .6, -3.5), tx = G1.cx + (ax * off[0] - az * off[1]) * G1.R, tz = G1.cz + (az * off[0] + ax * off[1]) * G1.R;
     let bd = 1e18;
+    // never on a severe slope: the ground round the hole (1.5 m out, four ways) must stay under 4 % (and the cell itself too)
+    const sl = (X, Z) => { const q = [0, 0]; let m = 0; for (const [ox, oz] of [[0, 0], [1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]]) { C.grad(X + ox, Z + oz, q); m = Math.max(m, Math.hypot(q[0], q[1])); } return m; };
     for (let j = 0; j < hh; j++) for (let i = 0; i < ww; i++) if (sd[j * ww + i] <= thr) {
-      const X = x0 + (i + i0) * res, Z = z0 + (j + j0) * res, dd = (X - tx) ** 2 + (Z - tz) ** 2;
+      const X = x0 + (i + i0) * res, Z = z0 + (j + j0) * res, sm = sl(X, Z), dd = (X - tx) ** 2 + (Z - tz) ** 2 + (sm > .04 ? 1e5 * (sm - .03) : 0);
       if (dd < bd) { bd = dd; cup = { x: X, z: Z }; }
     }
   }
