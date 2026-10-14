@@ -4428,15 +4428,15 @@ function updateCamera(dt) {
     camTmp.set(b.x - d[0] * back, b.y + up, b.z - d[1] * back);
     camTmp.y = Math.max(camTmp.y, C.h(camTmp.x, camTmp.z) + 1.4, C.wl(camTmp.x, camTmp.z) + 1.4);
     lookTmp.set(b.x + d[0] * (putt ? 1.5 : 7), b.y + (putt ? 0 : 1), b.z + d[1] * (putt ? 1.5 : 7));
-    // while the ball is coming to rest (on the ground, the last couple of seconds of its run) the camera already swings round to the
-    // view for the next shot, from where the ball will stop toward the pin
+    // while the ball is coming to rest (on the ground, the last second of its run) the camera already swings round to the
+    // position for the next shot (behind where the ball will stop, toward the pin) while it keeps the ball centred
     const sr = G.shot && G.shot.res;
     if (sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && hgt < 1.2) {
-      const rem = sr.duration - G.playT, w = smooth(2.6, .2, rem) * (putt ? .85 : 1);
+      const rem = sr.duration - G.playT, w = easeInOut(clamp(1 - rem, 0, 1)); // slow ease into the move
       if (w > .001) {
         const f = sr.final, fy = C.h(f.x, f.z), yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z)), onG = restsOnGreen(sr);
         addressCamFor(_pc, _pl, f.x, fy, f.z, yaw, onG, false);
-        camTmp.lerp(_pc, w); lookTmp.lerp(_pl, w);
+        camTmp.lerp(_pc, w); lookTmp.lerp(b, w); // the camera moves round behind the stopping ball but keeps looking at it
       }
     }
     cam.position.lerp(camTmp, 1 - Math.exp(-dt * (putt ? 3 : 1.7)));
