@@ -4024,7 +4024,7 @@ function startRound() {
 function startHole(i) {
   closeSheets(); $('done').classList.remove('on'); $('readout').classList.remove('on'); UI.readT = 0;
   document.body.classList.remove('flight', 'swing');
-  G.hole = i; G.camMove = null;
+  G.hole = i; if (G.rig) G.rig.arr = null;
   if (G.practice && G.pins) G.pins[i] = ((G.pins[i] | 0) + 1 + Math.floor(Math.random() * 3)) % 4; // practice: a different pin every time the hole is played
   G.C = courseFor(i);
   if (!G.C.real && G.C.def.par === 3) { G.C.center = mkPoly([[G.C.def.start.x, G.C.def.start.f], [G.C.cup.x, -G.C.cup.z]], null); G.C.length = G.C.center.L; }
@@ -4266,7 +4266,7 @@ function impact(tImp) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
-  G.camMove = null; W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
+  if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
@@ -4418,9 +4418,16 @@ function addressCam(out, look) {
   const alpha = Math.atan2(dv, hd) - Math.atan(-ny * Math.tan(fovH));
   look.set(x + d[0] * Math.cos(alpha) * 20, y - Math.sin(alpha) * 20, z + d[1] * Math.cos(alpha) * 20);
 }
-// Every camera move is eased in and out: positions and look points follow their targets with a critically damped spring (smooth-damp),
-// which starts and ends with zero speed and keeps its speed when the target or the mode changes, so no change of view is ever a jump.
-// st is the smoothing time: the move takes roughly 3 x st, so a bigger move gets a bigger st.
+/* ---------- camera rig ----------
+   One rig carries the camera from the ball in the air to the next shot ready, with no hand-overs:
+   - every target the camera aims for is itself continuous in time (the follow view, the final address view, and a blend between them
+     driven by a smootherstep weight w, so position, speed and acceleration of the target all start and end at zero);
+   - the camera then follows its target through two critically damped filters in series (a second-order cascade), which rounds off every
+     remaining corner, so the motion has no jumps in position, speed or acceleration (no jerk) even when the target changes mode;
+   - the arrival move starts about a second before the ball stops and lasts as long as its size asks for (1.8-4.2 s), the ball held in
+     the middle of the screen until the address framing (ball lower in the view) is blended in at the very end;
+   - where the next address view will be is predicted from where the ball will stop; the real one (after the caddie's aim) is blended in
+     over a second after the shot is finished, so even that correction is not a step. */
 function dampAxis(c, t, v, st, dt) {
   const w = 2 / Math.max(.0001, st), x = w * dt, e = 1 / (1 + x + .48 * x * x + .235 * x * x * x), ch = c - t, tp = (v + w * ch) * dt;
   _dv = (v - w * tp) * e; return t + (ch + tp) * e;
@@ -4429,67 +4436,84 @@ let _dv = 0;
 function dampV3(cur, tgt, vel, st, dt) {
   cur.x = dampAxis(cur.x, tgt.x, vel.x, st, dt); vel.x = _dv; cur.y = dampAxis(cur.y, tgt.y, vel.y, st, dt); vel.y = _dv; cur.z = dampAxis(cur.z, tgt.z, vel.z, st, dt); vel.z = _dv;
 }
-function camSmooth(posT, lookT, stP, stL, dt) {
-  dampV3(W.cam.position, posT, G.camV, stP, dt); dampV3(G.camLook, lookT, G.lookV, stL, dt); W.cam.lookAt(G.camLook);
+const FLIGHT_ST = .8, FLIGHT_LOOK_ST = .45;
+const CAM_ST = .25; // smoothing time of the camera filters (the same everywhere, so a change of mode never changes the dynamics)
+const smoother = x => { x = clamp(x, 0, 1); return x * x * x * (x * (x * 6 - 15) + 10); };
+const softMax = (a, b, k) => .5 * (a + b + Math.sqrt((a - b) * (a - b) + k * k)); // a max with a rounded corner
+function camInit() {
+  const R = G.rig = { p1: W.cam.position.clone(), v1: new THREE.Vector3(), pv: new THREE.Vector3(), l1: G.camLook.clone(), lv1: new THREE.Vector3(), lv: new THREE.Vector3(), t: 0, hgt: 0, arr: null, launch: null, bf: W.ball.position.clone(), bfv: new THREE.Vector3(), bPos: new THREE.Vector3(), bLook: new THREE.Vector3(),
+    fPos: new THREE.Vector3(), fLook: new THREE.Vector3(), tPos: new THREE.Vector3(), tLook: new THREE.Vector3(), aPos: new THREE.Vector3(), aLook: new THREE.Vector3(), pPos: new THREE.Vector3(), pLook: new THREE.Vector3(), q: new THREE.Vector3() };
+  return R;
+}
+function camSnap() { const R = G.rig || camInit(); R.p1.copy(W.cam.position); R.l1.copy(G.camLook); R.v1.set(0, 0, 0); R.pv.set(0, 0, 0); R.lv1.set(0, 0, 0); R.lv.set(0, 0, 0); R.arr = null; }
+function camFollowTargets(dt) { // the view that follows the ball in flight (continuous: the height blend is filtered)
+  const R = G.rig, C = G.C, b = W.ball.position, d = aimDir(), putt = G.shot && G.shot.L.putt;
+  R.hgt += (Math.max(0, b.y - C.h(b.x, b.z)) - R.hgt) * (1 - Math.exp(-dt * 3));
+  const back = putt ? 3.8 : 11 + Math.min(16, R.hgt * .4), up = putt ? 2 : 4 + R.hgt * .5;
+  R.fPos.set(b.x - d[0] * back, b.y + up, b.z - d[1] * back);
+  R.fPos.y = softMax(softMax(R.fPos.y, C.h(R.fPos.x, R.fPos.z) + 1.4, .6), C.wl(R.fPos.x, R.fPos.z) + 1.4, .6);
+  R.fLook.set(b.x + d[0] * (putt ? 1.5 : 7), b.y + (putt ? 0 : 1), b.z + d[1] * (putt ? 1.5 : 7));
+  R.bPos.copy(R.fPos); R.bLook.copy(R.fLook);
+}
+function camStep(posT, lookT, wf, dt) { // the two filters in series; wf = 1 in flight (slow, the camera trails the ball), 0 at rest (quick), eased in between
+  const R = G.rig, cam = W.cam, stP = CAM_ST + (FLIGHT_ST - CAM_ST) * wf, stL = CAM_ST + (FLIGHT_LOOK_ST - CAM_ST) * wf;
+  dampV3(R.p1, posT, R.v1, stP, dt); dampV3(cam.position, R.p1, R.pv, stP, dt);
+  dampV3(R.l1, lookT, R.lv1, stL, dt); dampV3(G.camLook, R.l1, R.lv, stL, dt); cam.lookAt(G.camLook);
 }
 function updateCamera(dt) {
-  const cam = W.cam, C = G.C; if (!G.camV) { G.camV = new THREE.Vector3(); G.lookV = new THREE.Vector3(); }
+  const cam = W.cam, C = G.C, R = G.rig || camInit(); R.t += dt;
   if (G.state === 'intro') {
     const T = 7, t = (G.introT % (T + 1.5)) / T, e = easeInOut(clamp(t, 0, 1)), L = C.center.L;
     const s = lerp(-30, L - 25, e), p = polyAt(C.center, Math.max(0, s)), q = polyAt(C.center, Math.min(L, s + 80));
     const d0 = polyAt(C.center, 20); const ddx = d0[0] - C.startPos.x, ddz = d0[1] - C.startPos.z, dl = Math.hypot(ddx, ddz) || 1, back = s < 0 ? -s : 0;
     camTmp.set(p[0] - ddx / dl * back, C.h(p[0], p[1]) + 42 - 12 * e, p[1] - ddz / dl * back);
     lookTmp.set(q[0], C.h(q[0], q[1]), q[1]);
-    if (G.introSnap) { G.introSnap = false; cam.position.copy(camTmp); G.camLook.copy(lookTmp); G.camV.set(0, 0, 0); G.lookV.set(0, 0, 0); }
-    camSmooth(camTmp, lookTmp, .55, .55, dt);
-    return;
-  }
-  if (G.state === 'address' || G.state === 'settle') {
-    addressCam(camTmp, lookTmp);
-    if (G.state === 'settle') {
-      G.settleT += dt;
-      if (!G.camMove) G.camMove = { st: clamp(.3 + cam.position.distanceTo(camTmp) * .03, .5, 1.1), centred: false }; // a move not started in flight
-      const M = G.camMove;
-      if (M.centred) {
-        // started before the ball stopped: the ball stays in the middle until the camera is nearly there, then the framing eases to the address view
-        const rem = cam.position.distanceTo(camTmp); M.e += (smooth(1.6, .1, rem) - M.e) * (1 - Math.exp(-dt * 2.4));
-        _pm.copy(W.ball.position).lerp(lookTmp, M.e); camSmooth(camTmp, _pm, M.st, Math.min(M.st, .25), dt);
-      } else camSmooth(camTmp, lookTmp, M.st, M.st * .8, dt);
-      if ((cam.position.distanceTo(camTmp) < .06 && G.camV.length() < .05 && G.lookV.length() < .05 && G.settleT > .3) || G.settleT > 6) enterAddress();
-    } else camSmooth(camTmp, lookTmp, .3, .3, dt); // address: follows aim changes and small shifts, eased
-    return;
-  }
-  if (G.state === 'flight' || G.state === 'holed') {
-    const b = W.ball.position, d = aimDir(), putt = G.shot && G.shot.L.putt;
-    const hgt = Math.max(0, b.y - C.h(b.x, b.z));
-    if (G.playT < .2 && !putt) { cam.lookAt(G.camLook); G.camV.multiplyScalar(.9); return; }
-    const back = putt ? 3.8 : 11 + Math.min(16, hgt * .4), up = putt ? 2 : 4 + hgt * .5;
-    camTmp.set(b.x - d[0] * back, b.y + up, b.z - d[1] * back);
-    camTmp.y = Math.max(camTmp.y, C.h(camTmp.x, camTmp.z) + 1.4, C.wl(camTmp.x, camTmp.z) + 1.4);
-    lookTmp.set(b.x + d[0] * (putt ? 1.5 : 7), b.y + (putt ? 0 : 1), b.z + d[1] * (putt ? 1.5 : 7));
-    // The ball is on the ground and about a second from stopping: now the camera starts one move to the position for the next shot
-    // (behind where the ball stops, toward the pin), the ball kept in the middle of the screen. Its length follows the size of the move,
-    // so it may well still be going when the ball is at rest (the settle phase carries it on).
-    const sr = G.shot && G.shot.res;
-    if (sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && (G.camMove || (hgt < 1.2 && sr.duration - G.playT <= 1))) {
-      const f = sr.final, yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z));
-      addressCamFor(_pc, _pl, f.x, C.h(f.x, f.z), f.z, yaw, restsOnGreen(sr), false);
-      if (!G.camMove) G.camMove = { st: clamp(.3 + cam.position.distanceTo(_pc) * .03, .5, 1.1), centred: true, e: 0 };
-      const rem = cam.position.distanceTo(_pc), M = G.camMove; M.e += (smooth(1.6, .1, rem) - M.e) * (1 - Math.exp(-dt * 2.4));
-      _pm.copy(b).lerp(_pl, M.e); camSmooth(_pc, _pm, M.st, Math.min(M.st, .25), dt); return;
-    }
-    camSmooth(camTmp, lookTmp, putt ? .5 : .75, .3, dt);
-    if (G.shake > 0) { G.shake -= dt; cam.position.x += (Math.random() - .5) * .06; cam.position.y += (Math.random() - .5) * .06; }
-    return;
+    if (G.introSnap) { G.introSnap = false; cam.position.copy(camTmp); G.camLook.copy(lookTmp); camSnap(); }
+    camStep(camTmp, lookTmp, 0, dt); return;
   }
   if (G.state === 'title' && C) {
     const a = performance.now() * .00005, cx = C.cup.x, cz = C.cup.z;
     const px = cx + Math.cos(a) * 64, pz = cz + Math.sin(a) * 64; // over real woods the orbit keeps above the treetops
-    cam.position.set(px, C.real ? Math.max(C.cup.y + 26, C.h(px, pz) + 30) : C.cup.y + 22, pz); cam.lookAt(cx, C.cup.y + 2, cz); G.camV.set(0, 0, 0); G.lookV.set(0, 0, 0);
+    cam.position.set(px, C.real ? Math.max(C.cup.y + 26, C.h(px, pz) + 30) : C.cup.y + 22, pz); G.camLook.set(cx, C.cup.y + 2, cz); cam.lookAt(G.camLook); camSnap(); return;
   }
+  // (light while the ball is moving, heavier as the arrival move progresses and the ball is at rest, so any hop in its drawn position when it comes to rest is smoothed out)
+  dampV3(R.bf, W.ball.position, R.bfv, .08 + .3 * smoother((R.arr ? (R.t - R.arr.t0) / R.arr.D : 0) / .5 - .3), dt); const ball = R.bf; // the ball position, filtered: a hop of the drawn ball never reaches the camera
+  const sr = G.shot && G.shot.res, flying = G.state === 'flight' || G.state === 'holed';
+  if (G.state === 'flight' || G.state === 'holed') {
+    camFollowTargets(dt);
+  }
+  // the arrival move: begins ~1 s before the ball stops (or when the shot is over without one), ends at the address view
+  const canPre = sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && R.hgt < 1.2 && sr.duration - G.playT <= 1;
+  if (!R.arr && (canPre || G.state === 'settle')) {
+    const pre = !!canPre; let pPos = R.pPos, pLook = R.pLook;
+    if (pre) { const f = sr.final, yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z)); addressCamFor(pPos, pLook, f.x, C.h(f.x, f.z), f.z, yaw, restsOnGreen(sr), false); }
+    else { addressCam(pPos, pLook); } // no prediction: the real view is known already
+    R.arr = { t0: R.t, D: clamp(1.4 + cam.position.distanceTo(pPos) * .07, 1.8, 4.2), pre, finT: pre ? null : R.t, f0: cam.position.clone(), fl0: G.camLook.clone() };
+  }
+  if (G.snapCam && G.state === 'settle') { // practice replay: straight to the tee shot, no travelling
+    G.snapCam = false; addressCam(camTmp, lookTmp); cam.position.copy(camTmp); G.camLook.copy(lookTmp); cam.lookAt(G.camLook); camSnap(); enterAddress(); return;
+  }
+  const A = R.arr;
+  if (A && G.state === 'settle' && A.finT == null) A.finT = R.t; // the shot is over: the real address view takes over from the prediction
+  if (!A) { // address (or flight before the arrival): follow targets, filtered
+    if (flying) { camStep(R.bPos, R.bLook, 1, dt); if (G.shake > 0) { G.shake -= dt; cam.position.x += (Math.random() - .5) * .06; cam.position.y += (Math.random() - .5) * .06; } }
+    else { addressCam(camTmp, lookTmp); camStep(camTmp, lookTmp, 0, dt); }
+    return;
+  }
+  // arrival: blend the follow view (or the frozen start view) into the final view with one smootherstep weight
+  addressCam(R.aPos, R.aLook);
+  const sF = A.finT == null ? 0 : smoother((R.t - A.finT) / 1.2); // prediction -> real address view
+  R.tPos.copy(R.pPos).lerp(R.aPos, sF); R.tLook.copy(R.pLook).lerp(R.aLook, sF);
+  const w = smoother((R.t - A.t0) / A.D);
+  const startPos = A.pre ? R.bPos : A.f0, startLook = A.pre ? R.bLook : A.fl0; // the follow view (frozen once the ball is at rest) or the view the move started from
+  R.q.copy(startPos).lerp(R.tPos, w);
+  const lc = _pm.copy(startLook).lerp(ball, smoother(w / .35)); // the ball moves to the middle of the screen early in the move
+  lc.lerp(R.tLook, smoother((w - .45) / .55)); // and the address framing (ball lower) comes in only at the end
+  camStep(R.q, lc, A.pre ? 1 - w : 0, dt);
+  if (G.state === 'settle' && ((w >= 1 && cam.position.distanceTo(R.aPos) < .05 && R.pv.length() < .05 && R.lv.length() < .05) || R.t - A.t0 > A.D + 5)) enterAddress();
 }
 function enterAddress() {
-  G.camMove = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
+  if (G.rig) G.rig.arr = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
   if (!settings.aimed) $('aimHint').classList.add('on');
@@ -5350,7 +5374,7 @@ function initInput() {
   mc.addEventListener('pointerup', () => mdown = false); mc.addEventListener('pointercancel', () => mdown = false);
   $('icGo').onclick = e => { e.stopPropagation(); audio(); beginHole(); };
   $('intro').addEventListener('click', () => { audio(); beginHole(); });
-  $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) { startHole(G.hole); beginHole(); G.settleT = 1.4; } /* practice replay: straight to the tee shot, no overview */ else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
+  $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) { startHole(G.hole); beginHole(); G.snapCam = true; } /* practice replay: straight to the tee shot, no overview */ else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
   // the player's name: asked for on the title screen, editable in the menu
   const ni = $('nameIn'), nr = $('nameRow'), mn = $('mName');
   const setName = v => { const c = cleanName(v); if (c) { settings.name = c; saveSettings(); } updateHUD(); };
