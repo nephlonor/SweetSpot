@@ -34,7 +34,7 @@
   color-scheme:light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;overflow:hidden;background:#2f5d33;color:var(--ink);font-family:var(--body);
+html,body{height:100%;margin:0;overflow:hidden;background:#000;color:var(--ink);font-family:var(--body);
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
@@ -321,6 +321,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
     <div class="mrow">Sound<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+    <div class="mrow">Screen<div class="seg" id="segFill"><button data-v="0">Fit</button><button data-v="1">Fill</button></div></div>
     <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="legacy">Legacy</button></div></div>
   </div>
   <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
@@ -4497,10 +4498,24 @@ function sizeCanvases() {
 }
 // the viewport height (kept as one function so every screen-space calculation agrees)
 function VH() { return window.innerHeight; }
+// Optional full-bleed view for home-screen apps whose viewport stops short of the bottom edge (try it with ?fill=1, switch off with ?fill=0).
+// Only the 3D canvas grows past the layout viewport; the HUD and every touch area keep their normal size and position, and the camera
+// keeps its normal projection (view offset), so the first VH() rows are exactly the same picture. SH() is the 3D canvas height.
+let FILL = false; try { const q = /[?&]fill=([01])/.exec(location.search); if (q) { q[1] === '1' ? localStorage.setItem('ssg-fill', '1') : localStorage.removeItem('ssg-fill'); } FILL = localStorage.getItem('ssg-fill') === '1'; } catch (e) { }
+let SHV = 0;
+function SH() { return SHV || window.innerHeight; }
+function fillGap() {
+  if (!FILL) return 0;
+  try { const sa = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); if (!sa) return 0;
+    const lg = Math.max(screen.width, screen.height), sh = Math.min(screen.width, screen.height), full = window.innerWidth > window.innerHeight ? sh : lg, gap = full - window.innerHeight; return gap > 0 && gap <= 100 ? gap : 0; } catch (e) { return 0; }
+}
 function onResize() {
-  const w = window.innerWidth, h = VH();
-  W.ren.setSize(w, h, false);
-  W.cam.aspect = w / h; W.cam.fov = h > w ? 58 : 46; W.cam.updateProjectionMatrix(); resizeTiltShift();
+  const w = window.innerWidth, h = VH(), gap = fillGap(); SHV = gap ? h + gap : 0;
+  const gl = $('gl'); gl.style.bottom = gap ? 'auto' : ''; gl.style.height = gap ? (h + gap) + 'px' : '';
+  W.ren.setSize(w, h + gap, false);
+  W.cam.aspect = w / h; W.cam.fov = h > w ? 58 : 46;
+  if (gap) W.cam.setViewOffset(w, h, 0, 0, w, h + gap); else W.cam.clearViewOffset();
+  W.cam.updateProjectionMatrix(); resizeTiltShift();
   sizeCanvases();
 }
 /* ---------- tempo panel ---------- */
@@ -4784,7 +4799,7 @@ function updatePinTag() {
   const tag = $('pinTag'); if (!G.C || G.state === 'title' || G.state === 'intro' || G.state === 'flight' || sheetOpen()) { tag.style.opacity = 0; return; }
   _pv2.set(G.C.cup.x, G.C.cup.y + PIN_H + .5, G.C.cup.z).project(W.cam);
   const vis = _pv2.z < 1 && Math.abs(_pv2.x) < 1.05 && _pv2.y < .98 && _pv2.y > -1;
-  const tx = (_pv2.x * .5 + .5) * window.innerWidth, ty = (-_pv2.y * .5 + .5) * VH(), hudBottom = $('pinCard').getBoundingClientRect().bottom + 30;
+  const tx = (_pv2.x * .5 + .5) * window.innerWidth, ty = (-_pv2.y * .5 + .5) * SH(), hudBottom = $('pinCard').getBoundingClientRect().bottom + 30;
   // never sit on top of the strike / result card
   const ro = $('readout'), rr = ro.classList.contains('on') ? ro.getBoundingClientRect() : null, hw = tag.offsetWidth / 2 + 4;
   const clash = !!rr && tx + hw > rr.left && tx - hw < rr.right && ty + 6 > rr.top && ty - tag.offsetHeight - 4 < rr.bottom;
@@ -4800,7 +4815,7 @@ function updateSeeThru() {
   if (G.state === 'flight' && W.ball.visible) {
     _sb.copy(W.ball.position).project(W.cam);
     if (_sb.z < 1) {
-      sx = (_sb.x * .5 + .5) * window.innerWidth; sy = (-_sb.y * .5 + .5) * VH();
+      sx = (_sb.x * .5 + .5) * window.innerWidth; sy = (-_sb.y * .5 + .5) * SH();
       const d = Math.max(.5, W.cam.position.distanceTo(W.ball.position));
       r = VIS_R * W.ball.scale.x / (d * Math.tan(W.cam.fov * DEG / 2)) * VH() / 2 + 10;
     }
@@ -4826,7 +4841,7 @@ function updateBallTag() {
   W.cam.updateMatrixWorld();
   _bt.copy(b).project(W.cam);
   if (_bt.z > 1) { UI.btOn = false; tag.classList.remove('on'); return; }
-  const vw = window.innerWidth, vh = VH(), sx = (_bt.x * .5 + .5) * vw, sy = (-_bt.y * .5 + .5) * vh;
+  const vw = window.innerWidth, vh = VH(), sx = (_bt.x * .5 + .5) * vw, sy = (-_bt.y * .5 + .5) * SH();
   const bd = Math.max(.1, W.cam.position.distanceTo(b)), rpx = VIS_R * W.ball.scale.x / bd * vh * .5 / Math.tan(W.cam.fov * DEG / 2);
   const w = tag.offsetWidth, h = tag.offsetHeight, gap = rpx + 9;
   let flip = UI.btFlip;
@@ -4884,6 +4899,7 @@ function syncMenu() {
   const mn = $('mName'); if (mn && document.activeElement !== mn) mn.value = settings.name || '';
   document.querySelectorAll('#segHand button').forEach(b => b.classList.toggle('sel', +b.dataset.v === settings.hand));
   document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.sound ? 1 : 0)));
+  document.querySelectorAll('#segFill button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (FILL ? 1 : 0)));
   const ph = $('pracHoles');
   if (ph) {
     if (ph.children.length !== HOLE_DEFS.length) { ph.innerHTML = ''; HOLE_DEFS.forEach((d, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.onclick = () => startPractice(i); ph.appendChild(b); }); }
@@ -5329,6 +5345,8 @@ function initInput() {
   $('mBoard').onclick = () => { closeSheets(true); openBoard(); };
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); });
+  // home-screen apps whose view stops short of the bottom edge: Fill stretches the 3D picture to the edge (the controls stay where they are)
+  document.querySelectorAll('#segFill button').forEach(b => b.onclick = () => { FILL = b.dataset.v === '1'; try { FILL ? localStorage.setItem('ssg-fill', '1') : localStorage.removeItem('ssg-fill'); } catch (e) { } onResize(); syncMenu(); });
   $('mCard').onclick = () => showScorecard(false);
   $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
