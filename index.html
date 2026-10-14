@@ -4062,11 +4062,13 @@ function treeOnLine(yaw, maxD) {
   }
   return best;
 }
-// the middle of the back third of the green, seen from the ball: the caddie plays to it (a long putt is better than a short chip)
+// Full shots: the line runs through the middle of the green; the distance is the back third of the green, but the target is never more than 5 m from the flag
 function backThird() {
   const C = G.C, g = C.green; if (!g || !g.R) return { x: C.cup.x, z: C.cup.z };
-  const dx = g.cx - G.ball.x, dz = g.cz - G.ball.z, l = Math.hypot(dx, dz) || 1;
-  return { x: g.cx + dx / l * g.R * .62, z: g.cz + dz / l * g.R * .62 };
+  const dx = g.cx - G.ball.x, dz = g.cz - G.ball.z, l = Math.hypot(dx, dz) || 1, ux = dx / l, uz = dz / l;
+  const fx = C.cup.x - G.ball.x, fz = C.cup.z - G.ball.z, tFlag = fx * ux + fz * uz, side = Math.abs(fx * uz - fz * ux), along = side >= 5 ? 0 : Math.sqrt(25 - side * side);
+  const t = clamp(l + g.R * .62, tFlag - along, tFlag + along); // (the flag off the line by 5 m or more: the point of the line nearest to it)
+  return { x: G.ball.x + ux * t, z: G.ball.z + uz * t };
 }
 function autoClubAndAim() {
   const C = G.C, d = distToPin(), lw = CLUBS[PUTTER - 1];
