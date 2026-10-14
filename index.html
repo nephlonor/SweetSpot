@@ -2256,11 +2256,13 @@ const REAL_TREE_COLS = [0x2f6d3c, 0x3a7d43, 0x467f3f, 0x2e6a45, 0x4c8a4a, 0x3d74
 // far (the woods beyond, thinned and a little larger per tree). Every tree still stops the ball.
 // hand-tuned trees of the club's map (by index in GCCB_DATA.trees): d scales the whole tree down (a compact tree whose mapped
 // crown reads too wide), slim narrows the crown only, keeping its height
-const TREE_TWEAK = { 1110: { d: .62 }, 125: { slim: .68 }, 455: { slim: .68 } };
+// hide removes a tree altogether (hole 3: 159 and 347 closed in the line of play from the right)
+const TREE_TWEAK = { 1110: { d: .62 }, 211: { d: .5 }, 125: { slim: .68 }, 455: { slim: .68 }, 159: { hide: true }, 347: { hide: true } };
 function buildRealTrees(C, grp) {
   const I = C.inner, all = [];
   const dOut = (X, Z) => Math.hypot(Math.max(I.minX - X, 0, X - I.maxX), Math.max(I.minZ - Z, 0, Z - I.maxZ));
   const add = (t, m, fi) => {
+    if ((TREE_TWEAK[t.fill ? -1 : fi] || {}).hide) return;
     const q = C.loc(t.e, t.n), X = q[0], Z = -q[1], d = dOut(X, Z); if (d > m) return;
     let sc = 1; if (t.fill && d > 220) { if (hash2(fi, 3, 17) < .45) return; sc = 1.22; }
     const dl = d < 25 ? polyQ(C.center, X, Z, 80).d : 1e6;
