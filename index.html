@@ -3889,6 +3889,9 @@ function mergeStatic(grp) {
 const WOBBLE = .6; // strike wobble, fixed at the old "Calm" level
 const settings = { hand: 1, sound: true, coached: false, aimed: false };
 try { const s = JSON.parse(localStorage.getItem('ssg-settings') || 'null'); if (s) Object.assign(settings, s); } catch (e) { }
+// Leaderboard reset: when LB_EPOCH changes, every device clears its own rounds and best scores once (the name and settings stay).
+const LB_EPOCH = '2026-10-14';
+try { if (localStorage.getItem('ssg-lb-epoch') !== LB_EPOCH) { Object.keys(localStorage).filter(k => /^ssg-(board|best)-/.test(k)).forEach(k => localStorage.removeItem(k)); localStorage.setItem('ssg-lb-epoch', LB_EPOCH); } } catch (e) { }
 delete settings.wiggle;
 function saveSettings() { try { localStorage.setItem('ssg-settings', JSON.stringify(settings)); } catch (e) { } }
 const $ = id => document.getElementById(id);
