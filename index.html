@@ -2851,6 +2851,7 @@ function updateRainbow(dt) {
   // only while it rains and the sun is out at the same time
   const want = .26 * smooth(.03, .1, G.rainLvl || 0) * (1 - smooth(.35, .6, G.rainLvl || 0)) * (1 - smooth(.55, .8, G.cloud == null ? 1 : G.cloud));
   B.v += (want - B.v) * (1 - Math.exp(-dt / 6));
+  if (B.v > .04 && !B.sang) { B.sang = true; try { SFX.rainbow(); } catch (e) { } } else if (B.v < .01) B.sang = false; // the jingle plays once each time it appears
   B.grp.visible = B.v > .005; if (!B.grp.visible) return;
   B.mat.uniforms.uOp.value = B.v; B.grp.position.copy(W.cam.position);
 }
@@ -4057,6 +4058,12 @@ const SFX = {
   tree() { noiseBurst(.28, .22, 2600, .4); tone(320, .06, 'square', .06); },
   trunk() { tone(190, .09, 'triangle', .2, 120); noiseBurst(.05, .18, 900, 1.2); },
   leaves() { noiseBurst(.22, .14, 3200, .4); },
+  // a bright, fairy-like glissando: a rising major-pentatonic run of bell tones, each with a quiet octave shimmer, ending on a held sparkle
+  rainbow() {
+    const n = [1319, 1568, 1760, 2093, 2349, 2637, 3136, 3520, 4186];
+    n.forEach((f, i) => { tone(f, .5, 'sine', .07, null, i * .085); tone(f * 2, .25, 'triangle', .02, null, i * .085 + .02); });
+    tone(4186, 1.1, 'sine', .05, null, n.length * .085); tone(5274, .7, 'sine', .025, null, n.length * .085 + .12); tone(6272, .5, 'sine', .015, null, n.length * .085 + .25);
+  },
   chime() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .4, 'sine', .13, null, i * .09)); },
   tick() { tone(1800, .02, 'sine', .05); },
   rim() { [0, .05, .1, .16].forEach((d, i) => tone(1300 + i * 90, .03, 'triangle', .05, null, d)); },
