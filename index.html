@@ -303,7 +303,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 18 holes · Par 72</p></div>
   <div class="tb">
     <div class="how">
-      <div class="card"><svg viewBox="0 0 30 30"><rect x="10" y="2" width="10" height="26" rx="5" fill="#2f6b35"/><rect x="12.5" y="12" width="5" height="14" rx="2.5" fill="#f7dc2e"/><path d="M15 6l3 4h-6z" fill="#fff"/></svg><b>Left thumb · tempo</b><p>Slide up, then snap down in under 0.35 s. Up three times slower than down.</p></div>
+      <div class="card"><svg viewBox="0 0 30 30"><rect x="10" y="2" width="10" height="26" rx="5" fill="#2f6b35"/><rect x="12.5" y="12" width="5" height="14" rx="2.5" fill="#f7dc2e"/><path d="M15 6l3 4h-6z" fill="#fff"/></svg><b>Left thumb · tempo</b><p>Slide up, then slide straight down. A tempo of 3:1 gets the best smash factor.</p></div>
       <div class="card"><svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="14" fill="#bfe2a0"/><rect x="5" y="10" width="20" height="11" rx="5" fill="#dfe5ea" stroke="#7f93a6" stroke-width="1.4"/><circle cx="15" cy="15.5" r="5" fill="#fff" stroke="#b9c4cc" stroke-width=".8"/></svg><b>Right thumb · strike</b><p>The ball on the dial rides up-left of your thumb. Keep it on the club's sweet spot.</p></div>
     </div>
     <div class="card nameRow courseRow" hidden><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="legacy">The Legacy</button></div></div>
@@ -4736,9 +4736,10 @@ function drawTempo(now) {
     x.restore();
   }
   // the thumb's path: back (faint) and down (bright), the straight line from the top as reference; it fades out slowly while the ball is in the air
-  if (SW.path && SW.path.length > 1) {
+  if (SW.path && SW.path.length > 1 && SW.phase !== 'back' && SW.phase !== 'ready') {
+    // only the downstroke; after the strike it fades out over a few seconds and never comes back
     let a = 1;
-    if (SW.phase === 'done') a = G.state === 'flight' || G.state === 'holed' ? clamp(1 - G.playT / Math.max(2, (G.shot && G.shot.res ? G.shot.res.duration : 4)), 0, 1) : 0;
+    if (SW.phase !== 'down') a = SW.pathAt > 0 ? clamp(1 - (now - SW.pathAt - 1200) / 2800, 0, 1) : 0;
     if (a > .01) {
       const r = $('tempoCv').getBoundingClientRect(), P = SW.path, ti = Math.min(SW.topI, P.length - 1), X = q => q[0] - r.left, Y = q => q[1] - r.top;
       x.save(); x.beginPath(); x.rect(0, 0, w, h); x.clip(); x.globalAlpha = a; x.lineCap = 'round'; x.lineJoin = 'round';
@@ -4746,7 +4747,6 @@ function drawTempo(now) {
         x.setLineDash([4, 5]); x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X(P[ti]), Y(P[ti])); x.lineTo(X(P[ti]), Y(P[ti]) + 240); x.stroke(); x.setLineDash([]);
       }
       const seg = (i0, i1, col, wd) => { x.strokeStyle = col; x.lineWidth = wd; x.beginPath(); x.moveTo(X(P[i0]), Y(P[i0])); for (let i = i0 + 1; i <= i1; i++) x.lineTo(X(P[i]), Y(P[i])); x.stroke(); };
-      seg(0, Math.min(ti, P.length - 1), 'rgba(255,255,255,.35)', 2.5);
       if (P.length - 1 > ti) { seg(ti, P.length - 1, 'rgba(0,30,12,.35)', 7); seg(ti, P.length - 1, '#ffe85a', 4); }
       const e = P[P.length - 1]; x.fillStyle = '#fff'; x.beginPath(); x.arc(X(e), Y(e), 4.5, 0, TAU); x.fill();
       x.restore();
