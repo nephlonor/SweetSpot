@@ -4589,7 +4589,7 @@ function camStep(posT, lookT, wf, dt) { // the two filters in series; wf = 1 in 
 function updateCamera(dt) {
   const cam = W.cam, C = G.C, R = G.rig || camInit(); R.t += dt;
   if (G.state === 'intro') {
-    const T = 7, t = (G.introT % (T + 1.5)) / T, e = easeInOut(clamp(t, 0, 1)), L = C.center.L;
+    const T = 11, t = (G.introT % (T + 1.5)) / T, e = easeInOut(clamp(t, 0, 1)), L = C.center.L;
     const s = lerp(-30, L - 25, e), p = polyAt(C.center, Math.max(0, s)), q = polyAt(C.center, Math.min(L, s + 80));
     const d0 = polyAt(C.center, 20); const ddx = d0[0] - C.startPos.x, ddz = d0[1] - C.startPos.z, dl = Math.hypot(ddx, ddz) || 1, back = s < 0 ? -s : 0;
     camTmp.set(p[0] - ddx / dl * back, C.h(p[0], p[1]) + 42 - 12 * e, p[1] - ddz / dl * back);
