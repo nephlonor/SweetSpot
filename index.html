@@ -306,7 +306,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
       <div class="card"><svg viewBox="0 0 30 30"><rect x="10" y="2" width="10" height="26" rx="5" fill="#2f6b35"/><rect x="12.5" y="12" width="5" height="14" rx="2.5" fill="#f7dc2e"/><path d="M15 6l3 4h-6z" fill="#fff"/></svg><b>Left thumb · tempo</b><p>Slide up, then snap down in under 0.35 s. Up three times slower than down.</p></div>
       <div class="card"><svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="14" fill="#bfe2a0"/><rect x="5" y="10" width="20" height="11" rx="5" fill="#dfe5ea" stroke="#7f93a6" stroke-width="1.4"/><circle cx="15" cy="15.5" r="5" fill="#fff" stroke="#b9c4cc" stroke-width=".8"/></svg><b>Right thumb · strike</b><p>The ball on the dial rides up-left of your thumb. Keep it on the club's sweet spot.</p></div>
     </div>
-    <div class="card nameRow courseRow"><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="legacy">The Legacy</button></div></div>
+    <div class="card nameRow courseRow" hidden><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="legacy">The Legacy</button></div></div>
     <label class="card nameRow" id="nameRow"><span>Player</span><input id="nameIn" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="go"></label>
     <button class="btn" id="btnPlay">Tee off</button>
     <div class="best" id="best"></div>
@@ -321,10 +321,10 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
     <div class="mrow">Sound<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
-    <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="legacy">Legacy</button></div></div>
+    <div class="mrow" hidden>Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="legacy">Legacy</button></div></div>
   </div>
   <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
-  <div class="mbtns"><button class="mbtn dark wide" id="mStats">📊 Stats &amp; records</button><button class="mbtn dark" id="mBoard">Leaderboard</button><button class="mbtn dark" id="mCard">Scorecard</button><button class="mbtn" id="mHelp">How to swing</button><button class="mbtn" id="mRound">New round</button></div>
+  <div class="mbtns"><button class="mbtn dark wide" id="mReplay">▶ Replay last shot</button><button class="mbtn dark wide" id="mStats">📊 Stats &amp; records</button><button class="mbtn dark" id="mBoard">Leaderboard</button><button class="mbtn dark" id="mCard">Scorecard</button><button class="mbtn" id="mHelp">How to swing</button><button class="mbtn" id="mRound">New round</button></div>
 </div>
 <div class="sheet" id="cardSheet"><div class="grab"></div><div id="cardBody"></div></div>
 <div class="sheet" id="boardSheet"><div class="grab"></div><div class="sht">Leaderboard <small id="boardName">Golf &amp; Country Club Basel</small></div><div id="boardBody"></div></div>
@@ -2626,12 +2626,14 @@ const COURSES = {
   gccb: { key: 'gccb', name: 'Golf & Country Club Basel', short: 'GCC Basel', defs: GCCB_DEFS, best: 'ssg-best-gccb', board: 'ssg-board-gccb', coll: 'rounds-gccb' },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
 };
-let COURSE = COURSES.legacy;
+const LEGACY_ON = false;
+let COURSE = COURSES.gccb;
 // each round sets a pin (0-3: front, back, left, right) per hole in G.pins
 function courseFor(i) { const pin = G.pins ? G.pins[i] | 0 : 0; return HOLE_DEFS[i].rh ? makeRealCourse(i, pin) : makeCourse(i, pin); }
 // switches everything that depends on the course in play; the round in progress is dropped
 function setCourse(key) {
-  COURSE = COURSES[key] || COURSES.gccb; HOLE_DEFS = COURSE.defs;
+  // The Legacy Course stays in the code (LEGACY_DEFS, COURSES.legacy) but is switched off in the app: set LEGACY_ON to bring it back
+  COURSE = (key === 'legacy' && LEGACY_ON ? COURSES.legacy : COURSES.gccb); HOLE_DEFS = COURSE.defs;
   PAR_TOTAL = HOLE_DEFS.reduce((a, d) => a + d.par, 0);
   HOLE_LEN = HOLE_DEFS.map(d => Math.round(holeLength(d)));
   BEST_KEY = COURSE.best; BOARD_KEY = COURSE.board;
@@ -4318,6 +4320,7 @@ function impact(tImp) {
   if (L.putt && (G.surf === S.GREEN || G.surf === S.FRINGE)) G.putts[G.hole]++;
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
+  G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res };
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '→' : '←'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
@@ -4391,6 +4394,27 @@ function updateFlight(dt) {
   }
   // finish exactly once (the old build re-entered here every frame after holing out)
   if (!sh.finished && G.playT >= tEnd + .7) { sh.finished = true; finishShot(); }
+  else if (sh.replay && !sh.over && G.playT >= tEnd + .7) { sh.over = true; endReplay(); }
+}
+// menu: watch the last shot again from where it was struck; nothing in the round changes (no stroke, no stats, the ball ends where it lies)
+function replayLast() {
+  const R = G.lastShot;
+  if (G.state !== 'address' || !R || R.C !== G.C || R.hole !== G.hole) { readoutNote('No shot to replay yet', 'ok'); return false; }
+  G.rep = { x: G.ball.x, z: G.ball.z, teed: G.teed, club: G.club, yaw: G.yaw, target: G.target, suggested: G.suggested, carryKey: G.carryKey };
+  placeBall(R.x, R.z, R.teed); SW.mark = null; SW.phase = 'done';
+  document.body.classList.remove('swing'); document.body.classList.add('flight');
+  G.shot = { L: R.L, res: R.res, ei: 0, finished: true, replay: true, summary: '' };
+  if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
+  W.tracer.geometry.setDrawRange(0, 0); G.state = 'flight'; G.playT = -.05; G.shake = R.L.putt ? 0 : .12;
+  W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null; $('aimHint').classList.remove('on');
+  return true;
+}
+function endReplay() {
+  const q = G.rep; G.rep = null; if (!q) return;
+  document.body.classList.remove('flight'); $('readout').classList.remove('on'); UI.readT = 0;
+  placeBall(q.x, q.z, q.teed); G.club = q.club; G.yaw = q.yaw; G.target = q.target; G.suggested = q.suggested; G.carryKey = q.carryKey;
+  G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone(); SW.phase = 'idle';
+  updateAim(true); drawMapThumb();
 }
 // stopped on the green (or on the fringe close enough to putt): nothing should cover the green any more
 function restsOnGreen(r) {
@@ -5482,6 +5506,7 @@ function initInput() {
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); });
   $('mCard').onclick = () => showScorecard(false);
+  $('mReplay').onclick = () => { closeSheets(); setTimeout(replayLast, 120); };
   $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
   $('mRound').onclick = () => { closeSheets(); startRound(); };
@@ -5544,7 +5569,7 @@ function boot(data) {
   calibrateClubs();
   initThree(); initInput(); syncMenu();
   // a round restored after an update stays on its course (rounds from before the course switch were on the Legacy Course)
-  setCourse(data && data.scores ? data.course || 'legacy' : settings.course || 'gccb'); initBoard();
+  setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard();
   showTitleHole();
   sizeCanvases();
   if (data && data.scores) { G.practice = !!data.practice; G.scores = data.scores; G.putts = data.putts || G.putts; if (data.pins) G.pins = data.pins; $('title').classList.remove('on'); startHole(data.hole || 0); }
