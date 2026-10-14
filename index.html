@@ -2834,7 +2834,7 @@ function updateWeatherVisuals(dt) {
 function updateRainbow(dt) {
   const B = W.rainbow; if (!B) return;
   // after a rain spell, while the cloud has thinned and the sun is out
-  const want = G.sinceRain >= 1 && G.sinceRain <= 2 && G.weather && (G.weather.id === 'damp' || G.weather.id === 'fine') ? .55 * (1 - smooth(.5, .8, G.cloud == null ? 1 : G.cloud)) * (1 - smooth(.03, .15, G.rainLvl || 0)) : 0;
+  const want = G.sinceRain >= 1 && G.sinceRain <= 2 && G.weather && (G.weather.id === 'damp' || G.weather.id === 'fine') ? .26 * (1 - smooth(.5, .8, G.cloud == null ? 1 : G.cloud)) * (1 - smooth(.03, .15, G.rainLvl || 0)) : 0;
   B.v += (want - B.v) * (1 - Math.exp(-dt / 6));
   B.grp.visible = B.v > .005; if (!B.grp.visible) return;
   B.mat.uniforms.uOp.value = B.v; B.grp.position.copy(W.cam.position);
@@ -2881,12 +2881,12 @@ function initThree() {
   scene.add(W.clouds);
   // rainbow: the 42 degree circle around the point opposite the sun (sun low in the west, so a high arc in the east)
   {
-    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], -SUN_OFF[1], -SUN_OFF[2]).normalize(), rO = R * Math.sin(43.5 * DEG), rI = R * Math.sin(40.5 * DEG);
+    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], -SUN_OFF[1], -SUN_OFF[2]).normalize(), rO = R * Math.sin(58 * DEG), rI = R * Math.sin(47 * DEG);
     const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, uniforms: { uOp: { value: 0 }, uIn: { value: rI }, uOut: { value: rO } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
       fragmentShader: 'varying vec2 vP; uniform float uOp, uIn, uOut; vec3 hsv(float h){ return clamp(abs(mod(h*6.+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.); } void main(){ float t = clamp((length(vP)-uIn)/(uOut-uIn),0.,1.); float al = pow(sin(3.14159*t),1.4) * uOp; gl_FragColor = vec4(hsv((1.-t)*.78), al); }' });
     const m = new THREE.Mesh(new THREE.RingGeometry(rI, rO, 128, 1), mat);
-    m.position.copy(a).multiplyScalar(R * Math.cos(42 * DEG)); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), a); m.renderOrder = 2; m.frustumCulled = false;
+    m.position.copy(a).multiplyScalar(R * Math.cos(52.5 * DEG)); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), a); m.renderOrder = 2; m.frustumCulled = false;
     const grp = new THREE.Group(); grp.add(m); grp.visible = false; scene.add(grp); W.rainbow = { grp, mat, v: 0 };
   }
   Object.assign(W, { ren, scene, cam, sun });
