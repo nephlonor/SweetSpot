@@ -729,7 +729,9 @@ function simulateShot(C, o) {
       const slopeA = Math.hypot(kx, kz);
       let sp = Math.hypot(vx, vz);
       if (sp < .025 && slopeA < mu * GRAV * 1.2 && !(cup && Math.hypot(x - cup.x, z - cup.z) < CUP_RIM)) { vx = vz = 0; ev.push({ t, type: 'stop', x, y, z }); fr.push(t, x, y, z, 1); break; }
-      let ax = kx, az = kz;
+      // putts: the early, fast part of the roll takes less break (a firm ball holds its line); the slope has its full say again as it slows
+      const bf = o.putt && (surf === S.GREEN || surf === S.FRINGE) ? 1 - .45 * smooth(1.2, 3.6, sp) : 1;
+      let ax = kx * bf, az = kz * bf;
       if (sp > 1e-4) { const dcl = mu * GRAV + kq * sp * sp; ax -= dcl * vx / sp; az -= dcl * vz / sp; }
       else if (slopeA > 0) { ax -= mu * GRAV * kx / slopeA; az -= mu * GRAV * kz / slopeA; }
       const nvx = vx + ax * dt, nvz = vz + az * dt;
@@ -2313,6 +2315,8 @@ const REAL_TREE_COLS = [0x2f6d3c, 0x3a7d43, 0x467f3f, 0x2e6a45, 0x4c8a4a, 0x3d74
 // hide removes a tree altogether (hole 3: the small shrub by the tee box)
 const TREE_TWEAK = { 1110: { d: .62 }, 211: { d: .5 }, 125: { slim: .68 }, 455: { slim: .68 }, 159: { slim: .55 }, 347: { slim: .55 }, 1828: { hide: true },
   1741: { hide: true }, // hole 4: a tree standing on the tee box
+  // hole 7: the trees behind the tee box
+  134: { hide: true }, 1485: { hide: true }, 1515: { hide: true }, 1573: { hide: true }, 1709: { hide: true }, 1750: { hide: true }, 1751: { hide: true }, 1758: { hide: true }, 1762: { hide: true },
   // hole 8: the trees right of the tee
   142: { slim: .6 }, 143: { slim: .6 }, 144: { slim: .6 }, 145: { slim: .6 }, 185: { slim: .6 }, 115: { slim: .65 }, 101: { slim: .65 } };
 function buildRealTrees(C, grp) {
@@ -4576,6 +4580,15 @@ function updateCamera(dt) {
     const d0 = polyAt(C.center, 20); const ddx = d0[0] - C.startPos.x, ddz = d0[1] - C.startPos.z, dl = Math.hypot(ddx, ddz) || 1, back = s < 0 ? -s : 0;
     camTmp.set(p[0] - ddx / dl * back, C.h(p[0], p[1]) + 42 - 12 * e, p[1] - ddz / dl * back);
     lookTmp.set(q[0], C.h(q[0], q[1]), q[1]);
+    // the last stretch: rise and pull back to where the whole green fits in the frame, looking at its centre
+    const g = C.green;
+    if (g && g.R) {
+      const u = smooth(.5, 1, t), asp = window.innerWidth / Math.max(1, VH()), th = Math.tan(W.cam.fov * DEG / 2), hh = Math.min(th, th * asp);
+      const dist = clamp(g.R * 2.5 / hh, 45, 120), pe = polyAt(C.center, Math.max(0, C.center.L - 30)), ex = g.cx - pe[0], ez = g.cz - pe[1], el = Math.hypot(ex, ez) || 1;
+      const ey = C.h(g.cx, g.cz) + dist * .85 + 8;
+      camTmp.set(lerp(camTmp.x, g.cx - ex / el * dist, u), lerp(camTmp.y, ey, u), lerp(camTmp.z, g.cz - ez / el * dist, u));
+      lookTmp.set(lerp(lookTmp.x, g.cx, u), lerp(lookTmp.y, C.h(g.cx, g.cz), u), lerp(lookTmp.z, g.cz, u));
+    }
     if (G.introSnap) { G.introSnap = false; cam.position.copy(camTmp); G.camLook.copy(lookTmp); camSnap(); }
     camStep(camTmp, lookTmp, 0, dt); return;
   }
