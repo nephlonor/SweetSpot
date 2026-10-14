@@ -5617,6 +5617,10 @@ function frame(now) {
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
   updateCamera(dt); updateWeatherVisuals(dt); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateBirds(now / 1000);
+  { // the flyover sees the course from high up: shadows reach twice as far there
+    const ext = G.state === 'intro' ? 150 : 75, sc = W.sun.shadow.camera;
+    if (sc.right !== ext) { sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.updateProjectionMatrix(); }
+  }
   if (C) { const t = G.camLook; W.sun.position.set(t.x + SUN_OFF[0], t.y + SUN_OFF[1], t.z + SUN_OFF[2]); W.sun.target.position.copy(t); }
   const tt = now / 1000;
   if (W.ring.visible) { const s = W.ring.userData.s || 1, k = 1 + Math.sin(tt * 3) * .05; W.ringPulse.scale.set(k, k, 1); }
