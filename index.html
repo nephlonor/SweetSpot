@@ -2352,7 +2352,7 @@ function buildRealTrees(C, grp) {
 }
 // near trees standing between the camera and the ball (within the first 45 m from the camera) step aside while they
 // would block the view, leaving a faint silhouette; they come back once clear of the line by a margin, so they don't flicker
-const _oq = new THREE.Vector3(), _ogc = new THREE.Color(), _ogw = new THREE.Color(0xeef6ea);
+const _rd = new THREE.Vector3(), _oq = new THREE.Vector3(), _ogc = new THREE.Color(), _ogw = new THREE.Color(0xeef6ea);
 function updateTreeOcc() {
   const O = W.treeOcc; if (!O || !G.C) return;
   const cam = W.cam.position, tgt = G.state === 'title' ? _oq.set(G.C.cup.x, G.C.cup.y + 2, G.C.cup.z) : G.state === 'intro' ? null : W.ball.position;
@@ -4831,16 +4831,46 @@ function mapPick(e) {
 }
 
 /* ---------- strike dot overlay: rides up-left of the right thumb ---------- */
+/* ---------- rain ---------- */
+// Random drops at three depth layers: near ones are long, fast and bright, far ones short and faint, each landing on a ground row that
+// depends on its depth (far drops land near the horizon, near ones low on the screen) and leaving a small splash ring. Streaks lean
+// with the wind across the view. Nothing repeats: positions, speeds and landing rows are all drawn at random.
+const RAIN = { drops: [], splashes: [], last: 0 };
+function drawRain(x, W2, H2, now) {
+  const R = RAIN, dt = Math.min(.05, Math.max(0, (now - R.last) / 1000)); R.last = now;
+  const want = Math.round(clamp(W2 * H2 / 1500, 120, 420));
+  const dir = W.cam.getWorldDirection(_rd), lean = clamp(.1 + (-dir.z * G.wind[0] + dir.x * G.wind[1]) * .02, -.3, .5); // sideways px per px fallen
+  const spawn = (d, top) => {
+    const z = Math.pow(Math.random(), 1.6); // mostly far drops, a few near
+    d.z = z; d.x = Math.random() * (W2 + H2 * .6) - H2 * .3; d.sp = 520 + 900 * z * (.85 + .3 * Math.random());
+    d.len = 10 + 34 * z * (.8 + .4 * Math.random()); d.land = H2 * (.4 + .56 * z * (.7 + .3 * Math.random()));
+    d.y = top ? -d.len - Math.random() * 60 : Math.random() * d.land; return d;
+  };
+  while (R.drops.length < want) R.drops.push(spawn({}, false));
+  if (R.drops.length > want) R.drops.length = want;
+  const buckets = [[], [], []];
+  for (const d of R.drops) {
+    d.y += d.sp * dt; d.x += d.sp * dt * lean;
+    if (d.y >= d.land) { if (d.z > .12 && R.splashes.length < 90) R.splashes.push({ x: d.x, y: d.land, z: d.z, t: 0 }); spawn(d, true); continue; }
+    buckets[d.z < .3 ? 0 : d.z < .65 ? 1 : 2].push(d);
+  }
+  x.lineCap = 'round';
+  [[.16, .7], [.28, 1], [.42, 1.5]].forEach(([a, w], k) => {
+    x.strokeStyle = 'rgba(255,244,228,' + a + ')'; x.lineWidth = w; x.beginPath();
+    for (const d of buckets[k]) { x.moveTo(d.x, d.y); x.lineTo(d.x - d.len * lean, d.y - d.len); }
+    x.stroke();
+  });
+  x.lineWidth = 1;
+  for (let i = R.splashes.length - 1; i >= 0; i--) {
+    const sp = R.splashes[i]; sp.t += dt; const u = sp.t / .32; if (u >= 1) { R.splashes.splice(i, 1); continue; }
+    const rr = (2 + 9 * sp.z) * (.3 + u); x.strokeStyle = 'rgba(255,244,228,' + (.3 * (1 - u) * (.4 + sp.z)) + ')'; x.beginPath(); x.ellipse(sp.x, sp.y, rr, rr * .32, 0, 0, TAU); x.stroke();
+  }
+}
 function drawFx(now) {
   const x = UI.fxc; if (!x) return;
   const W2 = window.innerWidth, H2 = window.innerHeight;
   x.setTransform(UI.dpr, 0, 0, UI.dpr, 0, 0); x.clearRect(0, 0, W2, H2);
-  if (WX.id === 'rain' && G.state !== 'title') {
-    // rain: streaks falling slightly slanted
-    x.strokeStyle = 'rgba(255,240,220,.35)'; x.lineWidth = 1; x.beginPath();
-    for (let i = 0; i < 90; i++) { const u = i * 0.6180339 % 1, v = ((now / 1000) * (1.1 + (i % 5) * .12) + i * 0.381966) % 1, px = u * (W2 + 60) - 30 + v * 24, py = v * H2; x.moveTo(px, py); x.lineTo(px - 3, py + 14); }
-    x.stroke();
-  }
+  if (WX.id === 'rain' && G.state !== 'title') drawRain(x, W2, H2, now);
   let p, frozen = false;
   if (G.state === 'address' && SW.phase !== 'done') p = dotScreen();
   else if (SW.mark && (G.state === 'flight' || G.state === 'settle' || G.state === 'holed' || SW.phase === 'done')) { p = SW.mark; frozen = true; }
