@@ -2521,7 +2521,7 @@ function buildRealDecor(C, grp) {
   }
   // tee sign beside the white tee
   const sc = document.createElement('canvas'); sc.width = 256; sc.height = 160; const sx = sc.getContext('2d');
-  sx.fillStyle = '#fdf8ee'; sx.fillRect(0, 0, 256, 160); sx.fillStyle = '#2f5d4a'; sx.font = '700 44px Fredoka, sans-serif'; sx.textAlign = 'center'; sx.fillText('Loch ' + (C.idx + 1), 128, 58);
+  sx.fillStyle = '#fdf8ee'; sx.fillRect(0, 0, 256, 160); sx.fillStyle = '#2f5d4a'; sx.font = '700 44px Fredoka, sans-serif'; sx.textAlign = 'center'; sx.fillText('Nr. ' + (C.idx + 1), 128, 58);
   sx.font = '30px Fredoka, sans-serif'; sx.fillText('Par ' + def.par + ' · ' + def.len + ' m', 128, 100); sx.font = '22px Fredoka, sans-serif'; sx.fillText('Hcp ' + def.hcp + ' · GCC Basel', 128, 138);
   const side = spotBeside(C, C.startPos.x, C.startPos.z, 6.5, 2);
   if (side) {
@@ -2637,7 +2637,7 @@ function realRanges(C, grp) {
 /* ---------- the two courses ---------- */
 // Golf & Country Club Basel from the white tees (the main course) and the original made-up eighteen, kept as The Legacy Course
 // the 7th drops 26 m to a green ringed by trees and four bunkers: its tee camera sits higher and further back to see over them
-const GCCB_DEFS = GCCB_DATA.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Loch ' + (i + 1), inspo: h.desc, seed: 7001 + i * 37, windMax: 5.5, rh: h, len: h.len, real: true, teeCam: i === 6 ? { back: 18, up: 15 } : null }));
+const GCCB_DEFS = GCCB_DATA.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 7001 + i * 37, windMax: 5.5, rh: h, len: h.len, real: true, teeCam: i === 6 ? { back: 18, up: 15 } : null }));
 const COURSES = {
   gccb: { key: 'gccb', name: 'Golf & Country Club Basel', short: 'GCC Basel', defs: GCCB_DEFS, best: 'ssg-best-gccb', board: 'ssg-board-gccb', coll: 'rounds-gccb' },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
