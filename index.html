@@ -4247,7 +4247,7 @@ function impact(tImp) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
-  W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
+  G.preRolled = false; W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
@@ -4414,9 +4414,16 @@ function updateCamera(dt) {
   if (G.state === 'address' || G.state === 'settle') {
     addressCam(camTmp, lookTmp);
     if (G.state === 'settle') {
-      G.settleT += dt; const u = easeInOut(clamp(G.settleT / 1.4, 0, 1));
-      cam.position.lerpVectors(G.camFrom, camTmp, u); G.camLook.lerpVectors(G.lookFrom, lookTmp, u);
-      if (u >= 1) enterAddress();
+      G.settleT += dt;
+      if (G.preRolled) {
+        // the pre-roll has already started the move: carry on from where the camera is, same easing, no second motion
+        const k = 1 - Math.exp(-dt * (isPutt() ? 3 : 2.2)); cam.position.lerp(camTmp, k); G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 4));
+        if ((cam.position.distanceTo(camTmp) < .2 && G.settleT > .25) || G.settleT > 2.4) enterAddress();
+      } else {
+        const u = easeInOut(clamp(G.settleT / 1.4, 0, 1));
+        cam.position.lerpVectors(G.camFrom, camTmp, u); G.camLook.lerpVectors(G.lookFrom, lookTmp, u);
+        if (u >= 1) enterAddress();
+      }
     } else { cam.position.lerp(camTmp, 1 - Math.exp(-dt * 8)); G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 8)); }
     cam.lookAt(G.camLook); return;
   }
@@ -4434,6 +4441,7 @@ function updateCamera(dt) {
     if (sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && hgt < 1.2) {
       const rem = sr.duration - G.playT, w = easeInOut(clamp(1 - rem, 0, 1)); // slow ease into the move
       if (w > .001) {
+        G.preRolled = true;
         const f = sr.final, fy = C.h(f.x, f.z), yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z)), onG = restsOnGreen(sr);
         addressCamFor(_pc, _pl, f.x, fy, f.z, yaw, onG, false);
         camTmp.lerp(_pc, w); lookTmp.lerp(b, w); // the camera moves round behind the stopping ball but keeps looking at it
@@ -4452,7 +4460,7 @@ function updateCamera(dt) {
   }
 }
 function enterAddress() {
-  G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
+  G.preRolled = false; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
   if (!settings.aimed) $('aimHint').classList.add('on');
