@@ -5183,7 +5183,7 @@ function drawPlan(cv, opt) {
   const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
   x.fillStyle = '#cfe3c3'; x.fillRect(0, 0, W2, H2);
   const f = planFit(cv, W2, H2, opt.pad || 4); x.imageSmoothingEnabled = true; x.drawImage(f.P.cv, f.ox, f.oy, f.P.w * f.s, f.P.h * f.s);
-  const C = G.C, b = w2m(f, G.ball.x, G.ball.z), p = w2m(f, C.cup.x, C.cup.z);
+  const C = G.C, bp = opt.ball || G.ball, b = w2m(f, bp.x, bp.z), p = w2m(f, C.cup.x, C.cup.z);
   if (opt.line) {
     x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 1.5; x.setLineDash([3, 3]); x.beginPath();
     for (let s = 0; s <= C.center.L; s += 6) { const q = polyAt(C.center, s), m = w2m(f, q[0], q[1]); s ? x.lineTo(m[0], m[1]) : x.moveTo(m[0], m[1]); } x.stroke(); x.setLineDash([]);
@@ -5206,14 +5206,23 @@ function drawPlan(cv, opt) {
 }
 function drawMapThumb() { const c = $('mapThumb'); if (c) drawPlan(c, { small: true, pad: 2 }); }
 let mapFit = null;
+// the map also opens while the ball is moving: then it just follows the ball (no target to place until the next shot is ready)
+function mapOpts() { const live = G.state === 'flight' || G.state === 'settle'; return live ? { pad: 10, ball: { x: W.ball.position.x, z: W.ball.position.z } } : { aim: true, pad: 10 }; }
 function openMap() {
-  if (G.state !== 'address') return;
-  $('mapTitle').textContent = `Hole ${G.hole + 1} · ${G.C.def.name}`; $('mapInfo').textContent = `Par ${G.C.def.par} · ${Math.round(distToPin())} m to pin`;
+  if (G.state !== 'address' && G.state !== 'flight' && G.state !== 'settle') return;
+  $('mapTitle').textContent = `Hole ${G.hole + 1} · ${G.C.def.name}`; $('mapInfo').textContent = `Par ${G.C.def.par} · ${Math.round(Math.hypot(G.C.cup.x - W.ball.position.x, G.C.cup.z - W.ball.position.z))} m to pin`;
   openSheet('mapSheet');
-  requestAnimationFrame(() => { mapFit = drawPlan($('mapCv'), { aim: true, pad: 10 }); });
+  requestAnimationFrame(() => { mapFit = drawPlan($('mapCv'), mapOpts()); mapLast = performance.now(); mapMode = mapOpts().aim ? 'aim' : 'live'; });
+}
+let mapLast = 0, mapMode = '';
+function refreshMapLive(now) {
+  if (!$('mapSheet').classList.contains('on') || now - mapLast < 90) return;
+  const o = mapOpts(), mode = o.aim ? 'aim' : 'live'; mapLast = now;
+  if (mode === 'live' || mode !== mapMode) mapFit = drawPlan($('mapCv'), o);
+  mapMode = mode;
 }
 function mapPick(e) {
-  if (!mapFit) return; const r = $('mapCv').getBoundingClientRect();
+  if (!mapFit || G.state !== 'address') return; const r = $('mapCv').getBoundingClientRect();
   const wpt = m2w(mapFit, e.clientX - r.left, e.clientY - r.top);
   G.target = wpt; G.yaw = Math.atan2(wpt[0] - G.ball.x, -(wpt[1] - G.ball.z)); settings.aimed = true;
   if (!isPutt()) { G.carry = predictCarry(); } placeAimGeo(); updateHUD();
@@ -5557,6 +5566,7 @@ function frame(now) {
   if (G.state === 'intro') G.introT += dt;
   if (G.state === 'flight') updateFlight(dt);
   else if (G.state === 'holed') { G.holedT += dt; if (G.shot && G.shot.res.holed && G.holedT < 3) updateFlight(dt); }
+  refreshMapLive(now);
   if (SW.kb && (SW.phase === 'back' || SW.phase === 'down')) {
     const t = performance.now();
     if (SW.phase === 'back') { SW.p = clamp((t - SW.t0) / 600, 0, 1); SW.pMax = SW.p; SW.vel = SW.fullPx / .6; }
