@@ -5069,7 +5069,7 @@ function initInput() {
   mc.addEventListener('pointerup', () => mdown = false); mc.addEventListener('pointercancel', () => mdown = false);
   $('icGo').onclick = e => { e.stopPropagation(); audio(); beginHole(); };
   $('intro').addEventListener('click', () => { audio(); beginHole(); });
-  $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) startHole(G.hole); else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
+  $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) { startHole(G.hole); beginHole(); G.settleT = 1.4; } /* practice replay: straight to the tee shot, no overview */ else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
   // the player's name: asked for on the title screen, editable in the menu
   const ni = $('nameIn'), nr = $('nameRow'), mn = $('mName');
   const setName = v => { const c = cleanName(v); if (c) { settings.name = c; saveSettings(); } updateHUD(); };
