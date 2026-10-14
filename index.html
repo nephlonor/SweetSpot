@@ -5156,6 +5156,17 @@ function boot(data) {
   requestAnimationFrame(frame);
   setTimeout(onResize, 300);
 }
+// Updates: GitHub Pages lets browsers keep the page for 10 minutes, and a home-screen app much longer. The deploy stamps BUILD and
+// writes version.txt; when the two differ the page reloads itself through a fresh URL.
+const BUILD = '__BUILD__';
+function checkUpdate() {
+  if (BUILD.startsWith('__')) return;
+  fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
+    v = v.trim(); if (v && v !== BUILD && location.search !== '?v=' + v) location.replace(location.pathname + '?v=' + v);
+  }).catch(() => { });
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
+window.addEventListener('load', () => { checkUpdate(); });
 window.addEventListener('load', () => {
   const h = window.claude && window.claude.hot;
   if (h && h.ready) h.ready(boot); else boot(h && h.data ? h.data : {});
