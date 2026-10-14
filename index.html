@@ -39,14 +39,14 @@ html,body{height:100%;margin:0;overflow:hidden;background:#2f5d33;color:var(--in
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
 input{-webkit-user-select:text;user-select:text;touch-action:manipulation}
-#gl{position:fixed;left:0;top:0;width:100%;height:var(--vh,100%);display:block;touch-action:none}
-#fx{position:fixed;left:0;top:0;width:100%;height:var(--vh,100%);display:block;pointer-events:none;z-index:4}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#fx{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:4}
 /* glass surfaces */
 .card,.glass{background:var(--gl-bg),var(--gl-tint);-webkit-backdrop-filter:var(--gl-blur);backdrop-filter:var(--gl-blur);border:1px solid var(--gl-line);box-shadow:var(--gl-sh);border-radius:22px;color:var(--w1);text-shadow:var(--tsh)}
 .good{color:var(--good)}.ok{color:var(--ok)}.bad{color:var(--bad)}.lb .row.me .good{color:#d6ffd0}
 .card .good,.glass .good{color:var(--gGood)!important}.card .ok,.glass .ok{color:var(--gOk)!important}.card .bad,.glass .bad{color:var(--gBad)!important}
 /* ---------- HUD ---------- */
-#hud{position:fixed;left:0;top:0;right:0;height:var(--vh,100%);pointer-events:none;z-index:2;transition:opacity .35s var(--ease)}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:2;transition:opacity .35s var(--ease)}
 #hud.off{opacity:0}
 #hud button{pointer-events:auto}
 /* top bar: one glass strip with map, hole and stroke, wind, distance and the player menu */
@@ -117,7 +117,7 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 /* in motion, a panel the ball passes behind turns see-through */
 .seethru{opacity:.24!important;transition:opacity .12s!important}
 /* ---------- overlays ---------- */
-.layer{position:fixed;left:0;top:0;right:0;height:var(--vh,100%);z-index:6;opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+.layer{position:fixed;inset:0;z-index:6;opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
 .layer.on{opacity:1;pointer-events:auto}
 #title{display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 26px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);background:linear-gradient(180deg,rgba(10,40,20,0) 45%,rgba(10,40,20,.32) 100%)}
 .logoCard{align-self:center;text-align:center;padding:16px 28px 15px;border-radius:28px}
@@ -162,10 +162,10 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 .dstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 14px}
 .dstats div{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:16px;padding:9px 4px;font:600 10px var(--cond);letter-spacing:.12em;text-transform:uppercase;color:var(--w3)}
 .dstats b{display:block;font:600 22px/1.1 var(--cond);color:var(--w1);letter-spacing:0}
-#scrim{position:fixed;left:0;top:0;right:0;height:var(--vh,100%);background:rgba(10,30,18,.28);z-index:7;opacity:0;pointer-events:none;transition:opacity .3s}
+#scrim{position:fixed;inset:0;background:rgba(10,30,18,.28);z-index:7;opacity:0;pointer-events:none;transition:opacity .3s}
 #scrim.on{opacity:1;pointer-events:auto}
 /* sheets: light frosted glass, dark text for dense content */
-.sheet{position:fixed;left:0;right:0;bottom:calc(-1 * var(--gap,0px));z-index:8;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,251,246,.86));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.75);border-bottom:0;border-radius:28px 28px 0 0;padding:10px calc(var(--sr) + 16px) calc(var(--sb) + 16px + var(--gap,0px)) calc(var(--sl) + 16px);transform:translateY(105%);transition:transform .42s var(--spring);max-height:88vh;overflow:auto;box-shadow:0 -10px 40px rgba(18,42,28,.22);margin:0 auto;max-width:560px}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:8;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,251,246,.86));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.75);border-bottom:0;border-radius:28px 28px 0 0;padding:10px calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);transform:translateY(105%);transition:transform .42s var(--spring);max-height:88vh;overflow:auto;box-shadow:0 -10px 40px rgba(18,42,28,.22);margin:0 auto;max-width:560px}
 .sheet.on{transform:none}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto 10px}
 .sht{font:600 24px var(--cond);text-transform:uppercase;margin:2px 0 12px;display:flex;justify-content:space-between;align-items:baseline}
@@ -4249,7 +4249,7 @@ function impact(tImp) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
-  G.preRolled = false; G.camD0 = null; G.frameE = 0; W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
+  G.camMove = null; W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
@@ -4377,7 +4377,15 @@ function finishShot() {
 
 /* ---------- camera ---------- */
 const camTmp = new THREE.Vector3(), lookTmp = new THREE.Vector3();
-const _pc = new THREE.Vector3(), _pl = new THREE.Vector3();
+const _pc = new THREE.Vector3(), _pl = new THREE.Vector3(), _pm = new THREE.Vector3(), _pk = new THREE.Vector3();
+// one eased camera move from G.camMove.from to the target, the ball kept in the middle of the screen; the address framing (ball lower)
+// blends in only over the last part. Returns true when the move is complete.
+function driveCamMove(dt, tgtPos, tgtLook, ballPos) {
+  const M = G.camMove, cam = W.cam; M.t += dt; const u = easeInOut(clamp(M.t / M.T, 0, 1));
+  _pm.copy(M.from).lerp(tgtPos, u); cam.position.lerp(_pm, 1 - Math.exp(-dt * 8)); // (a little smoothing hides the hand-over from the follow camera)
+  _pk.copy(ballPos).lerp(tgtLook, smooth(.72, 1, u)); G.camLook.lerp(_pk, 1 - Math.exp(-dt * 12)); cam.lookAt(G.camLook);
+  return u >= 1;
+}
 // the address camera for a ball lying at (bx, by, bz), aimed along yaw
 function addressCamFor(out, look, bx, by, bz, yaw, putt, teed) {
   const C = G.C, tc = teed && !putt ? C.def.teeCam : null, d = [Math.sin(yaw), -Math.cos(yaw)];
@@ -4417,13 +4425,9 @@ function updateCamera(dt) {
     addressCam(camTmp, lookTmp);
     if (G.state === 'settle') {
       G.settleT += dt;
-      if (G.preRolled) {
-        // the pre-roll has already started the move: carry on from where the camera is, same easing, no second motion
-        const k = 1 - Math.exp(-dt * (isPutt() ? 3 : 2.2)); cam.position.lerp(camTmp, k);
-        // the ball stays in the middle of the screen for the whole move; the framing eases to the address view only as the camera arrives
-        const rem = cam.position.distanceTo(camTmp); G.frameE += (smooth(1.6, .1, rem) - G.frameE) * (1 - Math.exp(-dt * 2.6));
-        _pl.copy(W.ball.position).lerp(lookTmp, G.frameE); G.camLook.copy(_pl);
-        if ((rem < .15 && G.frameE > .97) || G.settleT > 3) enterAddress();
+      if (G.camMove) {
+        // the move that began before the ball stopped carries on to the final address position, then hands over
+        if (driveCamMove(dt, camTmp, lookTmp, W.ball.position) || G.settleT > 6) enterAddress();
       } else {
         const u = easeInOut(clamp(G.settleT / 1.4, 0, 1));
         cam.position.lerpVectors(G.camFrom, camTmp, u); G.camLook.lerpVectors(G.lookFrom, lookTmp, u);
@@ -4440,20 +4444,18 @@ function updateCamera(dt) {
     camTmp.set(b.x - d[0] * back, b.y + up, b.z - d[1] * back);
     camTmp.y = Math.max(camTmp.y, C.h(camTmp.x, camTmp.z) + 1.4, C.wl(camTmp.x, camTmp.z) + 1.4);
     lookTmp.set(b.x + d[0] * (putt ? 1.5 : 7), b.y + (putt ? 0 : 1), b.z + d[1] * (putt ? 1.5 : 7));
-    // while the ball is coming to rest (on the ground, the last second of its run) the camera already swings round to the
-    // position for the next shot (behind where the ball will stop, toward the pin) while it keeps the ball centred
+    // The ball is on the ground and about a second from stopping: now the camera starts one move to the position for the next shot
+    // (behind where the ball stops, toward the pin). It keeps the ball in the middle of the screen and its length follows the size of
+    // the move, so it may well still be going when the ball is at rest (the settle phase below carries it on).
     const sr = G.shot && G.shot.res;
-    if (sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && hgt < 1.2) {
-      const rem = sr.duration - G.playT, w = easeInOut(clamp(1 - rem, 0, 1)); // slow ease into the move
-      if (w > .001) {
-        const f = sr.final, fy = C.h(f.x, f.z), yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z)), onG = restsOnGreen(sr);
-        addressCamFor(_pc, _pl, f.x, fy, f.z, yaw, onG, false);
-        if (!G.preRolled) { G.preRolled = true; G.camD0 = Math.max(1, cam.position.distanceTo(_pc)); }
-        camTmp.lerp(_pc, w); lookTmp.lerp(b, w); // the camera moves round behind the stopping ball but keeps looking at it
-      }
+    if (sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && (G.camMove || (hgt < 1.2 && sr.duration - G.playT <= 1))) {
+      const f = sr.final, yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z));
+      addressCamFor(_pc, _pl, f.x, C.h(f.x, f.z), f.z, yaw, restsOnGreen(sr), false);
+      if (!G.camMove) G.camMove = { t: 0, T: clamp(.7 + cam.position.distanceTo(_pc) * .07, .9, 3.5), from: cam.position.clone() };
+      driveCamMove(dt, _pc, _pl, b); return;
     }
     cam.position.lerp(camTmp, 1 - Math.exp(-dt * (putt ? 3 : 1.7)));
-    G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * (G.preRolled ? 14 : 5))); // (tight while the camera moves round the resting ball)
+    G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 5));
     cam.lookAt(G.camLook);
     if (G.shake > 0) { G.shake -= dt; cam.position.x += (Math.random() - .5) * .06; cam.position.y += (Math.random() - .5) * .06; }
     return;
@@ -4465,7 +4467,7 @@ function updateCamera(dt) {
   }
 }
 function enterAddress() {
-  G.preRolled = false; G.camD0 = null; G.frameE = 0; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
+  G.camMove = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
   if (!settings.aimed) $('aimHint').classList.add('on');
@@ -4493,19 +4495,10 @@ function sizeCanvases() {
   const fw = c.type === 'putter' ? R * 1.0 : c.type === 'wood' ? R * .92 : R * .84, fh = fw * (c.type === 'putter' ? .27 : c.type === 'wood' ? .5 : .44);
   UI.face = { hw: fw / 2, hh: fh / 2, fw, fh };
 }
-// iOS home-screen apps report an innerHeight that stops short of the home-indicator strip (a bare band shows below the page);
-// there the view is sized to the whole screen instead
-function VH() {
-  const h = window.innerHeight;
-  try {
-    const sa = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
-    if (sa) { const lg = Math.max(screen.width, screen.height), sh = Math.min(screen.width, screen.height), full = window.innerWidth > h ? sh : lg; if (full > h && full - h <= 100) return full; }
-  } catch (e) { }
-  return h;
-}
+// the viewport height (kept as one function so every screen-space calculation agrees)
+function VH() { return window.innerHeight; }
 function onResize() {
   const w = window.innerWidth, h = VH();
-  document.documentElement.style.setProperty('--vh', h + 'px'); document.documentElement.style.setProperty('--gap', Math.max(0, h - window.innerHeight) + 'px');
   W.ren.setSize(w, h, false);
   W.cam.aspect = w / h; W.cam.fov = h > w ? 58 : 46; W.cam.updateProjectionMatrix(); resizeTiltShift();
   sizeCanvases();
