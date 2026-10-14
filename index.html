@@ -434,7 +434,7 @@ function nextWeather(prev, r) { let u = r(); for (const [id, p] of (WX_NEXT[prev
 function wxTargets() {
   const id = G.weather ? G.weather.id : 'fine', N = G.wxN || 8, k = G.wxK || 0, last = k >= N - 1, nx = G.wxNext && G.wxNext.id, pv = G.wxPrev;
   if (id === 'rain') { const p = (k + .5) / N; return { cloud: 1, rain: clamp(.1 + .9 * Math.pow(Math.sin(Math.PI * p), 1.1), .08, 1) }; }
-  if (id === 'damp' && pv === 'rain') return k === 0 ? { cloud: .7, rain: .1 } : { cloud: k === 1 ? .5 : .42, rain: 0 }; // the rain passes, the sun breaks through
+  if (id === 'damp' && pv === 'rain') return k === 0 ? { cloud: .55, rain: .12 } : k === 1 ? { cloud: .5, rain: .08 } : { cloud: .42, rain: 0 }; // the rain passes, the sun breaks through
   if (id === 'damp') { if (last && nx === 'rain') return { cloud: .9, rain: .12 }; return { cloud: pv === 'rain' && k === 1 ? .8 : .7, rain: 0 }; }
   if (id === 'fine') return { cloud: last && nx === 'damp' ? .5 : .28, rain: 0 };
   return { cloud: .1, rain: 0 };
@@ -2833,8 +2833,8 @@ function updateWeatherVisuals(dt) {
 }
 function updateRainbow(dt) {
   const B = W.rainbow; if (!B) return;
-  // after a rain spell, while the cloud has thinned and the sun is out
-  const want = G.sinceRain >= 1 && G.sinceRain <= 2 && G.weather && (G.weather.id === 'damp' || G.weather.id === 'fine') ? .26 * (1 - smooth(.5, .8, G.cloud == null ? 1 : G.cloud)) * (1 - smooth(.03, .15, G.rainLvl || 0)) : 0;
+  // only while it rains and the sun is out at the same time
+  const want = .26 * smooth(.03, .1, G.rainLvl || 0) * (1 - smooth(.35, .6, G.rainLvl || 0)) * (1 - smooth(.55, .8, G.cloud == null ? 1 : G.cloud));
   B.v += (want - B.v) * (1 - Math.exp(-dt / 6));
   B.grp.visible = B.v > .005; if (!B.grp.visible) return;
   B.mat.uniforms.uOp.value = B.v; B.grp.position.copy(W.cam.position);
@@ -2881,7 +2881,7 @@ function initThree() {
   scene.add(W.clouds);
   // rainbow: the 42 degree circle around the point opposite the sun (sun low in the west, so a high arc in the east)
   {
-    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], -SUN_OFF[1], -SUN_OFF[2]).normalize(), D = R * Math.cos(42 * DEG), rO = D * Math.tan(51 * DEG), rI = D * Math.tan(33 * DEG);
+    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], -SUN_OFF[1], -SUN_OFF[2]).normalize(), D = R * Math.cos(42 * DEG), rO = D * Math.tan(58 * DEG), rI = D * Math.tan(27 * DEG);
     const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, uniforms: { uOp: { value: 0 }, uIn: { value: rI }, uOut: { value: rO } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
       fragmentShader: 'varying vec2 vP; uniform float uOp, uIn, uOut; vec3 hsv(float h){ return clamp(abs(mod(h*6.+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.); } void main(){ float t = clamp((length(vP)-uIn)/(uOut-uIn),0.,1.); float al = pow(sin(3.14159*t),1.4) * uOp; gl_FragColor = vec4(hsv((1.-t)*.78), al); }' });
