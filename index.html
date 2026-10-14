@@ -4490,6 +4490,9 @@ function updateCamera(dt) {
     else { addressCam(pPos, pLook); } // no prediction: the real view is known already
     R.arr = { t0: R.t, D: clamp(1.4 + cam.position.distanceTo(pPos) * .07, 1.8, 4.2), pre, finT: pre ? null : R.t, f0: cam.position.clone(), fl0: G.camLook.clone() };
   }
+  if (G.snapCam && G.state === 'settle') { // practice replay: straight to the tee shot, no travelling
+    G.snapCam = false; addressCam(camTmp, lookTmp); cam.position.copy(camTmp); G.camLook.copy(lookTmp); cam.lookAt(G.camLook); camSnap(); enterAddress(); return;
+  }
   const A = R.arr;
   if (A && G.state === 'settle' && A.finT == null) A.finT = R.t; // the shot is over: the real address view takes over from the prediction
   if (!A) { // address (or flight before the arrival): follow targets, filtered
@@ -5371,7 +5374,7 @@ function initInput() {
   mc.addEventListener('pointerup', () => mdown = false); mc.addEventListener('pointercancel', () => mdown = false);
   $('icGo').onclick = e => { e.stopPropagation(); audio(); beginHole(); };
   $('intro').addEventListener('click', () => { audio(); beginHole(); });
-  $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) { startHole(G.hole); beginHole(); G.settleT = 1.4; } /* practice replay: straight to the tee shot, no overview */ else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
+  $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) { startHole(G.hole); beginHole(); G.snapCam = true; } /* practice replay: straight to the tee shot, no overview */ else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
   // the player's name: asked for on the title screen, editable in the menu
   const ni = $('nameIn'), nr = $('nameRow'), mn = $('mName');
   const setName = v => { const c = cleanName(v); if (c) { settings.name = c; saveSettings(); } updateHUD(); };
