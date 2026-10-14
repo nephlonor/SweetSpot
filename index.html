@@ -2257,7 +2257,9 @@ const REAL_TREE_COLS = [0x2f6d3c, 0x3a7d43, 0x467f3f, 0x2e6a45, 0x4c8a4a, 0x3d74
 // hand-tuned trees of the club's map (by index in GCCB_DATA.trees): d scales the whole tree down (a compact tree whose mapped
 // crown reads too wide), slim narrows the crown only, keeping its height
 // hide removes a tree altogether (hole 3: the small shrub by the tee box)
-const TREE_TWEAK = { 1110: { d: .62 }, 211: { d: .5 }, 125: { slim: .68 }, 455: { slim: .68 }, 159: { slim: .55 }, 347: { slim: .55 }, 1828: { hide: true } };
+const TREE_TWEAK = { 1110: { d: .62 }, 211: { d: .5 }, 125: { slim: .68 }, 455: { slim: .68 }, 159: { slim: .55 }, 347: { slim: .55 }, 1828: { hide: true },
+  // hole 8: the trees right of the tee
+  142: { slim: .6 }, 143: { slim: .6 }, 144: { slim: .6 }, 145: { slim: .6 }, 185: { slim: .6 }, 115: { slim: .65 }, 101: { slim: .65 } };
 function buildRealTrees(C, grp) {
   const I = C.inner, all = [];
   const dOut = (X, Z) => Math.hypot(Math.max(I.minX - X, 0, X - I.maxX), Math.max(I.minZ - Z, 0, Z - I.maxZ));
