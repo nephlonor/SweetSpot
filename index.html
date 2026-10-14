@@ -4601,7 +4601,9 @@ function updateCamera(dt) {
       const dist = clamp(g.R * 2.5 / hh, 45, 120), pe = polyAt(C.center, Math.max(0, C.center.L - 30)), ex = g.cx - pe[0], ez = g.cz - pe[1], el = Math.hypot(ex, ez) || 1;
       const ey = C.h(g.cx, g.cz) + dist * .85 + 8;
       camTmp.set(lerp(camTmp.x, g.cx - ex / el * dist, u), lerp(camTmp.y, ey, u), lerp(camTmp.z, g.cz - ez / el * dist, u));
-      lookTmp.set(lerp(lookTmp.x, g.cx, u), lerp(lookTmp.y, C.h(g.cx, g.cz), u), lerp(lookTmp.z, g.cz, u));
+      // aim a little short of the green, so it sits in the upper part of the screen, clear of the hole card below
+      const k = dist * .42;
+      lookTmp.set(lerp(lookTmp.x, g.cx - ex / el * k, u), lerp(lookTmp.y, C.h(g.cx, g.cz), u), lerp(lookTmp.z, g.cz - ez / el * k, u));
     }
     if (G.introSnap) { G.introSnap = false; cam.position.copy(camTmp); G.camLook.copy(lookTmp); camSnap(); }
     camStep(camTmp, lookTmp, 0, dt); return;
