@@ -711,6 +711,7 @@ function simulateShot(C, o) {
   const n = fr.length / 5;
   const fx = fr[(n - 1) * 5 + 1], fz = fr[(n - 1) * 5 + 3];
   if (!res.holed && !res.water && !res.ob && C.isOB(fx, fz)) res.ob = true;
+  if (!res.holed && !res.water && !res.ob && C.lost && C.lost(fx, fz)) { res.ob = true; res.lost = true; }
   res.frames = Float32Array.from(fr); res.n = n; res.events = ev; res.apex = apex - o.y; res.land = land;
   res.final = { x: fx, y: fr[(n - 1) * 5 + 2], z: fz };
   res.finalSurf = res.water ? S.WATER : C.surf(fx, fz);
@@ -2070,6 +2071,22 @@ function makeRealCourse(idx, pin) {
     const u = Math.round((X - x0) / res), v = Math.round((Z - z0) / res);
     return u >= 0 && v >= 0 && u < w && v < h ? !inB[v * w + u] : !inRings([GC.boundary], enuE(X, Z), enuN(X, Z));
   };
+  if (idx === 13) {
+    // hole 14: the boundary right of the hole only runs through forest, so there is no out of bounds there; a ball that
+    // ends up more than 80 m deep in the forest there is simply not found (stroke and distance)
+    const obLine = C.isOB, rightOf = (X, Z) => {
+      const q = polyQ(C.center, X, Z, 1e5), sg = C.center.segs[q.seg], fx = (sg.bx - sg.ax) / sg.len, fz = (sg.bz - sg.az) / sg.len;
+      return (X - (sg.ax + (sg.bx - sg.ax) * q.u)) * -fz + (Z - (sg.az + (sg.bz - sg.az) * q.u)) * fx > 0;
+    };
+    // how far into the forest: walk back toward the line of play through unbroken deep rough
+    const depth = (X, Z) => {
+      const q = polyQ(C.center, X, Z, 1e5), sg = C.center.segs[q.seg], px = sg.ax + (sg.bx - sg.ax) * q.u, pz = sg.az + (sg.bz - sg.az) * q.u, d = Math.hypot(px - X, pz - Z) || 1;
+      for (let k = 0; k < d; k += 2) if (C.surf(X + (px - X) * k / d, Z + (pz - Z) * k / d) !== S.DEEP) return k;
+      return d;
+    };
+    C.isOB = (X, Z) => obLine(X, Z) && !rightOf(X, Z);
+    C.lost = (X, Z) => rightOf(X, Z) && C.surf(X, Z) === S.DEEP && depth(X, Z) > 80;
+  }
   C.inBounds = (X, Z) => { const e = enuE(X, Z), n = enuN(X, Z); return e > GR.e0 + 20 && e < GR.e0 + GR.W * GR.res - 20 && n > GR.n0 + 20 && n < GR.n0 + GR.H * GR.res - 20; };
   C.teeDist = (X, Z) => fieldAt(fT, X, Z);
   // the hole's own green: the one nearest the hole line's end
@@ -4155,7 +4172,7 @@ function finishShot() {
     placeBall(dx, dz, false); big = '<span class="bad">Water hazard</span>';
   } else if (r.ob) {
     G.strokes++; G.pens[h]++;
-    placeBall(G.prev.x, G.prev.z, G.prev.teed); big = '<span class="bad">Out of bounds</span>'; sub = 'Stroke and distance';
+    placeBall(G.prev.x, G.prev.z, G.prev.teed); big = `<span class="bad">${r.lost ? 'Ball not found' : 'Out of bounds'}</span>`; sub = 'Stroke and distance';
   } else {
     placeBall(r.final.x, r.final.z, false);
     big = SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${Math.round(r.total)} m · carry ${Math.round(r.carry)} m`;
