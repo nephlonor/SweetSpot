@@ -134,7 +134,7 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .how svg.tut{width:100%;max-width:120px;height:auto;margin:0 auto 2px}
 .tThumb{animation:tUp 4.2s infinite;transform-box:view-box}
 .tDown{stroke-dasharray:62;animation:tTrace 4.2s infinite}
-@keyframes tUp{0%{transform:translate(45px,80px);animation-timing-function:cubic-bezier(.45,0,.55,1)}56%{transform:translate(45px,20px)}60%{transform:translate(45px,20px);animation-timing-function:cubic-bezier(.5,0,.6,1)}76%{transform:translate(46px,80px)}100%{transform:translate(45px,80px)}}
+@keyframes tUp{0%{transform:translate(45px,20px);animation-timing-function:cubic-bezier(.45,0,.55,1)}56%{transform:translate(45px,80px)}60%{transform:translate(45px,80px);animation-timing-function:cubic-bezier(.5,0,.6,1)}76%{transform:translate(46px,20px)}100%{transform:translate(45px,20px)}}
 @keyframes tTrace{0%,59%{stroke-dashoffset:62;opacity:0}60%{opacity:1;stroke-dashoffset:62}76%{stroke-dashoffset:0;opacity:1}88%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
 .tBall{animation:tJit 1.6s infinite linear}
 .tFinger{animation:tFing 1.6s infinite linear}
@@ -314,7 +314,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 18 holes · Par 72</p></div>
   <div class="tb">
     <div class="how">
-      <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><rect x="31" y="6" width="28" height="88" rx="14" fill="#2f6b35"/><rect x="38" y="14" width="14" height="72" rx="7" fill="rgba(255,255,255,.16)"/><path class="tDown" d="M45 20V80" stroke="#ffe85a" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M17 62V34m0 0l-5 6m5-6l5 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".75"/><path d="M73 40v28m0 0l-5-6m5 6l5-6" stroke="#ffe85a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".9"/><g class="tThumb"><circle r="9" fill="#fff" stroke="#1d3d22" stroke-width="2"/></g></svg><b>Left thumb · tempo</b><p>Slide up, then slide straight down. A tempo of 3:1 gets the best smash factor.</p></div>
+      <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><rect x="31" y="6" width="28" height="88" rx="14" fill="#2f6b35"/><rect x="38" y="14" width="14" height="72" rx="7" fill="rgba(255,255,255,.16)"/><path class="tDown" d="M45 80V20" stroke="#ffe85a" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M17 34V62m0 0l-5-6m5 6l5-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".75"/><path d="M73 68V40m0 0l-5 6m5-6l5 6" stroke="#ffe85a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".9"/><g class="tThumb"><circle r="9" fill="#fff" stroke="#1d3d22" stroke-width="2"/></g></svg><b>Left thumb · tempo</b><p>Slide down, then slide straight up. A tempo of 3:1 gets the best smash factor.</p></div>
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b>Right thumb · strike</b><p>Your thumb jitters, and the ball rides up-left of it. Keep the ball on the club's sweet spot.</p></div>
     </div>
     <div class="card nameRow courseRow" hidden><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="legacy">The Legacy</button></div></div>
@@ -343,7 +343,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
 <div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="help">
   <div><b>Aim</b>Drag across the course, or open the map and tap a target. The white ring is where a pure, full swing lands with no wind.</div>
-  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the downswing straight: the sideways drift of your thumb on the way down (traced in yellow on the tempo scale, fading while the ball flies) sets the starting line, so drifting right sends the ball left of your aim line and drifting left sends it right (the ball starts the opposite way). Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
+  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide down for the backswing. The scale shows the carry for your club. Slide back up past where you started to strike. The upstroke must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the upstroke straight: the sideways drift of your thumb on the way up (traced in yellow on the tempo scale, fading after the strike) sets the starting line, so drifting right sends the ball right of your aim line and drifting left sends it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · right thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke and a drop. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
@@ -4276,18 +4276,19 @@ function swingBegin(x, y, t, kb) {
   if (SW.sid == null && !SW.mouseR) SW.thumb = false;
   if (!settings.coached) { settings.coached = true; saveSettings(); }
 }
-// The downswing's sideways drift sets the starting line: the average direction of the thumb's path from the top of the swing, measured from
-// straight down. The ball starts the opposite way: drifting right sends it left of the aim line, drifting left sends it right (degrees; 0 for a keyboard swing).
+// The upstroke's sideways drift sets the starting line: the average direction of the thumb's path from the bottom of the swing, measured from
+// straight up. The ball starts the way the thumb drifts: drifting right sends it right of the aim line, drifting left sends it left (degrees; 0 for a keyboard swing).
+// (pathDeg is positive for a ball starting left.)
 const PATH_GAIN = .55, PATH_MAX = 9;
 function pathAngle() {
   const P = SW.path; if (!P || P.length < 3 || SW.topI >= P.length - 1) return 0;
   const [x0, y0] = P[SW.topI]; let sa = 0, sw = 0;
-  for (let i = SW.topI + 1; i < P.length; i++) { const dy = P[i][1] - y0; if (dy < 18) continue; sa += Math.atan2(P[i][0] - x0, dy) * dy; sw += dy; }
-  return sw ? clamp(sa / sw / DEG * PATH_GAIN, -PATH_MAX, PATH_MAX) : 0;
+  for (let i = SW.topI + 1; i < P.length; i++) { const dy = y0 - P[i][1]; if (dy < 18) continue; sa += Math.atan2(P[i][0] - x0, dy) * dy; sw += dy; }
+  return sw ? clamp(-sa / sw / DEG * PATH_GAIN, -PATH_MAX, PATH_MAX) : 0;
 }
 function swingMove(y, t, x) {
   if (SW.phase === 'idle' || SW.phase === 'done') return;
-  const dtm = Math.max(.001, (t - SW.lastT) / 1000), p = (SW.startY - y) / SW.fullPx;
+  const dtm = Math.max(.001, (t - SW.lastT) / 1000), p = (y - SW.startY) / SW.fullPx;
   SW.vel = lerp(SW.vel, Math.abs(y - SW.lastY) / dtm, .5);
   advanceDrift(dtm);
   if (x != null && SW.path && SW.path.length < 600 && (SW.phase === 'back' || SW.phase === 'down')) SW.path.push([x, y]);
@@ -4297,7 +4298,7 @@ function swingMove(y, t, x) {
     if (SW.pMax - p > .05 && SW.pMax > .06) { SW.phase = 'down'; SFX.whoosh(.25); SW.topI = Math.max(0, SW.path.length - 1); }
   }
   if (SW.phase === 'down' && p <= 0) {
-    const pPrev = (SW.startY - SW.lastY) / SW.fullPx, u = pPrev > 0 ? pPrev / (pPrev - p) : 1;
+    const pPrev = (SW.lastY - SW.startY) / SW.fullPx, u = pPrev > 0 ? pPrev / (pPrev - p) : 1;
     const tImp = SW.lastT + (t - SW.lastT) * clamp(u, 0, 1);
     if (x != null) SW.path.push([x, y]);
     SW.p = 0; SW.lastY = y; SW.lastT = t; impact(tImp); return;
@@ -4363,7 +4364,7 @@ function impact(tImp) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
   G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res };
-  G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '→' : '←'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
+  G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '←' : '→'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
@@ -4712,15 +4713,15 @@ function drawTempo(now) {
   // distance scale (left) + MAX / MIN (right)
   x.textBaseline = 'middle';
   for (const p of [.25, .5, .75, 1]) {
-    const y = bot - H * p;
+    const y = top + H * p;
     const lab = putt ? (G.puttRange * p).toFixed(G.puttRange * p < 10 ? 1 : 0) + ' M' : Math.round(carryForPower(c, p)) + ' M';
     x.save(); x.shadowColor = 'rgba(0,30,12,.45)'; x.shadowBlur = 2; x.shadowOffsetY = 1;
     x.fillStyle = '#fff'; x.font = FONT(600, 13); x.textAlign = 'right'; x.fillText(lab, tx - 21, y); x.restore();
     x.fillStyle = 'rgba(255,255,255,.6)'; x.fillRect(tx - 18, y - 1, 4, 2);
   }
   x.fillStyle = 'rgba(255,255,255,.85)'; x.font = FONT(600, 11); x.textAlign = 'left';
-  const chY = G.chip && G.state === 'address' ? bot - H * Math.min(G.chip.p, 1.04) : -1e3; // keep MAX/MIN clear of the chip tag
-  if (Math.abs(chY - top - 4) > 16) x.fillText('MAX', tx + 19, top + 4); if (Math.abs(chY - bot + 4) > 16) x.fillText('MIN', tx + 19, bot - 4);
+  const chY = G.chip && G.state === 'address' ? top + H * Math.min(G.chip.p, 1.04) : -1e3; // keep MAX/MIN clear of the chip tag
+  if (Math.abs(chY - top - 4) > 16) x.fillText('MIN', tx + 19, top + 4); if (Math.abs(chY - bot + 4) > 16) x.fillText('MAX', tx + 19, bot - 4);
   // track
   const cap = (x0, y0, y1, r, col) => { x.fillStyle = col; x.beginPath(); x.moveTo(x0 - r, y1); x.arc(x0, y1, r, Math.PI, 0, true); x.lineTo(x0 + r, y0); x.arc(x0, y0, r, 0, Math.PI, true); x.closePath(); x.fill(); };
   if (SW.id != null || SW.phase === 'back' || SW.phase === 'down') cap(tx, top, bot, 19, 'rgba(247,220,46,.55)');
@@ -4731,26 +4732,26 @@ function drawTempo(now) {
   let p = active ? clamp(SW.p, 0, 1.06) : 0;
   if (SW.phase === 'done' && SW.last && now - SW.resultT < 900) p = 0;
   if (p > .004) {
-    const yTop = bot - H * Math.min(p, 1.04);
+    const yEnd = top + H * Math.min(p, 1.04);
     const gf = x.createLinearGradient(tx - 9, 0, tx + 9, 0); gf.addColorStop(0, '#f2c51a'); gf.addColorStop(.45, '#fbe74c'); gf.addColorStop(1, '#f0bf14');
-    cap(tx, yTop, bot, 9, gf);
-    x.fillStyle = 'rgba(255,255,255,.45)'; x.fillRect(tx - 5, yTop + 4, 2.5, Math.max(0, bot - yTop - 8));
-    if (bot - yTop > 30) {
+    cap(tx, top, yEnd, 9, gf);
+    x.fillStyle = 'rgba(255,255,255,.45)'; x.fillRect(tx - 5, top + 4, 2.5, Math.max(0, yEnd - top - 8));
+    if (yEnd - top > 30) {
       x.fillStyle = '#fff'; x.beginPath();
-      const ay = yTop + 14;
-      if (SW.phase === 'down') { x.moveTo(tx - 6, ay - 4); x.lineTo(tx + 6, ay - 4); x.lineTo(tx, ay + 5); }
-      else { x.moveTo(tx - 6, ay + 4); x.lineTo(tx + 6, ay + 4); x.lineTo(tx, ay - 5); }
+      const ay = yEnd - 14;
+      if (SW.phase === 'down') { x.moveTo(tx - 6, ay + 4); x.lineTo(tx + 6, ay + 4); x.lineTo(tx, ay - 5); }
+      else { x.moveTo(tx - 6, ay - 4); x.lineTo(tx + 6, ay - 4); x.lineTo(tx, ay + 5); }
       x.closePath(); x.fill();
     }
   }
   if ((SW.phase === 'back' || SW.phase === 'down') && SW.pMax > .02) {
-    const y = bot - H * Math.min(SW.pMax, 1.04);
+    const y = top + H * Math.min(SW.pMax, 1.04);
     x.fillStyle = '#e2392f'; x.fillRect(tx - 17, y - 1.5, 34, 3);
   }
   // part shots: a target line showing how far up to go
   const ch = G.chip;
   if (ch && (G.state === 'address' || SW.phase === 'back' || SW.phase === 'down')) {
-    const y = Math.round(bot - H * Math.min(ch.p, 1.04)) + .5, t = fmtDistShort(ch.d).replace(' ', '').toUpperCase();
+    const y = Math.round(top + H * Math.min(ch.p, 1.04)) + .5, t = fmtDistShort(ch.d).replace(' ', '').toUpperCase();
     x.fillStyle = 'rgba(22,33,28,.9)'; x.fillRect(tx - 22, y - 3, 44, 6);
     x.fillStyle = '#fff'; x.fillRect(tx - 21, y - 1.5, 42, 3);
     x.font = FONT(600, 10.5); const tw = x.measureText(t).width + 8, lx = Math.min(tx + 24, w - tw - 1);
@@ -4761,13 +4762,13 @@ function drawTempo(now) {
   // downswing timing ring at the strike line: closes when 3:1 is reached
   if (SW.phase === 'down') {
     const tb = (SW.tTop - SW.t0) / 1000, ideal = tb / (putt ? 2 : 3), el = (now - SW.tTop) / 1000, f = clamp(1 - el / ideal, 0, 1);
-    x.strokeStyle = f > 0 ? 'rgba(226,57,47,.85)' : 'rgba(226,57,47,.35)'; x.lineWidth = 3; x.beginPath(); x.arc(tx, bot, 15 + 30 * f, 0, TAU); x.stroke();
+    x.strokeStyle = f > 0 ? 'rgba(226,57,47,.85)' : 'rgba(226,57,47,.35)'; x.lineWidth = 3; x.beginPath(); x.arc(tx, top, 15 + 30 * f, 0, TAU); x.stroke();
   }
-  // idle hint: animated hand showing the up-slow / down-fast rhythm
+  // idle hint: animated hand showing the down-slow / up-fast rhythm
   if (G.state === 'address' && SW.phase === 'idle' && SW.id == null) {
     const cyc = (now / 1000) % 2.4; let u;
     if (cyc < 1.2) u = easeInOut(cyc / 1.2); else if (cyc < 1.4) u = 1; else if (cyc < 1.8) u = 1 - easeInOut((cyc - 1.4) / .4); else u = 0;
-    const hy = bot - H * .62 * u - 6;
+    const hy = top + H * .62 * u + 6;
     x.save(); x.globalAlpha = .9;
     for (let k = 0; k < 2; k++) { const rr = 8 + ((now / 600 + k * .5) % 1) * 12; x.strokeStyle = `rgba(255,255,255,${.7 * (1 - ((now / 600 + k * .5) % 1))})`; x.lineWidth = 1.5; x.beginPath(); x.arc(tx, hy, rr, 0, TAU); x.stroke(); }
     x.translate(tx - 11.5 * 1.7, hy - 5.5 * 1.7); x.scale(1.7, 1.7);
@@ -4782,8 +4783,8 @@ function drawTempo(now) {
     if (a > .01) {
       const r = $('tempoCv').getBoundingClientRect(), P = SW.path, ti = Math.min(SW.topI, P.length - 1), X = q => q[0] - r.left, Y = q => q[1] - r.top;
       x.save(); x.beginPath(); x.rect(0, 0, w, h); x.clip(); x.globalAlpha = a; x.lineCap = 'round'; x.lineJoin = 'round';
-      if (SW.phase === 'down' || SW.phase === 'done') { // the reference: straight down from the top of the swing
-        x.setLineDash([4, 5]); x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X(P[ti]), Y(P[ti])); x.lineTo(X(P[ti]), Y(P[ti]) + 240); x.stroke(); x.setLineDash([]);
+      if (SW.phase === 'down' || SW.phase === 'done') { // the reference: straight up from the bottom of the swing
+        x.setLineDash([4, 5]); x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X(P[ti]), Y(P[ti])); x.lineTo(X(P[ti]), Y(P[ti]) - 240); x.stroke(); x.setLineDash([]);
       }
       const seg = (i0, i1, col, wd) => { x.strokeStyle = col; x.lineWidth = wd; x.beginPath(); x.moveTo(X(P[i0]), Y(P[i0])); for (let i = i0 + 1; i <= i1; i++) x.lineTo(X(P[i]), Y(P[i])); x.stroke(); };
       if (P.length - 1 > ti) { seg(ti, P.length - 1, 'rgba(0,30,12,.35)', 7); seg(ti, P.length - 1, '#ffe85a', 4); }
