@@ -3872,7 +3872,9 @@ function startRound() {
 function startHole(i) {
   closeSheets(); $('done').classList.remove('on'); $('readout').classList.remove('on'); UI.readT = 0;
   document.body.classList.remove('flight', 'swing');
-  G.hole = i; G.C = courseFor(i);
+  G.hole = i;
+  if (G.practice && G.pins) G.pins[i] = ((G.pins[i] | 0) + 1 + Math.floor(Math.random() * 3)) % 4; // practice: a different pin every time the hole is played
+  G.C = courseFor(i);
   if (!G.C.real && G.C.def.par === 3) { G.C.center = mkPoly([[G.C.def.start.x, G.C.def.start.f], [G.C.cup.x, -G.C.cup.z]], null); G.C.length = G.C.center.L; }
   buildHole(G.C);
   const r = mulberry32((Date.now() & 0xffff) + i * 7), wa = r() * TAU, ws = (.25 + .75 * r()) * G.C.def.windMax;
