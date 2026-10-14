@@ -2735,7 +2735,7 @@ function initTiltShift() {
 function resizeTiltShift() {
   const P = W.post; if (!P) return;
   const s = W.ren.getDrawingBufferSize(new THREE.Vector2());
-  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.mat.uniforms.maxR.value = Math.max(2, s.y * .0106);
+  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.mat.uniforms.maxR.value = Math.max(2, s.y * .0070);
 }
 function renderTiltShift(dt) {
   const P = W.post;
