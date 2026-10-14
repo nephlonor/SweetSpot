@@ -34,19 +34,19 @@
   color-scheme:light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;overflow:hidden;background:#e4ece9;color:var(--ink);font-family:var(--body);
+html,body{height:100%;margin:0;overflow:hidden;background:#2f5d33;color:var(--ink);font-family:var(--body);
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
 input{-webkit-user-select:text;user-select:text;touch-action:manipulation}
-#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
-#fx{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:4}
+#gl{position:fixed;left:0;top:0;width:100%;height:var(--vh,100%);display:block;touch-action:none}
+#fx{position:fixed;left:0;top:0;width:100%;height:var(--vh,100%);display:block;pointer-events:none;z-index:4}
 /* glass surfaces */
 .card,.glass{background:var(--gl-bg),var(--gl-tint);-webkit-backdrop-filter:var(--gl-blur);backdrop-filter:var(--gl-blur);border:1px solid var(--gl-line);box-shadow:var(--gl-sh);border-radius:22px;color:var(--w1);text-shadow:var(--tsh)}
 .good{color:var(--good)}.ok{color:var(--ok)}.bad{color:var(--bad)}.lb .row.me .good{color:#d6ffd0}
 .card .good,.glass .good{color:var(--gGood)!important}.card .ok,.glass .ok{color:var(--gOk)!important}.card .bad,.glass .bad{color:var(--gBad)!important}
 /* ---------- HUD ---------- */
-#hud{position:fixed;inset:0;pointer-events:none;z-index:2;transition:opacity .35s var(--ease)}
+#hud{position:fixed;left:0;top:0;right:0;height:var(--vh,100%);pointer-events:none;z-index:2;transition:opacity .35s var(--ease)}
 #hud.off{opacity:0}
 #hud button{pointer-events:auto}
 /* top bar: one glass strip with map, hole and stroke, wind, distance and the player menu */
@@ -117,7 +117,7 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 /* in motion, a panel the ball passes behind turns see-through */
 .seethru{opacity:.24!important;transition:opacity .12s!important}
 /* ---------- overlays ---------- */
-.layer{position:fixed;inset:0;z-index:6;opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+.layer{position:fixed;left:0;top:0;right:0;height:var(--vh,100%);z-index:6;opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
 .layer.on{opacity:1;pointer-events:auto}
 #title{display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 26px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);background:linear-gradient(180deg,rgba(10,40,20,0) 45%,rgba(10,40,20,.32) 100%)}
 .logoCard{align-self:center;text-align:center;padding:16px 28px 15px;border-radius:28px}
@@ -162,10 +162,10 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 .dstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 14px}
 .dstats div{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:16px;padding:9px 4px;font:600 10px var(--cond);letter-spacing:.12em;text-transform:uppercase;color:var(--w3)}
 .dstats b{display:block;font:600 22px/1.1 var(--cond);color:var(--w1);letter-spacing:0}
-#scrim{position:fixed;inset:0;background:rgba(10,30,18,.28);z-index:7;opacity:0;pointer-events:none;transition:opacity .3s}
+#scrim{position:fixed;left:0;top:0;right:0;height:var(--vh,100%);background:rgba(10,30,18,.28);z-index:7;opacity:0;pointer-events:none;transition:opacity .3s}
 #scrim.on{opacity:1;pointer-events:auto}
 /* sheets: light frosted glass, dark text for dense content */
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:8;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,251,246,.86));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.75);border-bottom:0;border-radius:28px 28px 0 0;padding:10px calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);transform:translateY(105%);transition:transform .42s var(--spring);max-height:88vh;overflow:auto;box-shadow:0 -10px 40px rgba(18,42,28,.22);margin:0 auto;max-width:560px}
+.sheet{position:fixed;left:0;right:0;bottom:calc(-1 * var(--gap,0px));z-index:8;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,251,246,.86));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.75);border-bottom:0;border-radius:28px 28px 0 0;padding:10px calc(var(--sr) + 16px) calc(var(--sb) + 16px + var(--gap,0px)) calc(var(--sl) + 16px);transform:translateY(105%);transition:transform .42s var(--spring);max-height:88vh;overflow:auto;box-shadow:0 -10px 40px rgba(18,42,28,.22);margin:0 auto;max-width:560px}
 .sheet.on{transform:none}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto 10px}
 .sht{font:600 24px var(--cond);text-transform:uppercase;margin:2px 0 12px;display:flex;justify-content:space-between;align-items:baseline}
@@ -4355,7 +4355,7 @@ function addressCam(out, look) {
   const x = G.ball.x - d[0] * back, z = G.ball.z - d[1] * back;
   const y = Math.max(G.ball.y + up, Math.max(C.h(x, z), C.wl(x, z)) + 1);
   out.set(x, y, z);
-  const portrait = window.innerHeight > window.innerWidth, ny = portrait ? -.16 : -.36;
+  const portrait = VH() > window.innerWidth, ny = portrait ? -.16 : -.36;
   const fovH = W.cam.fov * DEG / 2, dv = y - (G.ball.y + VIS_R), hd = back;
   const alpha = Math.atan2(dv, hd) - Math.atan(-ny * Math.tan(fovH));
   look.set(x + d[0] * Math.cos(alpha) * 20, y - Math.sin(alpha) * 20, z + d[1] * Math.cos(alpha) * 20);
@@ -4423,15 +4423,26 @@ function sizeCanvases() {
   s.width = Math.max(4, rs.width * UI.dpr); s.height = Math.max(4, rs.width * UI.dpr);
   UI.tc = t.getContext('2d'); UI.sc = s.getContext('2d');
   UI.faceCX = rs.left + rs.width / 2; UI.faceCY = rs.top + rs.width / 2;
-  const fx = $('fx'); fx.width = window.innerWidth * UI.dpr; fx.height = window.innerHeight * UI.dpr; UI.fxc = fx.getContext('2d');
+  const fx = $('fx'); fx.width = window.innerWidth * UI.dpr; fx.height = VH() * UI.dpr; UI.fxc = fx.getContext('2d');
   UI.trackPx = Math.max(120, rt.height - 34);
   const R = rs.width / 2 - 5; UI.R = R;
   const c = CLUBS[G.club] || CLUBS[0];
   const fw = c.type === 'putter' ? R * 1.0 : c.type === 'wood' ? R * .92 : R * .84, fh = fw * (c.type === 'putter' ? .27 : c.type === 'wood' ? .5 : .44);
   UI.face = { hw: fw / 2, hh: fh / 2, fw, fh };
 }
+// iOS home-screen apps report an innerHeight that stops short of the home-indicator strip (a bare band shows below the page);
+// there the view is sized to the whole screen instead
+function VH() {
+  const h = window.innerHeight;
+  try {
+    const sa = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    if (sa) { const lg = Math.max(screen.width, screen.height), sh = Math.min(screen.width, screen.height), full = window.innerWidth > h ? sh : lg; if (full > h && full - h <= 100) return full; }
+  } catch (e) { }
+  return h;
+}
 function onResize() {
-  const w = window.innerWidth, h = window.innerHeight;
+  const w = window.innerWidth, h = VH();
+  document.documentElement.style.setProperty('--vh', h + 'px'); document.documentElement.style.setProperty('--gap', Math.max(0, h - window.innerHeight) + 'px');
   W.ren.setSize(w, h, false);
   W.cam.aspect = w / h; W.cam.fov = h > w ? 58 : 46; W.cam.updateProjectionMatrix(); resizeTiltShift();
   sizeCanvases();
@@ -4717,7 +4728,7 @@ function updatePinTag() {
   const tag = $('pinTag'); if (!G.C || G.state === 'title' || G.state === 'intro' || G.state === 'flight' || sheetOpen()) { tag.style.opacity = 0; return; }
   _pv2.set(G.C.cup.x, G.C.cup.y + PIN_H + .5, G.C.cup.z).project(W.cam);
   const vis = _pv2.z < 1 && Math.abs(_pv2.x) < 1.05 && _pv2.y < .98 && _pv2.y > -1;
-  const tx = (_pv2.x * .5 + .5) * window.innerWidth, ty = (-_pv2.y * .5 + .5) * window.innerHeight, hudBottom = $('pinCard').getBoundingClientRect().bottom + 30;
+  const tx = (_pv2.x * .5 + .5) * window.innerWidth, ty = (-_pv2.y * .5 + .5) * VH(), hudBottom = $('pinCard').getBoundingClientRect().bottom + 30;
   // never sit on top of the strike / result card
   const ro = $('readout'), rr = ro.classList.contains('on') ? ro.getBoundingClientRect() : null, hw = tag.offsetWidth / 2 + 4;
   const clash = !!rr && tx + hw > rr.left && tx - hw < rr.right && ty + 6 > rr.top && ty - tag.offsetHeight - 4 < rr.bottom;
@@ -4733,9 +4744,9 @@ function updateSeeThru() {
   if (G.state === 'flight' && W.ball.visible) {
     _sb.copy(W.ball.position).project(W.cam);
     if (_sb.z < 1) {
-      sx = (_sb.x * .5 + .5) * window.innerWidth; sy = (-_sb.y * .5 + .5) * window.innerHeight;
+      sx = (_sb.x * .5 + .5) * window.innerWidth; sy = (-_sb.y * .5 + .5) * VH();
       const d = Math.max(.5, W.cam.position.distanceTo(W.ball.position));
-      r = VIS_R * W.ball.scale.x / (d * Math.tan(W.cam.fov * DEG / 2)) * window.innerHeight / 2 + 10;
+      r = VIS_R * W.ball.scale.x / (d * Math.tan(W.cam.fov * DEG / 2)) * VH() / 2 + 10;
     }
   }
   for (const el of _seeEls) {
@@ -4759,7 +4770,7 @@ function updateBallTag() {
   W.cam.updateMatrixWorld();
   _bt.copy(b).project(W.cam);
   if (_bt.z > 1) { UI.btOn = false; tag.classList.remove('on'); return; }
-  const vw = window.innerWidth, vh = window.innerHeight, sx = (_bt.x * .5 + .5) * vw, sy = (-_bt.y * .5 + .5) * vh;
+  const vw = window.innerWidth, vh = VH(), sx = (_bt.x * .5 + .5) * vw, sy = (-_bt.y * .5 + .5) * vh;
   const bd = Math.max(.1, W.cam.position.distanceTo(b)), rpx = VIS_R * W.ball.scale.x / bd * vh * .5 / Math.tan(W.cam.fov * DEG / 2);
   const w = tag.offsetWidth, h = tag.offsetHeight, gap = rpx + 9;
   let flip = UI.btFlip;
@@ -4945,7 +4956,7 @@ function mapPick(e) {
 /* ---------- strike dot overlay: rides up-left of the right thumb ---------- */
 function drawFx(now) {
   const x = UI.fxc; if (!x) return;
-  const W2 = window.innerWidth, H2 = window.innerHeight;
+  const W2 = window.innerWidth, H2 = VH();
   x.setTransform(UI.dpr, 0, 0, UI.dpr, 0, 0); x.clearRect(0, 0, W2, H2);
   let p, frozen = false;
   if (G.state === 'address' && SW.phase !== 'done') p = dotScreen();
@@ -5152,7 +5163,7 @@ function openBoard() { fillBoard($('boardBody'), 30); openSheet('boardSheet'); }
 /* ================= INPUT + LOOP ================= */
 function initInput() {
   const aim = { id: null, x: 0 };
-  const zoneY = () => window.innerHeight * (window.innerHeight > window.innerWidth ? .42 : .34);
+  const zoneY = () => VH() * (VH() > window.innerWidth ? .42 : .34);
   // the right thumb only works from the top of the strike dial down: anything above it aims
   const strikeTop = () => { const r = $('strike').getBoundingClientRect(); return r.height ? r.top : zoneY(); };
   document.addEventListener('pointerdown', e => {
