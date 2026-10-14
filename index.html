@@ -34,7 +34,7 @@
   color-scheme:light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;overflow:hidden;background:#2f5d33;color:var(--ink);font-family:var(--body);
+html,body{height:100%;margin:0;overflow:hidden;background:#000;color:var(--ink);font-family:var(--body);
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
@@ -321,6 +321,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
     <div class="mrow">Sound<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+    <div class="mrow">Screen<div class="seg" id="segFill"><button data-v="0">Fit</button><button data-v="1">Fill</button></div></div>
     <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="legacy">Legacy</button></div></div>
   </div>
   <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
@@ -3949,7 +3950,23 @@ function play(name, rate, vol, lp, delay) {
   n.connect(g).connect(a.destination); s.start(a.currentTime + (delay || 0)); return true;
 }
 let AC = null;
-function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); loadSounds(AC); } catch (e) { } } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function audio() {
+  if (!AC || AC.state === 'closed') { try { AC = new (window.AudioContext || window.webkitAudioContext)(); loadSounds(AC); } catch (e) { } }
+  if (AC && AC.state !== 'running') { try { const p = AC.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } } // iOS also uses 'interrupted' after another app has had the audio
+  return AC;
+}
+// iOS suspends (or interrupts) the audio when the app is left, and only lets a touch bring it back: every return to the app and every
+// touch checks the context, wakes it with a silent blip, and if it is stuck builds a fresh one (the decoded samples are reused)
+function wakeAudio(fromTouch) {
+  if (!settings.sound && !AC) return;
+  if (AC && AC.state === 'running') return;
+  const a = audio(); if (!a) return;
+  try { const b = a.createBuffer(1, 1, 22050), s = a.createBufferSource(); s.buffer = b; s.connect(a.destination); s.start(0); } catch (e) { }
+  if (fromTouch) setTimeout(() => { if (AC === a && a.state !== 'running') { try { a.close(); } catch (e) { } AC = null; const n = audio(); if (n) { try { const b = n.createBuffer(1, 1, 22050), s = n.createBufferSource(); s.buffer = b; s.connect(n.destination); s.start(0); } catch (e) { } } } }, 250);
+}
+['pointerdown', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, () => wakeAudio(true), true));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wakeAudio(false); });
+window.addEventListener('pageshow', () => wakeAudio(false)); window.addEventListener('focus', () => wakeAudio(false));
 function tone(f, d, type, vol, f2, delay) {
   if (!settings.sound) return; const a = audio(); if (!a) return; const t = a.currentTime + (delay || 0);
   const o = a.createOscillator(), g = a.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
@@ -4007,7 +4024,7 @@ function startRound() {
 function startHole(i) {
   closeSheets(); $('done').classList.remove('on'); $('readout').classList.remove('on'); UI.readT = 0;
   document.body.classList.remove('flight', 'swing');
-  G.hole = i;
+  G.hole = i; G.camMove = null;
   if (G.practice && G.pins) G.pins[i] = ((G.pins[i] | 0) + 1 + Math.floor(Math.random() * 3)) % 4; // practice: a different pin every time the hole is played
   G.C = courseFor(i);
   if (!G.C.real && G.C.def.par === 3) { G.C.center = mkPoly([[G.C.def.start.x, G.C.def.start.f], [G.C.cup.x, -G.C.cup.z]], null); G.C.length = G.C.center.L; }
@@ -4378,14 +4395,6 @@ function finishShot() {
 /* ---------- camera ---------- */
 const camTmp = new THREE.Vector3(), lookTmp = new THREE.Vector3();
 const _pc = new THREE.Vector3(), _pl = new THREE.Vector3(), _pm = new THREE.Vector3(), _pk = new THREE.Vector3();
-// one eased camera move from G.camMove.from to the target, the ball kept in the middle of the screen; the address framing (ball lower)
-// blends in only over the last part. Returns true when the move is complete.
-function driveCamMove(dt, tgtPos, tgtLook, ballPos) {
-  const M = G.camMove, cam = W.cam; M.t += dt; const u = easeInOut(clamp(M.t / M.T, 0, 1));
-  _pm.copy(M.from).lerp(tgtPos, u); cam.position.lerp(_pm, 1 - Math.exp(-dt * 8)); // (a little smoothing hides the hand-over from the follow camera)
-  _pk.copy(ballPos).lerp(tgtLook, smooth(.72, 1, u)); G.camLook.lerp(_pk, 1 - Math.exp(-dt * 12)); cam.lookAt(G.camLook);
-  return u >= 1;
-}
 // the address camera for a ball lying at (bx, by, bz), aimed along yaw
 function addressCamFor(out, look, bx, by, bz, yaw, putt, teed) {
   const C = G.C, tc = teed && !putt ? C.def.teeCam : null, d = [Math.sin(yaw), -Math.cos(yaw)];
@@ -4409,61 +4418,74 @@ function addressCam(out, look) {
   const alpha = Math.atan2(dv, hd) - Math.atan(-ny * Math.tan(fovH));
   look.set(x + d[0] * Math.cos(alpha) * 20, y - Math.sin(alpha) * 20, z + d[1] * Math.cos(alpha) * 20);
 }
+// Every camera move is eased in and out: positions and look points follow their targets with a critically damped spring (smooth-damp),
+// which starts and ends with zero speed and keeps its speed when the target or the mode changes, so no change of view is ever a jump.
+// st is the smoothing time: the move takes roughly 3 x st, so a bigger move gets a bigger st.
+function dampAxis(c, t, v, st, dt) {
+  const w = 2 / Math.max(.0001, st), x = w * dt, e = 1 / (1 + x + .48 * x * x + .235 * x * x * x), ch = c - t, tp = (v + w * ch) * dt;
+  _dv = (v - w * tp) * e; return t + (ch + tp) * e;
+}
+let _dv = 0;
+function dampV3(cur, tgt, vel, st, dt) {
+  cur.x = dampAxis(cur.x, tgt.x, vel.x, st, dt); vel.x = _dv; cur.y = dampAxis(cur.y, tgt.y, vel.y, st, dt); vel.y = _dv; cur.z = dampAxis(cur.z, tgt.z, vel.z, st, dt); vel.z = _dv;
+}
+function camSmooth(posT, lookT, stP, stL, dt) {
+  dampV3(W.cam.position, posT, G.camV, stP, dt); dampV3(G.camLook, lookT, G.lookV, stL, dt); W.cam.lookAt(G.camLook);
+}
 function updateCamera(dt) {
-  const cam = W.cam, C = G.C;
+  const cam = W.cam, C = G.C; if (!G.camV) { G.camV = new THREE.Vector3(); G.lookV = new THREE.Vector3(); }
   if (G.state === 'intro') {
     const T = 7, t = (G.introT % (T + 1.5)) / T, e = easeInOut(clamp(t, 0, 1)), L = C.center.L;
     const s = lerp(-30, L - 25, e), p = polyAt(C.center, Math.max(0, s)), q = polyAt(C.center, Math.min(L, s + 80));
     const d0 = polyAt(C.center, 20); const ddx = d0[0] - C.startPos.x, ddz = d0[1] - C.startPos.z, dl = Math.hypot(ddx, ddz) || 1, back = s < 0 ? -s : 0;
     camTmp.set(p[0] - ddx / dl * back, C.h(p[0], p[1]) + 42 - 12 * e, p[1] - ddz / dl * back);
     lookTmp.set(q[0], C.h(q[0], q[1]), q[1]);
-    if (G.introSnap) { G.introSnap = false; cam.position.copy(camTmp); G.camLook.copy(lookTmp); }
-    cam.position.lerp(camTmp, 1 - Math.exp(-dt * 3)); G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 3)); cam.lookAt(G.camLook);
+    if (G.introSnap) { G.introSnap = false; cam.position.copy(camTmp); G.camLook.copy(lookTmp); G.camV.set(0, 0, 0); G.lookV.set(0, 0, 0); }
+    camSmooth(camTmp, lookTmp, .55, .55, dt);
     return;
   }
   if (G.state === 'address' || G.state === 'settle') {
     addressCam(camTmp, lookTmp);
     if (G.state === 'settle') {
       G.settleT += dt;
-      if (G.camMove) {
-        // the move that began before the ball stopped carries on to the final address position, then hands over
-        if (driveCamMove(dt, camTmp, lookTmp, W.ball.position) || G.settleT > 6) enterAddress();
-      } else {
-        const u = easeInOut(clamp(G.settleT / 1.4, 0, 1));
-        cam.position.lerpVectors(G.camFrom, camTmp, u); G.camLook.lerpVectors(G.lookFrom, lookTmp, u);
-        if (u >= 1) enterAddress();
-      }
-    } else { cam.position.lerp(camTmp, 1 - Math.exp(-dt * 8)); G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 8)); }
-    cam.lookAt(G.camLook); return;
+      if (!G.camMove) G.camMove = { st: clamp(.3 + cam.position.distanceTo(camTmp) * .03, .5, 1.1), centred: false }; // a move not started in flight
+      const M = G.camMove;
+      if (M.centred) {
+        // started before the ball stopped: the ball stays in the middle until the camera is nearly there, then the framing eases to the address view
+        const rem = cam.position.distanceTo(camTmp); M.e += (smooth(1.6, .1, rem) - M.e) * (1 - Math.exp(-dt * 2.4));
+        _pm.copy(W.ball.position).lerp(lookTmp, M.e); camSmooth(camTmp, _pm, M.st, Math.min(M.st, .25), dt);
+      } else camSmooth(camTmp, lookTmp, M.st, M.st * .8, dt);
+      if ((cam.position.distanceTo(camTmp) < .06 && G.camV.length() < .05 && G.lookV.length() < .05 && G.settleT > .3) || G.settleT > 6) enterAddress();
+    } else camSmooth(camTmp, lookTmp, .3, .3, dt); // address: follows aim changes and small shifts, eased
+    return;
   }
   if (G.state === 'flight' || G.state === 'holed') {
     const b = W.ball.position, d = aimDir(), putt = G.shot && G.shot.L.putt;
     const hgt = Math.max(0, b.y - C.h(b.x, b.z));
-    if (G.playT < .2 && !putt) { cam.lookAt(G.camLook); return; }
+    if (G.playT < .2 && !putt) { cam.lookAt(G.camLook); G.camV.multiplyScalar(.9); return; }
     const back = putt ? 3.8 : 11 + Math.min(16, hgt * .4), up = putt ? 2 : 4 + hgt * .5;
     camTmp.set(b.x - d[0] * back, b.y + up, b.z - d[1] * back);
     camTmp.y = Math.max(camTmp.y, C.h(camTmp.x, camTmp.z) + 1.4, C.wl(camTmp.x, camTmp.z) + 1.4);
     lookTmp.set(b.x + d[0] * (putt ? 1.5 : 7), b.y + (putt ? 0 : 1), b.z + d[1] * (putt ? 1.5 : 7));
     // The ball is on the ground and about a second from stopping: now the camera starts one move to the position for the next shot
-    // (behind where the ball stops, toward the pin). It keeps the ball in the middle of the screen and its length follows the size of
-    // the move, so it may well still be going when the ball is at rest (the settle phase below carries it on).
+    // (behind where the ball stops, toward the pin), the ball kept in the middle of the screen. Its length follows the size of the move,
+    // so it may well still be going when the ball is at rest (the settle phase carries it on).
     const sr = G.shot && G.shot.res;
     if (sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && (G.camMove || (hgt < 1.2 && sr.duration - G.playT <= 1))) {
       const f = sr.final, yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z));
       addressCamFor(_pc, _pl, f.x, C.h(f.x, f.z), f.z, yaw, restsOnGreen(sr), false);
-      if (!G.camMove) G.camMove = { t: 0, T: clamp(.7 + cam.position.distanceTo(_pc) * .07, .9, 3.5), from: cam.position.clone() };
-      driveCamMove(dt, _pc, _pl, b); return;
+      if (!G.camMove) G.camMove = { st: clamp(.3 + cam.position.distanceTo(_pc) * .03, .5, 1.1), centred: true, e: 0 };
+      const rem = cam.position.distanceTo(_pc), M = G.camMove; M.e += (smooth(1.6, .1, rem) - M.e) * (1 - Math.exp(-dt * 2.4));
+      _pm.copy(b).lerp(_pl, M.e); camSmooth(_pc, _pm, M.st, Math.min(M.st, .25), dt); return;
     }
-    cam.position.lerp(camTmp, 1 - Math.exp(-dt * (putt ? 3 : 1.7)));
-    G.camLook.lerp(lookTmp, 1 - Math.exp(-dt * 5));
-    cam.lookAt(G.camLook);
+    camSmooth(camTmp, lookTmp, putt ? .5 : .75, .3, dt);
     if (G.shake > 0) { G.shake -= dt; cam.position.x += (Math.random() - .5) * .06; cam.position.y += (Math.random() - .5) * .06; }
     return;
   }
   if (G.state === 'title' && C) {
     const a = performance.now() * .00005, cx = C.cup.x, cz = C.cup.z;
     const px = cx + Math.cos(a) * 64, pz = cz + Math.sin(a) * 64; // over real woods the orbit keeps above the treetops
-    cam.position.set(px, C.real ? Math.max(C.cup.y + 26, C.h(px, pz) + 30) : C.cup.y + 22, pz); cam.lookAt(cx, C.cup.y + 2, cz);
+    cam.position.set(px, C.real ? Math.max(C.cup.y + 26, C.h(px, pz) + 30) : C.cup.y + 22, pz); cam.lookAt(cx, C.cup.y + 2, cz); G.camV.set(0, 0, 0); G.lookV.set(0, 0, 0);
   }
 }
 function enterAddress() {
@@ -4497,10 +4519,24 @@ function sizeCanvases() {
 }
 // the viewport height (kept as one function so every screen-space calculation agrees)
 function VH() { return window.innerHeight; }
+// Optional full-bleed view for home-screen apps whose viewport stops short of the bottom edge (try it with ?fill=1, switch off with ?fill=0).
+// Only the 3D canvas grows past the layout viewport; the HUD and every touch area keep their normal size and position, and the camera
+// keeps its normal projection (view offset), so the first VH() rows are exactly the same picture. SH() is the 3D canvas height.
+let FILL = false; try { const q = /[?&]fill=([01])/.exec(location.search); if (q) { q[1] === '1' ? localStorage.setItem('ssg-fill', '1') : localStorage.removeItem('ssg-fill'); } FILL = localStorage.getItem('ssg-fill') === '1'; } catch (e) { }
+let SHV = 0;
+function SH() { return SHV || window.innerHeight; }
+function fillGap() {
+  if (!FILL) return 0;
+  try { const sa = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); if (!sa) return 0;
+    const lg = Math.max(screen.width, screen.height), sh = Math.min(screen.width, screen.height), full = window.innerWidth > window.innerHeight ? sh : lg, gap = full - window.innerHeight; return gap > 0 && gap <= 100 ? gap : 0; } catch (e) { return 0; }
+}
 function onResize() {
-  const w = window.innerWidth, h = VH();
-  W.ren.setSize(w, h, false);
-  W.cam.aspect = w / h; W.cam.fov = h > w ? 58 : 46; W.cam.updateProjectionMatrix(); resizeTiltShift();
+  const w = window.innerWidth, h = VH(), gap = fillGap(); SHV = gap ? h + gap : 0;
+  const gl = $('gl'); gl.style.bottom = gap ? 'auto' : ''; gl.style.height = gap ? (h + gap) + 'px' : '';
+  W.ren.setSize(w, h + gap, false);
+  W.cam.aspect = w / h; W.cam.fov = h > w ? 58 : 46;
+  if (gap) W.cam.setViewOffset(w, h, 0, 0, w, h + gap); else W.cam.clearViewOffset();
+  W.cam.updateProjectionMatrix(); resizeTiltShift();
   sizeCanvases();
 }
 /* ---------- tempo panel ---------- */
@@ -4784,7 +4820,7 @@ function updatePinTag() {
   const tag = $('pinTag'); if (!G.C || G.state === 'title' || G.state === 'intro' || G.state === 'flight' || sheetOpen()) { tag.style.opacity = 0; return; }
   _pv2.set(G.C.cup.x, G.C.cup.y + PIN_H + .5, G.C.cup.z).project(W.cam);
   const vis = _pv2.z < 1 && Math.abs(_pv2.x) < 1.05 && _pv2.y < .98 && _pv2.y > -1;
-  const tx = (_pv2.x * .5 + .5) * window.innerWidth, ty = (-_pv2.y * .5 + .5) * VH(), hudBottom = $('pinCard').getBoundingClientRect().bottom + 30;
+  const tx = (_pv2.x * .5 + .5) * window.innerWidth, ty = (-_pv2.y * .5 + .5) * SH(), hudBottom = $('pinCard').getBoundingClientRect().bottom + 30;
   // never sit on top of the strike / result card
   const ro = $('readout'), rr = ro.classList.contains('on') ? ro.getBoundingClientRect() : null, hw = tag.offsetWidth / 2 + 4;
   const clash = !!rr && tx + hw > rr.left && tx - hw < rr.right && ty + 6 > rr.top && ty - tag.offsetHeight - 4 < rr.bottom;
@@ -4800,7 +4836,7 @@ function updateSeeThru() {
   if (G.state === 'flight' && W.ball.visible) {
     _sb.copy(W.ball.position).project(W.cam);
     if (_sb.z < 1) {
-      sx = (_sb.x * .5 + .5) * window.innerWidth; sy = (-_sb.y * .5 + .5) * VH();
+      sx = (_sb.x * .5 + .5) * window.innerWidth; sy = (-_sb.y * .5 + .5) * SH();
       const d = Math.max(.5, W.cam.position.distanceTo(W.ball.position));
       r = VIS_R * W.ball.scale.x / (d * Math.tan(W.cam.fov * DEG / 2)) * VH() / 2 + 10;
     }
@@ -4826,7 +4862,7 @@ function updateBallTag() {
   W.cam.updateMatrixWorld();
   _bt.copy(b).project(W.cam);
   if (_bt.z > 1) { UI.btOn = false; tag.classList.remove('on'); return; }
-  const vw = window.innerWidth, vh = VH(), sx = (_bt.x * .5 + .5) * vw, sy = (-_bt.y * .5 + .5) * vh;
+  const vw = window.innerWidth, vh = VH(), sx = (_bt.x * .5 + .5) * vw, sy = (-_bt.y * .5 + .5) * SH();
   const bd = Math.max(.1, W.cam.position.distanceTo(b)), rpx = VIS_R * W.ball.scale.x / bd * vh * .5 / Math.tan(W.cam.fov * DEG / 2);
   const w = tag.offsetWidth, h = tag.offsetHeight, gap = rpx + 9;
   let flip = UI.btFlip;
@@ -4884,6 +4920,7 @@ function syncMenu() {
   const mn = $('mName'); if (mn && document.activeElement !== mn) mn.value = settings.name || '';
   document.querySelectorAll('#segHand button').forEach(b => b.classList.toggle('sel', +b.dataset.v === settings.hand));
   document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.sound ? 1 : 0)));
+  document.querySelectorAll('#segFill button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (FILL ? 1 : 0)));
   const ph = $('pracHoles');
   if (ph) {
     if (ph.children.length !== HOLE_DEFS.length) { ph.innerHTML = ''; HOLE_DEFS.forEach((d, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.onclick = () => startPractice(i); ph.appendChild(b); }); }
@@ -5329,6 +5366,8 @@ function initInput() {
   $('mBoard').onclick = () => { closeSheets(true); openBoard(); };
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); });
+  // home-screen apps whose view stops short of the bottom edge: Fill stretches the 3D picture to the edge (the controls stay where they are)
+  document.querySelectorAll('#segFill button').forEach(b => b.onclick = () => { FILL = b.dataset.v === '1'; try { FILL ? localStorage.setItem('ssg-fill', '1') : localStorage.removeItem('ssg-fill'); } catch (e) { } onResize(); syncMenu(); });
   $('mCard').onclick = () => showScorecard(false);
   $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
