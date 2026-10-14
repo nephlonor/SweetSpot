@@ -2196,6 +2196,9 @@ function buildRealWater(C, grp) {
 const REAL_TREE_COLS = [0x2f6d3c, 0x3a7d43, 0x467f3f, 0x2e6a45, 0x4c8a4a, 0x3d7449, 0x55934d, 0x316b52, 0x5a8f46, 0x426f3b];
 // three levels of detail: near the line of play (round crowns with extra lobes, shadows), mid (simple crowns),
 // far (the woods beyond, thinned and a little larger per tree). Every tree still stops the ball.
+// hand-tuned trees of the club's map (by index in GCCB_DATA.trees): d scales the whole tree down (a compact tree whose mapped
+// crown reads too wide), slim narrows the crown only, keeping its height
+const TREE_TWEAK = { 1110: { d: .62 }, 125: { slim: .68 }, 455: { slim: .68 } };
 function buildRealTrees(C, grp) {
   const I = C.inner, all = [];
   const dOut = (X, Z) => Math.hypot(Math.max(I.minX - X, 0, X - I.maxX), Math.max(I.minZ - Z, 0, Z - I.maxZ));
@@ -2203,7 +2206,7 @@ function buildRealTrees(C, grp) {
     const q = C.loc(t.e, t.n), X = q[0], Z = -q[1], d = dOut(X, Z); if (d > m) return;
     let sc = 1; if (t.fill && d > 220) { if (hash2(fi, 3, 17) < .45) return; sc = 1.22; }
     const dl = d < 25 ? polyQ(C.center, X, Z, 80).d : 1e6;
-    all.push({ X, Z, d: t.d * sc, kind: t.kind, H: t.H, fill: !!t.fill, tier: dl < 70 ? 0 : d < 220 ? 1 : 2, dd: d });
+    all.push({ X, Z, id: t.fill ? -1 : fi, d: t.d * sc * ((TREE_TWEAK[t.fill ? -1 : fi] || {}).d || 1), kind: t.kind, H: t.H, fill: !!t.fill, tier: dl < 70 ? 0 : d < 220 ? 1 : 2, dd: d });
   };
   GC.trees.forEach((t, i) => add(t, 330, i)); GC.fill.forEach((t, i) => add(t, 480, i + 7919));
   let nN = 0, nF = 0; for (const t of all) { t.near = t.tier === 0; if (t.near) nN++; else nF++; }
@@ -2246,19 +2249,20 @@ function buildRealTrees(C, grp) {
       const lim = Math.min(dt + 1, dg + 2);
       if (lim < R) { R = Math.max(1.2, lim); th = Math.max(th, Ht - 1.8 * R); }
     }
+    const Rh = R * ((TREE_TWEAK[t.id] || {}).slim || 1);
     col.setHex(t.kind === 3 ? [0x7fb35e, 0x88bb62, 0x76aa58][(hv * 3) | 0] : hv < .78 ? REAL_TREE_COLS[(hv / .78 * REAL_TREE_COLS.length) | 0] : LEAF_COLS[((hv - .78) / .22 * LEAF_COLS.length) | 0]);
     const ts = t.kind ? .55 : .75 + R * .09, cy = y + th + .9 * R;
     put(tr, t.X, y - .2, t.Z, ts, th + .5 + .4 * R, ts, tcol, ry);
-    put(bl, t.X, cy, t.Z, R, .9 * R, R, col, ry);
+    put(bl, t.X, cy, t.Z, Rh, .9 * R, Rh, col, ry);
     if (t.near && t.kind === 0) {
       // two smaller lobes break the round silhouette
-      const a = ry, o = .45 * R;
-      put(bl, t.X + Math.cos(a) * o, cy + .28 * R, t.Z + Math.sin(a) * o, .62 * R, .55 * R, .62 * R, col.clone().offsetHSL(0, 0, .04), ry + .7);
-      put(bl, t.X - Math.cos(a + .6) * o, cy + .12 * R, t.Z - Math.sin(a + .6) * o, .58 * R, .52 * R, .58 * R, col.clone().offsetHSL(.01, 0, -.02), ry + 1.5);
+      const a = ry, o = .45 * Rh;
+      put(bl, t.X + Math.cos(a) * o, cy + .28 * R, t.Z + Math.sin(a) * o, .62 * Rh, .55 * R, .62 * Rh, col.clone().offsetHSL(0, 0, .04), ry + .7);
+      put(bl, t.X - Math.cos(a + .6) * o, cy + .12 * R, t.Z - Math.sin(a + .6) * o, .58 * Rh, .52 * R, .58 * Rh, col.clone().offsetHSL(.01, 0, -.02), ry + 1.5);
     }
-    can(t.X, cy, t.Z, .98 * R, 1.2, i); trunk(t.X, t.Z, cy - .4 * R, i, (.22 + .04 * R) ** 2);
-    plan.push({ x: t.X, z: t.Z, r: R, col: col.getHex(), far: !t.near });
-    if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: cy + .9 * R, r: R * 1.05, refs, hid: false });
+    can(t.X, cy, t.Z, .98 * Rh, 1.2, i); trunk(t.X, t.Z, cy - .4 * R, i, (.22 + .04 * R) ** 2);
+    plan.push({ x: t.X, z: t.Z, r: Rh, col: col.getHex(), far: !t.near });
+    if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: cy + .9 * R, r: Rh * 1.05, refs, hid: false });
   });
   refs = null;
   [trN, trF, blN, blF, coN, coF].forEach(m => { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; if (!m.count) m.visible = false; });
@@ -2638,7 +2642,7 @@ function renderTiltShift(dt) {
     else tgt = W.ring.visible ? W.ring.position : W.ball.position; // at rest: the aim point
   }
   if (tgt) { P.v.copy(tgt).project(W.cam); if (P.v.z < 1) want = clamp(P.v.y * .5 + .5, .3, .8); }
-  P.fy += (want - P.fy) * (1 - Math.exp(-dt * 6)); P.mat.uniforms.fy.value = P.fy;
+  P.fy += (want - P.fy) * (1 - Math.exp(-dt * 2.2)); P.mat.uniforms.fy.value = P.fy;
   W.ren.setRenderTarget(P.rt); W.ren.render(W.scene, W.cam);
   W.ren.setRenderTarget(null); W.ren.render(P.sc, P.cam);
 }
