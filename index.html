@@ -130,6 +130,7 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 .how b{display:block;font:600 17px/1.05 var(--cond);text-transform:uppercase;margin:7px 0 4px}
 .how p{margin:0;font:600 13px/1.35 var(--body);color:var(--w2)}
 .how svg{width:30px;height:30px;display:block}
+body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.replay #done,body.replay #recCard,body.replay #confetti,body.replay #readout{display:none!important}
 .how svg.tut{width:100%;max-width:120px;height:auto;margin:0 auto 2px}
 .tThumb{animation:tUp 4.2s infinite;transform-box:view-box}
 .tDown{stroke-dasharray:62;animation:tTrace 4.2s infinite}
@@ -323,7 +324,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
-<div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button></div></div>
+<div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">▶ Replay last shot</button></div></div>
 <div id="scrim"></div>
 <div class="sheet" id="bagSheet"><div class="grab"></div><div class="sht">Your bag <small id="bagLie">From the tee</small></div><div class="bag" id="bag"></div></div>
 <div class="sheet" id="menuSheet"><div class="grab"></div><div class="sht">Settings</div>
@@ -4432,21 +4433,27 @@ function updateFlight(dt) {
 }
 // menu: watch the last shot again from where it was struck; nothing in the round changes (no stroke, no stats, the ball ends where it lies)
 function replayLast() {
-  const R = G.lastShot;
-  if (G.state !== 'address' || !R || R.C !== G.C || R.hole !== G.hole) { readoutNote('No shot to replay yet', 'ok'); return false; }
-  G.rep = { x: G.ball.x, z: G.ball.z, teed: G.teed, club: G.club, yaw: G.yaw, target: G.target, suggested: G.suggested, carryKey: G.carryKey };
+  const R = G.lastShot, fromHole = G.state === 'holed';
+  if ((G.state !== 'address' && !fromHole) || !R || R.C !== G.C || R.hole !== G.hole) { readoutNote('No shot to replay yet', 'ok'); return false; }
+  G.rep = { x: G.ball.x, z: G.ball.z, teed: G.teed, club: G.club, yaw: G.yaw, target: G.target, suggested: G.suggested, carryKey: G.carryKey, fromHole, shot: G.shot, holedT: G.holedT };
   placeBall(R.x, R.z, R.teed); SW.mark = null; SW.phase = 'done';
-  document.body.classList.remove('swing'); document.body.classList.add('flight');
+  document.body.classList.remove('swing'); document.body.classList.add('flight', 'replay'); $('done').classList.remove('on'); $('readout').classList.remove('on');
   G.shot = { L: R.L, res: R.res, ei: 0, finished: true, replay: true, summary: '' };
-  if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
-  W.tracer.geometry.setDrawRange(0, 0); G.state = 'flight'; G.playT = -.05; G.shake = R.L.putt ? 0 : .12;
+  if (G.rig) { G.rig.arr = null; G.rig.launch = null; }
+  // the address view of the shot, held for two seconds before the ball is struck
+  const v = R.L.v, yaw = Math.atan2(v[0] != null ? v[0] : v.x, -(v[2] != null ? v[2] : v.z)), a = new THREE.Vector3(), lk = new THREE.Vector3();
+  addressCamFor(a, lk, G.ball.x, G.ball.y, G.ball.z, yaw, !!R.L.putt, R.teed);
+  W.cam.position.copy(a); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
+  W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
+  W.tracer.geometry.setDrawRange(0, 0); G.state = 'flight'; G.playT = -2; G.shake = R.L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null; $('aimHint').classList.remove('on');
   return true;
 }
 function endReplay() {
   const q = G.rep; G.rep = null; if (!q) return;
-  document.body.classList.remove('flight'); $('readout').classList.remove('on'); UI.readT = 0;
+  document.body.classList.remove('flight', 'replay'); $('readout').classList.remove('on'); UI.readT = 0;
   placeBall(q.x, q.z, q.teed); G.club = q.club; G.yaw = q.yaw; G.target = q.target; G.suggested = q.suggested; G.carryKey = q.carryKey;
+  if (q.fromHole) { G.shot = q.shot; G.state = 'holed'; G.holedT = 99; SW.phase = 'idle'; $('done').classList.add('on'); return; }
   G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone(); SW.phase = 'idle';
   updateAim(true); drawMapThumb();
 }
@@ -5558,6 +5565,7 @@ function initInput() {
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); });
   $('mCard').onclick = () => showScorecard(false);
+  $('dReplay').onclick = () => { SFX.blip(); replayLast(); };
   $('mReplay').onclick = () => { closeSheets(); setTimeout(replayLast, 120); };
   $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
