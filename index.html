@@ -2735,7 +2735,7 @@ function initTiltShift() {
 function resizeTiltShift() {
   const P = W.post; if (!P) return;
   const s = W.ren.getDrawingBufferSize(new THREE.Vector2());
-  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.mat.uniforms.maxR.value = Math.max(2, s.y * .0125);
+  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.mat.uniforms.maxR.value = Math.max(2, s.y * .0106);
 }
 function renderTiltShift(dt) {
   const P = W.post;
@@ -4507,8 +4507,10 @@ function updateCamera(dt) {
   const w = smoother((R.t - A.t0) / A.D);
   const startPos = A.pre ? R.bPos : A.f0, startLook = A.pre ? R.bLook : A.fl0; // the follow view (frozen once the ball is at rest) or the view the move started from
   R.q.copy(startPos).lerp(R.tPos, w);
-  const lc = _pm.copy(startLook).lerp(ball, smoother(w / .35)); // the ball moves to the middle of the screen early in the move
-  lc.lerp(R.tLook, smoother((w - .45) / .55)); // and the address framing (ball lower) comes in only at the end
+  let lc;
+  if (A.pre) { // following the ball in: the ball moves to the middle of the screen early in the move, the address framing (ball lower) comes in at the end
+    lc = _pm.copy(startLook).lerp(ball, smoother(w / .35)); lc.lerp(R.tLook, smoother((w - .45) / .55));
+  } else lc = _pm.copy(startLook).lerp(R.tLook, w); // a move down to a new shot (e.g. from the hole overview to the tee): the view stays on the layout, no early tilt to the ball
   camStep(R.q, lc, A.pre ? 1 - w : 0, dt);
   if (G.state === 'settle' && ((w >= 1 && cam.position.distanceTo(R.aPos) < .05 && R.pv.length() < .05 && R.lv.length() < .05) || R.t - A.t0 > A.D + 5)) enterAddress();
 }
