@@ -2683,13 +2683,25 @@ function initTiltShift() {
   });
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); quad.frustumCulled = false;
   const sc = new THREE.Scene(); sc.add(quad);
-  W.post = { rt, mat, sc, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), fy: .55, v: new THREE.Vector3(), lp: new THREE.Vector3() };
+  // motion blur: a zoom blur toward the middle of the view, used while the camera flies fast after a good shot
+  const rt2 = new THREE.WebGLRenderTarget(size.x || 2, size.y || 2, { depthBuffer: false }); rt2.texture.minFilter = rt2.texture.magFilter = THREE.LinearFilter; rt2.texture.generateMipmaps = false;
+  const mbMat = new THREE.ShaderMaterial({
+    uniforms: { tD: { value: rt.texture }, k: { value: 0 }, ctr: { value: new THREE.Vector2(.5, .5) } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
+    fragmentShader: `uniform sampler2D tD; uniform float k; uniform vec2 ctr; varying vec2 vUv;
+      void main(){
+        vec2 dv = vUv - ctr; float w = smoothstep(.12, .75, length(dv * vec2(1., .8)));
+        vec3 c = vec3(0.); for (int i = 0; i < 12; i++) { float t = float(i) / 11.; c += texture2D(tD, ctr + dv * (1. - k * w * t)).rgb; }
+        gl_FragColor = vec4(c / 12., 1.);
+      }`, depthTest: false, depthWrite: false });
+  const mbQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mbMat); mbQuad.frustumCulled = false; const mbSc = new THREE.Scene(); mbSc.add(mbQuad);
+  W.post = { rt, mat, sc, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), fy: .55, v: new THREE.Vector3(), lp: new THREE.Vector3(), rt2, mbMat, mbSc, prev: new THREE.Vector3(), t0: 0, spd: 0, mb: 0 };
   resizeTiltShift();
 }
 function resizeTiltShift() {
   const P = W.post; if (!P) return;
   const s = W.ren.getDrawingBufferSize(new THREE.Vector2());
-  P.rt.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.mat.uniforms.maxR.value = Math.max(2, s.y * .0125);
+  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.mat.uniforms.maxR.value = Math.max(2, s.y * .0125);
 }
 function renderTiltShift(dt) {
   const P = W.post;
@@ -2703,9 +2715,71 @@ function renderTiltShift(dt) {
   }
   if (tgt) { P.v.copy(tgt).project(W.cam); if (P.v.z < 1) want = clamp(P.v.y * .5 + .5, .3, .8); }
   P.fy += (want - P.fy) * (1 - Math.exp(-dt * 2.2)); P.mat.uniforms.fy.value = P.fy;
+  // camera speed (real time) -> motion blur strength, only while a full shot is in the air
+  const nowT = performance.now(), cp = W.cam.position;
+  if (P.t0) { const k = Math.max(.004, (nowT - P.t0) / 1000), v = cp.distanceTo(P.prev) / k; P.spd += (v - P.spd) * (1 - Math.exp(-k * 8)); }
+  P.t0 = nowT; P.prev.copy(cp);
+  const flying = G.state === 'flight' && G.shot && !G.shot.L.putt, wantMb = flying ? smooth(12, 45, P.spd) * .1 : 0;
+  P.mb += (wantMb - P.mb) * (1 - Math.exp(-dt * 6));
   W.ren.setRenderTarget(P.rt); W.ren.render(W.scene, W.cam);
+  if (P.mb > .004) {
+    P.mbMat.uniforms.k.value = P.mb; W.ren.setRenderTarget(P.rt2); W.ren.render(P.mbSc, P.cam); P.mat.uniforms.tD.value = P.rt2.texture;
+  } else P.mat.uniforms.tD.value = P.rt.texture;
   W.ren.setRenderTarget(null); W.ren.render(P.sc, P.cam);
 }
+/* ---------- rain (3D) ---------- */
+// Drops are real particles in the world, simulated on the GPU: each one falls (leaning with the wind) through a box that follows the
+// camera and wraps round it, and is drawn as a thin streak between where it is now and where it was a moment ago relative to the camera
+// (so streaks stretch when the camera moves fast). Trees occlude them, the ball flies through them, and the tilt-shift blur takes them too.
+function initRain() {
+  const N = 7000, seed = new Float32Array(N * 16), corner = new Float32Array(N * 8), idx = new Uint32Array(N * 6), r = mulberry32(77);
+  for (let i = 0; i < N; i++) {
+    const a = r(), b = r(), c = r(), d = r();
+    for (let k = 0; k < 4; k++) { seed.set([a, b, c, d], (i * 4 + k) * 4); }
+    corner.set([-1, 0, 1, 0, -1, 1, 1, 1], i * 8);
+    idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 2, i * 4 + 1, i * 4 + 3], i * 6);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 12), 3)); g.setAttribute('seed', new THREE.BufferAttribute(seed, 4));
+  g.setAttribute('corner', new THREE.BufferAttribute(corner, 2)); g.setIndex(new THREE.BufferAttribute(idx, 1));
+  const U = { uTime: { value: 0 }, uCam: { value: new THREE.Vector3() }, uCamVel: { value: new THREE.Vector3() }, uGround: { value: 0 }, uH: { value: 36 }, uHalf: { value: 38 },
+    uWind: { value: new THREE.Vector2() }, uRes: { value: new THREE.Vector2(1, 1) }, uWidth: { value: 1.4 }, uFall: { value: 15 }, uAlpha: { value: .62 } };
+  const m = new THREE.ShaderMaterial({
+    uniforms: U, transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+    vertexShader: `attribute vec4 seed; attribute vec2 corner;
+      uniform float uTime, uGround, uH, uHalf, uWidth, uFall, uAlpha; uniform vec3 uCam, uCamVel; uniform vec2 uWind, uRes; varying float vA;
+      void main(){
+        float S = uHalf * 2.;
+        vec3 vel = vec3(uWind.x, -uFall * (.85 + .3 * seed.w), uWind.y);
+        vec3 p = vec3(seed.x * S, seed.y * uH, seed.z * S) + vel * uTime;
+        vec3 head = vec3(uCam.x + mod(p.x - uCam.x + uHalf, S) - uHalf, uGround + mod(p.y, uH), uCam.z + mod(p.z - uCam.z + uHalf, S) - uHalf);
+        vec3 rel = vel - uCamVel; float rl = length(rel);
+        vec3 tail = head - rel / max(rl, .001) * max(rl * .035, .45);
+        vec4 ch = projectionMatrix * viewMatrix * vec4(head, 1.), ct = projectionMatrix * viewMatrix * vec4(tail, 1.);
+        float dist = length(head - cameraPosition), hd = length((head - uCam).xz);
+        vA = uAlpha * smoothstep(1.5, 5., dist) * (1. - smoothstep(uHalf * .55, uHalf, hd)) * (.45 + .55 * seed.w) * (1. - smoothstep(30., 70., dist) * .6);
+        if (ch.w < .2 || ct.w < .2) { gl_Position = vec4(2., 2., 2., 1.); return; }
+        vec2 nh = ch.xy / ch.w, nt = ct.xy / ct.w, d = (nh - nt) * uRes; float dl = length(d); d = dl > .001 ? d / dl : vec2(0., 1.);
+        vec2 off = vec2(-d.y, d.x) * corner.x * uWidth / uRes;
+        vec4 c = corner.y > .5 ? ch : ct; gl_Position = vec4((c.xy / c.w + off) * c.w, c.z, c.w);
+      }`,
+    fragmentShader: `varying float vA; void main(){ gl_FragColor = vec4(1., .96, .9, vA); }`
+  });
+  const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 3; mesh.visible = false; W.scene.add(mesh);
+  W.rain = { mesh, U, last: 0, pos: new THREE.Vector3(), vel: new THREE.Vector3() };
+}
+function updateRain(now, dt) {
+  const R = W.rain; if (!R) return; const on = WX.id === 'rain' && !!G.C; R.mesh.visible = on; if (!on) return;
+  const U = R.U, cam = W.cam.position, C = G.C;
+  U.uTime.value = (now / 1000) % 600; U.uCam.value.copy(cam);
+  const s = W.ren.getDrawingBufferSize(_rv); U.uRes.value.set(s.x, s.y); U.uWidth.value = Math.max(1.2, s.y / 520);
+  U.uWind.value.set(G.wind[0] * .5, G.wind[1] * .5);
+  U.uGround.value = C.h(cam.x, cam.z) - 8; U.uH.value = 8 + Math.max(30, cam.y - C.h(cam.x, cam.z) + 14);
+  // camera velocity (smoothed), so streaks stretch with fast camera moves
+  if (R.last) { const k = Math.max(.001, (now - R.last) / 1000); _rv2.copy(cam).sub(R.pos).divideScalar(k); R.vel.lerp(_rv2, 1 - Math.exp(-k * 10)); }
+  R.last = now; R.pos.copy(cam); U.uCamVel.value.copy(R.vel);
+}
+const _rv = new THREE.Vector2(), _rv2 = new THREE.Vector3();
 function initThree() {
   const cv = document.getElementById('gl');
   const ren = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
@@ -2735,7 +2809,7 @@ function initThree() {
   }
   scene.add(W.clouds);
   Object.assign(W, { ren, scene, cam, sun });
-  initTiltShift();
+  initTiltShift(); initRain();
   // ball (oversized, faceted)
   const bt = makeBallTextures();
   W.ball = new THREE.Mesh(new THREE.SphereGeometry(VIS_R, 48, 32), new THREE.MeshPhongMaterial({ color: 0xffffff, map: bt.map, bumpMap: bt.bump, bumpScale: .004, specular: 0x2c2c2c, shininess: 38, emissive: 0xffffff, emissiveIntensity: .17 }));
@@ -4835,46 +4909,10 @@ function mapPick(e) {
 }
 
 /* ---------- strike dot overlay: rides up-left of the right thumb ---------- */
-/* ---------- rain ---------- */
-// Random drops at three depth layers: near ones are long, fast and bright, far ones short and faint, each landing on a ground row that
-// depends on its depth (far drops land near the horizon, near ones low on the screen) and leaving a small splash ring. Streaks lean
-// with the wind across the view. Nothing repeats: positions, speeds and landing rows are all drawn at random.
-const RAIN = { drops: [], splashes: [], last: 0 };
-function drawRain(x, W2, H2, now) {
-  const R = RAIN, dt = Math.min(.05, Math.max(0, (now - R.last) / 1000)); R.last = now;
-  const want = Math.round(clamp(W2 * H2 / 1500, 120, 420));
-  const dir = W.cam.getWorldDirection(_rd), lean = clamp(.1 + (-dir.z * G.wind[0] + dir.x * G.wind[1]) * .02, -.3, .5); // sideways px per px fallen
-  const spawn = (d, top) => {
-    const z = Math.pow(Math.random(), 1.6); // mostly far drops, a few near
-    d.z = z; d.x = Math.random() * (W2 + H2 * .6) - H2 * .3; d.sp = 520 + 900 * z * (.85 + .3 * Math.random());
-    d.len = 10 + 34 * z * (.8 + .4 * Math.random()); d.land = H2 * (.4 + .56 * z * (.7 + .3 * Math.random()));
-    d.y = top ? -d.len - Math.random() * 60 : Math.random() * d.land; return d;
-  };
-  while (R.drops.length < want) R.drops.push(spawn({}, false));
-  if (R.drops.length > want) R.drops.length = want;
-  const buckets = [[], [], []];
-  for (const d of R.drops) {
-    d.y += d.sp * dt; d.x += d.sp * dt * lean;
-    if (d.y >= d.land) { if (d.z > .12 && R.splashes.length < 90) R.splashes.push({ x: d.x, y: d.land, z: d.z, t: 0 }); spawn(d, true); continue; }
-    buckets[d.z < .3 ? 0 : d.z < .65 ? 1 : 2].push(d);
-  }
-  x.lineCap = 'round';
-  [[.16, .7], [.28, 1], [.42, 1.5]].forEach(([a, w], k) => {
-    x.strokeStyle = 'rgba(255,244,228,' + a + ')'; x.lineWidth = w; x.beginPath();
-    for (const d of buckets[k]) { x.moveTo(d.x, d.y); x.lineTo(d.x - d.len * lean, d.y - d.len); }
-    x.stroke();
-  });
-  x.lineWidth = 1;
-  for (let i = R.splashes.length - 1; i >= 0; i--) {
-    const sp = R.splashes[i]; sp.t += dt; const u = sp.t / .32; if (u >= 1) { R.splashes.splice(i, 1); continue; }
-    const rr = (2 + 9 * sp.z) * (.3 + u); x.strokeStyle = 'rgba(255,244,228,' + (.3 * (1 - u) * (.4 + sp.z)) + ')'; x.beginPath(); x.ellipse(sp.x, sp.y, rr, rr * .32, 0, 0, TAU); x.stroke();
-  }
-}
 function drawFx(now) {
   const x = UI.fxc; if (!x) return;
   const W2 = window.innerWidth, H2 = window.innerHeight;
   x.setTransform(UI.dpr, 0, 0, UI.dpr, 0, 0); x.clearRect(0, 0, W2, H2);
-  if (WX.id === 'rain' && G.state !== 'title') drawRain(x, W2, H2, now);
   let p, frozen = false;
   if (G.state === 'address' && SW.phase !== 'done') p = dotScreen();
   else if (SW.mark && (G.state === 'flight' || G.state === 'settle' || G.state === 'holed' || SW.phase === 'done')) { p = SW.mark; frozen = true; }
@@ -5124,7 +5162,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
-  updateCamera(dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateBirds(now / 1000);
+  updateCamera(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateBirds(now / 1000);
   if (C) { const t = G.camLook; W.sun.position.set(t.x + SUN_OFF[0], t.y + SUN_OFF[1], t.z + SUN_OFF[2]); W.sun.target.position.copy(t); }
   const tt = now / 1000;
   if (W.ring.visible) { const s = W.ring.userData.s || 1, k = 1 + Math.sin(tt * 3) * .05; W.ringPulse.scale.set(k, k, 1); }
