@@ -189,6 +189,33 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 .mbtns .wide{grid-column:1 / -1}
 .mbtn{height:50px;border-radius:16px;background:var(--soft);font:600 16px var(--cond);text-transform:uppercase;letter-spacing:.04em}
 .mbtn.dark{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+
+/* record card + stats */
+#recCard{position:fixed;left:50%;top:36%;z-index:12;width:min(92vw,430px);padding:20px 18px 18px;border-radius:28px;text-align:center;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-8deg);overflow:hidden;
+  background:linear-gradient(135deg,#ffe85a,#ffab1f 52%,#ff5d3a);color:#2b1200;box-shadow:0 18px 60px rgba(255,110,20,.55),inset 0 0 0 3px rgba(255,255,255,.85),inset 0 -10px 30px rgba(190,60,0,.25)}
+#recCard.on{opacity:1;transform:translate(-50%,-50%) rotate(-2deg);animation:recPop 3.6s cubic-bezier(.2,.9,.25,1.15) forwards}
+#recCard:before{content:"";position:absolute;left:50%;top:50%;width:900px;height:900px;margin:-450px 0 0 -450px;background:repeating-conic-gradient(rgba(255,255,255,.34) 0 7deg,transparent 7deg 20deg);animation:recSpin 6s linear infinite;z-index:0}
+#recCard:after{content:"";position:absolute;top:0;bottom:0;width:60px;left:-80px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:recShine 1.4s .5s ease-out 2;z-index:2}
+#recCard>*{position:relative;z-index:1}
+.rc-k{display:inline-block;font:700 14px/1 var(--cond);letter-spacing:.34em;text-transform:uppercase;padding:6px 12px 5px;border-radius:999px;background:#2b1200;color:#ffe85a;animation:recBlink .5s steps(2) 5}
+.rc-t{margin-top:10px;font:700 30px/1.02 var(--cond);text-transform:uppercase;font-style:italic;transform:skewX(-6deg);letter-spacing:.01em;text-shadow:0 2px 0 rgba(255,255,255,.5)}
+.rc-v{margin-top:4px;font:700 74px/1 var(--cond);font-style:italic;transform:skewX(-6deg);font-variant-numeric:tabular-nums;color:#fff;-webkit-text-stroke:2px #2b1200;paint-order:stroke fill;text-shadow:0 5px 0 rgba(43,18,0,.35)}
+.rc-s{margin-top:6px;font:600 15px/1.2 var(--cond);letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+@keyframes recPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-10deg)}9%{opacity:1;transform:translate(-50%,-50%) scale(1.14) rotate(-1deg)}15%{transform:translate(-50%,-50%) scale(.97) rotate(-3deg)}21%{transform:translate(-50%,-50%) scale(1) rotate(-2deg)}86%{opacity:1;transform:translate(-50%,-50%) scale(1.02) rotate(-2deg)}100%{opacity:0;transform:translate(-50%,-64%) scale(.94) rotate(-2deg)}}
+@keyframes recSpin{to{transform:rotate(360deg)}}@keyframes recShine{from{left:-80px}to{left:110%}}@keyframes recBlink{50%{opacity:.35}}
+.stLvl{background:linear-gradient(135deg,#2f6b35,#4a9a4c);color:#fff;border-radius:20px;padding:12px 14px;margin-bottom:10px}
+.stLvl b{display:block;font:700 24px/1.05 var(--cond);text-transform:uppercase}.stLvl span{font:600 12px var(--cond);letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.stBar{height:7px;border-radius:4px;background:rgba(255,255,255,.28);margin-top:8px;overflow:hidden}.stBar i{display:block;height:100%;background:#ffe85a;border-radius:4px}
+.stGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stCard{background:var(--soft);border-radius:16px;padding:10px 12px;position:relative;overflow:hidden}
+.stCard.rec{background:linear-gradient(135deg,#fff3b0,#ffd36a)}
+.stCard .em{position:absolute;right:8px;top:6px;font-size:22px;opacity:.9}
+.stCard .k{font:600 11px/1.15 var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding-right:26px}
+.stCard.rec .k{color:rgba(43,18,0,.6)}
+.stCard .v{font:700 28px/1.1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums;margin-top:3px}
+.stCard .n{font:500 12px/1.25 var(--body);color:var(--ink2);margin-top:2px}
+.stFun{display:flex;flex-direction:column;gap:6px}.stFun div{background:var(--soft);border-radius:14px;padding:9px 12px;font:500 14px/1.35 var(--body);color:var(--ink2)}.stFun b{color:var(--ink);font-weight:700}
+.stRow{display:flex;justify-content:space-between;align-items:center;font:600 15px var(--cond);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--hair)}.stRow span:first-child{color:var(--ink3);letter-spacing:.08em;font-size:12px}
 .pracHoles{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}.pracHoles button{height:38px;border-radius:12px;background:var(--soft);font:600 16px var(--cond);font-variant-numeric:tabular-nums}.pracHoles button.sel{background:var(--g1);color:#fff}
 .scw{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font:600 17px var(--cond);font-variant-numeric:tabular-nums}
@@ -295,11 +322,12 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="legacy">Legacy</button></div></div>
   </div>
   <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
-  <div class="mbtns"><button class="mbtn dark" id="mBoard">Leaderboard</button><button class="mbtn dark" id="mCard">Scorecard</button><button class="mbtn" id="mHelp">How to swing</button><button class="mbtn" id="mRound">New round</button></div>
+  <div class="mbtns"><button class="mbtn dark wide" id="mStats">📊 Stats &amp; records</button><button class="mbtn dark" id="mBoard">Leaderboard</button><button class="mbtn dark" id="mCard">Scorecard</button><button class="mbtn" id="mHelp">How to swing</button><button class="mbtn" id="mRound">New round</button></div>
 </div>
 <div class="sheet" id="cardSheet"><div class="grab"></div><div id="cardBody"></div></div>
 <div class="sheet" id="boardSheet"><div class="grab"></div><div class="sht">Leaderboard <small id="boardName">Golf &amp; Country Club Basel</small></div><div id="boardBody"></div></div>
 <div class="sheet" id="mapSheet"><div class="grab"></div><div class="sht"><span id="mapTitle">Hole map</span><small id="mapInfo"></small></div><div class="mapwrap"><canvas id="mapCv"></canvas></div><div class="maph"><span>Tap or drag to place your target</span><button class="mbtn dark" id="mapDone" style="height:44px;padding:0 22px">Done</button></div></div>
+<div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
 <div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="help">
   <div><b>Aim</b>Drag across the course, or open the map and tap a target. The white ring is where a pure, full swing lands with no wind.</div>
   <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; slower costs distance. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
@@ -309,6 +337,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
   <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. The Legacy Course is the original, made-up eighteen.</div>
 </div></div>
+<div id="recCard"></div>
 <div id="confetti"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -4270,12 +4299,12 @@ function restsOnGreen(r) {
 }
 function finishShot() {
   const sh = G.shot, r = sh.res, C = G.C, h = G.hole, par = C.def.par, first = G.strokes === 1;
-  document.body.classList.remove('flight');
+  document.body.classList.remove('flight'); statsShot(sh, r);
   if (r.holed) {
     G.state = 'holed'; G.holedT = 0; G.scores[h] = G.strokes;
     if (G.gir[h] == null) G.gir[h] = G.strokes - 1 <= par - 2;
     if (first && par >= 4) G.fir[h] = false;
-    SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
+    statsHole(h); SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
     setTimeout(() => { if (G.state === 'holed') showDone(false); }, 1300); updateHUD(); return;
   }
   let big = '', sub = '';
@@ -4306,7 +4335,7 @@ function finishShot() {
   if (first && par >= 4 && G.fir[h] == null) G.fir[h] = false;
   if (G.surf === S.GREEN && G.gir[h] == null && G.strokes <= par - 2) G.gir[h] = true;
   if (G.strokes >= par + 5) {
-    G.scores[h] = par + 5; G.state = 'holed'; G.holedT = 0;
+    G.scores[h] = par + 5; G.state = 'holed'; G.holedT = 0; statsHole(h);
     readout('<div class="r1">Picked up <span class="r1s">Max score · par + 5</span></div>', 2);
     setTimeout(() => { if (G.state === 'holed') showDone(true); }, 1200); updateHUD(); return;
   }
@@ -4822,7 +4851,7 @@ function showScorecard(final) {
   const played = G.scores.filter(s => s != null).length, firH = G.fir.filter((f, i) => f === true).length, firN = HOLE_DEFS.filter((d, i) => d.par >= 4 && G.fir[i] != null).length, girH = G.gir.filter(g => g === true).length;
   let best = null; try { best = +localStorage.getItem(BEST_KEY) || null; } catch (e) { }
   if (final && played === HOLE_DEFS.length) { try { if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { } best = best ? Math.min(best, tp.s) : tp.s; }
-  if (final && played === HOLE_DEFS.length && !G.submitted) { G.submitted = true; submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1 }); }
+  if (final && played === HOLE_DEFS.length && !G.submitted) { G.submitted = true; statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1 }); }
   $('cardBody').innerHTML = `<div class="sht">${final ? 'Round complete' : 'Scorecard'} <small>${final ? playerName() + ' · ' + COURSE.short : COURSE.name}</small></div>${final ? '<div id="finalBoard"></div><div class="sub">Scorecard</div>' : ''}<div class="scw"><table class="vcard">${rows}</table></div>
     <div class="scsum"><div><b>${played ? fmtToPar(tp.d) : '–'}</b>To par</div><div><b>${firN ? firH + '/' + firN : '–'}</b>Fairways</div><div><b>${played ? girH + '/' + played : '–'}</b>Greens</div><div><b>${best || '–'}</b>Best</div></div>
     ${final ? '<div class="mbtns"><button class="mbtn dark" id="scAgain">Play again</button><button class="mbtn" id="scClose">Close</button></div>' : ''}`;
@@ -4943,6 +4972,103 @@ function drawFx(now) {
   x.globalAlpha = 1;
 }
 
+
+/* ================= STATS + RECORDS ================= */
+// Kept on this device. Shot records (longest drive, longest holed shot, longest putt) count in practice too; holes, streaks and rounds only in a real round.
+const STATS_KEY = 'ssg-stats';
+function defStats() {
+  return { v: 1, rounds: 0, holes: 0, shots: 0, strokes: 0, putts: 0, dist: 0, aces: 0, eagles: 0, birdies: 0, pars: 0, bogeys: 0, doubles: 0, fwHit: 0, fwTry: 0, gir: 0, girTry: 0,
+    water: 0, ob: 0, lost: 0, trees: 0, chipins: 0, holedShots: 0, rainHoles: 0, cur: { gir: 0, fw: 0, bird: 0 },
+    rec: { holed: { v: 10 }, putt: { v: 3 }, drive: { v: 200 }, girStreak: { v: 2 }, fwStreak: { v: 3 }, birdStreak: { v: 1 }, round: { v: 10 }, roundPutts: { v: 40 } } };
+}
+let ST = (() => { try { const s = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); if (s && s.v === 1) { const d = defStats(); for (const k in d) if (s[k] === undefined) s[k] = d[k]; for (const k in d.rec) if (!s.rec[k]) s.rec[k] = d.rec[k]; return s; } } catch (e) { } return defStats(); })();
+function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(ST)); } catch (e) { } }
+const REC = {
+  holed: { t: 'Longest shot holed', e: '🎯', u: 'm', f: v => v.toFixed(1) + ' m' },
+  putt: { t: 'Longest putt holed', e: '⛳', u: 'm', f: v => v.toFixed(1) + ' m' },
+  drive: { t: 'Longest drive', e: '🚀', f: v => Math.round(v) + ' m' },
+  girStreak: { t: 'Greens in a row', e: '🟢', f: v => v + ' in a row' },
+  fwStreak: { t: 'Fairways in a row', e: '🛣️', f: v => v + ' in a row' },
+  birdStreak: { t: 'Birdie streak', e: '🐦', f: v => v + ' in a row' },
+  round: { t: 'Best round', e: '🏆', low: true, f: v => (v > 0 ? '+' + v : v === 0 ? 'E' : '' + v) },
+  roundPutts: { t: 'Fewest putts in a round', e: '🪄', low: true, f: v => v + ' putts' }
+};
+const recQueue = []; let recBusy = false;
+function recordCard(kicker, title, big, sub) {
+  recQueue.push({ kicker, title, big, sub }); if (!recBusy) nextRecord();
+}
+function nextRecord() {
+  const q = recQueue.shift(), el = $('recCard'); if (!q) { recBusy = false; return; } recBusy = true;
+  el.className = ''; void el.offsetWidth;
+  el.innerHTML = `<div class="rc-k">${q.kicker}</div><div class="rc-t">${q.title}</div><div class="rc-v">${q.big}</div>${q.sub ? `<div class="rc-s">${q.sub}</div>` : ''}`;
+  el.classList.add('on'); try { SFX.chime(); buzz([30, 40, 30, 40, 60]); } catch (e) { } burstConfetti();
+  setTimeout(() => { el.className = ''; setTimeout(nextRecord, 250); }, 3600);
+}
+// a record was beaten (low: smaller is better); returns true when it is a new one
+function beat(key, val, info, quiet) {
+  const R = ST.rec[key], d = REC[key], better = d.low ? val < R.v : val > R.v; if (!better) return false;
+  const prev = R.v, had = R.at != null; R.v = val; R.at = Date.now(); R.info = info || ''; saveStats();
+  if (!quiet) setTimeout(() => recordCard('New record!', d.t, d.f(val), had ? 'Previous best ' + d.f(prev) : 'The mark to beat was ' + d.f(prev)), 500);
+  return true;
+}
+// every finished shot (call once from finishShot)
+function statsShot(sh, r) {
+  const C = G.C, par = C.def.par, pv = G.prev || { x: G.ball.x, z: G.ball.z, teed: false }, putt = !!sh.L.putt, club = CLUBS[G.club] ? CLUBS[G.club].name : '';
+  ST.shots++; ST.dist += r.holed ? Math.hypot(C.cup.x - pv.x, C.cup.z - pv.z) : (r.total || 0);
+  if (r.water) ST.water++; if (r.lost) ST.lost++; else if (r.ob) ST.ob++;
+  if (r.events && r.events.some(e => e.type === 'tree')) ST.trees++;
+  const where = `Hole ${G.hole + 1} · ${COURSE.short}${G.practice ? ' · practice' : ''}`;
+  if (pv.teed && par >= 4 && !r.water && !r.ob && r.total > 0) beat('drive', r.total, where);
+  if (r.holed) {
+    const d = Math.hypot(C.cup.x - pv.x, C.cup.z - pv.z); ST.holedShots++; if (!putt && G.strokes > 1) ST.chipins++;
+    const big = beat('holed', d, where + ' · ' + club);
+    if (putt) beat('putt', d, where, big); // a putt that is also the longest holed shot only shows one card
+    if (G.strokes === 1) setTimeout(() => recordCard('Unreal!', 'Hole in one', Math.round(d) + ' m', where), big ? 4300 : 500), ST.aces++;
+  }
+  saveStats();
+}
+// a hole finished in a real round
+function statsHole(h) {
+  if (G.practice) return; const par = G.C.def.par, sc = G.scores[h], d = sc - par, S = ST;
+  S.holes++; S.strokes += sc; S.putts += G.putts[h] || 0; if (G.weather && G.weather.id === 'rain') S.rainHoles++;
+  if (sc === 1 && par > 1) { /* counted as an ace in statsShot */ } else if (d <= -2) S.eagles++; else if (d === -1) S.birdies++; else if (d === 0) S.pars++; else if (d === 1) S.bogeys++; else S.doubles++;
+  S.girTry++; if (G.gir[h] === true) { S.gir++; S.cur.gir++; beat('girStreak', S.cur.gir, 'Streak running'); } else S.cur.gir = 0;
+  if (par >= 4) { S.fwTry++; if (G.fir[h] === true) { S.fwHit++; S.cur.fw++; beat('fwStreak', S.cur.fw, 'Streak running'); } else S.cur.fw = 0; }
+  if (d < 0) { S.cur.bird++; beat('birdStreak', S.cur.bird, 'Streak running'); } else S.cur.bird = 0;
+  saveStats();
+}
+function statsRound(tp) {
+  ST.rounds++; saveStats(); const pu = G.putts.reduce((a, b) => a + b, 0), c = COURSE.short;
+  const b1 = beat('round', tp.d, c + ' · ' + tp.s + ' strokes'); setTimeout(() => beat('roundPutts', pu, c), b1 ? 4300 : 300);
+}
+const LEVELS = [[0, 'Rookie'], [18, 'Club Member'], [54, 'Fairway Regular'], [108, 'Scratch Hunter'], [216, 'Course Legend'], [432, 'Hall of Famer']];
+function openStats() {
+  const S = ST, el = $('statsBody'), pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–', km = S.dist / 1000;
+  let li = 0; LEVELS.forEach((l, i) => { if (S.holes >= l[0]) li = i; }); const nx = LEVELS[li + 1], lo = LEVELS[li][0];
+  const card = (k, e, v, n, rec) => `<div class="stCard${rec ? ' rec' : ''}"><span class="em">${e}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+  const rc = k => { const R = S.rec[k], d = REC[k]; return card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', R.at != null); };
+  const pace = S.holes ? (S.strokes / S.holes).toFixed(2) : '–';
+  const fun = [];
+  if (S.dist > 0) fun.push(`Your shots have flown <b>${km >= 1 ? km.toFixed(2) + ' km' : Math.round(S.dist) + ' m'}</b>, about <b>${(S.dist / 105).toFixed(1)}</b> football pitches.`);
+  if (S.water) fun.push(`<b>${S.water}</b> ball${S.water > 1 ? 's' : ''} fed the fish 🐟`);
+  if (S.trees) fun.push(`You clipped the timber <b>${S.trees}</b> time${S.trees > 1 ? 's' : ''} 🌳`);
+  if (S.ob + S.lost) fun.push(`<b>${S.ob}</b> out of bounds, <b>${S.lost}</b> lost in the woods`);
+  if (S.rainHoles) fun.push(`<b>${S.rainHoles}</b> hole${S.rainHoles > 1 ? 's' : ''} played in the rain ☔`);
+  if (S.chipins) fun.push(`<b>${S.chipins}</b> holed-out shot${S.chipins > 1 ? 's' : ''} from off the green 🪄`);
+  if (S.aces) fun.push(`<b>${S.aces}</b> hole${S.aces > 1 ? 's' : ''} in one. Legend. 👑`);
+  if (!fun.length) fun.push('Play a few holes and the fun facts will show up here.');
+  el.innerHTML = `<div class="stLvl"><b>${LEVELS[li][1]}</b><span>${nx ? (nx[0] - S.holes) + (nx[0] - S.holes === 1 ? ' hole to ' : ' holes to ') + nx[1] : 'Top level reached'} · ${S.holes} hole${S.holes === 1 ? '' : 's'} · ${S.rounds} round${S.rounds === 1 ? '' : 's'}</span>${nx ? `<div class="stBar"><i style="width:${Math.min(100, 100 * (S.holes - lo) / (nx[0] - lo))}%"></i></div>` : ''}</div>
+    <div class="sub"><span>Records</span></div><div class="stGrid">${['holed', 'putt', 'drive', 'girStreak', 'fwStreak', 'birdStreak', 'round', 'roundPutts'].map(rc).join('')}</div>
+    <div class="sub"><span>Streaks running now</span></div><div class="stGrid">${card('Greens in a row', '🟢', S.cur.gir, 'best ' + S.rec.girStreak.v)}${card('Fairways in a row', '🛣️', S.cur.fw, 'best ' + S.rec.fwStreak.v)}${card('Birdie streak', '🐦', S.cur.bird, 'best ' + S.rec.birdStreak.v)}${card('Holes in one', '👑', S.aces)}</div>
+    <div class="sub"><span>Scoring</span></div>
+    <div class="stRow"><span>Eagles or better</span><span>${S.eagles}</span></div><div class="stRow"><span>Birdies</span><span>${S.birdies}</span></div><div class="stRow"><span>Pars</span><span>${S.pars}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bogeys}</span></div><div class="stRow"><span>Double or worse</span><span>${S.doubles}</span></div>
+    <div class="stRow"><span>Fairways hit</span><span>${pct(S.fwHit, S.fwTry)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gir, S.girTry)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.holes ? (S.putts / S.holes).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${pace}</span></div>
+    <div class="sub"><span>Fun facts</span></div><div class="stFun">${fun.map(f => `<div>${f}</div>`).join('')}</div>
+    <div class="mbtns"><button class="mbtn" id="stReset">Reset stats</button><button class="mbtn dark" id="stClose">Close</button></div>`;
+  $('stSub').textContent = playerName(); $('stClose').onclick = () => closeSheets();
+  $('stReset').onclick = () => { if (confirm('Reset all stats and records on this device?')) { ST = defStats(); saveStats(); openStats(); } };
+  openSheet('statsSheet');
+}
 /* ================= PLAYER + LEADERBOARD ================= */
 // Rounds go to a board on this device (always) and, when the page runs inside Claude with the db capability and the
 // viewer may write shared data, to a shared board everyone with the link can read.
@@ -5129,6 +5255,7 @@ function initInput() {
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); });
   $('mCard').onclick = () => showScorecard(false);
+  $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
   $('mRound').onclick = () => { closeSheets(); startRound(); };
   // course: on the title it just switches the course shown; in the menu it starts a new round on it
