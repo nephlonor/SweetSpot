@@ -333,7 +333,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
 <div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="help">
   <div><b>Aim</b>Drag across the course, or open the map and tap a target. The white ring is where a pure, full swing lands with no wind.</div>
-  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; slower costs distance. Keep the downswing straight: the sideways drift of your thumb on the way down (traced in yellow on the tempo scale, fading while the ball flies) sets the starting line, so drifting right sends the ball left of your aim line and drifting left sends it right (the ball starts the opposite way). Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
+  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the downswing straight: the sideways drift of your thumb on the way down (traced in yellow on the tempo scale, fading while the ball flies) sets the starting line, so drifting right sends the ball left of your aim line and drifting left sends it right (the ball starts the opposite way). Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · right thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke and a drop. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
@@ -449,7 +449,7 @@ const CLUBS = [
 const PUTTER = CLUBS.length - 1;
 const POW_EXP = .78;
 const DOWN_FULL = .35; // seconds
-const DOWN_LOSS = .45; // slow-downswing penalty, as a share of the original curve
+const DOWN_STEP = .2, DOWN_STEP_LOSS = .2; // each 0.2 s the downswing is slower than DOWN_FULL cuts the ball speed by a further 20 % (compounding)
 const TEMPO_K = -Math.log((1.4 / 1.5 - .85) / .15); // tempo multiplier .85 + .15 * exp(-K * (R - 3)^2) hits 1.4/1.5 at 2:1 and 4:1
 const PUTT_RANGES = [3, 6, 10, 15, 22, 30];
 // part swings make less spin: a short chip leaves the face with a fraction of a full swing's backspin
@@ -779,7 +779,7 @@ function computeLaunch(ci, sw, st, surf, yaw, hand, teed, lieRoll) {
   } else {
     const p = clamp(sw.p, .04, 1);
     // full power needs the downswing (top -> strike) under 0.35 s; slower costs club speed
-    const downF = sw.Td <= DOWN_FULL ? 1 : 1 - DOWN_LOSS * (1 - clamp(Math.pow(DOWN_FULL / sw.Td, .45), .5, 1));
+    const downF = sw.Td <= DOWN_FULL ? 1 : Math.pow(1 - DOWN_STEP_LOSS, (sw.Td - DOWN_FULL) / DOWN_STEP); // every 0.2 s slower than 0.35 s takes a further 20 % off the ball speed
     const clubSpeed = c.clubSpeed * Math.pow(p, POW_EXP) * downF;
     let sm = 1 - .20 * h * h - (v < 0 ? .15 : .015) * v * v;
     let launchAdd = (v > 0 ? 3 : 2.2) * v, spinMul = 1 - .33 * clamp(v, -1.2, 1.2), start = 1.6 * h, extra = null;
