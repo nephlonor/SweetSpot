@@ -4061,17 +4061,23 @@ function treeOnLine(yaw, maxD) {
   }
   return best;
 }
+// the middle of the back third of the green, seen from the ball: the caddie plays to it (a long putt is better than a short chip)
+function backThird() {
+  const C = G.C, g = C.green; if (!g || !g.R) return { x: C.cup.x, z: C.cup.z };
+  const dx = g.cx - G.ball.x, dz = g.cz - G.ball.z, l = Math.hypot(dx, dz) || 1;
+  return { x: g.cx + dx / l * g.R * .62, z: g.cz + dz / l * g.R * .62 };
+}
 function autoClubAndAim() {
-  const C = G.C, d = distToPin();
+  const C = G.C, d = distToPin(), bt = backThird(), dB = Math.hypot(bt.x - G.ball.x, bt.z - G.ball.z);
   G.target = null;
   if (onGreenish()) { G.club = PUTTER; G.suggested = PUTTER; G.yaw = Math.atan2(C.cup.x - G.ball.x, -(C.cup.z - G.ball.z)); pickPuttRange(); G.carryKey = ''; updateAim(true); return; }
   let ci = CLUBS.length - 2;
-  for (let k = 0; k < PUTTER; k++) { const c = CLUBS[k]; if (G.surf !== S.TEE && c.id === 'Dr') continue; if (c.carry + c.roll * .6 <= d + 4) { ci = k; break; } }
+  for (let k = 0; k < PUTTER; k++) { const c = CLUBS[k]; if (G.surf !== S.TEE && c.id === 'Dr') continue; if (c.carry + c.roll * .6 <= dB + 4) { ci = k; break; } } // the club for the back third of the green
   if (G.surf === S.SAND && d < 90) ci = 11;
   // caddie: aim down the centre line at the club's reach; step down a club if a pure shot would finish wet or OB
   const aimFor = k => {
-    const reach = CLUBS[k].carry + CLUBS[k].roll; let tx = C.cup.x, tz = C.cup.z;
-    if (reach < d - 15) {
+    const reach = CLUBS[k].carry + CLUBS[k].roll; let tx = bt.x, tz = bt.z;
+    if (reach < dB - 15) {
       let bestS = 0, bd = 1e9; for (let s2 = 0; s2 <= C.center.L; s2 += 2) { const p = polyAt(C.center, s2), dd = Math.hypot(p[0] - G.ball.x, p[1] - G.ball.z); if (dd < bd) { bd = dd; bestS = s2; } }
       for (let s2 = bestS; s2 <= C.center.L; s2 += 2) { const p = polyAt(C.center, s2); if (Math.hypot(p[0] - G.ball.x, p[1] - G.ball.z) >= reach) { tx = p[0]; tz = p[1]; break; } }
     }
