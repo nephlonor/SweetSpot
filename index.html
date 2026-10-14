@@ -2881,7 +2881,7 @@ function initThree() {
   scene.add(W.clouds);
   // rainbow: the 42 degree circle around the point opposite the sun (sun low in the west, so a high arc in the east)
   {
-    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], -SUN_OFF[1], -SUN_OFF[2]).normalize(), D = R * Math.cos(42 * DEG), rO = D * Math.tan(58 * DEG), rI = D * Math.tan(27 * DEG);
+    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], Math.hypot(SUN_OFF[0], SUN_OFF[2]) * Math.tan(10 * DEG), -SUN_OFF[2]).normalize() /* centre raised to 10 deg above the horizon so the arc stands high in the sky */, D = R * Math.cos(42 * DEG), rO = D * Math.tan(58 * DEG), rI = D * Math.tan(27 * DEG);
     const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, uniforms: { uOp: { value: 0 }, uIn: { value: rI }, uOut: { value: rO } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
       fragmentShader: 'varying vec2 vP; uniform float uOp, uIn, uOut; vec3 hsv(float h){ return clamp(abs(mod(h*6.+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.); } void main(){ float t = clamp((length(vP)-uIn)/(uOut-uIn),0.,1.); float al = pow(sin(3.14159*t),1.4) * uOp; gl_FragColor = vec4(hsv((1.-t)*.78), al); }' });
