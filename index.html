@@ -333,7 +333,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
 <div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="help">
   <div><b>Aim</b>Drag across the course, or open the map and tap a target. The white ring is where a pure, full swing lands with no wind.</div>
-  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; slower costs distance. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
+  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; slower costs distance. Keep the downswing straight: the sideways drift of your thumb on the way down (traced in yellow on the tempo scale, fading while the ball flies) sets the starting line, so drifting right pushes the ball right and drifting left pulls it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · right thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke and a drop. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
@@ -771,7 +771,7 @@ function computeLaunch(ci, sw, st, surf, yaw, hand, teed, lieRoll) {
     let vb = Math.sqrt(2 * SURF[S.GREEN].mu * GRAV * Math.max(.05, D));
     const sm = (1 - .22 * h * h - .06 * v * v) * (.95 + .05 * q);
     vb *= sm;
-    const start = 1.4 * h * hand;
+    const start = 1.4 * h * hand + (sw.pathDeg || 0);
     const yy = yaw + start * DEG;
     out.putt = true; out.ballSpeed = vb; out.clubSpeed = vb / 1.0; out.smash = sm; out.startDeg = start; out.tilt = 0;
     out.v = [Math.sin(yy) * vb, 0, -Math.cos(yy) * vb]; out.w = [0, 0, 0];
@@ -807,7 +807,7 @@ function computeLaunch(ci, sw, st, surf, yaw, hand, teed, lieRoll) {
     launch = clamp(launch, 1, 68);
     const ballSpeed = clubSpeed * c.smash * tempoMult * sm * lieSpeed;
     const spin = Math.max(0, c.spin * spinFrac(p) * spinMul * lie.spin);
-    start *= hand; tilt *= hand;
+    start = start * hand + (sw.pathDeg || 0); tilt *= hand; // (the downswing path is a screen direction: right is right for either hand)
     const yy = yaw + start * DEG, dx = Math.sin(yy), dz = -Math.cos(yy);
     const cl = Math.cos(launch * DEG), sl = Math.sin(launch * DEG);
     const tr = tilt * DEG, ct = Math.cos(tr), st2 = Math.sin(tr), wr = spin * RPM;
@@ -4187,23 +4187,34 @@ function predictCarry() {
 function canSwing() { return G.state === 'address' && !sheetOpen(); }
 function swingBegin(x, y, t, kb) {
   Object.assign(SW, { phase: 'ready', p: 0, pMax: 0, startY: y, lastY: y, lastT: t, t0: 0, tTop: 0, vel: 0, speedN: 0, dH: 0, dV: 0, jH: 0, jV: 0, tau: Math.random() * 50, seed: (Math.random() * 1e6) | 0, kb: !!kb, mark: null, resultT: 0, trail: [] });
-  SW.fullPx = UI.trackPx || 220;
+  SW.fullPx = UI.trackPx || 220; SW.path = []; SW.topI = 0; SW.pathDeg = 0; SW.pathAt = 0;
   if (SW.sid == null && !SW.mouseR) SW.thumb = false;
   if (!settings.coached) { settings.coached = true; saveSettings(); }
 }
-function swingMove(y, t) {
+// The downswing's sideways drift sets the starting line: the average direction of the thumb's path from the top of the swing, measured from
+// straight down. Drifting right sends the ball right of the aim line, drifting left sends it left (degrees; 0 for a keyboard swing).
+const PATH_GAIN = .55, PATH_MAX = 9;
+function pathAngle() {
+  const P = SW.path; if (!P || P.length < 3 || SW.topI >= P.length - 1) return 0;
+  const [x0, y0] = P[SW.topI]; let sa = 0, sw = 0;
+  for (let i = SW.topI + 1; i < P.length; i++) { const dy = P[i][1] - y0; if (dy < 18) continue; sa += Math.atan2(P[i][0] - x0, dy) * dy; sw += dy; }
+  return sw ? clamp(sa / sw / DEG * PATH_GAIN, -PATH_MAX, PATH_MAX) : 0;
+}
+function swingMove(y, t, x) {
   if (SW.phase === 'idle' || SW.phase === 'done') return;
   const dtm = Math.max(.001, (t - SW.lastT) / 1000), p = (SW.startY - y) / SW.fullPx;
   SW.vel = lerp(SW.vel, Math.abs(y - SW.lastY) / dtm, .5);
   advanceDrift(dtm);
+  if (x != null && SW.path && SW.path.length < 600 && (SW.phase === 'back' || SW.phase === 'down')) SW.path.push([x, y]);
   if (SW.phase === 'ready' && p > .03) { SW.phase = 'back'; SW.t0 = t; document.body.classList.add('swing'); $('aimHint').classList.remove('on'); }
   if (SW.phase === 'back') {
     if (p > SW.pMax) { const q0 = Math.floor(Math.min(SW.pMax, 1) * 4); SW.pMax = p; SW.tTop = t; if (Math.floor(Math.min(p, 1) * 4) > q0) SFX.tick(); }
-    if (SW.pMax - p > .05 && SW.pMax > .06) { SW.phase = 'down'; SFX.whoosh(.25); }
+    if (SW.pMax - p > .05 && SW.pMax > .06) { SW.phase = 'down'; SFX.whoosh(.25); SW.topI = Math.max(0, SW.path.length - 1); }
   }
   if (SW.phase === 'down' && p <= 0) {
     const pPrev = (SW.startY - SW.lastY) / SW.fullPx, u = pPrev > 0 ? pPrev / (pPrev - p) : 1;
     const tImp = SW.lastT + (t - SW.lastT) * clamp(u, 0, 1);
+    if (x != null) SW.path.push([x, y]);
     SW.p = 0; SW.lastY = y; SW.lastT = t; impact(tImp); return;
   }
   SW.p = clamp(p, -.2, 1.12); SW.lastY = y; SW.lastT = t;
@@ -4258,14 +4269,15 @@ function impact(tImp) {
   const st = strikeNow();
   SW.phase = 'done'; SW.mark = { x: st.x, y: st.y }; SW.resultT = performance.now(); SW.impactT = performance.now();
   document.body.classList.remove('swing'); document.body.classList.add('flight');
-  const L = computeLaunch(G.club, { p: Math.min(SW.pMax, 1.05), Tb, Td, range: G.puttRange }, st, G.surf, G.yaw, settings.hand, G.teed, Math.random());
+  SW.pathDeg = pathAngle(); SW.pathAt = performance.now();
+  const L = computeLaunch(G.club, { p: Math.min(SW.pMax, 1.05), Tb, Td, range: G.puttRange, pathDeg: SW.pathDeg }, st, G.surf, G.yaw, settings.hand, G.teed, Math.random());
   L.Tb = Tb; L.Td = Td; L.loose = st.loose; SW.last = L;
   SFX.hit(L.qualityLevel, L.putt); buzz(L.qualityLevel < 1 ? 12 : 30);
   G.strokes++;
   if (L.putt && (G.surf === S.GREEN || G.surf === S.FRINGE)) G.putts[G.hole]++;
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
-  G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
+  G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '→' : '←'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
@@ -4636,6 +4648,23 @@ function drawTempo(now) {
     x.translate(tx - 11.5 * 1.7, hy - 5.5 * 1.7); x.scale(1.7, 1.7);
     x.fillStyle = '#fff'; x.fill(HAND); x.lineWidth = .9; x.strokeStyle = '#16211c'; x.stroke(HAND);
     x.restore();
+  }
+  // the thumb's path: back (faint) and down (bright), the straight line from the top as reference; it fades out slowly while the ball is in the air
+  if (SW.path && SW.path.length > 1) {
+    let a = 1;
+    if (SW.phase === 'done') a = G.state === 'flight' || G.state === 'holed' ? clamp(1 - G.playT / Math.max(2, (G.shot && G.shot.res ? G.shot.res.duration : 4)), 0, 1) : 0;
+    if (a > .01) {
+      const r = $('tempoCv').getBoundingClientRect(), P = SW.path, ti = Math.min(SW.topI, P.length - 1), X = q => q[0] - r.left, Y = q => q[1] - r.top;
+      x.save(); x.beginPath(); x.rect(0, 0, w, h); x.clip(); x.globalAlpha = a; x.lineCap = 'round'; x.lineJoin = 'round';
+      if (SW.phase === 'down' || SW.phase === 'done') { // the reference: straight down from the top of the swing
+        x.setLineDash([4, 5]); x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X(P[ti]), Y(P[ti])); x.lineTo(X(P[ti]), Y(P[ti]) + 240); x.stroke(); x.setLineDash([]);
+      }
+      const seg = (i0, i1, col, wd) => { x.strokeStyle = col; x.lineWidth = wd; x.beginPath(); x.moveTo(X(P[i0]), Y(P[i0])); for (let i = i0 + 1; i <= i1; i++) x.lineTo(X(P[i]), Y(P[i])); x.stroke(); };
+      seg(0, Math.min(ti, P.length - 1), 'rgba(255,255,255,.35)', 2.5);
+      if (P.length - 1 > ti) { seg(ti, P.length - 1, 'rgba(0,30,12,.35)', 7); seg(ti, P.length - 1, '#ffe85a', 4); }
+      const e = P[P.length - 1]; x.fillStyle = '#fff'; x.beginPath(); x.arc(X(e), Y(e), 4.5, 0, TAU); x.fill();
+      x.restore();
+    }
   }
   // footer text
   const f1 = $('tf1'), f2 = $('tf2'), R = putt ? 2 : 3;
@@ -5320,7 +5349,7 @@ function initInput() {
       SW.mouseR = SW.sid == null && e.pointerId !== SW.id && e.pointerId !== aim.id && e.clientX > window.innerWidth / 2 && e.clientY > strikeTop();
       if (SW.mouseR) { SW.tx = e.clientX; SW.ty = e.clientY; SW.thumb = true; }
     }
-    if (e.pointerId === SW.id) { swingMove(e.clientY, e.timeStamp); e.preventDefault(); return; }
+    if (e.pointerId === SW.id) { swingMove(e.clientY, e.timeStamp, e.clientX); e.preventDefault(); return; }
     if (e.pointerId === SW.sid) { SW.tx = e.clientX; SW.ty = Math.max(e.clientY, strikeTop()); return; }
     if (e.pointerId === aim.id && G.state === 'address') {
       G.yaw += (e.clientX - aim.x) * (isPutt() ? .0011 : .0032); aim.x = e.clientX; G.target = null;
