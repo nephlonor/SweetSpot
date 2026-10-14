@@ -4436,8 +4436,9 @@ let _dv = 0;
 function dampV3(cur, tgt, vel, st, dt) {
   cur.x = dampAxis(cur.x, tgt.x, vel.x, st, dt); vel.x = _dv; cur.y = dampAxis(cur.y, tgt.y, vel.y, st, dt); vel.y = _dv; cur.z = dampAxis(cur.z, tgt.z, vel.z, st, dt); vel.z = _dv;
 }
-const FLIGHT_ST = .8, FLIGHT_LOOK_ST = .45;
-const CAM_ST = .25; // smoothing time of the camera filters (the same everywhere, so a change of mode never changes the dynamics)
+const CAM_SPEED = 1.2; // all camera moves run this much faster (times scale by 1/CAM_SPEED)
+const FLIGHT_ST = .8 / CAM_SPEED, FLIGHT_LOOK_ST = .45 / CAM_SPEED;
+const CAM_ST = .25 / CAM_SPEED; // smoothing time of the camera filters (the same everywhere, so a change of mode never changes the dynamics)
 const smoother = x => { x = clamp(x, 0, 1); return x * x * x * (x * (x * 6 - 15) + 10); };
 const softMax = (a, b, k) => .5 * (a + b + Math.sqrt((a - b) * (a - b) + k * k)); // a max with a rounded corner
 function camInit() {
@@ -4488,7 +4489,7 @@ function updateCamera(dt) {
     const pre = !!canPre; let pPos = R.pPos, pLook = R.pLook;
     if (pre) { const f = sr.final, yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z)); addressCamFor(pPos, pLook, f.x, C.h(f.x, f.z), f.z, yaw, restsOnGreen(sr), false); }
     else { addressCam(pPos, pLook); } // no prediction: the real view is known already
-    R.arr = { t0: R.t, D: clamp(1.4 + cam.position.distanceTo(pPos) * .07, 1.8, 4.2), pre, finT: pre ? null : R.t, f0: cam.position.clone(), fl0: G.camLook.clone() };
+    R.arr = { t0: R.t, D: clamp(1.4 + cam.position.distanceTo(pPos) * .07, 1.8, 4.2) / CAM_SPEED, pre, finT: pre ? null : R.t, f0: cam.position.clone(), fl0: G.camLook.clone() };
   }
   if (G.snapCam && G.state === 'settle') { // practice replay: straight to the tee shot, no travelling
     G.snapCam = false; addressCam(camTmp, lookTmp); cam.position.copy(camTmp); G.camLook.copy(lookTmp); cam.lookAt(G.camLook); camSnap(); enterAddress(); return;
