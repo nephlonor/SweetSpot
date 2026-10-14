@@ -333,7 +333,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
 <div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="help">
   <div><b>Aim</b>Drag across the course, or open the map and tap a target. The white ring is where a pure, full swing lands with no wind.</div>
-  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; slower costs distance. Keep the downswing straight: the sideways drift of your thumb on the way down (traced in yellow on the tempo scale, fading while the ball flies) sets the starting line, so drifting right pushes the ball right and drifting left pulls it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
+  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide up for the backswing. The scale shows the carry for your club. Slide back down past where you started to strike. The downswing must take under 0.35 s for full power; slower costs distance. Keep the downswing straight: the sideways drift of your thumb on the way down (traced in yellow on the tempo scale, fading while the ball flies) sets the starting line, so drifting right sends the ball left of your aim line and drifting left sends it right (the ball starts the opposite way). Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · right thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke and a drop. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
@@ -771,7 +771,7 @@ function computeLaunch(ci, sw, st, surf, yaw, hand, teed, lieRoll) {
     let vb = Math.sqrt(2 * SURF[S.GREEN].mu * GRAV * Math.max(.05, D));
     const sm = (1 - .22 * h * h - .06 * v * v) * (.95 + .05 * q);
     vb *= sm;
-    const start = 1.4 * h * hand + (sw.pathDeg || 0);
+    const start = 1.4 * h * hand - (sw.pathDeg || 0);
     const yy = yaw + start * DEG;
     out.putt = true; out.ballSpeed = vb; out.clubSpeed = vb / 1.0; out.smash = sm; out.startDeg = start; out.tilt = 0;
     out.v = [Math.sin(yy) * vb, 0, -Math.cos(yy) * vb]; out.w = [0, 0, 0];
@@ -807,7 +807,7 @@ function computeLaunch(ci, sw, st, surf, yaw, hand, teed, lieRoll) {
     launch = clamp(launch, 1, 68);
     const ballSpeed = clubSpeed * c.smash * tempoMult * sm * lieSpeed;
     const spin = Math.max(0, c.spin * spinFrac(p) * spinMul * lie.spin);
-    start = start * hand + (sw.pathDeg || 0); tilt *= hand; // (the downswing path is a screen direction: right is right for either hand)
+    start = start * hand - (sw.pathDeg || 0); tilt *= hand; // (the downswing path is a screen direction, either hand; the ball starts the opposite way)
     const yy = yaw + start * DEG, dx = Math.sin(yy), dz = -Math.cos(yy);
     const cl = Math.cos(launch * DEG), sl = Math.sin(launch * DEG);
     const tr = tilt * DEG, ct = Math.cos(tr), st2 = Math.sin(tr), wr = spin * RPM;
@@ -4192,7 +4192,7 @@ function swingBegin(x, y, t, kb) {
   if (!settings.coached) { settings.coached = true; saveSettings(); }
 }
 // The downswing's sideways drift sets the starting line: the average direction of the thumb's path from the top of the swing, measured from
-// straight down. Drifting right sends the ball right of the aim line, drifting left sends it left (degrees; 0 for a keyboard swing).
+// straight down. The ball starts the opposite way: drifting right sends it left of the aim line, drifting left sends it right (degrees; 0 for a keyboard swing).
 const PATH_GAIN = .55, PATH_MAX = 9;
 function pathAngle() {
   const P = SW.path; if (!P || P.length < 3 || SW.topI >= P.length - 1) return 0;
