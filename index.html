@@ -2414,7 +2414,7 @@ function buildRealTrees(C, grp) {
     }
     const Rh = R * ((TREE_TWEAK[t.id] || {}).slim || 1);
     col.setHex(t.kind === 3 ? [0x7fb35e, 0x88bb62, 0x76aa58][(hv * 3) | 0] : hv < .78 ? REAL_TREE_COLS[(hv / .78 * REAL_TREE_COLS.length) | 0] : LEAF_COLS[((hv - .78) / .22 * LEAF_COLS.length) | 0]);
-    if (RDC.dry) col.offsetHSL(-.022, -.13, .015); // links: duller, slightly yellower foliage
+    if (RDC.dry) col.offsetHSL(-.04, -.15, .02); // links: duller, slightly yellower foliage
     const ts = t.kind ? .55 : .75 + R * .09, cy = y + th + .9 * R;
     put(tr, t.X, y - .2, t.Z, ts, th + .5 + .4 * R, ts, tcol, ry);
     put(bl, t.X, cy, t.Z, Rh, .9 * R, Rh, col, ry);
@@ -3169,14 +3169,14 @@ function terrainMatFrom(o) {
   const tex = d => { const t = new THREE.DataTexture(d, w, h, THREE.RGBAFormat); t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.generateMipmaps = false; t.needsUpdate = true; return t; };
   const v3 = rgb => new THREE.Vector3(rgb[0], rgb[1], rgb[2]);
   const pc = (k, dl, ds, dh) => { const c = PAL_HSL[k]; return v3(hslToRgb(c[0] + (dh || 0), c[1] + (ds || 0), c[2] + (dl || 0))); };
-  const dr = o.dry ? 1 : 0;
+  const dr = o.dry ? 1.7 : 0; // (1 = a little dry; Alsace is pushed well toward straw and olive-yellow)
   const U = {
     tFA: { value: tex(A) }, tFB: { value: tex(B) }, tFC: { value: tex(T) }, fO: { value: new THREE.Vector2(x0, z0) }, fN: { value: new THREE.Vector2(w, h) }, fInv: { value: 1 / res }, fR: { value: R },
     wLo: { value: wlo }, wHi: { value: whi }, seaLv: { value: o.sea != null ? o.sea : -1e4 }, hasCoast: { value: o.sea != null ? 1 : 0 }, isLinks: { value: o.links ? 1 : 0 }, isRocky: { value: o.rocky ? 1 : 0 },
     tFar: { value: far ? far.tex : NO_FAR.tex }, hasFar: { value: far ? 1 : 0 }, farA: { value: far ? far.A : new THREE.Vector4() }, farB: { value: far ? far.B : new THREE.Vector4(0, 0, 1, 1) }, cupP: CUP_U,
     // dry = a links-style course: sun-bleached, more olive and straw in the rough, a touch drier on the fairways (greens stay healthy)
-    cRough: { value: pc(S.ROUGH, dr * .03, -dr * .12, -dr * .05) }, cDeep: { value: pc(S.DEEP, dr * .05, -dr * .17, -dr * .068) }, cFirst: { value: pc(S.FIRST, dr * .02, -dr * .07, -dr * .025) }, cFairA: { value: pc(S.FAIR, .045 + dr * .03, -dr * .09, -dr * .035) }, cFairB: { value: pc(S.FAIR, -.025 + dr * .02, -dr * .09, -dr * .035) },
-    cGreenA: { value: pc(S.GREEN, .02) }, cGreenB: { value: pc(S.GREEN, -.008) }, cFringe: { value: pc(S.FRINGE) }, cSand: { value: pc(S.SAND) }, cWaste: { value: pc(S.SAND, -.05, -.08, .012) },
+    cRough: { value: pc(S.ROUGH, dr * .03, -dr * .12, -dr * .05) }, cDeep: { value: pc(S.DEEP, dr * .05, -dr * .17, -dr * .068) }, cFirst: { value: pc(S.FIRST, dr * .02, -dr * .07, -dr * .025) }, cFairA: { value: pc(S.FAIR, .045 + dr * .03, -dr * .1, -dr * .05) }, cFairB: { value: pc(S.FAIR, -.025 + dr * .02, -dr * .1, -dr * .05) },
+    cGreenA: { value: pc(S.GREEN, .02, -dr * .02, -dr * .012) }, cGreenB: { value: pc(S.GREEN, -.008, -dr * .02, -dr * .012) }, cFringe: { value: pc(S.FRINGE, 0, -dr * .04, -dr * .02) }, cSand: { value: pc(S.SAND) }, cWaste: { value: pc(S.SAND, -.05, -.08, .012) },
     cTee: { value: pc(S.TEE) }, cPath: { value: pc(S.PATH) }, cBeach: { value: v3(hslToRgb(BEACH[0], BEACH[1], BEACH[2])) }, cPond: { value: pc(S.WATER, -.16, -.12) },
     cRock: { value: v3(hslToRgb(.085, .16, .68)) }, cGranite: { value: v3(hslToRgb(.08, .07, .6)) }, cBed1: { value: v3(hslToRgb(.13, .35, .7)) }, cBed2: { value: v3(hslToRgb(.5, .3, .5)) }, cDune: { value: v3(hslToRgb(.115, .36, .74)) }
   };
@@ -4070,7 +4070,7 @@ function initGround(L, grp) {
   // the next scatter is built in the background a slice per frame, then swapped in whole
   L.st = { gM: new Float32Array(NG * 16), gC: new Float32Array(NG * 3), sM: new Float32Array(NF * 16), hC: new Float32Array(NF * 3) };
 }
-const GRASS_COLS_DRY = [0x9aa04a, 0xa8a84f, 0x8c9440, 0xb5ad5c, 0x7f9a45, 0xc2b66a, 0x8fa24e, 0xb0a458, 0xc9bb74];
+const GRASS_COLS_DRY = [0xaaa44a, 0xb8ae50, 0x9c9a40, 0xc4b45c, 0x8f9e45, 0xd0bc6a, 0xa0a64e, 0xc0ae58, 0xd6c274];
 const GRASS_COLS = [0x5f9a36, 0x72ad3f, 0x4f8a30, 0x84b447, 0x6aa33a, 0x8db84e, 0x5a9440, 0x9aaa45, 0xb7b565];
 const FLOWER_COLS = [0xffffff, 0xffffff, 0xfff3a6, 0xffd23f, 0xff9fb8, 0xd9b8ff, 0xffffff, 0xff7a3d, 0xb9d7ff];
 // grass out to ~128 m round the camera: a fine lattice near, a coarser one with bigger clumps further out; wildflowers within ~78 m.
