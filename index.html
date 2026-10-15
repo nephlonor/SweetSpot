@@ -239,6 +239,7 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .stCard .n{font:500 12px/1.25 var(--body);color:var(--ink2);margin-top:2px}
 .stFun{display:flex;flex-direction:column;gap:6px}.stFun div{background:var(--soft);border-radius:14px;padding:9px 12px;font:500 14px/1.35 var(--body);color:var(--ink2)}.stFun b{color:var(--ink);font-weight:700}
 .stRow{display:flex;justify-content:space-between;align-items:center;font:600 15px var(--cond);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--hair)}.stRow span:first-child{color:var(--ink3);letter-spacing:.08em;font-size:12px}
+.boardCourse{display:flex;margin:0 0 10px}.boardCourse button{flex:1}
 .pracHoles{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}.pracHoles button{height:38px;border-radius:12px;background:var(--soft);font:600 16px var(--cond);font-variant-numeric:tabular-nums}.pracHoles button.sel{background:var(--g1);color:#fff}
 .scw{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font:600 17px var(--cond);font-variant-numeric:tabular-nums}
@@ -6505,8 +6506,8 @@ async function postAuto(r) {
     setTimeout(() => { Board.ghAt[COURSE.key] = 0; loadWorld(true); }, 40000); refreshBoards(); return true;
   } catch (e) { return false; }
 }
-async function loadWorld(force) {
-  const key = COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
+async function loadWorld(force, key) {
+  key = key || COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${key}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); if (!r.ok) throw new Error('http');
     const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18 })) : [];
@@ -6515,9 +6516,9 @@ async function loadWorld(force) {
 }
 const roundKey = r => r.name + '|' + r.at;
 // the world rows: the file's, plus my own rounds I have just posted that the workflow has not added yet
-function worldRows() {
-  const g = Board.gh[COURSE.key]; if (!g) return null; const have = new Set(g.map(roundKey));
-  return g.concat(localRounds().filter(r => r.posted && !have.has(roundKey(r))).map(r => Object.assign({}, r, { pending: true })));
+function worldRows(key) {
+  key = key || COURSE.key; const g = Board.gh[key]; if (!g) return null; const have = new Set(g.map(roundKey));
+  return g.concat(localRounds(key).filter(r => r.posted && !have.has(roundKey(r))).map(r => Object.assign({}, r, { pending: true })));
 }
 function postUrl(r) {
   const body = 'Posting a round from Sweet Spot Golf. Just press **Submit new issue**; a bot adds it to the board within a minute.\n\n```json\n' + JSON.stringify(roundPayload(r)) + '\n```\n';
@@ -6530,12 +6531,14 @@ function postWorld(r) {
 }
 function playerName() { return cleanName(settings.name) || 'Player'; }
 function cleanName(s) { return String(s || '').replace(/[^\p{L}\p{N} ._'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14); }
-function validRound(r) {
-  return !!r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 20 && Number.isFinite(r.strokes) && r.strokes >= HOLE_DEFS.length && r.strokes <= 200
-    && Number.isFinite(r.toPar) && Math.abs(r.toPar) <= 200 && Number.isFinite(r.at) && (r.holes == null ? HOLE_DEFS.length === 9 : r.holes === HOLE_DEFS.length);
+function validRound(r, n) {
+  n = n || HOLE_DEFS.length;
+  return !!r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 20 && Number.isFinite(r.strokes) && r.strokes >= n && r.strokes <= 200
+    && Number.isFinite(r.toPar) && Math.abs(r.toPar) <= 200 && Number.isFinite(r.at) && (r.holes == null ? n === 9 : r.holes === n);
 }
 function sortRounds(a) { return a.slice().sort((p, q) => p.toPar - q.toPar || p.strokes - q.strokes || p.at - q.at); }
-function localRounds() { try { const a = JSON.parse(localStorage.getItem(BOARD_KEY) || '[]'); return Array.isArray(a) ? a.filter(validRound) : []; } catch (e) { return []; } }
+// this device's rounds of a course (the one in play when no key is given)
+function localRounds(key) { const c = key ? COURSES[key] : null, n = c ? c.defs.length : HOLE_DEFS.length; try { const a = JSON.parse(localStorage.getItem(c ? c.board : BOARD_KEY) || '[]'); return Array.isArray(a) ? a.filter(r => validRound(r, n)) : []; } catch (e) { return []; } }
 async function initBoard() {
   try {
     if (!window.claude || typeof window.claude.use !== 'function') return;
@@ -6546,7 +6549,7 @@ async function initBoard() {
     for (const c of Object.values(COURSES)) {
       const k = c.coll; Board.shared[k] = [];
       db.collection(k).orderBy('toPar').limit(300).onSnapshot(s => {
-        Board.shared[k] = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })).filter(validRound); Board.ready[k] = true; refreshBoards();
+        Board.shared[k] = s.docs.map(d => Object.assign({}, d.data(), { id: d.id })).filter(r => validRound(r, c.defs.length)); Board.ready[k] = true; refreshBoards();
       }, e => { Board.err[k] = (e && e.code) || 'unavailable'; Board.ready[k] = true; refreshBoards(); });
     }
     refreshBoards();
@@ -6563,8 +6566,20 @@ async function submitRound(entry) {
   postAuto(entry); // straight to the world board when the post-only key is set
 }
 // list for the chosen tab; names are other people's text, so everything goes in with textContent
-function fillBoard(el, limit) {
+function fillBoard(el, limit, key, pick) {
+  key = key || COURSE.key; const CO = COURSES[key] || COURSE, own = key === COURSE.key;
   el.textContent = '';
+  // the leaderboard sheet can show any course's board, without touching the round in play
+  if (pick) {
+    $('boardName').textContent = CO.name;
+    const cs = document.createElement('div'); cs.className = 'seg boardCourse';
+    for (const c of Object.values(COURSES)) {
+      if (c.key === 'legacy' && !LEGACY_ON) continue;
+      const b = document.createElement('button'); b.textContent = c.short; if (c.key === key) b.className = 'sel';
+      b.onclick = () => { Board.view = c.key; loadWorld(false, c.key); refreshBoards(); }; cs.appendChild(b);
+    }
+    el.appendChild(cs);
+  }
   const shared = !!Board.db, tab = Board.tab || 'world';
   const head = document.createElement('div'); head.className = 'sub';
   const lab = document.createElement('span'); lab.textContent = tab === 'world' ? 'World' : tab === 'all' ? 'Everyone' : 'This device'; head.appendChild(lab);
@@ -6578,16 +6593,16 @@ function fillBoard(el, limit) {
   }
   el.appendChild(head);
   const list = document.createElement('div'); list.className = 'lb'; el.appendChild(list);
-  const wr = tab === 'world' ? worldRows() : null;
-  const rows = sortRounds(tab === 'world' ? wr || [] : tab === 'all' ? (Board.shared[COURSE.coll] || []) : localRounds()).slice(0, limit || 25);
+  const wr = tab === 'world' ? worldRows(key) : null;
+  const rows = sortRounds(tab === 'world' ? wr || [] : tab === 'all' ? (Board.shared[CO.coll] || []) : localRounds(key)).slice(0, limit || 25);
   if (!rows.length) {
     const e = document.createElement('div'); e.className = 'empty';
-    e.textContent = tab === 'world' && wr == null ? (Board.gh[COURSE.key] === null ? 'The world board could not be reached.' : 'Loading…') : tab === 'all' && !Board.ready[COURSE.coll] ? 'Loading…' : 'No rounds yet. Finish all ' + HOLE_DEFS.length + ' holes to post a score.';
+    e.textContent = tab === 'world' && wr == null ? (Board.gh[key] === null ? 'The world board could not be reached.' : 'Loading…') : tab === 'all' && !Board.ready[CO.coll] ? 'Loading…' : 'No rounds yet. Finish all ' + CO.defs.length + ' holes to post a score.';
     list.appendChild(e);
   }
   rows.forEach((r, i) => {
     const row = document.createElement('div');
-    const mine = tab === 'all' ? (r.id && r.id === Board.lastShared) : r.at === Board.lastLocal;
+    const mine = own && (tab === 'all' ? (r.id && r.id === Board.lastShared) : r.at === Board.lastLocal);
     row.className = 'row' + (mine ? ' me' : '') + (i === 0 ? ' top1' : '');
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : String(i + 1);
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;
@@ -6597,17 +6612,17 @@ function fillBoard(el, limit) {
     row.append(rk, nm, tp, st); list.appendChild(row);
   });
   // post my best round of this course to the world board
-  const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r)));
+  const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r))) : null;
   if (mineBest && tab !== 'all') {
     const bt = document.createElement('button'); bt.className = 'mbtn dark wide'; bt.style.marginTop = '8px'; bt.textContent = '\u{1F30D} Post my best round (' + fmtToPar(mineBest.toPar) + ') to the world board'; bt.onclick = async () => { if (ghKey()) { bt.disabled = true; bt.textContent = 'Posting\u2026'; if (!(await postAuto(mineBest))) postWorld(mineBest); } else postWorld(mineBest); }; el.appendChild(bt);
     const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = ghKey() ? 'No account needed. It appears on the board within a minute.' : 'Opens GitHub with the score filled in: press "Submit new issue" (a free GitHub account is needed). A bot adds it to the board within a minute.'; el.appendChild(n);
   } else if (tab === 'device' || (!shared && tab !== 'world')) { const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = 'Rounds are kept on this device.'; el.appendChild(n); }
 }
 function refreshBoards() {
-  if ($('boardSheet').classList.contains('on')) fillBoard($('boardBody'), 30);
+  if ($('boardSheet').classList.contains('on')) fillBoard($('boardBody'), 30, Board.view, true);
   const fb = $('finalBoard'); if (fb && $('cardSheet').classList.contains('on')) fillBoard(fb, 10);
 }
-function openBoard() { loadWorld(); fillBoard($('boardBody'), 30); openSheet('boardSheet'); }
+function openBoard() { Board.view = COURSE.key; loadWorld(); fillBoard($('boardBody'), 30, Board.view, true); openSheet('boardSheet'); }
 
 /* ================= INPUT + LOOP ================= */
 function initInput() {
