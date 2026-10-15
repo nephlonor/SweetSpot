@@ -239,6 +239,19 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .stCard .n{font:500 12px/1.25 var(--body);color:var(--ink2);margin-top:2px}
 .stFun{display:flex;flex-direction:column;gap:6px}.stFun div{background:var(--soft);border-radius:14px;padding:9px 12px;font:500 14px/1.35 var(--body);color:var(--ink2)}.stFun b{color:var(--ink);font-weight:700}
 .stRow{display:flex;justify-content:space-between;align-items:center;font:600 15px var(--cond);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--hair)}.stRow span:first-child{color:var(--ink3);letter-spacing:.08em;font-size:12px}
+.mpRoom{display:flex;gap:6px;flex:1;justify-content:flex-end}.mpRoom input{max-width:120px}
+.mpb{height:38px;padding:0 14px;border-radius:12px;background:#2f6b35;color:#fff;font:600 15px var(--cond);text-transform:uppercase;letter-spacing:.05em;border:0}
+.mpInfo{font:500 13px var(--sans,system-ui);color:var(--ink2);padding:2px 4px 4px;line-height:1.35}.mpInfo b{color:var(--ink)}
+.mpBtns{display:flex;gap:6px;margin-top:6px}.mpBtns .mpb{flex:1;background:var(--soft);color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair)}
+#mpPanel{position:fixed;z-index:2;right:calc(var(--sr) + 10px);top:0;min-width:128px;max-width:46vw;padding:6px 9px 7px;border-radius:16px;pointer-events:none;opacity:0;transition:opacity .3s;font:600 13px var(--cond);color:#fff;text-shadow:var(--tsh)}
+#mpPanel.on{opacity:1}
+#mpPanel .mph{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.8;margin-bottom:2px}
+#mpPanel .mpr{display:flex;align-items:center;gap:6px;white-space:nowrap;line-height:1.5}
+#mpPanel .mpr i{width:8px;height:8px;border-radius:50%;flex:none}
+#mpPanel .mpr .n{flex:1;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+#mpPanel .mpr .t{font-variant-numeric:tabular-nums}#mpPanel .mpr .h{opacity:.75;font-size:11px;min-width:24px;text-align:right}
+#mpPanel .mpr.me .n{text-decoration:underline;text-underline-offset:2px}
+#mpTags .gtag{position:fixed;left:0;top:0;z-index:2;padding:2px 8px;border-radius:9px;font:600 12px var(--cond);pointer-events:none;white-space:nowrap;text-transform:uppercase;color:#fff;transition:opacity .2s}
 .boardCourse{display:flex;margin:0 0 10px}.boardCourse button{flex:1}
 .pracHoles{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}.pracHoles button{height:38px;border-radius:12px;background:var(--soft);font:600 16px var(--cond);font-variant-numeric:tabular-nums}.pracHoles button.sel{background:var(--g1);color:#fff}
 .scw{overflow-x:auto}
@@ -331,6 +344,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 </div>
 <canvas id="fx"></canvas>
 <div id="pinTag" class="gtag">0 m</div>
+<div id="mpPanel" class="glass"></div><div id="mpTags"></div>
 <div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small>M</small></div><div class="bt2" id="btC"></div></div>
 <div class="layer on" id="title">
   <div class="card logoCard"><h1>Sweet <span>Spot</span><br>Golf</h1><p id="courseLine">Golf &amp; Country Club Basel
@@ -358,6 +372,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
     <div class="mrow">Sound<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
     <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+    <div class="mrow mpRow">Live room<div class="mpRoom"><input id="mpCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code" enterkeyhint="go"><button class="mpb" id="mpJoin">Join</button></div></div>
+    <div class="mpInfo" id="mpInfo">Play live with friends: everyone in the same room sees the others' balls fly on the same hole, and the scores.<div class="mpBtns"><button class="mpb" id="mpNew">New room</button><button class="mpb" id="mpShare">Share link</button></div></div>
     <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
   </div>
   <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
@@ -4918,6 +4934,168 @@ function noiseBurst(d, vol, freq, q, delay) {
   const s = a.createBufferSource(); s.buffer = buf; const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq || 1200; f.Q.value = q || .8;
   const g = a.createGain(); g.gain.value = vol || .2; s.connect(f).connect(g).connect(a.destination); s.start(t);
 }
+/* ---------- live multiplayer: rooms ---------- */
+// Players in the same room (a short code; a link with ?room=CODE joins it) share, through a public MQTT broker over secure websockets:
+// who they are, course, hole, score and where their ball lies (kept on the broker, cleared when they leave), and each shot's flight as a
+// path of points. On your own hole the others' balls are drawn with their name, and every shot of theirs flies with its tracer; a live
+// panel lists the room's scores. Nothing else is shared; there are no accounts.
+const MP_BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
+const MP_COLS = ['#ff6b6b', '#4dabf7', '#ffd43b', '#b197fc', '#63e6be', '#ffa94d', '#f783ac', '#a9e34b'];
+const MP = { client: null, room: '', id: Math.random().toString(36).slice(2, 10), peers: new Map(), objs: new Map(), bi: 0, fails: 0, st: 'off', beat: 0, panelT: 0, lib: null };
+const mpT = s => `ssgolf/v1/${MP.room}/${s}`;
+const mpClean = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+const mpCol = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0; return MP_COLS[h % MP_COLS.length]; };
+function mpLib() {
+  if (window.mqtt) return Promise.resolve(window.mqtt);
+  if (MP.lib) return MP.lib;
+  return MP.lib = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.10.1/mqtt.min.js'; sc.onload = () => window.mqtt ? ok(window.mqtt) : no(); sc.onerror = () => { MP.lib = null; no(); }; document.head.appendChild(sc); });
+}
+function mpJoin(code) {
+  code = mpClean(code); if (code.length < 3) return false;
+  if (MP.client && MP.room === code) return true;
+  mpLeave(true); MP.room = code; settings.room = code; saveSettings(); MP.st = 'connecting'; mpSync();
+  mpLib().then(lib => mpConnect(lib)).catch(() => { MP.st = 'error'; mpSync(); });
+  return true;
+}
+function mpConnect(lib) {
+  if (!MP.room) return;
+  const q = new URLSearchParams(location.search).get('mqtt'), url = q || MP_BROKERS[MP.bi % MP_BROKERS.length];
+  const c = lib.connect(url, { clientId: 'ssg_' + MP.id + '_' + Math.random().toString(36).slice(2, 6), clean: true, keepalive: 30, reconnectPeriod: 4000, connectTimeout: 15000,
+    will: { topic: mpT('s/' + MP.id), payload: '', retain: true, qos: 0 } });
+  MP.client = c;
+  c.on('connect', () => { MP.fails = 0; MP.st = 'on'; c.subscribe(mpT('+/+')); mpState(true); mpSync(); });
+  c.on('message', (topic, buf) => mpMsg(topic, buf));
+  const fail = () => { if (MP.client !== c) return; MP.st = 'connecting'; mpSync(); if (++MP.fails >= 2 && !q) { MP.fails = 0; MP.bi++; try { c.end(true); } catch (e) { } MP.client = null; setTimeout(() => MP.room && mpConnect(lib), 500); } };
+  c.on('error', fail); c.on('offline', fail);
+}
+function mpLeave(keep) {
+  const c = MP.client; MP.client = null;
+  if (c) { try { c.publish(mpT('s/' + MP.id), '', { retain: true }, () => c.end(false)); setTimeout(() => { try { c.end(true); } catch (e) { } }, 3000); } catch (e) { } } // cleared from the room first, then gone
+  for (const o of MP.objs.values()) mpDrop(o); MP.objs.clear(); MP.peers.clear();
+  if (!keep) { MP.room = ''; settings.room = ''; saveSettings(); }
+  MP.st = 'off'; mpSync();
+}
+function mpMsg(topic, buf) {
+  const p = topic.split('/'), kind = p[3], id = p[4]; if (!id || id === MP.id) return;
+  const txt = buf && buf.length ? new TextDecoder().decode(buf) : '';
+  if (kind === 's') {
+    if (!txt) { const o = MP.objs.get(id); if (o) mpDrop(o); MP.objs.delete(id); MP.peers.delete(id); return; }
+    let d; try { d = JSON.parse(txt); } catch (e) { return; }
+    if (!d || typeof d.n !== 'string' || Date.now() - (+d.at || 0) > 3 * 36e5) return; // ghosts of long-gone players are ignored
+    const pr = MP.peers.get(id) || { id, col: mpCol(id) };
+    Object.assign(pr, { n: cleanName(d.n) || 'Player', c: String(d.c || ''), h: d.h | 0, tp: +d.tp || 0, th: d.th | 0, s: d.s | 0, x: +d.x, z: +d.z, at: +d.at, seen: Date.now() });
+    MP.peers.set(id, pr);
+  } else if (kind === 'f') {
+    let d; try { d = JSON.parse(txt); } catch (e) { return; }
+    const pr = MP.peers.get(id); if (!pr || !d || !Array.isArray(d.p) || d.p.length < 6) return;
+    pr.fly = { c: d.c, h: d.h | 0, p: d.p, dt: +d.dt || .1, t0: performance.now(), dur: (d.p.length / 3 - 1) * (+d.dt || .1) };
+    pr.c = d.c; pr.h = d.h | 0;
+  }
+  MP.panelT = 0;
+}
+// my state: kept on the broker (retained) so a newcomer sees everyone at once
+function mpState(force) {
+  const c = MP.client; if (!c || MP.st !== 'on' || !G.C || G.state === 'title') return;
+  const now = Date.now(); if (!force && now - MP.beat < 10000) return; // a heartbeat every 10 s; changes go out at once MP.beat = now;
+  const tp = totalToPar(), en = G.C.enu(G.ball.x, G.ball.z);
+  const d = { n: playerName(), c: COURSE.key, h: G.hole, tp: tp.d, th: G.scores.filter(v => v != null).length, s: G.strokes, x: +en[0].toFixed(1), z: +en[1].toFixed(1), at: now };
+  try { c.publish(mpT('s/' + MP.id), JSON.stringify(d), { retain: true }); } catch (e) { }
+}
+// a shot: its flight as east/north/height points every 0.1 s (heights in the hole's own frame: everyone on the hole shares it)
+function mpShot(res) {
+  const c = MP.client; if (!c || MP.st !== 'on' || !G.C || !res) return;
+  const fr = res.frames, n = res.n, pts = [], dt = .1; let k = 0;
+  for (let t = 0; t <= res.duration + 1e-6 && pts.length < 3 * 400; t += dt) {
+    while (k < n - 2 && fr[(k + 1) * 5] <= t) k++;
+    const a = k * 5, b = Math.min(n - 1, k + 1) * 5, sp = Math.max(1e-6, fr[b] - fr[a]), u = clamp((t - fr[a]) / sp, 0, 1);
+    const x = lerp(fr[a + 1], fr[b + 1], u), y = lerp(fr[a + 2], fr[b + 2], u), z = lerp(fr[a + 3], fr[b + 3], u), en = G.C.enu(x, z);
+    pts.push(+en[0].toFixed(2), +en[1].toFixed(2), +y.toFixed(2));
+  }
+  try { c.publish(mpT('f/' + MP.id), JSON.stringify({ c: COURSE.key, h: G.hole, dt, p: pts })); } catch (e) { }
+}
+// the others on my hole: a ball in their colour, a tracer while it flies, their name above it
+function mpObj(pr) {
+  let o = MP.objs.get(pr.id); if (o) return o;
+  const col = new THREE.Color(pr.col);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(VIS_R, 14, 10), new THREE.MeshLambertMaterial({ color: col, emissive: col.clone().multiplyScalar(.25) }));
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(400 * 3), 3)); tg.setDrawRange(0, 0);
+  const tr = new THREE.Line(tg, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: .85 }));
+  ball.frustumCulled = tr.frustumCulled = false; W.scene.add(ball); W.scene.add(tr);
+  const tag = document.createElement('div'); tag.className = 'gtag'; tag.style.borderLeft = '3px solid ' + pr.col; $('mpTags').appendChild(tag);
+  o = { ball, tr, tag, id: pr.id }; MP.objs.set(pr.id, o); return o;
+}
+function mpDrop(o) { W.scene.remove(o.ball); W.scene.remove(o.tr); o.ball.geometry.dispose(); o.tr.geometry.dispose(); o.tag.remove(); }
+const _mpv = new THREE.Vector3();
+function mpUpdate(dt) {
+  if (!MP.room) return;
+  mpState(false);
+  const C = G.C, show = C && G.state !== 'title' && G.state !== 'intro', now = performance.now(), seen = new Set();
+  for (const pr of MP.peers.values()) {
+    if (Date.now() - pr.seen > 15 * 60e3 && Date.now() - pr.at > 15 * 60e3) continue;
+    const here = show && pr.c === COURSE.key && pr.h === G.hole; if (!here) continue;
+    const o = mpObj(pr); seen.add(pr.id);
+    let X, Y, Z; const f = pr.fly && pr.fly.c === COURSE.key && pr.fly.h === G.hole ? pr.fly : null, el = f ? (now - f.t0) / 1000 : 1e9;
+    if (f && el <= f.dur + 1.5) {
+      const P = f.p, m = P.length / 3, u = clamp(el / f.dt, 0, m - 1), i = Math.min(m - 2, u | 0), w = u - i, pa = o.tr.geometry.attributes.position;
+      const at = j => { const q = C.loc(P[3 * j], P[3 * j + 1]); return [q[0], P[3 * j + 2], -q[1]]; };
+      const A = at(i), B = at(i + 1); X = lerp(A[0], B[0], w); Y = lerp(A[1], B[1], w) + VIS_R; Z = lerp(A[2], B[2], w);
+      const nn = Math.min(400, i + 1); for (let j = 0; j < nn; j++) { const q = at(j); pa.array[3 * j] = q[0]; pa.array[3 * j + 1] = q[1] + VIS_R; pa.array[3 * j + 2] = q[2]; }
+      pa.needsUpdate = true; o.tr.geometry.setDrawRange(0, nn); o.tr.material.opacity = .85 * clamp(f.dur + 1.5 - el, 0, 1);
+    } else {
+      if (!Number.isFinite(pr.x)) { o.ball.visible = false; o.tag.style.opacity = 0; continue; }
+      const q = C.loc(pr.x, pr.z); X = q[0]; Z = -q[1]; Y = groundY(X, Z) + VIS_R; o.tr.geometry.setDrawRange(0, 0);
+    }
+    o.ball.visible = true; o.ball.position.set(X, Y, Z);
+    const d = W.cam.position.distanceTo(o.ball.position); o.ball.scale.setScalar(clamp(.02 * d / VIS_R, 1, 7));
+    _mpv.set(X, Y + .6, Z).project(W.cam);
+    const vis = _mpv.z < 1 && Math.abs(_mpv.x) < 1.1 && Math.abs(_mpv.y) < 1.1 && !sheetOpen();
+    o.tag.style.opacity = vis ? 1 : 0;
+    if (vis) { o.tag.textContent = pr.n + '  ' + (pr.th ? fmtToPar(pr.tp) : 'E'); o.tag.style.transform = `translate(${(_mpv.x * .5 + .5) * window.innerWidth}px, ${(-_mpv.y * .5 + .5) * SH()}px) translate(-50%,-110%)`; }
+  }
+  for (const [id, o] of MP.objs) if (!seen.has(id)) { o.ball.visible = false; o.tr.geometry.setDrawRange(0, 0); o.tag.style.opacity = 0; }
+  if ((MP.panelT -= dt) <= 0) { MP.panelT = 1; mpPanel(); }
+}
+// the room's scores, by score to par: name, to par, the hole they are on (F when they have finished)
+function mpPanel() {
+  const el = $('mpPanel'), on = !!MP.room && G.state !== 'title' && G.state !== 'intro';
+  el.classList.toggle('on', on); if (!on) return;
+  const rows = [{ id: MP.id, n: playerName(), tp: totalToPar().d, h: G.hole, c: COURSE.key, th: G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
+  for (const pr of MP.peers.values()) if (Date.now() - pr.at < 6 * 36e5) rows.push(pr);
+  rows.sort((a, b) => a.tp - b.tp || b.th - a.th);
+  el.textContent = '';
+  const hd = document.createElement('div'); hd.className = 'mph'; hd.textContent = 'Room ' + MP.room + (MP.st === 'on' ? '' : ' · ' + (MP.st === 'error' ? 'offline' : 'connecting…')); el.appendChild(hd);
+  for (const r of rows.slice(0, 8)) {
+    const row = document.createElement('div'); row.className = 'mpr' + (r.me ? ' me' : '');
+    const dot = document.createElement('i'); dot.style.background = r.col;
+    const nm = document.createElement('span'); nm.className = 'n'; nm.textContent = r.n;
+    const tp = document.createElement('span'); tp.className = 't'; tp.textContent = r.th ? fmtToPar(r.tp) : 'E';
+    const hh = document.createElement('span'); hh.className = 'h'; const crs = COURSES[r.c]; hh.textContent = (r.c !== COURSE.key && crs ? crs.short.slice(0, 3) + ' ' : '') + (r.th >= 18 ? 'F' : 'H' + ((r.h | 0) + 1));
+    row.append(dot, nm, tp, hh); el.appendChild(row);
+  }
+  const sr = $('strike').getBoundingClientRect(); el.style.top = Math.max(80, sr.top - el.offsetHeight - 10) + 'px';
+}
+function mpSync() {
+  const i = $('mpCode'), b = $('mpJoin'); if (!i) return;
+  if (document.activeElement !== i) i.value = MP.room || settings.room || '';
+  b.textContent = MP.room ? 'Leave' : 'Join';
+  const st = $('mpInfo').firstChild; if (st && st.nodeType === 3) st.textContent = MP.room ? (MP.st === 'on' ? `In room ${MP.room} · ${MP.peers.size} other player${MP.peers.size === 1 ? '' : 's'} here. ` : MP.st === 'error' ? 'The room server could not be reached. ' : 'Connecting to the room… ') : 'Play live with friends: everyone in the same room sees the others\' balls fly on the same hole, and the scores. ';
+  MP.panelT = 0;
+}
+function mpInit() {
+  $('mpJoin').onclick = () => { if (MP.room) mpLeave(); else if (!mpJoin($('mpCode').value)) { $('mpCode').focus(); } };
+  $('mpCode').addEventListener('keydown', e => { if (e.key === 'Enter') { $('mpCode').blur(); if (!MP.room) mpJoin($('mpCode').value); } });
+  $('mpNew').onclick = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let k = 0; k < 5; k++) c += a[(Math.random() * a.length) | 0]; mpJoin(c); };
+  $('mpShare').onclick = async () => {
+    if (!MP.room) { $('mpNew').click(); }
+    const url = location.origin + location.pathname + '?room=' + MP.room;
+    try { if (navigator.share) { await navigator.share({ title: 'Sweet Spot Golf', text: 'Play a live round with me · room ' + MP.room, url }); return; } } catch (e) { return; }
+    try { await navigator.clipboard.writeText(url); $('mpShare').textContent = 'Link copied'; setTimeout(() => $('mpShare').textContent = 'Share link', 1800); } catch (e) { prompt('Room link', url); }
+  };
+  const q = mpClean(new URLSearchParams(location.search).get('room'));
+  if (q) mpJoin(q); else if (settings.room) mpJoin(settings.room);
+  mpSync();
+}
+
 /* ---------- background music (Augusta) ---------- */
 // An original, calm piece in the spirit of a spring afternoon in Georgia (not the Masters theme, which is copyrighted): fingerpicked
 // guitar (Karplus-Strong strings) under a soft piano in D major, 66 bpm. About ten minutes before it comes round again: the tune, two
@@ -5448,7 +5626,7 @@ function impact(tImp) {
   G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res };
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '←' : '→'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
-  G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12; saveRound(); G.savedT = 0;
+  G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12; saveRound(); G.savedT = 0; mpShot(res);
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
   W.tracer.geometry.setDrawRange(0, 0);
@@ -5577,7 +5755,7 @@ function finishShot() {
     G.state = 'holed'; G.holedT = 0; G.scores[h] = G.strokes;
     if (G.gir[h] == null) G.gir[h] = G.strokes - 1 <= par - 2;
     if (first && par >= 4) G.fir[h] = false;
-    statsHole(h); saveRound(); SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
+    statsHole(h); saveRound(); mpState(true); SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
     setTimeout(() => { if (G.state === 'holed') showDone(false); }, 1300); updateHUD(); return;
   }
   let big = '', sub = '';
@@ -5753,7 +5931,7 @@ function updateCamera(dt) {
   if (G.state === 'settle' && ((w >= 1 && cam.position.distanceTo(R.aPos) < .05 && R.pv.length() < .05 && R.lv.length() < .05) || R.t - A.t0 > A.D + 5)) enterAddress();
 }
 function enterAddress() {
-  saveRound();
+  saveRound(); mpState(true);
   if (G.rig) G.rig.arr = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
@@ -6250,6 +6428,7 @@ function syncMenu() {
   document.querySelectorAll('#segHand button').forEach(b => b.classList.toggle('sel', +b.dataset.v === settings.hand));
   document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.sound ? 1 : 0)));
   document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
+  mpSync();
   const ph = $('pracHoles');
   if (ph) {
     if (ph.children.length !== HOLE_DEFS.length) { ph.innerHTML = ''; HOLE_DEFS.forEach((d, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.onclick = () => startPractice(i); ph.appendChild(b); }); }
@@ -6827,6 +7006,7 @@ function initInput() {
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
+  mpInit();
   // every sheet gets a close X at its top right (closes like a tap outside it)
   document.querySelectorAll('.sheet').forEach(sh => {
     if (sh.querySelector('.shX')) return;
@@ -6877,7 +7057,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
-  swirlWind(dt); updateSwirl(dt); updateCamera(dt); updateWeatherVisuals(dt); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
+  swirlWind(dt); updateSwirl(dt); mpUpdate(dt); updateCamera(dt); updateWeatherVisuals(dt); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
     const ext = G.state === 'intro' ? 300 : 75, sc = W.sun.shadow.camera;
     if (sc.right !== ext) { sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = ext > 100 ? 900 : 420; sc.updateProjectionMatrix(); }
