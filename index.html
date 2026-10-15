@@ -345,6 +345,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
     <div class="mrow">Sound<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+    <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
     <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
   </div>
   <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
@@ -361,7 +362,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke and a drop. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
-  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low.</div>
+  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu.</div>
 </div></div>
 <div id="recCard"></div>
 <div id="confetti"></div>
@@ -2417,6 +2418,37 @@ const TREE_TWEAK_GCCB = { 1110: { d: .62 }, 211: { d: .5 }, 125: { slim: .68 }, 
   // hole 8: the trees right of the tee
   142: { slim: .6 }, 143: { slim: .6 }, 144: { slim: .6 }, 145: { slim: .6 }, 185: { slim: .6 }, 115: { slim: .65 }, 101: { slim: .65 } };
 let TREE_TWEAK = TREE_TWEAK_GCCB;
+// Loblolly pine crowns (Augusta): a few upswept branches spiralling up the top of the trunk, each ending in a flattened, lumpy tuft of
+// needles, and a small leader tuft on top; undersides shaded darker. Four near variants (with branches) and two plain far ones,
+// built once, in a unit frame (crown radius 1, base of the crown at y = 0)
+const PINE_GEO = { near: null, far: null };
+function pineCrownGeo(seed, near) {
+  const r = mulberry32(seed), parts = [], nb = near ? 7 : 3, up = new THREE.Vector3(0, 1, 0), V = new THREE.Vector3(), Q = new THREE.Quaternion();
+  const GR2 = [0x2a5231, 0x2f5a36, 0x33613a, 0x285034, 0x37653c];
+  const tuft = (x, y, z, sx, sy, sz, c) => {
+    const g = new THREE.IcosahedronGeometry(1, near ? 1 : 0), pa = g.attributes.position;
+    for (let i = 0; i < pa.count; i++) { const k = 1 + (hash2(Math.round(pa.getX(i) * 50), Math.round(pa.getZ(i) * 50) + seed, Math.round(pa.getY(i) * 50)) - .5) * .32; pa.setXYZ(i, pa.getX(i) * k, pa.getY(i) * k, pa.getZ(i) * k); }
+    const m = new THREE.Matrix4().makeRotationY(r() * TAU); m.premultiply(new THREE.Matrix4().makeScale(sx, sy, sz)); m.setPosition(x, y, z); parts.push({ g, c, m });
+  };
+  for (let k = 0; k < nb; k++) {
+    const a = k / nb * TAU * 2.4 + r() * .7, f = k / (nb - 1 || 1), h = .05 + f * .95, len = (1 - .45 * f) * (.78 + .3 * r()), rise = .28 + .25 * r();
+    const tx = Math.cos(a) * len, tz = Math.sin(a) * len, ty = h + len * rise, sz = (.5 - .14 * f) * (.85 + .3 * r());
+    if (near) { // the branch: a thin limb from the trunk out to the tuft
+      const L = Math.hypot(tx, ty - h, tz), g = new THREE.CylinderGeometry(.03, .055, L, 4, 1, true), m = new THREE.Matrix4();
+      Q.setFromUnitVectors(up, V.set(tx, ty - h, tz).normalize()); m.makeRotationFromQuaternion(Q); m.setPosition(tx / 2, (h + ty) / 2, tz / 2); parts.push({ g, c: 0x5b4434, m });
+    }
+    tuft(tx, ty, tz, sz * 1.25, sz * .62, sz * 1.25, GR2[(r() * GR2.length) | 0]);
+    if (near && r() < .6) tuft(tx * .6, ty - .05, tz * .6, sz * .8, sz * .45, sz * .8, GR2[(r() * GR2.length) | 0]); // a second, inner tuft on the same limb
+  }
+  tuft(0, 1.32, 0, .34, .4, .34, 0x37653c); // the leader
+  const g = mergeParts(parts), na = g.attributes.normal, ca = g.attributes.color, pa = g.attributes.position;
+  for (let i = 0; i < ca.count; i++) { const sh = .62 + .38 * clamp(na.getY(i) * .5 + .5, 0, 1) + .08 * clamp(pa.getY(i) - .6, 0, 1); ca.setXYZ(i, ca.getX(i) * sh, ca.getY(i) * sh, ca.getZ(i) * sh); }
+  return g;
+}
+function pineGeos() {
+  if (!PINE_GEO.near) { PINE_GEO.near = [11, 23, 37, 53].map(sd => pineCrownGeo(sd, true)); PINE_GEO.far = [71, 89].map(sd => pineCrownGeo(sd, false)); }
+  return PINE_GEO;
+}
 function buildRealTrees(C, grp) {
   const I = C.inner, all = [];
   const dOut = (X, Z) => Math.hypot(Math.max(I.minX - X, 0, X - I.maxX), Math.max(I.minZ - Z, 0, Z - I.maxZ));
@@ -2435,6 +2467,12 @@ function buildRealTrees(C, grp) {
   const coneF = new THREE.ConeGeometry(1, 1, 6, 1, true); coneF.translate(0, .5, 0);
   const mk = (geo, cnt, shadow) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
   const trN = mk(trunkG, nN, true), trF = mk(trunkF, nF, false), blN = mk(blobN, nN * 4, true), blF = mk(blobF, nF * 2, false), coN = mk(coneG, nN * 3, true), coF = mk(coneF, nF * 2, false);
+  // pines: one instance of a whole crown (vertex-coloured; the instance colour only tints it)
+  const pv = (t, i) => (hash2(i, 13, 7) * (t.near ? 4 : 2)) | 0, pc = { near: [0, 0, 0, 0], far: [0, 0] };
+  all.forEach((t, i) => { if (t.kind === 4) pc[t.near ? 'near' : 'far'][pv(t, i)]++; });
+  const PG = pc.near.some(n => n) || pc.far.some(n => n) ? pineGeos() : null;
+  const mkP = (geo, cnt, shadow) => { const c2 = Math.max(1, cnt), m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true }), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
+  const piN = PG ? PG.near.map((g, k) => mkP(g, pc.near[k], true)) : [], piF = PG ? PG.far.map((g, k) => mkP(g, pc.far[k], false)) : [];
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), col = new THREE.Color(), tcol = new THREE.Color(0x7d604a), pcol = new THREE.Color(0x6b5244);
   let refs = null;
   const put = (im, x, y, z, sx, sy, sz, c, ry) => { if (im.count >= im.instanceMatrix.count) return; Q.setFromAxisAngle(V.set(0, 1, 0), ry || 0); M.compose(V.set(x, y, z), Q, Sc.set(sx, sy, sz)); im.setMatrixAt(im.count, M); im.setColorAt(im.count, c); if (refs) refs.push(im, im.count); im.count++; };
@@ -2460,15 +2498,11 @@ function buildRealTrees(C, grp) {
     if (t.kind === 4) {
       // loblolly pine (Augusta): a tall, bare, rust-grey trunk; the crown a loose cluster of flattened tufts high up
       if (C.fieldAt(C.F.tee, t.X, t.Z) < -.3 || C.fieldAt(C.F.green, t.X, t.Z) < .5) return;
-      const Ht = clamp(t.H > 0 ? t.H : 24, 12, 40), R = clamp(t.d / 2, 2, 5.2), th = Ht - 1.9 * R, cy = y + th + .9 * R;
-      col.setHex([0x29512f, 0x2e5934, 0x33603a, 0x2b5532, 0x3a6a3e][(hv * 5) | 0]);
-      put(tr, t.X, y - .2, t.Z, 1.05 + .05 * R, th + R, 1.05 + .05 * R, pcol, ry);
-      put(bl, t.X, cy, t.Z, R, .5 * R, R, col, ry);
-      if (t.near) {
-        const a = ry, o = .55 * R;
-        put(bl, t.X + Math.cos(a) * o, cy + .45 * R, t.Z + Math.sin(a) * o, .62 * R, .36 * R, .62 * R, col.clone().offsetHSL(0, .02, .05), ry + .7);
-        put(bl, t.X - Math.cos(a + 2.1) * o, cy - .55 * R, t.Z - Math.sin(a + 2.1) * o, .55 * R, .32 * R, .55 * R, col.clone().offsetHSL(0, 0, -.03), ry + 1.5);
-      }
+      const Ht = clamp(t.H > 0 ? t.H : 24, 12, 40), R = clamp(t.d / 2, 2, 5.2), th = Ht - 1.65 * R, cy = y + th + .75 * R;
+      col.setHSL(.3 + hv * .04, .12 + hv * .1, .78 + hv * .14); // a slight tint per tree over the crown's own colours
+      put(tr, t.X, y - .2, t.Z, 1.05 + .05 * R, th + 1.1 * R, 1.05 + .05 * R, pcol, ry);
+      const sq = .85 + .3 * hash2(i, 4, 9); // some crowns rounder, some flatter
+      put((t.near ? piN : piF)[pv(t, i)], t.X, y + th - .15 * R, t.Z, R, R * sq, R, col, ry);
       can(t.X, cy, t.Z, .95 * R, 2.4, i); trunk(t.X, t.Z, cy - .4 * R, i, .09);
       plan.push({ x: t.X, z: t.Z, r: R, col: col.getHex(), far: !t.near });
       if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: cy + .9 * R, r: R, refs, hid: false });
@@ -2507,13 +2541,13 @@ function buildRealTrees(C, grp) {
     if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: cy + .9 * R, r: Rh * 1.05, refs, hid: false });
   });
   refs = null;
-  [trN, trF, blN, blF, coN, coF].forEach(m => { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; if (!m.count) m.visible = false; });
+  [trN, trF, blN, blF, coN, coF, ...piN, ...piF].forEach(m => { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; if (!m.count) m.visible = false; });
   // trees the camera would look through step aside (see updateTreeOcc)
   const oc = 12, oh = new Map();
   occ.forEach((o, k) => { for (let gx = Math.floor((o.x - o.r) / oc); gx <= Math.floor((o.x + o.r) / oc); gx++) for (let gz = Math.floor((o.z - o.r) / oc); gz <= Math.floor((o.z + o.r) / oc); gz++) { const key = gx * 73856 + gz; if (!oh.has(key)) oh.set(key, []); oh.get(key).push(k); } });
   // a stepped-aside tree is still drawn as a faint, flat silhouette
   const ghostMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .22, depthWrite: false }), ghosts = new Map();
-  for (const m of [trN, trF, blN, blF, coN, coF]) {
+  for (const m of [trN, trF, blN, blF, coN, coF, ...piN]) {
     const gm = new THREE.InstancedMesh(m.geometry, ghostMat, 96); gm.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(96 * 3), 3);
     gm.count = 0; gm.renderOrder = 2; gm.userData.keep = true; grp.add(gm); ghosts.set(m, gm);
   }
@@ -4871,6 +4905,73 @@ function noiseBurst(d, vol, freq, q, delay) {
   const s = a.createBufferSource(); s.buffer = buf; const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq || 1200; f.Q.value = q || .8;
   const g = a.createGain(); g.gain.value = vol || .2; s.connect(f).connect(g).connect(a.destination); s.start(t);
 }
+/* ---------- background music (Augusta) ---------- */
+// An original, calm piece in the spirit of a spring afternoon in Georgia (not the Masters theme, which is copyrighted): fingerpicked
+// guitar (Karplus-Strong strings) under a soft piano tune in D major, 66 bpm, 24 bars - two passes of the tune, then guitar alone.
+// Synthesised live, quietly, with a small hall reverb; on only on Augusta, with the sound on and Music on.
+const MUS = { ac: null, bus: null, next: 0, step: 0, ks: {}, timer: 0 };
+const MUS_E = 60 / 66 / 2; // an eighth note, s
+const MUS_CH = { D: [50, 57, 62, 66, 69], GD: [50, 55, 59, 62, 67], Bm: [47, 54, 59, 62, 66], A: [45, 52, 57, 61, 64], G: [43, 50, 55, 59, 62], DF: [42, 50, 57, 62, 66], Em: [40, 47, 55, 59, 62], As: [45, 52, 57, 62, 64] };
+const MUS_BARS = ['D', 'GD', 'Bm', 'A', 'G', 'DF', 'Em', 'As'];
+// the tune: [midi, eighths] per bar (0 = rest); pass 2 changes the last two bars to come home to D
+const MUS_TUNE = [[[0, 2], [78, 3], [76, 1], [74, 2]], [[71, 4], [74, 2], [76, 2]], [[78, 3], [81, 1], [78, 2], [76, 2]], [[76, 6], [0, 2]],
+  [[74, 3], [71, 1], [74, 2], [76, 2]], [[78, 4], [76, 2], [74, 2]], [[71, 3], [74, 1], [76, 2], [74, 2]], [[73, 4], [76, 2], [0, 2]]];
+const MUS_TUNE2 = MUS_TUNE.slice(0, 6).concat([[[76, 3], [78, 1], [76, 2], [71, 2]], [[74, 8]]]);
+const mHz = m => 440 * Math.pow(2, (m - 69) / 12);
+function musicWanted() { return settings.sound && settings.music !== false && COURSE && COURSE.key === 'augusta' && !document.hidden; }
+// a plucked steel string: Karplus-Strong, a soft pick (low-passed noise burst), 3 s
+function musKS(a, m) {
+  const k = m; if (MUS.ks[k]) return MUS.ks[k];
+  const sr = a.sampleRate, n = Math.floor(sr * 3), buf = a.createBuffer(1, n, sr), d = buf.getChannelData(0), N = Math.max(2, Math.round(sr / mHz(m)));
+  const ring = new Float32Array(N); let lp = 0; for (let i = 0; i < N; i++) { lp = lp * .78 + (Math.random() * 2 - 1) * .22; ring[i] = lp; }
+  let p = 0; const damp = .4985 + Math.min(.0012, m * .00001);
+  for (let i = 0; i < n; i++) { const nx = (p + 1) % N, v = ring[p]; d[i] = v; ring[p] = (v + ring[nx]) * damp; p = nx; }
+  return MUS.ks[k] = buf;
+}
+function musPluck(a, m, t, v) {
+  const s = a.createBufferSource(), g = a.createGain(); s.buffer = musKS(a, m); g.gain.value = v;
+  s.connect(g).connect(MUS.gtr); s.start(t); s.stop(t + 3);
+}
+function musPiano(a, m, t, dur, v) {
+  const f = mHz(m), g = a.createGain(), lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .012); g.gain.exponentialRampToValueAtTime(v * .35, t + .5); g.gain.exponentialRampToValueAtTime(.0001, t + Math.max(1.2, dur + .9));
+  for (const [mul, amp, type] of [[1, 1, 'sine'], [2, .28, 'sine'], [3, .08, 'triangle']]) { const o = a.createOscillator(), og = a.createGain(); o.type = type; o.frequency.value = f * mul; o.detune.value = (Math.random() - .5) * 4; og.gain.value = amp; o.connect(og).connect(g); o.start(t); o.stop(t + dur + 1.2); }
+  g.connect(lp).connect(MUS.bus);
+}
+function musSetup(a) {
+  const bus = a.createGain(), out = a.createGain(), rv = a.createConvolver(), wet = a.createGain(), sr = a.sampleRate, L = Math.floor(sr * 2.4), ir = a.createBuffer(2, L, sr);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 3.2); }
+  rv.buffer = ir; wet.gain.value = .28; bus.gain.value = 1;
+  out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.2, a.currentTime + 3);
+  bus.connect(out); bus.connect(rv).connect(wet).connect(out); out.connect(a.destination);
+  const gtr = a.createBiquadFilter(); gtr.type = 'lowpass'; gtr.frequency.value = 2300; gtr.Q.value = .5; const gg = a.createGain(); gg.gain.value = 1.6; gtr.connect(gg).connect(bus); MUS.gtr = gtr; // a warmer, rounder string
+  MUS.ac = a; MUS.bus = bus; MUS.out = out; MUS.ks = {}; MUS.step = 0; MUS.next = a.currentTime + .4;
+}
+function musicStop() {
+  if (!MUS.ac) return; const a = MUS.ac, o = MUS.out;
+  try { o.gain.cancelScheduledValues(a.currentTime); o.gain.setValueAtTime(o.gain.value, a.currentTime); o.gain.linearRampToValueAtTime(0, a.currentTime + .6); setTimeout(() => { try { o.disconnect(); } catch (e) { } }, 900); } catch (e) { }
+  MUS.ac = null; MUS.bus = null;
+}
+function musStep(a, st, t) {
+  const bar = Math.floor(st / 8) % 24, e = st % 8, ch = MUS_CH[bar % 8 === 7 && e >= 4 ? 'A' : MUS_BARS[bar % 8]], hum = () => (Math.random() - .5) * .016;
+  // the guitar: bass on the beat, a rolling arpeggio above
+  const pat = [0, 2, 3, 4, 1, 3, 2, 4], vel = e === 0 ? .5 : e === 4 ? .36 : .26;
+  musPluck(a, ch[pat[e]], t + hum(), vel * (bar >= 16 ? 1.1 : 1));
+  if (e === 0 && bar % 2 === 0) musPluck(a, ch[0] - 12 >= 36 ? ch[0] - 12 : ch[0], t + .01, .22);
+  // the piano tune on passes 1 and 2; pass 3 only an occasional high note
+  if (bar < 16) {
+    const tune = (bar < 8 ? MUS_TUNE : MUS_TUNE2)[bar % 8]; let o = 0;
+    for (const [m, d] of tune) { if (o === e && m) musPiano(a, m, t + hum(), d * MUS_E, bar < 8 ? .11 : .13); o += d; }
+  } else if (e === 0 && bar % 2 === 1) musPiano(a, ch[4] + 12, t + .05, 4 * MUS_E, .05);
+}
+function musicTick() {
+  if (!musicWanted()) { musicStop(); return; }
+  const a = AC; if (!a || a.state !== 'running') return; // the context is made (and woken) by a touch; music joins in once it runs
+  if (MUS.ac !== a) musSetup(a);
+  if (MUS.next < a.currentTime) { MUS.next = a.currentTime + .1; }
+  while (MUS.next < a.currentTime + .7) { musStep(a, MUS.step, MUS.next); MUS.next += MUS_E; MUS.step++; }
+}
+setInterval(musicTick, 200);
 const SFX = {
   hit(q, putt) {
     const ct = CLUBS[G.club] ? CLUBS[G.club].type : 'iron', r = (Math.random() - .5) * .06;
@@ -5986,6 +6087,7 @@ function syncMenu() {
   const mn = $('mName'); if (mn && document.activeElement !== mn) mn.value = settings.name || '';
   document.querySelectorAll('#segHand button').forEach(b => b.classList.toggle('sel', +b.dataset.v === settings.hand));
   document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.sound ? 1 : 0)));
+  document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
   const ph = $('pracHoles');
   if (ph) {
     if (ph.children.length !== HOLE_DEFS.length) { ph.innerHTML = ''; HOLE_DEFS.forEach((d, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.onclick = () => startPractice(i); ph.appendChild(b); }); }
@@ -6518,7 +6620,8 @@ function initInput() {
   };
   $('mBoard').onclick = () => { closeSheets(true); openBoard(); };
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
-  document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); });
+  document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
+  document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   $('mCard').onclick = () => showScorecard(false);
   $('dReplay').onclick = () => { SFX.blip(); replayLast(); };
   $('mReplay').onclick = () => { closeSheets(); setTimeout(replayLast, 120); };
