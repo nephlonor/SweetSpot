@@ -3966,15 +3966,18 @@ function updateFountains(t) {
 const LIFE_T = { value: 0 };
 const _lm = new THREE.Matrix4(), _lm2 = new THREE.Matrix4(), _ld = new THREE.Object3D(), _lc = new THREE.Color(), _le = new THREE.Euler();
 // vertex-coloured lambert; the instanced grass sways in the wind
-function lifeMat(sway) {
-  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, flatShading: !sway });
+const LIFE_CAM = { value: new THREE.Vector3() };
+function lifeMat(sway, far, fade) {
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, flatShading: !sway, transparent: !sway });
   if (sway) m.onBeforeCompile = sh => {
-    sh.uniforms.uT = LIFE_T;
-    sh.vertexShader = 'uniform float uT;\n' + sh.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = vec3( position );
+    sh.uniforms.uT = LIFE_T; sh.uniforms.uCam = LIFE_CAM; sh.uniforms.uFar = { value: far || 120 }; sh.uniforms.uFade = { value: fade || 40 };
+    sh.vertexShader = 'uniform float uT; uniform vec3 uCam; uniform float uFar; uniform float uFade;\n' + sh.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = vec3( position );
       #ifdef USE_INSTANCING
       float ph = instanceMatrix[3].x * .9 + instanceMatrix[3].z * .7;
       float sw = max( position.y, 0. );
       transformed.x += sin( uT * 2.3 + ph ) * sw * .2; transformed.z += cos( uT * 1.9 + ph * 1.3 ) * sw * .15;
+      // grows in with distance instead of popping: full size inside uFar - uFade, gone at uFar
+      transformed *= 1. - smoothstep( uFar - uFade, uFar, distance( instanceMatrix[3].xz, uCam.xz ) );
       #endif`);
   };
   return m;
@@ -4020,50 +4023,56 @@ function flowerGeos() {
   return { stem, head: mergeParts(parts) };
 }
 function initGround(L, grp) {
-  const NG = 3400, NF = 1100, gm = lifeMat(true);
+  const NG = 7000, NF = 1500, gm = lifeMat(true, 120, 42);
   L.gMesh = new THREE.InstancedMesh(grassGeo(), gm, NG); L.gMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NG * 3), 3); L.gMesh.count = 0; L.gMesh.frustumCulled = false;
-  const fg = flowerGeos(), fm = lifeMat(true), fm2 = lifeMat(true);
+  const fg = flowerGeos(), fm = lifeMat(true, 60, 24), fm2 = lifeMat(true, 60, 24);
   L.sMesh = new THREE.InstancedMesh(fg.stem, fm, NF); L.sMesh.count = 0; L.sMesh.frustumCulled = false;
   L.hMesh = new THREE.InstancedMesh(fg.head, fm2, NF); L.hMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NF * 3), 3); L.hMesh.count = 0; L.hMesh.frustumCulled = false;
   for (const m of [L.gMesh, L.sMesh, L.hMesh]) { m.userData.keep = true; grp.add(m); }
-  L.gx = 1e9; L.gz = 1e9; L.gT = -9; L.gBall = [1e9, 1e9]; L.NG = NG; L.NF = NF;
+  L.gx = 1e9; L.gz = 1e9; L.gT = -9; L.gBall = [1e9, 1e9]; L.NG = NG; L.NF = NF; L.job = null;
+  // the next scatter is built in the background a slice per frame, then swapped in whole
+  L.st = { gM: new Float32Array(NG * 16), gC: new Float32Array(NG * 3), sM: new Float32Array(NF * 16), hC: new Float32Array(NF * 3) };
 }
 const GRASS_COLS = [0x5f9a36, 0x72ad3f, 0x4f8a30, 0x84b447, 0x6aa33a, 0x8db84e, 0x5a9440, 0x9aaa45, 0xb7b565];
 const FLOWER_COLS = [0xffffff, 0xffffff, 0xfff3a6, 0xffd23f, 0xff9fb8, 0xd9b8ff, 0xffffff, 0xff7a3d, 0xb9d7ff];
-function updateGround(L, fx, fz) {
-  const C = L.C, R = 58, cell = 1.5, bx0 = G.ball.x, bz0 = G.ball.z, M = _lm, Q = _lm2, cam = W.cam.position, sdx = bx0 - cam.x, sdz = bz0 - cam.z, sl2 = Math.max(.01, sdx * sdx + sdz * sdz);
-  let ng = 0, nf = 0; const gi0 = Math.floor((fx - R) / cell), gi1 = Math.floor((fx + R) / cell), gj0 = Math.floor((fz - R) / cell), gj1 = Math.floor((fz + R) / cell);
-  const gc = L.gMesh.instanceColor.array, hc = L.hMesh.instanceColor.array;
-  for (let gj = gj0; gj <= gj1; gj++) for (let gi = gi0; gi <= gi1; gi++) {
-    if (ng >= L.NG - 1) break;
-    const x = (gi + hash2(gi, gj, 41)) * cell, z = (gj + hash2(gi, gj, 43)) * cell, dx = x - fx, dz = z - fz, d2 = dx * dx + dz * dz; if (d2 > R * R) continue;
-    const h1 = hash2(gi, gj, 47); if (h1 > .93) continue;
-    const sf = C.surf(x, z); const deep = sf === S.DEEP; if (!deep && sf !== S.ROUGH) continue;
-    if (!C.inBounds(x, z)) continue;
-    const bd = Math.hypot(x - bx0, z - bz0); if (bd < .8 && G.state !== 'flight') continue; // keep the ball in the clear
-    // low grass right at the ball and along the view from the camera to it, so the lie and the line stay readable
-    const tt = clamp(((x - cam.x) * sdx + (z - cam.z) * sdz) / sl2, 0, 1), cdist = Math.hypot(x - (cam.x + sdx * tt), z - (cam.z + sdz * tt)), cl = G.state === 'flight' ? 1 : Math.min(smooth(.8, 3.2, bd) * .65 + .35, smooth(.6, 2.4, cdist) * .7 + .3) * (Math.hypot(x - cam.x, z - cam.z) < 7 ? .5 : 1);
-    const edge = clamp((R - Math.sqrt(d2)) / 14, 0, 1);
-    // patches: some places are lusher than others
-    const patch = hash2(Math.floor(gi / 9), Math.floor(gj / 9), 5), dens = deep ? .55 + patch * .45 : .22 + patch * .4; if (h1 > dens) continue;
-    const y = groundY(x, z), s = (deep ? .85 + hash2(gi, gj, 49) * .6 : .55 + hash2(gi, gj, 49) * .45) * edge * cl; if (s < .05) continue;
-    M.makeRotationY(hash2(gi, gj, 51) * TAU); M.scale(_ld.scale.set(s, s * (.9 + patch * .6), s)); M.setPosition(x, y - .02, z);
-    L.gMesh.setMatrixAt(ng, M);
-    _lc.setHex(GRASS_COLS[(hash2(gi, gj, 53) * GRASS_COLS.length) | 0]); if (deep) _lc.offsetHSL(.0, -.05, .0); _lc.multiplyScalar(.85 + hash2(gi, gj, 55) * .3);
-    gc[ng * 3] = _lc.r; gc[ng * 3 + 1] = _lc.g; gc[ng * 3 + 2] = _lc.b; ng++;
-    // wildflowers in drifts, mostly where the rough is lush
-    if (nf < L.NF - 1 && patch > .5 && hash2(gi, gj, 57) < (deep ? .38 : .24) * (patch - .3) * 2) {
-      const k = 2 + ((hash2(gi, gj, 59) * 3) | 0);
-      for (let q = 0; q < k && nf < L.NF; q++) {
-        const fx2 = x + (hash2(gi, gj, 60 + q) - .5) * 1.3, fz2 = z + (hash2(gi, gj, 70 + q) - .5) * 1.3, fy = groundY(fx2, fz2), fs = (.75 + hash2(gi, gj, 80 + q) * .7) * edge;
-        Q.makeRotationY(hash2(gi, gj, 90 + q) * TAU); Q.scale(_ld.scale.set(fs, fs, fs)); Q.setPosition(fx2, fy, fz2);
-        L.sMesh.setMatrixAt(nf, Q); L.hMesh.setMatrixAt(nf, Q);
-        const fc = FLOWER_COLS[(hash2(gi + (patch * 7 | 0), gj, 100 + q) * FLOWER_COLS.length) | 0]; _lc.setHex(fc);
-        hc[nf * 3] = _lc.r; hc[nf * 3 + 1] = _lc.g; hc[nf * 3 + 2] = _lc.b; nf++;
+// grass out to ~128 m round the camera: a fine lattice near, a coarser one with bigger clumps further out; wildflowers within ~78 m.
+// Everything is keyed to world cells (stable) and shrinks to nothing at its range in the shader, so nothing pops in or out.
+function* groundJob(L, fx, fz) {
+  const C = L.C, cell0 = 1.5, bx0 = G.ball.x, bz0 = G.ball.z, cam = W.cam.position, sdx = bx0 - cam.x, sdz = bz0 - cam.z, sl2 = Math.max(.01, sdx * sdx + sdz * sdz), ST = L.st, M = new THREE.Matrix4(), Q = new THREE.Matrix4(), sc = new THREE.Vector3(), col = new THREE.Color();
+  let ng = 0, nf = 0, budget = 0; const flying = G.state === 'flight';
+  for (const ring of [{ cell: cell0, r0: 0, r1: 72, mul: 1, dm: 1, tag: 0 }, { cell: 3.4, r0: 72, r1: 134, mul: 1.75, dm: .8, tag: 1 }]) {
+    const cell = ring.cell, R1 = ring.r1, gi0 = Math.floor((fx - R1) / cell), gi1 = Math.floor((fx + R1) / cell), gj0 = Math.floor((fz - R1) / cell), gj1 = Math.floor((fz + R1) / cell);
+    for (let gj = gj0; gj <= gj1; gj++) for (let gi = gi0; gi <= gi1; gi++) {
+      if (++budget > 650) { budget = 0; yield; }
+      if (ng >= L.NG - 1) break;
+      const x = (gi + hash2(gi, gj, 41 + ring.tag * 7)) * cell, z = (gj + hash2(gi, gj, 43 + ring.tag * 7)) * cell, dx = x - fx, dz = z - fz, d2 = dx * dx + dz * dz;
+      if (d2 > R1 * R1 || d2 < ring.r0 * ring.r0) continue;
+      const h1 = hash2(gi, gj, 47 + ring.tag); if (h1 > .93) continue;
+      const sf = C.surf(x, z), deep = sf === S.DEEP; if (!deep && sf !== S.ROUGH) continue;
+      if (!C.inBounds(x, z)) continue;
+      const bd = Math.hypot(x - bx0, z - bz0); if (bd < .8 && !flying) continue; // keep the ball in the clear
+      // low grass right at the ball and along the view from the camera to it, so the lie and the line stay readable
+      const tt = clamp(((x - cam.x) * sdx + (z - cam.z) * sdz) / sl2, 0, 1), cdist = Math.hypot(x - (cam.x + sdx * tt), z - (cam.z + sdz * tt));
+      const cl = flying ? 1 : Math.min(smooth(.8, 3.2, bd) * .65 + .35, smooth(.6, 2.4, cdist) * .7 + .3) * (Math.hypot(x - cam.x, z - cam.z) < 7 ? .5 : 1);
+      const patch = hash2(Math.floor(gi * cell / 13), Math.floor(gj * cell / 13), 5), dens = (deep ? .55 + patch * .45 : .22 + patch * .4) * ring.dm; if (h1 > dens) continue;
+      const y = groundY(x, z), s = (deep ? .85 + hash2(gi, gj, 49) * .6 : .55 + hash2(gi, gj, 49) * .45) * cl * ring.mul; if (s < .05) continue;
+      M.makeRotationY(hash2(gi, gj, 51) * TAU); M.scale(sc.set(s, s * (.9 + patch * .6), s)); M.setPosition(x, y - .02, z); M.toArray(ST.gM, ng * 16);
+      col.setHex(GRASS_COLS[(hash2(gi, gj, 53) * GRASS_COLS.length) | 0]); if (deep) col.offsetHSL(0, -.05, 0); col.multiplyScalar(.85 + hash2(gi, gj, 55) * .3);
+      ST.gC[ng * 3] = col.r; ST.gC[ng * 3 + 1] = col.g; ST.gC[ng * 3 + 2] = col.b; ng++;
+      // wildflowers in drifts, mostly where the rough is lush
+      if (!ring.tag && nf < L.NF - 3 && patch > .5 && hash2(gi, gj, 57) < (deep ? .38 : .24) * (patch - .3) * 2) {
+        const k = 2 + ((hash2(gi, gj, 59) * 3) | 0);
+        for (let q = 0; q < k && nf < L.NF; q++) {
+          const fx2 = x + (hash2(gi, gj, 60 + q) - .5) * 1.3, fz2 = z + (hash2(gi, gj, 70 + q) - .5) * 1.3, fy = groundY(fx2, fz2), fs = (.75 + hash2(gi, gj, 80 + q) * .7) * cl;
+          Q.makeRotationY(hash2(gi, gj, 90 + q) * TAU); Q.scale(sc.set(fs, fs, fs)); Q.setPosition(fx2, fy, fz2); Q.toArray(ST.sM, nf * 16);
+          col.setHex(FLOWER_COLS[(hash2(gi + (patch * 7 | 0), gj, 100 + q) * FLOWER_COLS.length) | 0]); ST.hC[nf * 3] = col.r; ST.hC[nf * 3 + 1] = col.g; ST.hC[nf * 3 + 2] = col.b; nf++;
+        }
       }
     }
   }
-  L.gMesh.count = ng; L.sMesh.count = nf; L.hMesh.count = nf;
+  // swap in
+  L.gMesh.instanceMatrix.array.set(ST.gM.subarray(0, ng * 16)); L.gMesh.instanceColor.array.set(ST.gC.subarray(0, ng * 3)); L.gMesh.count = ng;
+  L.sMesh.instanceMatrix.array.set(ST.sM.subarray(0, nf * 16)); L.hMesh.instanceMatrix.array.set(ST.sM.subarray(0, nf * 16)); L.hMesh.instanceColor.array.set(ST.hC.subarray(0, nf * 3)); L.sMesh.count = L.hMesh.count = nf;
   L.gMesh.instanceMatrix.needsUpdate = true; L.gMesh.instanceColor.needsUpdate = true; L.sMesh.instanceMatrix.needsUpdate = true; L.hMesh.instanceMatrix.needsUpdate = true; L.hMesh.instanceColor.needsUpdate = true;
   L.gx = fx; L.gz = fz; L.gBall = [bx0, bz0];
 }
@@ -4115,7 +4124,7 @@ function makeDeer(L, stag) {
   head.position.set(0, 1.28, .72); head.add(hm); hm.position.set(0, -.3, -.1);
   const legs = [[-.17, .5], [.17, .5], [-.17, -.5], [.17, -.5]].map(p => { const lg = new THREE.Group(); lg.position.set(p[0], .76, p[1]); lg.add(lmesh(P.leg, mat)); g.add(lg); return lg; });
   g.add(body); g.add(head); g.visible = false; L.grp.add(g);
-  const e = { kind: 'deer', g, head, legs, st: 'gone', x: 0, z: 0, yaw: 0, spd: 0, ph: Math.random() * 6, tmr: 0, wp: null, ex: 0, ez: 0, respawn: 4 + Math.random() * 20, hitT: 0, scale: stag ? 1.1 : 1, r: .9, h: 1.7 };
+  const e = { kind: 'deer', mat, g, head, legs, st: 'gone', x: 0, z: 0, yaw: 0, spd: 0, ph: Math.random() * 6, tmr: 0, wp: null, ex: 0, ez: 0, respawn: 4 + Math.random() * 20, hitT: 0, scale: stag ? 1.1 : 1, r: .9, h: 1.7 };
   e.spawn = () => { const c = crossingPoints(L, 8); if (!c) { e.respawn = 6; return; } e.x = c.a[0]; e.z = c.a[1]; e.wp = c.b; e.st = 'walk'; e.spd = 0; e.tmr = 3 + Math.random() * 6; e.yaw = Math.atan2(c.b[0] - c.a[0], c.b[1] - c.a[1]); g.visible = true; };
   e.flee = (fx, fz) => { if (e.st === 'flee' || e.st === 'gone') return; e.st = 'flee'; e.tmr = 5 + Math.random() * 2; const a = Math.atan2(e.x - fx, e.z - fz) + (Math.random() - .5) * .7; e.yaw = a; e.wp = [e.x + Math.sin(a) * 90, e.z + Math.cos(a) * 90]; };
   e.hit = (x, y, z) => { if (e.st === 'gone') return null; const gy = groundY(e.x, e.z), dx = x - e.x, dz = z - e.z; if (y < gy - .1 || y > gy + e.h) return null; const d = Math.hypot(dx, dz); if (d > e.r * e.scale) return null; const l = d || 1; return { nx: dx / l, ny: .35, nz: dz / l }; };
@@ -4148,7 +4157,7 @@ function makeRabbit(L) {
   const fur = 0xa58b6a, belly = 0xe6dcc8, mat = LIFE_MAT();
   const geo = mergeParts([lsp(.13, .12, .2, 0, .15, 0, fur), lsp(.09, .09, .1, 0, .23, .17, fur), lbx(.035, .17, .03, -.035, .36, .16, fur, .2, 0, -.15), lbx(.035, .17, .03, .035, .36, .16, fur, .2, 0, .15), lsp(.05, .05, .05, 0, .16, -.21, 0xf6f1e6), lsp(.05, .05, .1, .08, .07, -.1, belly), lsp(.05, .05, .1, -.08, .07, -.1, belly)]);
   const g = lmesh(geo, mat); g.visible = false; L.grp.add(g);
-  const e = { kind: 'rabbit', g, st: 'gone', x: 0, z: 0, yaw: 0, ph: 0, wp: null, tmr: 0, respawn: 3 + Math.random() * 14, r: .32, h: .5, hop: 0 };
+  const e = { kind: 'rabbit', mat, g, st: 'gone', x: 0, z: 0, yaw: 0, ph: 0, wp: null, tmr: 0, respawn: 3 + Math.random() * 14, r: .32, h: .5, hop: 0 };
   e.spawn = () => { const c = crossingPoints(L, 2); if (!c) { e.respawn = 6; return; } e.x = c.a[0]; e.z = c.a[1]; e.wp = c.b; e.st = 'walk'; e.tmr = 1 + Math.random() * 3; e.yaw = Math.atan2(c.b[0] - c.a[0], c.b[1] - c.a[1]); g.visible = true; };
   e.flee = (fx, fz) => { if (e.st === 'flee' || e.st === 'gone') return; e.st = 'flee'; e.tmr = 5; const a = Math.atan2(e.x - fx, e.z - fz) + (Math.random() - .5) * .9; e.yaw = a; e.wp = [e.x + Math.sin(a) * 80, e.z + Math.cos(a) * 80]; };
   e.hit = (x, y, z) => { if (e.st === 'gone') return null; const gy = groundY(e.x, e.z) + e.hop; if (y < gy - .1 || y > gy + e.h) return null; const dx = x - e.x, dz = z - e.z, d = Math.hypot(dx, dz); if (d > e.r) return null; const l = d || 1; return { nx: dx / l, ny: .5, nz: dz / l }; };
@@ -4279,11 +4288,12 @@ function updateFlocks(L, dt) {
     }
   }
 }
-function drawBirds(L) {
+function drawBirds(L, dt) {
   const B = L.B; let i = 0;
   for (const b of B.list) {
-    if (b.vis <= 0 && b.st === 'gone') { _ld.scale.setScalar(0); _ld.position.set(0, -500, 0); _ld.updateMatrix(); B.body.setMatrixAt(i, _ld.matrix); B.wl.setMatrixAt(i, _ld.matrix); B.wr.setMatrixAt(i, _ld.matrix); i++; continue; }
-    const s = b.kind.s; _ld.position.set(b.x, b.y + (b.folded ? .1 * s : 0), b.z); _ld.rotation.set(b.pitch, b.yaw, b.roll, 'YXZ'); _ld.scale.setScalar(s); _ld.updateMatrix();
+    const hid = b.vis <= 0 && b.st === 'gone'; b.sh = clamp((b.sh == null ? 0 : b.sh) + (hid ? -dt : dt) / .8, 0, 1);
+    if (b.sh < .01) { _ld.scale.setScalar(0); _ld.position.set(0, -500, 0); _ld.updateMatrix(); B.body.setMatrixAt(i, _ld.matrix); B.wl.setMatrixAt(i, _ld.matrix); B.wr.setMatrixAt(i, _ld.matrix); i++; continue; }
+    const s = b.kind.s; _ld.position.set(b.x, b.y + (b.folded ? .1 * s : 0), b.z); _ld.rotation.set(b.pitch, b.yaw, b.roll, 'YXZ'); _ld.scale.setScalar(s * smooth(0, 1, b.sh)); _ld.updateMatrix();
     B.body.setMatrixAt(i, _ld.matrix);
     const ang = b.folded ? -1.25 : b.glide ? .08 : Math.sin(b.flap) * .85, ws = b.folded ? .55 : 1;
     _lm.makeScale(ws, 1, ws); _lm.premultiply(_lm2.makeRotationZ(ang)); _lm.setPosition(.08, .035, 0); _lm2.multiplyMatrices(_ld.matrix, _lm); B.wr.setMatrixAt(i, _lm2);
@@ -4309,7 +4319,7 @@ function makePlane(L) {
   const g = new THREE.Group(), mat = LIFE_MAT(); g.add(lmesh(hull, mat));
   const prop = lmesh(mergeParts([lbx(.14, 2.4, .08, 0, 0, 0, [.15, .15, .15]), lbx(2.4, .14, .08, 0, 0, 0, [.15, .15, .15]), lsp(.16, .16, .22, 0, 0, .12, red)]), mat); prop.position.set(0, 0, 3.4); g.add(prop);
   g.visible = false; L.grp.add(g);
-  const e = { kind: 'plane', g, prop, st: 'wait', tmr: Math.random() < .7 ? 14 + Math.random() * 90 : 1e9, x: 0, y: 0, z: 0, yaw: 0, a: [0, 0], b: [0, 0], alt: 40, spd: 52, t: 0, T: 10, r: 1, shake: 0, played: false };
+  const e = { kind: 'plane', mat, g, prop, st: 'wait', tmr: Math.random() < .7 ? 14 + Math.random() * 90 : 1e9, x: 0, y: 0, z: 0, yaw: 0, a: [0, 0], b: [0, 0], alt: 40, spd: 52, t: 0, T: 10, r: 1, shake: 0, played: false };
   e.hit = (x, y, z) => {
     if (e.st !== 'fly') return null; const dx = x - e.x, dy = y - e.y, dz = z - e.z, cs = Math.cos(e.yaw), sn = Math.sin(e.yaw), lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
     const inBody = Math.abs(lx) < .75 && Math.abs(dy) < .8 && lz > -4.4 && lz < 3.6, inWing = Math.abs(lx) < 5.6 && Math.abs(dy - .72) < .25 && Math.abs(lz - .25) < .85, inTail = Math.abs(lx) < 1.8 && Math.abs(dy - .2) < .25 && Math.abs(lz + 5.5) < .6;
@@ -4338,9 +4348,9 @@ function makeGlider(L) {
   const canopy = lmesh(mergeParts(pan), mat); const cg = new THREE.Group(); cg.add(canopy); g.add(cg);
   const pilot = new THREE.Group(); const pm = lmesh(mergeParts([lbx(.5, .55, .35, 0, 0, 0, 0x2f5b8a), lsp(.13, .15, .14, 0, .42, .02, 0xe8bf9a, 5), lsp(.16, .12, .16, 0, .5, .02, 0xd23b2b, 5), lbx(.17, .6, .2, -.13, -.5, .18, 0x2a2f38, -1.0), lbx(.17, .6, .2, .13, -.5, .18, 0x2a2f38, -1.0), lbx(.3, .45, .5, 0, -.2, -.22, 0xc9b49a)]), mat); pilot.add(pm); g.add(pilot);
   const lg = new THREE.BufferGeometry(), lp = []; for (let i = 0; i <= 6; i++) { const a = (i / 6 - .5) * 1.9, R = span / 1.9, x = Math.sin(a) * R, y = Math.cos(a) * R - R; for (const z of [-.8, .8]) lp.push(x, y, z, x * .06, -5.4, 0); }
-  lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3)); const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x222222 })); lines.frustumCulled = false; cg.add(lines);
+  lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3)); const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x222222, transparent: true })); lines.frustumCulled = false; cg.add(lines);
   g.visible = false; L.grp.add(g);
-  const e = { kind: 'glider', g, cg, canopy, pilot, lines, st: 'wait', tmr: Math.random() < .6 ? 10 + Math.random() * 55 : 1e9, t: 0, T: 34, A: [0, 0, 0], B: [0, 0, 0], yaw: 0, x: 0, y: 0, z: 0, tl: 0, collapse: 0, px: 0, pz: 0, show: 1, pitch: 0 };
+  const e = { kind: 'glider', mat, lmat: lines.material, g, cg, canopy, pilot, lines, st: 'wait', tmr: Math.random() < .6 ? 10 + Math.random() * 55 : 1e9, t: 0, T: 34, A: [0, 0, 0], B: [0, 0, 0], yaw: 0, x: 0, y: 0, z: 0, tl: 0, collapse: 0, px: 0, pz: 0, show: 1, pitch: 0 };
   e.hit = (x, y, z) => {
     if (e.st === 'wait') return null;
     const py = groundY(e.px, e.pz);
@@ -4408,16 +4418,24 @@ function buildLife(C, grp) {
     L.plane = makePlane(L); L.glider = makeGlider(L); L.ents.push(L.plane, L.glider);
   } catch (e) { console.error('life', e); W.life = null; }
 }
+// animals, the plane and the paraglider fade in when they appear and out when they leave
+function lifeFade(e, dt) {
+  const on = e.st !== 'gone' && e.st !== 'wait'; e.alpha = clamp((e.alpha == null ? 0 : e.alpha) + (on ? dt / .9 : -dt / 1.1), 0, 1);
+  e.mat.opacity = e.alpha; if (e.lmat) e.lmat.opacity = e.alpha; e.g.visible = e.alpha > .02;
+}
 function updateLife(dt, now) {
   const L = W.life; if (!L || L.C !== G.C) return; dt = Math.min(dt, .1); L.t += dt; LIFE_T.value = now;
   const b = W.ball.position, T = L.T, px = T.x, pz = T.z; T.x = b.x; T.y = b.y; T.z = b.z; T.fly = G.state === 'flight' && !!G.shot && !G.shot.replay && !(G.shot.L && G.shot.L.putt);
   L.ballMovingAway = false;
   // grass around the camera and ball (rebuilt when they move on)
-  const cam = W.cam.position, look = G.camLook, fx = (cam.x + look.x) / 2, fz = (cam.z + look.z) / 2;
-  const busy = G.state === 'flight' || G.state === 'intro', moved = Math.hypot(fx - L.gx, fz - L.gz) > (busy ? 22 : 11), ballMoved = !busy && Math.hypot(G.ball.x - L.gBall[0], G.ball.z - L.gBall[1]) > .5;
-  if ((moved || ballMoved || L.gMesh.count === 0) && L.t - L.gT > (busy ? .8 : .4)) { updateGround(L, fx, fz); L.gT = L.t; }
-  for (const e of L.ents) if (e.update) e.update(dt);
-  const B = L.B; for (const bd of B.list) birdUpdate(L, bd, dt); updateFlocks(L, dt); drawBirds(L);
+  const cam = W.cam.position, fx = cam.x, fz = cam.z; LIFE_CAM.value.copy(cam);
+  if (L.job) { const r = L.job.next(); if (r.done) { L.job = null; L.gT = L.t; } }
+  else {
+    const busy = G.state === 'flight' || G.state === 'intro', moved = Math.hypot(fx - L.gx, fz - L.gz) > (busy ? 14 : 10), ballMoved = !busy && Math.hypot(G.ball.x - L.gBall[0], G.ball.z - L.gBall[1]) > .5;
+    if ((moved || ballMoved || L.gMesh.count === 0) && L.t - L.gT > .3) L.job = groundJob(L, fx, fz);
+  }
+  for (const e of L.ents) { if (e.update) e.update(dt); if (e.mat) lifeFade(e, dt); }
+  const B = L.B; for (const bd of B.list) birdUpdate(L, bd, dt); updateFlocks(L, dt); drawBirds(L, dt);
   // animals bolt when the ball lands among them
   if (G.state === 'flight' || G.state === 'settle') for (const e of L.ents) if (e.flee) { const d = Math.hypot(e.x - T.x, e.z - T.z); if (T.fly ? d < (e.kind === 'deer' ? 38 : 26) : d < (e.kind === 'deer' ? 22 : 12)) e.flee(T.x, T.z); }
 }
