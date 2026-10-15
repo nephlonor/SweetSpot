@@ -113,6 +113,9 @@ input{-webkit-user-select:text;user-select:text;touch-action:manipulation}
 #strikeCv{width:100%;aspect-ratio:1/1;display:block;position:relative}
 body.swing #topbar{opacity:0}
 body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
+#skipBtn{position:absolute;z-index:6;transform:translate(-50%,6px) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .3s var(--spring);padding:7px 16px 8px;border-radius:18px;color:#fff;font:600 15px Oswald,"Arial Narrow",sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:5px;cursor:pointer}
+#skipBtn.on{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
+#skipBtn svg{width:15px;height:15px}
 #tempo,#strike{transition:opacity .4s}
 /* in motion, a panel the ball passes behind turns see-through */
 .seethru{opacity:.24!important;transition:opacity .12s!important}
@@ -305,6 +308,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
   <div id="aimHint" class="glass"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Drag to aim</div>
   <div class="card" id="readout"></div>
+  <button class="glass" id="skipBtn" aria-label="Skip to the next shot">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"/></svg></button>
   <div class="card" id="tempo">
     <div class="ptitle" id="tTitle">Tempo (3:1)</div>
     <div class="clubSel">
@@ -5370,6 +5374,19 @@ function impact(tImp) {
 
 /* ---------- flight playback ---------- */
 const _ax = new THREE.Vector3();
+// "Next": two seconds into a shot a small button over the tempo bar skips the rest of the flight and roll, straight to the next address
+function updateSkipBtn() {
+  const b = $('skipBtn'), sh = G.shot, want = G.state === 'flight' && sh && !sh.skipped && G.playT >= 2 && G.playT < sh.res.duration + .5 && !sheetOpen();
+  if (want && !b.classList.contains('on')) { const r = $('tempo').getBoundingClientRect(); b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top - 50) + 'px'; }
+  b.classList.toggle('on', !!want);
+}
+function skipShot() {
+  const sh = G.shot; if (G.state !== 'flight' || !sh || sh.skipped) return;
+  sh.skipped = true; $('skipBtn').classList.remove('on'); SFX.blip();
+  const r = sh.res; sh.ei = r.events.length; // the bounces, clatter and splashes in between are not played
+  if (r.holed) SFX.cup();
+  G.playT = Math.max(G.playT, r.duration + .7); G.snapCam = !sh.replay; // the address view comes straight up, no travelling
+}
 function updateFlight(dt) {
   const sh = G.shot, r = sh.res, fr = r.frames;
   // one playback rate for the whole shot: switching rate mid-roll made the ball visibly speed up after landing
@@ -6670,6 +6687,7 @@ function initInput() {
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
+  $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
   $('mCard').onclick = () => showScorecard(false);
   $('dReplay').onclick = () => { SFX.blip(); replayLast(); };
   $('mReplay').onclick = () => { closeSheets(); setTimeout(replayLast, 120); };
@@ -6725,6 +6743,7 @@ function frame(now) {
   W.clouds.children.forEach(c => { c.position.x += c.userData.sp * dt; if (c.position.x > 1400) c.position.x = -1400; });
   if (UI.readT > 0) { UI.readT -= dt; if (UI.readT <= 0) $('readout').classList.remove('on'); }
   if (C) { updateSeeThru(); updatePinTag(); updateWindArrow(); updateBallTag(); }
+  updateSkipBtn();
   const hudOff = G.state === 'title' || G.state === 'intro';
   $('hud').classList.toggle('off', hudOff);
   if (!hudOff) { drawTempo(now); drawStrike(now); drawFx(now); } else if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height);
