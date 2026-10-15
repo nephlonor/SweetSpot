@@ -184,6 +184,9 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .grab{width:40px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto 10px}
 .sht{font:600 24px var(--cond);text-transform:uppercase;margin:2px 0 12px;display:flex;justify-content:space-between;align-items:baseline}
 .sht small{font:600 12px var(--cond);color:var(--ink3);letter-spacing:.1em}
+.shX{position:absolute;top:12px;right:calc(var(--sr) + 12px);width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.07);color:var(--ink2,#334);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.shX svg{width:18px;height:18px}
+.shX:active{background:rgba(0,0,0,.14)}
 .bag{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
 .bag button{background:var(--soft);border-radius:16px;padding:10px;text-align:left;position:relative;transition:transform .12s}
 .bag button:active{transform:scale(.96)}
@@ -344,7 +347,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
 <div id="scrim"></div>
 <div class="sheet" id="bagSheet"><div class="grab"></div><div class="sht">Your bag <small id="bagLie">From the tee</small></div><div class="bag" id="bag"></div></div>
-<div class="sheet" id="menuSheet"><div class="grab"></div><div class="sht">Settings</div>
+<div class="sheet" id="menuSheet"><div class="grab"></div><button class="shX" id="menuX" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="sht">Settings</div>
   <div class="mlist">
     <div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
@@ -6688,6 +6691,7 @@ function initInput() {
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
+  $('menuX').onclick = () => closeSheets();
   $('mCard').onclick = () => showScorecard(false);
   $('dReplay').onclick = () => { SFX.blip(); replayLast(); };
   $('mReplay').onclick = () => { closeSheets(); setTimeout(replayLast, 120); };
