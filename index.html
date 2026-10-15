@@ -5014,7 +5014,7 @@ function mpMsg(topic, buf) {
   } else if (kind === 'f') {
     let d; try { d = JSON.parse(txt); } catch (e) { return; }
     const pr = MP.peers.get(id); if (!pr || !d || !Array.isArray(d.p) || d.p.length < 6) return;
-    pr.fly = { c: d.c, h: d.h | 0, zb: Number.isFinite(+d.zb) ? +d.zb : null, p: d.p, dt: +d.dt || .1, t0: performance.now(), dur: (d.p.length / 3 - 1) * (+d.dt || .1) };
+    pr.fly = { x0: pr.x, z0: pr.z, c: d.c, h: d.h | 0, zb: Number.isFinite(+d.zb) ? +d.zb : null, p: d.p, dt: +d.dt || .1, t0: performance.now(), dur: (d.p.length / 3 - 1) * (+d.dt || .1) };
     pr.c = d.c; pr.h = d.h | 0;
   }
   MP.panelT = 0;
@@ -5117,6 +5117,8 @@ function mpUpdate(dt) {
         pa.array[k6] = q[0] - sx; pa.array[k6 + 1] = q[1] + VIS_R; pa.array[k6 + 2] = q[2] - sz; pa.array[k6 + 3] = q[0] + sx; pa.array[k6 + 4] = q[1] + VIS_R; pa.array[k6 + 5] = q[2] + sz;
       }
       pa.needsUpdate = true; o.tr.geometry.setDrawRange(0, Math.max(0, (nn - 1) * 6)); o.tr.material.opacity = .85 * clamp(f.dur + 1.5 - el, 0, 1);
+    } else if (f && el < f.dur + 25 && pr.x === f.x0 && pr.z === f.z0) { // the flight is over, their new position has not arrived yet: the ball stays where it landed
+      const P = f.p, m = P.length / 3, q = C.loc(P[3 * m - 3], P[3 * m - 2]); X = q[0]; Z = -q[1]; Y = groundY(X, Z) + VIS_R; o.tr.geometry.setDrawRange(0, 0);
     } else {
       if (!Number.isFinite(pr.x)) { o.ball.visible = false; o.tag.style.opacity = 0; continue; }
       const q = C.loc(pr.x, pr.z); X = q[0]; Z = -q[1]; Y = groundY(X, Z) + VIS_R; o.tr.geometry.setDrawRange(0, 0);
@@ -5217,23 +5219,32 @@ function mpResume(quiet) {
   W.ball.visible = true; G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone(); G.snapCam = true; if (G.rig) G.rig.arr = null;
   G.carryKey = ''; updateAim(true); mpState(true); MP.panelT = 0; if (!quiet) SFX.blip();
 }
-// the follow camera: behind their ball looking toward the green; in the air it chases the ball
+// the follow camera: behind their ball looking toward the green; in the air the view their own camera has (the same distance, height and
+// smoothing, along the direction of the shot), so the flight reads just as it does for them
 const _scP = new THREE.Vector3(), _scL = new THREE.Vector3();
 function mpSpecCam(dt) {
   const pr = MP.peers.get(MP.follow); if (!pr || !COURSES[pr.c]) { mpResume(); return; }
   if ((pr.h | 0) !== MP.specHole || pr.c !== MP.specCourse) mpSpecLoad(pr); // they moved on: their next hole (or course)
-  const C = G.C;
+  const C = G.C, R = G.rig || camInit();
   const o = MP.objs.get(pr.id); let bx, by, bz;
   if (o && o.ball.visible) { bx = o.ball.position.x; by = o.ball.position.y; bz = o.ball.position.z; }
   else { const q = C.loc(pr.x, pr.z); bx = q[0]; bz = -q[1]; by = C.h(bx, bz); }
-  const fl = pr.fly && (performance.now() - pr.fly.t0) / 1000 < pr.fly.dur + .5;
-  let dx = C.cup.x - bx, dz = C.cup.z - bz;
-  if (fl && MP.specCam) { const vx = bx - MP.specCam.x, vz = bz - MP.specCam.z; if (Math.hypot(vx, vz) > .05) { dx = vx; dz = vz; } }
-  const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
-  const back = fl ? 22 : 11, up = fl ? 9 : 4.2, gy = Math.max(C.h(bx - dx * back, bz - dz * back), C.wl(bx - dx * back, bz - dz * back));
-  _scP.set(bx - dx * back, Math.max(by, gy) + up, bz - dz * back); _scL.set(bx + dx * (fl ? 6 : 18), fl ? by : by + .5, bz + dz * (fl ? 6 : 18));
-  const k = MP.specCam ? 1 - Math.exp(-dt * (fl ? 6 : 1.6)) : 1; // (in the air it keeps up with the ball)
-  W.cam.position.lerp(_scP, k); G.camLook.lerp(_scL, k); W.cam.lookAt(G.camLook);
+  const f = pr.fly && pr.fly.c === COURSE.key ? pr.fly : null, fl = !!f && (performance.now() - f.t0) / 1000 < f.dur + .5;
+  if (fl) {
+    if (f.dk !== MP.specHole) { // the direction of the shot: from where it started to where it ended (toward the cup for a short putt)
+      const P = f.p, n = P.length / 3, a = C.loc(P[0], P[1]), z = C.loc(P[3 * n - 3], P[3 * n - 2]);
+      let dx = z[0] - a[0], dz = -(z[1] - a[1]); if (Math.hypot(dx, dz) < 4) { dx = C.cup.x - a[0]; dz = C.cup.z + a[1]; }
+      const l = Math.hypot(dx, dz) || 1; f.dx = dx / l; f.dz = dz / l; f.dk = MP.specHole;
+    }
+    R.hgt += (Math.max(0, by - C.h(bx, bz)) - R.hgt) * (1 - Math.exp(-dt * 3));
+    const back = 11 + Math.min(16, R.hgt * .4), up = 4 + R.hgt * .5, px = bx - f.dx * back, pz = bz - f.dz * back;
+    _scP.set(px, softMax(softMax(by + up, C.h(px, pz) + 1.4, .6), C.wl(px, pz) + 1.4, .6), pz); _scL.set(bx + f.dx * 7, by + 1, bz + f.dz * 7);
+  } else {
+    let dx = C.cup.x - bx, dz = C.cup.z - bz; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+    const px = bx - dx * 11, pz = bz - dz * 11, gy = Math.max(C.h(px, pz), C.wl(px, pz));
+    _scP.set(px, Math.max(by, gy) + 4.2, pz); _scL.set(bx + dx * 18, by + .5, bz + dz * 18); R.hgt = 0;
+  }
+  if (!MP.specCam) { W.cam.position.copy(_scP); G.camLook.copy(_scL); W.cam.lookAt(G.camLook); camSnap(); } else camStep(_scP, _scL, fl ? 1 : .6, dt);
   MP.specCam = { x: bx, z: bz }; W.ball.position.set(bx, by, bz); // (the trees between the camera and their ball step aside)
 }
 function mpSync() {
