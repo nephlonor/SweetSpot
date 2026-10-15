@@ -241,6 +241,10 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .stRow{display:flex;justify-content:space-between;align-items:center;font:600 15px var(--cond);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--hair)}.stRow span:first-child{color:var(--ink3);letter-spacing:.08em;font-size:12px}
 .mpRoom{display:flex;gap:6px;flex:1;justify-content:flex-end}.mpRoom input{max-width:120px}
 .mpb{height:38px;padding:0 14px;border-radius:12px;background:#2f6b35;color:#fff;font:600 15px var(--cond);text-transform:uppercase;letter-spacing:.05em;border:0}
+.mpList{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}.mpList .empty{font:500 13px var(--sans,system-ui);color:var(--ink3);padding:2px 4px}
+.mpLr{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:14px;padding:6px 6px 6px 12px;font:600 15px var(--cond);text-transform:uppercase}
+.mpLr i{width:9px;height:9px;border-radius:50%;flex:none}.mpLr .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mpLr .w{color:var(--ink2);font-size:13px;white-space:nowrap}.mpLr .t{min-width:30px;text-align:right}
+.mpLr .mpb{height:34px;padding:0 12px;font-size:13px}.mpLr.on .mpb{background:#c0392b}
 .mpInfo{font:500 13px var(--sans,system-ui);color:var(--ink2);padding:2px 4px 4px;line-height:1.35}.mpInfo b{color:var(--ink)}
 .mpBtns{display:flex;gap:6px;margin-top:6px}.mpBtns .mpb{flex:1;background:var(--soft);color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair)}
 #mpPanel{position:fixed;z-index:2;right:calc(var(--sr) + 10px);top:0;min-width:128px;max-width:46vw;padding:6px 9px 7px;border-radius:16px;pointer-events:none;opacity:0;transition:opacity .3s;font:600 13px var(--cond);color:#fff;text-shadow:var(--tsh)}
@@ -253,6 +257,7 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 #specBar #specInfo{overflow:hidden;text-overflow:ellipsis;min-width:0}
 #specBar .btn{height:44px;padding:0 16px;font-size:16px;flex:none}
 body.spec #specBar{display:flex}
+body.spec .tb-hole,body.spec #windCard,body.spec #pinCard{visibility:hidden}
 body.spec #pinTag,body.spec #ballTag,body.spec #aimHint,body.spec #skipBtn,body.spec #readout{display:none!important}
 body.spec #tempo,body.spec #strike{opacity:.55!important}body.spec #tempo *,body.spec #strike *{pointer-events:none!important}body.spec #fx{opacity:.7}
 #mpPanel .mph{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.8;margin-bottom:2px}
@@ -385,6 +390,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
     <div class="mrow mpRow">Live room<div class="mpRoom"><input id="mpCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code" enterkeyhint="go"><button class="mpb" id="mpJoin">Join</button></div></div>
     <div class="mpInfo" id="mpInfo">Play live with friends: everyone in the same room sees the others' balls fly on the same hole, and the scores.<div class="mpBtns"><button class="mpb" id="mpNew">New room</button><button class="mpb" id="mpShare">Share link</button></div></div>
+    <div class="sub"><span>Players online</span></div><div class="mpList" id="mpList"></div>
     <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
   </div>
   <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
@@ -4977,7 +4983,7 @@ function mpConnect(lib) {
   const c = lib.connect(url, { clientId: 'ssg_' + MP.id + '_' + Math.random().toString(36).slice(2, 6), clean: true, keepalive: 30, reconnectPeriod: 4000, connectTimeout: 15000,
     will: { topic: mpT('s/' + MP.id), payload: '', retain: true, qos: 0 } });
   MP.client = c;
-  c.on('connect', () => { MP.fails = 0; MP.st = 'on'; c.subscribe(mpT('+/+')); mpState(true); mpSync(); });
+  c.on('connect', () => { MP.fails = 0; MP.st = 'on'; c.subscribe([mpT('+/+')].concat(Object.keys(COURSES).filter(k => k !== 'legacy').map(k => `ssgolf/v1/${mpLobby(k)}/+/+`).filter(t => !t.startsWith(mpT(''))))); mpState(true); mpSync(); }); // my room, and every course's public lobby (who is playing where)
   c.on('message', (topic, buf) => mpMsg(topic, buf));
   const fail = () => { if (MP.client !== c) return; MP.st = 'connecting'; mpSync(); if (++MP.fails >= 2 && !q) { MP.fails = 0; MP.bi++; try { c.end(true); } catch (e) { } MP.client = null; setTimeout(() => MP.room && mpConnect(lib), 500); } };
   c.on('error', fail); c.on('offline', fail);
@@ -4990,13 +4996,13 @@ function mpLeave(keep) {
   MP.st = 'off'; mpSync();
 }
 function mpMsg(topic, buf) {
-  const p = topic.split('/'), kind = p[3], id = p[4]; if (!id || id === MP.id) return;
+  const p = topic.split('/'), room = p[2], kind = p[3], id = p[4]; if (!id || id === MP.id) return;
   const txt = buf && buf.length ? new TextDecoder().decode(buf) : '';
   if (kind === 's') {
     if (!txt) { const o = MP.objs.get(id); if (o) mpDrop(o); MP.objs.delete(id); MP.peers.delete(id); if (MP.follow === id) mpResume(); return; }
     let d; try { d = JSON.parse(txt); } catch (e) { return; }
     if (!d || typeof d.n !== 'string' || Date.now() - (+d.at || 0) > 3 * 36e5) return; // ghosts of long-gone players are ignored
-    const pr = MP.peers.get(id) || { id, col: mpCol(id) };
+    const pr = MP.peers.get(id) || { id, col: mpCol(id) }; pr.room = room;
     Object.assign(pr, { n: cleanName(d.n) || 'Player', c: String(d.c || ''), h: d.h | 0, tp: +d.tp || 0, th: d.th | 0, s: d.s | 0, x: +d.x, z: +d.z, at: +d.at, pin: d.pin | 0, fo: String(d.fo || ''), seen: Date.now() });
     MP.peers.set(id, pr);
   } else if (kind === 'i') { // the swing input of the player I follow
@@ -5012,10 +5018,10 @@ function mpMsg(topic, buf) {
 }
 // my state: kept on the broker (retained) so a newcomer sees everyone at once
 function mpState(force) {
-  const c = MP.client; if (!c || MP.st !== 'on' || !G.C || G.state === 'title') return;
+  const c = MP.client; if (!c || MP.st !== 'on' || !G.C || G.state === 'title' || (MP.spec && MP.spec.title)) return;
   const now = Date.now(); if (!force && now - MP.beat < 10000) return; // a heartbeat every 10 s; changes go out at once MP.beat = now;
   const tp = totalToPar(), en = (MP.spec ? MP.spec.C : G.C).enu(G.ball.x, G.ball.z); // (while following someone, my ball is still on my own hole)
-  const d = { n: playerName(), c: COURSE.key, h: G.hole, tp: tp.d, th: G.scores.filter(v => v != null).length, s: G.strokes, x: +en[0].toFixed(1), z: +en[1].toFixed(1), at: now, pin: G.pins ? G.pins[G.hole] | 0 : 0, fo: MP.follow || '' };
+  const sp = MP.spec, d = { n: playerName(), c: sp ? sp.course : COURSE.key, h: G.hole, tp: sp ? sp.tp : tp.d, th: sp ? sp.th : G.scores.filter(v => v != null).length, s: G.strokes, x: +en[0].toFixed(1), z: +en[1].toFixed(1), at: now, pin: G.pins ? G.pins[G.hole] | 0 : 0, fo: MP.follow || '' };
   try { c.publish(mpT('s/' + MP.id), JSON.stringify(d), { retain: true }); } catch (e) { }
 }
 // a shot: its flight as east/north/height points every 0.1 s (heights in the hole's own frame: everyone on the hole shares it)
@@ -5120,16 +5126,16 @@ function mpUpdate(dt) {
     if (vis) { o.tag.textContent = pr.n + '  ' + (pr.th ? fmtToPar(pr.tp) : 'E'); o.tag.style.transform = `translate(${(_mpv.x * .5 + .5) * window.innerWidth}px, ${(-_mpv.y * .5 + .5) * SH()}px) translate(-50%,-110%)`; }
   }
   for (const [id, o] of MP.objs) if (!seen.has(id)) { o.ball.visible = false; o.tr.geometry.setDrawRange(0, 0); o.tag.style.opacity = 0; }
-  if ((MP.panelT -= dt) <= 0) { MP.panelT = 1; mpPanel(); }
+  if ((MP.panelT -= dt) <= 0) { MP.panelT = 1; mpPanel(); if ($('menuSheet').classList.contains('on')) mpList(); }
 }
 // the room's scores, by score to par: name, to par, the hole they are on (F when they have finished)
 function mpPanel() {
   const el = $('mpPanel'), on = !!MP.room && G.state !== 'title' && G.state !== 'intro';
   el.classList.toggle('on', on); if (!on) return;
-  const rows = [{ id: MP.id, n: playerName(), tp: totalToPar().d, h: G.hole, c: COURSE.key, th: G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
+  const sp = MP.spec, rows = [{ id: MP.id, n: playerName(), tp: sp ? sp.tp : totalToPar().d, h: G.hole, c: sp ? sp.course : COURSE.key, th: sp ? sp.th : G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
   // (a crowded lobby lists those nearest first: on my hole, then on my course, then the rest)
   const near = pr => (pr.c === COURSE.key ? 0 : 2) + (pr.c === COURSE.key && pr.h === G.hole ? 0 : 1);
-  const others = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 6 * 36e5).sort((a, b) => near(a) - near(b) || b.at - a.at).slice(0, 7);
+  const others = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 6 * 36e5 && (pr.room === MP.room || pr.id === MP.follow)).sort((a, b) => near(a) - near(b) || b.at - a.at).slice(0, 7);
   rows.push(...others); rows.sort((a, b) => a.tp - b.tp || b.th - a.th);
   // rebuilt only when something in it changed, so a tap on a name is never lost to a refresh
   const sig = MP.room + MP.st + (MP.follow || '') + COURSE.key + rows.slice(0, 8).map(r => [r.id, r.n, r.tp, r.th, r.h, r.c, r.fo === MP.id].join(',')).join('|');
@@ -5150,26 +5156,51 @@ function mpPanel() {
   if (MP.spec) { const pr = MP.peers.get(MP.follow); if (pr) $('specInfo').textContent = `Following ${pr.n} · Hole ${(pr.h | 0) + 1} · ${pr.th ? fmtToPar(pr.tp) : 'E'}`; }
 }
 function mpPlace(el) { const sr = $('strike').getBoundingClientRect(), sb = $('specBar').getBoundingClientRect(); el.style.top = (MP.spec ? sb.bottom + 8 : !sr.height ? 80 : Math.max(80, sr.top - el.offsetHeight - 10)) + 'px'; }
+// every player online, on every course (their course's public lobby) and in my room: tap Watch to follow them anywhere
+function mpList() {
+  const el = $('mpList'); if (!el) return;
+  const all = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 3 * 36e5 && COURSES[pr.c]).sort((a, b) => (a.c === COURSE.key ? 0 : 1) - (b.c === COURSE.key ? 0 : 1) || a.tp - b.tp);
+  const sig = all.map(pr => [pr.id, pr.n, pr.c, pr.h, pr.tp, pr.th].join(',')).join('|') + (MP.follow || '');
+  if (sig === MP.listSig) return; MP.listSig = sig; el.textContent = '';
+  if (!all.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = MP.st === 'on' ? 'No one else is playing right now.' : 'Not connected.'; el.appendChild(e); return; }
+  for (const pr of all.slice(0, 30)) {
+    const row = document.createElement('div'); row.className = 'mpLr' + (pr.id === MP.follow ? ' on' : '');
+    const dot = document.createElement('i'); dot.style.background = pr.col;
+    const nm = document.createElement('span'); nm.className = 'n'; nm.textContent = pr.n;
+    const wh = document.createElement('span'); wh.className = 'w'; wh.textContent = COURSES[pr.c].short + ' · ' + (pr.th >= 18 ? 'F' : 'H' + ((pr.h | 0) + 1));
+    const tp = document.createElement('span'); tp.className = 't'; tp.textContent = pr.th ? fmtToPar(pr.tp) : 'E';
+    const b = document.createElement('button'); b.className = 'mpb'; b.textContent = pr.id === MP.follow ? 'Stop' : 'Watch';
+    b.onclick = e => { e.stopPropagation(); if (MP.follow === pr.id) { mpResume(); syncMenu(); } else mpFollow(pr.id); };
+    row.append(dot, nm, wh, tp, b); el.appendChild(row);
+  }
+}
 // following: their hole is built and the camera rides with their ball; my round waits where it was (the ball at rest, aimed)
 function mpFollow(id) {
   const pr = MP.peers.get(id); if (!pr) return;
-  if (pr.c !== COURSE.key) { readout(`<div class="r1">${pr.n} is playing ${(COURSES[pr.c] || {}).short || 'another course'}</div>`, 2.2); return; }
-  if (!MP.spec && G.state !== 'address') { readout('<div class="r1">Follow once your ball is at rest</div>', 2.2); return; }
-  if (!MP.spec) MP.spec = { C: G.C, hole: G.hole };
+  if (!COURSES[pr.c]) return;
+  if (!MP.spec && G.state !== 'address' && G.state !== 'title') { readout('<div class="r1">Watch once your ball is at rest</div>', 2.2); return; }
+  // my round waits exactly as it is: its course, hole, score; from the start screen there is no round to wait
+  if (!MP.spec) MP.spec = { C: G.C, hole: G.hole, course: COURSE.key, tp: totalToPar().d, th: G.scores.filter(v => v != null).length, title: G.state === 'title' };
+  if (MP.spec.title) $('title').classList.remove('on');
   MP.follow = id; MP.rin = null; closeSheets(); mpSpecLoad(pr);
   document.body.classList.add('spec'); G.state = 'spec'; $('readout').classList.remove('on'); $('aimHint').classList.remove('on');
   mpState(true); MP.panelT = 0; SFX.blip();
 }
+// another course's data, switched in without touching the round (unlike setCourse)
+function mpWorld(key) { if (COURSE.key === key || !COURSES[key]) return; COURSE = COURSES[key]; HOLE_DEFS = COURSE.defs; useRealData(key); }
 function mpSpecLoad(pr) {
-  const h = pr.h | 0, keep = G.pins ? G.pins[h] : 0;
-  if (G.pins) G.pins[h] = pr.pin | 0; // their pin, for their green
-  const C = courseFor(h); if (G.pins) G.pins[h] = keep;
+  mpWorld(pr.c); MP.specCourse = pr.c;
+  const h = pr.h | 0, had = !!G.pins; if (!had) G.pins = HOLE_DEFS.map(() => 0); const keep = G.pins[h];
+  G.pins[h] = pr.pin | 0; // their pin, for their green
+  const C = courseFor(h); G.pins[h] = keep; if (!had) G.pins = null;
   G.C = C; buildHole(C); MP.specHole = h; MP.specCam = null;
   W.ball.visible = W.aim.visible = W.ring.visible = W.peg.visible = false; W.tracer.visible = false;
 }
 function mpResume(quiet) {
   const sp = MP.spec; MP.follow = null; if (!sp) return; MP.spec = null;
   document.body.classList.remove('spec');
+  mpWorld(sp.course);
+  if (sp.title) { showTitleHole(); $('title').classList.add('on'); MP.panelT = 0; return; } // back to the start screen
   const C = courseFor(G.hole); C.swirl = sp.C.swirl; G.C = C; buildHole(C); // my own hole again, as it was
   W.ball.visible = true; G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone(); G.snapCam = true; if (G.rig) G.rig.arr = null;
   G.carryKey = ''; updateAim(true); mpState(true); MP.panelT = 0; if (!quiet) SFX.blip();
@@ -5177,8 +5208,9 @@ function mpResume(quiet) {
 // the follow camera: behind their ball looking toward the green; in the air it chases the ball
 const _scP = new THREE.Vector3(), _scL = new THREE.Vector3();
 function mpSpecCam(dt) {
-  const pr = MP.peers.get(MP.follow), C = G.C; if (!pr || pr.c !== COURSE.key) { mpResume(); return; }
-  if ((pr.h | 0) !== MP.specHole) mpSpecLoad(pr);
+  const pr = MP.peers.get(MP.follow); if (!pr || !COURSES[pr.c]) { mpResume(); return; }
+  if ((pr.h | 0) !== MP.specHole || pr.c !== MP.specCourse) mpSpecLoad(pr); // they moved on: their next hole (or course)
+  const C = G.C;
   const o = MP.objs.get(pr.id); let bx, by, bz;
   if (o && o.ball.visible) { bx = o.ball.position.x; by = o.ball.position.y; bz = o.ball.position.z; }
   else { const q = C.loc(pr.x, pr.z); bx = q[0]; bz = -q[1]; by = C.h(bx, bz); }
@@ -5194,7 +5226,7 @@ function mpSpecCam(dt) {
 }
 function mpSync() {
   const i = $('mpCode'), b = $('mpJoin'); if (!i) return;
-  const lobby = mpIsLobby(MP.room), n = MP.peers.size;
+  const lobby = mpIsLobby(MP.room), n = [...MP.peers.values()].filter(pr => pr.room === MP.room).length; mpList();
   if (document.activeElement !== i) i.value = lobby ? '' : MP.room;
   b.textContent = lobby ? 'Join' : 'Leave';
   const st = $('mpInfo').firstChild; if (st && st.nodeType === 3) st.textContent = MP.st === 'error' ? 'The room server could not be reached. ' : MP.st !== 'on' ? 'Connecting… ' : lobby
@@ -5469,7 +5501,7 @@ function startRound() {
   startHole(0);
 }
 function startHole(i) {
-  if (MP.spec) { MP.spec = null; MP.follow = null; document.body.classList.remove('spec'); } // a new hole ends following
+  if (MP.spec) { const sp = MP.spec; MP.spec = null; MP.follow = null; document.body.classList.remove('spec'); mpWorld(sp.course); } // a new hole ends following (back on my own course)
   closeSheets(); $('done').classList.remove('on'); $('readout').classList.remove('on'); UI.readT = 0;
   document.body.classList.remove('flight', 'swing');
   G.hole = i; if (G.rig) G.rig.arr = null;
@@ -6842,6 +6874,9 @@ function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course :
 async function postAuto(r) {
   const k = ghKey(); if (!k) return false;
   const CO = COURSES[r.course] || COURSE; // the round's own course (a retry may run while another course is in play)
+  const markPosted = () => { const loc = localRounds(CO.key), q = loc.find(x => x.at === r.at && x.name === r.name); if (q) { q.posted = true; try { localStorage.setItem(CO.board, JSON.stringify(sortRounds(loc).slice(0, 60))); } catch (e) { } } };
+  // one player, one entry per score per course: a score already on the world board under this name is not posted again
+  const wb = Board.gh[CO.key]; if (wb && wb.some(x => x.name.toLowerCase() === String(r.name).toLowerCase() && x.strokes === r.strokes)) { markPosted(); refreshBoards(); return true; }
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: `[score] ${r.name} ${fmtToPar(r.toPar)} (${r.strokes}) ${CO.short}`, body: 'Posted from Sweet Spot Golf.\n\n```json\n' + JSON.stringify(roundPayload(r)) + '\n```\n' }) });
