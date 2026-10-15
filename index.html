@@ -264,6 +264,17 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .mapwrap{position:relative;height:min(62vh,560px);border-radius:18px;overflow:hidden;background:#cfe3c3;touch-action:none}
 #mapCv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 .maph{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font:600 13px var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.howVid{display:flex;justify-content:center;margin:0 0 10px}
+.howVid video{max-height:52vh;max-width:100%;border-radius:16px;background:#0b1f12;display:block}
+#vidIntro{z-index:60;background:#0b1f12;transition:opacity .5s var(--ease)}
+#vidIntro #vidLogo{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;border-radius:30px;box-shadow:0 10px 40px rgba(0,0,0,.45);opacity:0;transition:opacity .6s ease}
+#vidIntro.logo #vidLogo{opacity:1}
+#vidIntro video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0b1f12;opacity:0;transition:opacity .7s ease}
+#vidIntro.play video{opacity:1}
+#vidIntro.play #vidLogo{opacity:0}
+#vidSkip,#vidSnd{position:absolute;z-index:2;border:0;border-radius:999px;padding:9px 16px;font:600 14px var(--cond);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:rgba(14,40,22,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+#vidSkip{top:calc(env(safe-area-inset-top,0px) + 14px);right:14px}
+#vidSnd{bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:50%;transform:translateX(-50%);display:none}
 .help{display:flex;flex-direction:column;gap:8px}
 .help div{background:var(--soft);border-radius:16px;padding:11px 13px;font:500 14.5px/1.4 var(--body);color:var(--ink2)}
 .help b{display:block;font:600 17px var(--cond);text-transform:uppercase;color:var(--ink);margin-bottom:2px}
@@ -325,6 +336,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
 <div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">▶ Replay last shot</button></div></div>
+<div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">🔊 Tap for sound</button></div>
+<script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
 <div id="scrim"></div>
 <div class="sheet" id="bagSheet"><div class="grab"></div><div class="sht">Your bag <small id="bagLie">From the tee</small></div><div class="bag" id="bag"></div></div>
 <div class="sheet" id="menuSheet"><div class="grab"></div><div class="sht">Settings</div>
@@ -341,7 +354,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="sheet" id="boardSheet"><div class="grab"></div><div class="sht">Leaderboard <small id="boardName">Golf &amp; Country Club Basel</small></div><div id="boardBody"></div></div>
 <div class="sheet" id="mapSheet"><div class="grab"></div><div class="sht"><span id="mapTitle">Hole map</span><small id="mapInfo"></small></div><div class="mapwrap"><canvas id="mapCv"></canvas></div><div class="maph"><span>Tap or drag to place your target</span><button class="mbtn dark" id="mapDone" style="height:44px;padding:0 22px">Done</button></div></div>
 <div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
-<div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="help">
+<div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="howVid"><video id="howVid" src="swing-explainer.mp4" poster="swing-poster.jpg" controls playsinline webkit-playsinline preload="none"></video></div><div class="help">
   <div><b>Aim</b>Drag across the course, or open the map and tap a target. The white ring is where a pure, full swing lands with no wind.</div>
   <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide down for the backswing. The scale shows the carry for your club. Slide back up past where you started to strike. The upstroke must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the upstroke straight: the sideways drift of your thumb on the way up (traced in yellow on the tempo scale, fading after the strike) sets the starting line, so drifting right sends the ball right of your aim line and drifting left sends it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · right thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
@@ -4013,8 +4026,10 @@ function play(name, rate, vol, lp, delay) {
   n.connect(g).connect(a.destination); s.start(a.currentTime + (delay || 0)); return true;
 }
 let AC = null;
+// Safari 16.4+: play like media (also past the silent switch) and let the system hand the audio back after an interruption
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
 function audio() {
-  if (!AC || AC.state === 'closed') { try { AC = new (window.AudioContext || window.webkitAudioContext)(); loadSounds(AC); } catch (e) { } }
+  if (!AC || AC.state === 'closed') { try { AC = new (window.AudioContext || window.webkitAudioContext)(); loadSounds(AC); const me = AC; me.onstatechange = () => { if (AC === me && !document.hidden && me.state !== 'running') wakeAudio(false); }; } catch (e) { } }
   if (AC && AC.state !== 'running') { try { const p = AC.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } } // iOS also uses 'interrupted' after another app has had the audio
   return AC;
 }
@@ -4028,7 +4043,11 @@ function wakeAudio(fromTouch) {
   if (fromTouch) setTimeout(() => { if (AC === a && a.state !== 'running') { try { a.close(); } catch (e) { } AC = null; const n = audio(); if (n) { try { const b = n.createBuffer(1, 1, 22050), s = n.createBufferSource(); s.buffer = b; s.connect(n.destination); s.start(0); } catch (e) { } } } }, 250);
 }
 ['pointerdown', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, () => wakeAudio(true), true));
-document.addEventListener('visibilitychange', () => { if (!document.hidden) wakeAudio(false); });
+// iOS can bring a context back reporting 'running' while it is silent (after another app or a call had the audio), and that state is not
+// reliable, so the context is dropped whenever the page is hidden; the next touch on return builds a fresh one (the decoded samples are reused)
+function dropAudio() { const a = AC; AC = null; if (a) { try { a.onstatechange = null; a.close(); } catch (e) { } } }
+document.addEventListener('visibilitychange', () => { if (document.hidden) dropAudio(); else wakeAudio(false); });
+window.addEventListener('pagehide', dropAudio);
 window.addEventListener('pageshow', () => wakeAudio(false)); window.addEventListener('focus', () => wakeAudio(false));
 function tone(f, d, type, vol, f2, delay) {
   if (!settings.sound) return; const a = audio(); if (!a) return; const t = a.currentTime + (delay || 0);
@@ -5093,7 +5112,7 @@ function addStatsChip(id) {
   if (!c) { c = document.createElement('button'); c.className = 'stChip'; c.onclick = e => { e.stopPropagation(); openStats(); }; h.appendChild(c); }
   let li = 0; LEVELS.forEach((l, i) => { if (ST.holes >= l[0]) li = i; }); c.textContent = '📊 ' + LEVELS[li][1];
 }
-function closeSheets(keepScrim) { document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
+function closeSheets(keepScrim) { const hv = $('howVid'); if (hv && !hv.paused) hv.pause(); document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
 function openBag() {
   if (G.state !== 'address' && G.state !== 'settle') return;
   const b = $('bag'); b.innerHTML = '';
@@ -5646,8 +5665,27 @@ function showTitleHole() {
   G.state = 'title'; W.aim.visible = W.ring.visible = false; W.peg.visible = false;
   HOLE_LEN[0] = Math.round(G.C.length);
 }
+// first launch: the logo fades in, then the how-to-play video fills the screen; afterwards the start screen shows. (Played once per device.)
+function initIntroVideo() {
+  const L = $('vidIntro'), V = $('introVid'); if (!L || !L.classList.contains('on')) return;
+  let done = false, started = false;
+  const mark = () => { try { localStorage.setItem('ssg-intro-seen', '1'); } catch (e) { } };
+  const finish = () => { if (done) return; done = true; mark(); try { V.pause(); } catch (e) { } L.classList.remove('on', 'play', 'logo'); $('vidSnd').style.display = 'none'; setTimeout(() => { try { V.removeAttribute('src'); V.load(); } catch (e) { } }, 700); };
+  $('vidSkip').onclick = finish; V.addEventListener('ended', finish); V.addEventListener('error', finish);
+  $('vidSnd').onclick = () => { V.muted = false; $('vidSnd').style.display = 'none'; };
+  V.addEventListener('playing', () => { if (!started) { started = true; mark(); L.classList.add('play'); } });
+  requestAnimationFrame(() => L.classList.add('logo'));
+  setTimeout(() => {
+    if (done) return;
+    V.muted = false;
+    const pr = V.play();
+    // browsers block sound before a first tap: play muted instead and offer the sound
+    if (pr && pr.catch) pr.catch(() => { if (done) return; V.muted = true; const p2 = V.play(); if (p2 && p2.catch) p2.catch(finish); $('vidSnd').style.display = 'block'; });
+  }, 1500);
+}
 function boot(data) {
   calibrateClubs();
+  initIntroVideo();
   initThree(); initInput(); syncMenu();
   // a round restored after an update stays on its course (rounds from before the course switch were on the Legacy Course)
   setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard();
