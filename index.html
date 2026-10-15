@@ -3177,7 +3177,9 @@ function terrainMatFrom(o) {
     // dry = a links-style course: sun-bleached, more olive and straw in the rough, a touch drier on the fairways (greens stay healthy)
     cRough: { value: pc(S.ROUGH, dr * .035, -dr * .05, -dr * .04) }, cDeep: { value: pc(S.DEEP, dr * .045, -dr * .06, -dr * .052) }, cFirst: { value: pc(S.FIRST, dr * .03, -dr * .035, -dr * .036) }, cFairA: { value: pc(S.FAIR, .045 + dr * .035, -dr * .03, -dr * .04) }, cFairB: { value: pc(S.FAIR, -.025 + dr * .025, -dr * .03, -dr * .04) },
     cGreenA: { value: pc(S.GREEN, .02 + dr * .008, -dr * .012, -dr * .026) }, cGreenB: { value: pc(S.GREEN, -.008 + dr * .008, -dr * .012, -dr * .026) }, cFringe: { value: pc(S.FRINGE, dr * .012, -dr * .025, -dr * .032) }, cSand: { value: pc(S.SAND) }, cWaste: { value: pc(S.SAND, -.05, -.08, .012) },
-    cTee: { value: o.dry ? pc(S.FRINGE, dr * .012, -dr * .025, -dr * .032) : pc(S.TEE) }, // links (Alsace): tee boxes are cut like the fringe, the same colour cPath: { value: pc(S.PATH) }, cBeach: { value: v3(hslToRgb(BEACH[0], BEACH[1], BEACH[2])) }, cPond: { value: pc(S.WATER, -.16, -.12) },
+    cTee: { value: o.dry ? pc(S.FRINGE, dr * .012, -dr * .025, -dr * .032) : pc(S.TEE) }, // links (Alsace): tee boxes are cut like the fringe, the same colour
+    cPath: { value: o.dry ? v3(hslToRgb(.125, .30, .84)) : pc(S.PATH) }, // links: sandy paths
+    cBeach: { value: v3(hslToRgb(BEACH[0], BEACH[1], BEACH[2])) }, cPond: { value: pc(S.WATER, -.16, -.12) },
     cRock: { value: v3(hslToRgb(.085, .16, .68)) }, cGranite: { value: v3(hslToRgb(.08, .07, .6)) }, cBed1: { value: v3(hslToRgb(.13, .35, .7)) }, cBed2: { value: v3(hslToRgb(.5, .3, .5)) }, cDune: { value: v3(hslToRgb(.115, .36, .74)) }
   };
   const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x000000, shininess: 1 });
