@@ -2571,7 +2571,7 @@ function buildRealDecor(C, grp) {
     sign.position.set(side[0], C.h(side[0], side[1]) + 1.4, side[1]); sign.rotation.y = Math.atan2(C.startPos.x - side[0], C.startPos.z - side[1]); sign.castShadow = true; grp.add(sign);
     const post = new THREE.Mesh(new THREE.BoxGeometry(.15, 1.2, .15), lambert(0xc4a48d)); post.position.set(side[0], C.h(side[0], side[1]) + .5, side[1]); grp.add(post);
   }
-  const stake = (x, z, c) => { const m = new THREE.Mesh(new THREE.BoxGeometry(.1, 1, .1), lambert(c)); m.position.set(x, C.h(x, z) + .5, z); m.castShadow = true; grp.add(m); };
+  const stake = (x, z, c) => { const mt = lambert(c), wh = c === 0xffffff; if (wh) mt.emissive.setHex(0xffffff); /* out-of-bounds posts: pure white even in the low golden light */ const m = new THREE.Mesh(new THREE.BoxGeometry(wh ? .13 : .1, wh ? 1.15 : 1, wh ? .13 : .1), mt); m.position.set(x, C.h(x, z) + (wh ? .575 : .5), z); m.castShadow = !wh; grp.add(m); };
   // white stakes along the course boundary (out of bounds)
   const I = C.inner, bnd = GC.boundary, nb = bnd.length >> 1;
   for (let i = 0; i < nb; i++) {
@@ -3466,7 +3466,7 @@ function buildDecor(C, grp) {
   const sign = new THREE.Mesh(new THREE.BoxGeometry(2, 1.25, .08), [0, 0, 0, 0, 1, 1].map(i => i ? new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(sc) }) : lambert(0xd9b99b)));
   const sgx = def.tee.x - def.tee.w / 2 - 3, sgz = -(def.tee.f - def.tee.l / 2 + 2); sign.position.set(sgx, C.h(sgx, sgz) + 1.4, sgz); sign.rotation.y = .5; sign.castShadow = true; grp.add(sign);
   const post = new THREE.Mesh(new THREE.BoxGeometry(.15, 1.2, .15), lambert(0xc4a48d)); post.position.set(sgx, C.h(sgx, sgz) + .5, sgz); grp.add(post);
-  const stake = (x, z, c) => { const m = new THREE.Mesh(new THREE.BoxGeometry(.1, 1, .1), lambert(c)); m.position.set(x, C.h(x, z) + .5, z); m.castShadow = true; grp.add(m); };
+  const stake = (x, z, c) => { const mt = lambert(c), wh = c === 0xffffff; if (wh) mt.emissive.setHex(0xffffff); /* out-of-bounds posts: pure white even in the low golden light */ const m = new THREE.Mesh(new THREE.BoxGeometry(wh ? .13 : .1, wh ? 1.15 : 1, wh ? .13 : .1), mt); m.position.set(x, C.h(x, z) + (wh ? .575 : .5), z); m.castShadow = !wh; grp.add(m); };
   for (const L of def.obLines) { const pl = mkPoly(L, null); for (let s = 0; s <= pl.L; s += 14) { const p = polyAt(pl, s); stake(p[0], p[1], 0xffffff); } }
   for (const w of C.waters) for (let k = 0; k < 24; k++) { const a = k / 24 * TAU, lx = Math.cos(a) * w.rx * 1.12, lz = Math.sin(a) * w.rz * 1.12, x = w.cx + lx * w.c - lz * w.s, z = w.cz + lx * w.s + lz * w.c; if (C.surf(x, z) !== S.WATER) stake(x, z, 0xff8f8f); }
   for (const c of C.creeks) for (let s = 0; s <= c.L; s += 16) { const p = polyAt(c, s); for (const sd of [-1, 1]) { const a = polyAt(c, Math.min(c.L, s + 1)), dx = a[0] - p[0], dz = a[1] - p[1], l = Math.hypot(dx, dz) || 1; const x = p[0] - dz / l * (c.hw + 3.5) * sd, z = p[1] + dx / l * (c.hw + 3.5) * sd; if (C.surf(x, z) !== S.WATER) stake(x, z, 0xffe08a); } }
