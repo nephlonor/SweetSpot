@@ -247,7 +247,7 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .mpLr .mpb{height:34px;padding:0 12px;font-size:13px}.mpLr.on .mpb{background:#c0392b}
 .mpInfo{font:500 13px var(--sans,system-ui);color:var(--ink2);padding:2px 4px 4px;line-height:1.35}.mpInfo b{color:var(--ink)}
 .mpBtns{display:flex;gap:6px;margin-top:6px}.mpBtns .mpb{flex:1;background:var(--soft);color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair)}
-#mpPanel{position:fixed;z-index:2;right:calc(var(--sr) + 10px);top:0;min-width:128px;max-width:46vw;padding:6px 9px 7px;border-radius:16px;pointer-events:none;opacity:0;transition:opacity .3s;font:600 13px var(--cond);color:#fff;text-shadow:var(--tsh)}
+#mpPanel{position:fixed;z-index:2;right:calc(var(--sr) + 10px);top:0;min-width:128px;max-width:46vw;padding:6px 9px 7px;border-radius:16px;pointer-events:none;opacity:0;transition:opacity .3s,top .25s;font:600 13px var(--cond);color:#fff;text-shadow:var(--tsh)}
 #mpPanel.on{opacity:1}
 #mpPanel button.mpr{pointer-events:auto;width:100%;background:none;border:0;padding:0 4px;margin:0 -4px;font:inherit;color:inherit;text-shadow:inherit;border-radius:8px;cursor:pointer;text-align:left}
 #mpPanel .mpr.on{background:rgba(255,255,255,.22)}
@@ -5130,12 +5130,14 @@ function mpUpdate(dt) {
 }
 // the room's scores, by score to par: name, to par, the hole they are on (F when they have finished)
 function mpPanel() {
-  const el = $('mpPanel'), on = !!MP.room && G.state !== 'title' && G.state !== 'intro';
-  el.classList.toggle('on', on); if (!on) return;
-  const sp = MP.spec, rows = [{ id: MP.id, n: playerName(), tp: sp ? sp.tp : totalToPar().d, h: G.hole, c: sp ? sp.course : COURSE.key, th: sp ? sp.th : G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
+  const el = $('mpPanel');
   // (a crowded lobby lists those nearest first: on my hole, then on my course, then the rest)
   const near = pr => (pr.c === COURSE.key ? 0 : 2) + (pr.c === COURSE.key && pr.h === G.hole ? 0 : 1);
   const others = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 6 * 36e5 && (pr.room === MP.room || pr.id === MP.follow)).sort((a, b) => near(a) - near(b) || b.at - a.at).slice(0, 7);
+  // the public lobby's box only shows once someone else is in it with me (a private room always shows)
+  const on = !!MP.room && G.state !== 'title' && G.state !== 'intro' && (!mpIsLobby(MP.room) || others.length > 0 || !!MP.spec);
+  el.classList.toggle('on', on); if (!on) return;
+  const sp = MP.spec, rows = [{ id: MP.id, n: playerName(), tp: sp ? sp.tp : totalToPar().d, h: G.hole, c: sp ? sp.course : COURSE.key, th: sp ? sp.th : G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
   rows.push(...others); rows.sort((a, b) => a.tp - b.tp || b.th - a.th);
   // rebuilt only when something in it changed, so a tap on a name is never lost to a refresh
   const sig = MP.room + MP.st + (MP.follow || '') + COURSE.key + rows.slice(0, 8).map(r => [r.id, r.n, r.tp, r.th, r.h, r.c, r.fo === MP.id].join(',')).join('|');
@@ -5155,7 +5157,14 @@ function mpPanel() {
   mpPlace(el);
   if (MP.spec) { const pr = MP.peers.get(MP.follow); if (pr) $('specInfo').textContent = `Following ${pr.n} · Hole ${(pr.h | 0) + 1} · ${pr.th ? fmtToPar(pr.tp) : 'E'}`; }
 }
-function mpPlace(el) { const sr = $('strike').getBoundingClientRect(), sb = $('specBar').getBoundingClientRect(); el.style.top = (MP.spec ? sb.bottom + 8 : !sr.height ? 80 : Math.max(80, sr.top - el.offsetHeight - 10)) + 'px'; }
+// top right, just under the top bar (under the Resume play bar while following someone)
+// (dropping below the shot readout while it is up, where the two would overlap)
+function mpPlace(el) {
+  const tb = $('topbar').getBoundingClientRect(), sb = $('specBar').getBoundingClientRect(), ro = $('readout'), rr = ro.getBoundingClientRect();
+  let y = (MP.spec && sb.height ? sb.bottom : tb.bottom) + 8;
+  if (ro.classList.contains('on') && rr.right > window.innerWidth - el.offsetWidth - 20) y = Math.max(y, rr.bottom + 8);
+  el.style.top = y + 'px';
+}
 // every player online, on every course (their course's public lobby) and in my room: tap Watch to follow them anywhere
 function mpList() {
   const el = $('mpList'); if (!el) return;
@@ -6540,13 +6549,13 @@ function updateBallTag() {
   tag.style.transform = `translate3d(${x2.toFixed(1)}px,${y2.toFixed(1)}px,0)`;
   if (!UI.btOn) { UI.btOn = true; tag.classList.add('on'); }
 }
-function readout(html, sec) { const r = $('readout'); r.innerHTML = html; r.classList.remove('noted'); r.classList.add('on'); UI.readT = sec || 2.4; }
+function readout(html, sec) { const r = $('readout'); r.innerHTML = html; r.classList.remove('noted'); r.classList.add('on'); UI.readT = sec || 2.4; if ($('mpPanel').classList.contains('on')) mpPlace($('mpPanel')); }
 // in-flight events add a line to the strike card instead of replacing it
 function readoutNote(text, cls) {
   const r = $('readout'); let n = r.querySelector('.rnote');
   if (!n) { n = document.createElement('div'); r.appendChild(n); }
   n.className = 'rnote ' + (cls || ''); n.textContent = text; r.classList.add('noted'); // the note takes the numbers' line
-  if (!r.classList.contains('on')) { r.classList.add('on'); UI.readT = 2.4; }
+  if (!r.classList.contains('on')) { r.classList.add('on'); UI.readT = 2.4; if ($('mpPanel').classList.contains('on')) mpPlace($('mpPanel')); }
 }
 /* ---------- sheets ---------- */
 function sheetOpen() { return !!document.querySelector('.sheet.on'); }
@@ -7227,7 +7236,7 @@ function frame(now) {
   if (W.ring.visible) { const s = W.ring.userData.s || 1, k = 1 + Math.sin(tt * 3) * .05; W.ringPulse.scale.set(k, k, 1); }
   if (W.flag && C) { const pa = W.flag.geometry.attributes.position, b = W.flagBase, ws = Math.hypot(G.wind[0], G.wind[1]); for (let i = 0; i < pa.count; i++) { const x0 = b[i * 3]; pa.array[i * 3 + 2] = Math.sin(x0 * 5 - tt * (3 + ws)) * .08 * x0; } pa.needsUpdate = true; W.flag.rotation.y = Math.atan2(-G.wind[1], G.wind[0]); }
   W.clouds.children.forEach(c => { c.position.x += c.userData.sp * dt; if (c.position.x > 1400) c.position.x = -1400; });
-  if (UI.readT > 0) { UI.readT -= dt; if (UI.readT <= 0) $('readout').classList.remove('on'); }
+  if (UI.readT > 0) { UI.readT -= dt; if (UI.readT <= 0) { $('readout').classList.remove('on'); if ($('mpPanel').classList.contains('on')) mpPlace($('mpPanel')); } }
   if (C) { updateSeeThru(); updatePinTag(); updateWindArrow(); updateBallTag(); }
   updateSkipBtn();
   const hudOff = G.state === 'title' || G.state === 'intro';
