@@ -4989,7 +4989,7 @@ function mpMsg(topic, buf) {
   } else if (kind === 'f') {
     let d; try { d = JSON.parse(txt); } catch (e) { return; }
     const pr = MP.peers.get(id); if (!pr || !d || !Array.isArray(d.p) || d.p.length < 6) return;
-    pr.fly = { c: d.c, h: d.h | 0, p: d.p, dt: +d.dt || .1, t0: performance.now(), dur: (d.p.length / 3 - 1) * (+d.dt || .1) };
+    pr.fly = { c: d.c, h: d.h | 0, zb: Number.isFinite(+d.zb) ? +d.zb : null, p: d.p, dt: +d.dt || .1, t0: performance.now(), dur: (d.p.length / 3 - 1) * (+d.dt || .1) };
     pr.c = d.c; pr.h = d.h | 0;
   }
   MP.panelT = 0;
@@ -5012,7 +5012,7 @@ function mpShot(res) {
     const x = lerp(fr[a + 1], fr[b + 1], u), y = lerp(fr[a + 2], fr[b + 2], u), z = lerp(fr[a + 3], fr[b + 3], u), en = G.C.enu(x, z);
     pts.push(+en[0].toFixed(2), +en[1].toFixed(2), +y.toFixed(2));
   }
-  try { c.publish(mpT('f/' + MP.id), JSON.stringify({ c: COURSE.key, h: G.hole, dt, p: pts })); } catch (e) { }
+  try { c.publish(mpT('f/' + MP.id), JSON.stringify({ c: COURSE.key, h: G.hole, zb: G.C.zBase, dt, p: pts })); } catch (e) { }
 }
 // the others on my hole: a ball in their colour, a tracer while it flies, their name above it
 function mpObj(pr) {
@@ -5033,12 +5033,17 @@ function mpUpdate(dt) {
   const C = G.C, show = C && G.state !== 'title' && G.state !== 'intro', now = performance.now(), seen = new Set();
   for (const pr of MP.peers.values()) {
     if (Date.now() - pr.seen > 15 * 60e3 && Date.now() - pr.at > 15 * 60e3) continue;
-    const here = show && pr.c === COURSE.key && pr.h === G.hole; if (!here || seen.size >= 8) continue; // (a busy lobby: eight balls at most)
+    // anyone on my course whose ball (or flight) is near my hole: on it, or on the holes alongside, in front or behind
+    const f0 = pr.fly && pr.fly.c === COURSE.key ? pr.fly : null;
+    const near = (e, n) => { if (!Number.isFinite(e)) return false; const q = C.loc(e, n), I = C.inner, X = q[0], Z = -q[1]; return X > I.minX - 140 && X < I.maxX + 140 && Z > I.minZ - 140 && Z < I.maxZ + 140; };
+    const here = show && pr.c === COURSE.key && (pr.h === G.hole || near(pr.x, pr.z) || (f0 && (now - f0.t0) / 1000 < f0.dur + 1.5 && (near(f0.p[0], f0.p[1]) || near(f0.p[f0.p.length - 3], f0.p[f0.p.length - 2]))));
+    if (!here || seen.size >= 8) continue; // (a busy lobby: eight balls at most)
     const o = mpObj(pr); seen.add(pr.id);
-    let X, Y, Z; const f = pr.fly && pr.fly.c === COURSE.key && pr.fly.h === G.hole ? pr.fly : null, el = f ? (now - f.t0) / 1000 : 1e9;
+    let X, Y, Z; const f = f0, el = f ? (now - f.t0) / 1000 : 1e9;
     if (f && el <= f.dur + 1.5) {
       const P = f.p, m = P.length / 3, u = clamp(el / f.dt, 0, m - 1), i = Math.min(m - 2, u | 0), w = u - i, pa = o.tr.geometry.attributes.position;
-      const at = j => { const q = C.loc(P[3 * j], P[3 * j + 1]); return [q[0], P[3 * j + 2], -q[1]]; };
+      const dz = f.zb != null ? f.zb - C.zBase : 0; // heights come in their hole's frame: shifted into mine
+      const at = j => { const q = C.loc(P[3 * j], P[3 * j + 1]); return [q[0], P[3 * j + 2] + dz, -q[1]]; };
       const A = at(i), B = at(i + 1); X = lerp(A[0], B[0], w); Y = lerp(A[1], B[1], w) + VIS_R; Z = lerp(A[2], B[2], w);
       const nn = Math.min(400, i + 1); for (let j = 0; j < nn; j++) { const q = at(j); pa.array[3 * j] = q[0]; pa.array[3 * j + 1] = q[1] + VIS_R; pa.array[3 * j + 2] = q[2]; }
       pa.needsUpdate = true; o.tr.geometry.setDrawRange(0, nn); o.tr.material.opacity = .85 * clamp(f.dur + 1.5 - el, 0, 1);
