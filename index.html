@@ -156,6 +156,9 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 @keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
 .btn{height:58px;border-radius:20px;background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff;font:600 22px var(--cond);text-transform:uppercase;letter-spacing:.06em;box-shadow:0 10px 24px rgba(20,70,30,.35),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .15s;text-shadow:0 1px 2px rgba(0,30,12,.3)}
 .btn:active{transform:scale(.97)}
+.playRow{display:flex;gap:10px}.playRow .btn{flex:1;min-width:0}.playRow .btn.alt{flex:1.35}
+.btn.alt{background:rgba(255,255,255,.92);color:#2f6b35;text-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.btn.alt small{font:600 12px var(--cond);letter-spacing:.1em;color:var(--ink2);margin-top:3px}
 .best{text-align:center;font:600 13px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--w1);text-shadow:var(--tsh);min-height:16px}
 #intro,#done{display:flex;align-items:flex-end;justify-content:center;padding:0 calc(var(--sr) + 12px) calc(var(--sb) + 12px) calc(var(--sl) + 12px)}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
@@ -336,9 +339,9 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><rect x="31" y="6" width="28" height="88" rx="14" fill="#2f6b35"/><rect x="38" y="14" width="14" height="72" rx="7" fill="rgba(255,255,255,.16)"/><path class="tDown" d="M45 80V20" stroke="#ffe85a" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M17 34V62m0 0l-5-6m5 6l5-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".75"/><path d="M73 68V40m0 0l-5 6m5-6l5 6" stroke="#ffe85a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".9"/><g class="tThumb"><circle r="9" fill="#fff" stroke="#1d3d22" stroke-width="2"/></g></svg><b>Left thumb · tempo</b><p>Slide down, then slide straight up. A tempo of 3:1 gets the best smash factor.</p></div>
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b>Right thumb · strike</b><p>Your thumb jitters, and the ball rides up-left of it. Keep the ball on the club's sweet spot.</p></div>
     </div>
-    <div class="card nameRow courseRow"><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace Golf</button><button data-v="augusta">Augusta</button></div></div>
+    <div class="card nameRow courseRow"><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
     <label class="card nameRow" id="nameRow"><span>Player</span><input id="nameIn" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="go"></label>
-    <button class="btn" id="btnPlay">Tee off</button>
+    <div class="playRow"><button class="btn alt" id="btnResume" style="display:none">Resume<small id="resumeInfo"></small></button><button class="btn" id="btnPlay">Tee off</button></div>
     <div class="best" id="best"></div>
   </div>
 </div>
@@ -3106,7 +3109,7 @@ function renderTiltShift(dt) {
   let tgt = null;
   if (G.C && G.state !== 'title' && G.state !== 'intro') {
     if (lp) tgt = P.lp.set(lp.x, lp.y, lp.z); // in flight: where it will land (or finish)
-    else tgt = W.ring.visible ? W.ring.position : W.ball.position; // at rest: the aim point
+    else tgt = W.ring.visible || G.state === 'settle' ? W.ring.position : W.ball.position; // at rest, and while the camera moves into place for the next shot: the target
   }
   if (tgt) { P.v.copy(tgt).project(W.cam); if (P.v.z < 1) want = clamp(P.v.y * .5 + .5, .3, .8); }
   P.fy += (want - P.fy) * (1 - Math.exp(-dt * 2.2)); P.mat.uniforms.fy.value = P.fy;
@@ -5069,7 +5072,53 @@ const SW = {
   mark: null, last: null, resultT: 0, fullPx: 220, trail: [], impactT: 0
 };
 
+/* ---------- the round in progress, kept on this device ---------- */
+// Saved whenever the next shot is ready (where the ball lies, strokes so far, the scorecard and the pin sheet) and when a hole is
+// finished; the start screen then offers "Resume round". Practice is never saved; a finished or a new round clears it.
+const ROUND_KEY = 'ssg-round';
+function saveRound() {
+  if (G.practice || !G.C || !G.scores || G.state === 'title') return;
+  if (G.scores.every(v => v != null)) { clearRound(); return; }
+  const h = G.hole, mid = G.scores[h] == null && G.strokes > 0 ? { strokes: G.strokes, x: G.ball.x, z: G.ball.z, teed: !!G.teed, prev: G.prev || null } : null;
+  const r = { v: 1, course: COURSE.key, hole: h, scores: G.scores, putts: G.putts, fir: G.fir, gir: G.gir, pens: G.pens, pins: G.pins, planes: G.planes, at: Date.now(), mid };
+  try { localStorage.setItem(ROUND_KEY, JSON.stringify(r)); } catch (e) { }
+  refreshResume();
+}
+function clearRound() { try { localStorage.removeItem(ROUND_KEY); } catch (e) { } refreshResume(); }
+function savedRound() {
+  try {
+    const r = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null'), c = r && COURSES[r.course];
+    if (!r || !c || !Array.isArray(r.scores) || r.scores.length !== c.defs.length || Date.now() - r.at > 30 * 864e5) return null;
+    if (r.scores.every(v => v != null) || (!r.mid && r.scores.every(v => v == null))) return null;
+    return r;
+  } catch (e) { return null; }
+}
+// the hole to go back to: the one being played, else the next one not yet finished
+function resumeHole(r) { if (r.mid && r.scores[r.hole] == null) return r.hole; for (let k = 1; k <= r.scores.length; k++) { const i = (r.hole + k) % r.scores.length; if (r.scores[i] == null) return i; } return 0; }
+function refreshResume() {
+  const b = $('btnResume'); if (!b) return; const r = savedRound();
+  if (!r) { b.style.display = 'none'; $('btnPlay').textContent = 'Tee off'; return; }
+  $('btnPlay').textContent = 'New round';
+  const defs = COURSES[r.course].defs; let s = 0, p = 0; r.scores.forEach((v, i) => { if (v != null) { s += v; p += defs[i].par; } });
+  $('resumeInfo').textContent = `${COURSES[r.course].short} · Hole ${resumeHole(r) + 1} · ${p ? fmtToPar(s - p) : 'E'}`;
+  b.style.display = '';
+}
+function resumeRound() {
+  const r = savedRound(); if (!r) return false;
+  setCourse(r.course);
+  const n = HOLE_DEFS.length, arr = (a, d) => Array.isArray(a) && a.length === n ? a : HOLE_DEFS.map(() => d);
+  G.practice = false; G.submitted = false; if (r.planes != null) G.planes = r.planes;
+  G.scores = arr(r.scores, null); G.putts = arr(r.putts, 0); G.fir = arr(r.fir, null); G.gir = arr(r.gir, null); G.pens = arr(r.pens, 0); G.pins = arr(r.pins, 0);
+  const h = resumeHole(r), mid = r.mid && h === r.hole ? r.mid : null, pu = G.putts[h], pe = G.pens[h];
+  startHole(h);
+  if (mid) { // back where the ball lies, with the strokes already played on this hole
+    G.putts[h] = pu; G.pens[h] = pe; G.strokes = mid.strokes; G.target = null;
+    placeBall(mid.x, mid.z, mid.teed); G.prev = mid.prev || { x: mid.x, z: mid.z, teed: mid.teed }; autoClubAndAim(); updateHUD();
+  }
+  return true;
+}
 function startRound() {
+  clearRound();
   G.practice = false; G.submitted = false; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
   G.pins = HOLE_DEFS.map(() => Math.floor(Math.random() * 4)); // a fresh pin sheet every round
@@ -5485,7 +5534,7 @@ function finishShot() {
     G.state = 'holed'; G.holedT = 0; G.scores[h] = G.strokes;
     if (G.gir[h] == null) G.gir[h] = G.strokes - 1 <= par - 2;
     if (first && par >= 4) G.fir[h] = false;
-    statsHole(h); SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
+    statsHole(h); saveRound(); SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
     setTimeout(() => { if (G.state === 'holed') showDone(false); }, 1300); updateHUD(); return;
   }
   let big = '', sub = '';
@@ -5516,7 +5565,7 @@ function finishShot() {
   if (first && par >= 4 && G.fir[h] == null) G.fir[h] = false;
   if (G.surf === S.GREEN && G.gir[h] == null && G.strokes <= par - 2) G.gir[h] = true;
   if (G.strokes >= par + 5) {
-    G.scores[h] = par + 5; G.state = 'holed'; G.holedT = 0; statsHole(h);
+    G.scores[h] = par + 5; G.state = 'holed'; G.holedT = 0; statsHole(h); saveRound();
     readout('<div class="r1">Picked up <span class="r1s">Max score · par + 5</span></div>', 2);
     setTimeout(() => { if (G.state === 'holed') showDone(true); }, 1200); updateHUD(); return;
   }
@@ -5661,6 +5710,7 @@ function updateCamera(dt) {
   if (G.state === 'settle' && ((w >= 1 && cam.position.distanceTo(R.aPos) < .05 && R.pv.length() < .05 && R.lv.length() < .05) || R.t - A.t0 > A.D + 5)) enterAddress();
 }
 function enterAddress() {
+  saveRound();
   if (G.rig) G.rig.arr = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
@@ -6168,7 +6218,7 @@ function syncMenu() {
 function startPractice(i) {
   const inRound = !G.practice && (G.scores.some(v => v != null) || G.strokes > 0) && G.state !== 'title';
   if (inRound && !confirm('End the current round and practise hole ' + (i + 1) + '?')) return;
-  G.practice = true; G.submitted = true;
+  G.practice = true; G.submitted = true; clearRound();
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
   if (!G.pins) G.pins = HOLE_DEFS.map(() => Math.floor(Math.random() * 4));
   $('title').classList.remove('on'); closeSheets(); startHole(i);
@@ -6198,6 +6248,7 @@ function showScorecard(final) {
   const played = G.scores.filter(s => s != null).length, firH = G.fir.filter((f, i) => f === true).length, firN = HOLE_DEFS.filter((d, i) => d.par >= 4 && G.fir[i] != null).length, girH = G.gir.filter(g => g === true).length;
   let best = null; try { best = +localStorage.getItem(BEST_KEY) || null; } catch (e) { }
   if (final && played === HOLE_DEFS.length) { try { if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { } best = best ? Math.min(best, tp.s) : tp.s; }
+  if (final && played === HOLE_DEFS.length) clearRound();
   if (final && played === HOLE_DEFS.length && !G.submitted) { G.submitted = true; statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1 }); }
   $('cardBody').innerHTML = `<div class="sht">${final ? 'Round complete' : 'Scorecard'} <small>${final ? playerName() + ' · ' + COURSE.short : COURSE.name}</small></div>${final ? '<div id="finalBoard"></div><div class="sub">Scorecard</div>' : ''}<div class="scw"><table class="vcard">${rows}</table></div>
     <div class="scsum"><div><b>${played ? fmtToPar(tp.d) : '–'}</b>To par</div><div><b>${firN ? firH + '/' + firN : '–'}</b>Fairways</div><div><b>${played ? girH + '/' + played : '–'}</b>Greens</div><div><b>${best || '–'}</b>Best</div></div>
@@ -6683,6 +6734,10 @@ function initInput() {
   ni.addEventListener('keydown', e => { if (e.key === 'Enter') { ni.blur(); $('btnPlay').click(); } });
   mn.addEventListener('change', () => { setName(mn.value); mn.value = settings.name || ''; });
   mn.addEventListener('keydown', e => { if (e.key === 'Enter') mn.blur(); });
+  $('btnResume').onclick = () => {
+    if (!cleanName(settings.name)) { nr.classList.remove('need'); void nr.offsetWidth; nr.classList.add('need'); ni.focus(); return; }
+    audio(); SFX.blip(); $('title').classList.remove('on'); if (!resumeRound()) { $('title').classList.add('on'); refreshResume(); }
+  };
   $('btnPlay').onclick = () => {
     if (!cleanName(settings.name)) { nr.classList.remove('need'); void nr.offsetWidth; nr.classList.add('need'); ni.focus(); return; }
     audio(); SFX.blip(); $('title').classList.remove('on'); startRound();
@@ -6789,7 +6844,7 @@ function boot(data) {
   initIntroVideo();
   initThree(); initInput(); syncMenu();
   // a round restored after an update stays on its course (rounds from before the course switch were on the Legacy Course)
-  setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard();
+  setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard(); refreshResume();
   showTitleHole();
   sizeCanvases();
   if (data && data.scores) { G.practice = !!data.practice; G.scores = data.scores; G.putts = data.putts || G.putts; if (data.pins) G.pins = data.pins; $('title').classList.remove('on'); startHole(data.hole || 0); }
