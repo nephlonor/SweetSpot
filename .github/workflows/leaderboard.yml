@@ -39,6 +39,7 @@ jobs:
             try { rows = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { rows = []; }
             const name = r.name.trim(), by = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
             if (rows.some(x => x.name === name && x.at === r.at)) return finish(true, 'This round is already on the board.');
+            if (rows.some(x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && x.strokes === r.strokes)) return finish(true, 'This score is already on the board for this player.'); // one player, one entry per score per course
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
             if (rows.filter(x => x.at > Date.now() - 36e5).length >= 120) return finish(false, 'The board is busy; try again later.');
             rows.push({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by });
