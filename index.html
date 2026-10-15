@@ -5077,9 +5077,19 @@ const SW = {
 // Saved whenever the next shot is ready (where the ball lies, strokes so far, the scorecard and the pin sheet) and when a hole is
 // finished; the start screen then offers "Resume round". Practice is never saved; a finished or a new round clears it.
 const ROUND_KEY = 'ssg-round';
+// the last hole is in: best score, stats and the leaderboards (local, shared, world) straight away - not only once the final
+// scorecard is opened, so closing the app on the last hole's card cannot lose the round. Runs once per round.
+function finishRound() {
+  if (G.practice || !G.scores || !G.scores.every(v => v != null)) return;
+  clearRound();
+  if (G.submitted) return; G.submitted = true;
+  const tp = totalToPar();
+  try { const best = +localStorage.getItem(BEST_KEY) || null; if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { }
+  statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1 });
+}
 function saveRound() {
   if (G.practice || !G.C || !G.scores || G.state === 'title') return;
-  if (G.scores.every(v => v != null)) { clearRound(); return; }
+  if (G.scores.every(v => v != null)) { finishRound(); return; }
   const h = G.hole, mid = G.scores[h] == null && G.strokes > 0 ? { strokes: G.strokes, x: G.ball.x, z: G.ball.z, teed: !!G.teed, prev: G.prev || null } : null;
   const r = { v: 1, course: COURSE.key, hole: h, scores: G.scores, putts: G.putts, fir: G.fir, gir: G.gir, pens: G.pens, pins: G.pins, planes: G.planes, at: Date.now(), mid };
   try { localStorage.setItem(ROUND_KEY, JSON.stringify(r)); } catch (e) { }
@@ -6247,10 +6257,8 @@ function showScorecard(final) {
   });
   rows += sub('Total', 0, HOLE_DEFS.length, 'tot');
   const played = G.scores.filter(s => s != null).length, firH = G.fir.filter((f, i) => f === true).length, firN = HOLE_DEFS.filter((d, i) => d.par >= 4 && G.fir[i] != null).length, girH = G.gir.filter(g => g === true).length;
+  if (final) finishRound();
   let best = null; try { best = +localStorage.getItem(BEST_KEY) || null; } catch (e) { }
-  if (final && played === HOLE_DEFS.length) { try { if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { } best = best ? Math.min(best, tp.s) : tp.s; }
-  if (final && played === HOLE_DEFS.length) clearRound();
-  if (final && played === HOLE_DEFS.length && !G.submitted) { G.submitted = true; statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1 }); }
   $('cardBody').innerHTML = `<div class="sht">${final ? 'Round complete' : 'Scorecard'} <small>${final ? playerName() + ' · ' + COURSE.short : COURSE.name}</small></div>${final ? '<div id="finalBoard"></div><div class="sub">Scorecard</div>' : ''}<div class="scw"><table class="vcard">${rows}</table></div>
     <div class="scsum"><div><b>${played ? fmtToPar(tp.d) : '–'}</b>To par</div><div><b>${firN ? firH + '/' + firN : '–'}</b>Fairways</div><div><b>${played ? girH + '/' + played : '–'}</b>Greens</div><div><b>${best || '–'}</b>Best</div></div>
     ${final ? '<div class="mbtns"><button class="mbtn dark" id="scAgain">Play again</button><button class="mbtn" id="scClose">Close</button></div>' : ''}`;
