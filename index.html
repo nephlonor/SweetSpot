@@ -201,6 +201,7 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .bd{font:600 15px var(--cond);color:var(--ink2);margin-top:5px;font-variant-numeric:tabular-nums}
 .tip{position:absolute;top:9px;right:9px;font:600 9px var(--cond);letter-spacing:.1em;background:var(--yel);color:var(--ink);padding:2px 5px;border-radius:5px}
 .mlist{display:flex;flex-direction:column;gap:8px}
+.mlist.setBlock{margin-top:14px}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--soft);border-radius:16px;padding:10px 12px;font:600 16px var(--cond);text-transform:uppercase}
 .mrow input{height:38px;font-size:18px;color:var(--ink);background:#fff;box-shadow:inset 0 0 0 1px var(--hair);text-shadow:none;max-width:60%}
 .seg{display:flex;gap:3px;background:rgba(22,33,28,.07);padding:3px;border-radius:12px}
@@ -384,17 +385,19 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="sheet" id="bagSheet"><div class="grab"></div><div class="sht">Your bag <small id="bagLie">From the tee</small></div><div class="bag" id="bag"></div></div>
 <div class="sheet" id="menuSheet"><div class="grab"></div><div class="sht">Settings</div>
   <div class="mlist">
+    <div class="sub"><span>Players online</span></div><div class="mpList" id="mpList"></div>
+    <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
+  </div>
+  <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
+  <div class="mbtns"><button class="mbtn dark wide" id="mReplay">▶ Replay last shot</button><button class="mbtn dark wide" id="mStats">📊 Stats &amp; records</button><button class="mbtn dark" id="mBoard">Leaderboard</button><button class="mbtn dark" id="mCard">Scorecard</button><button class="mbtn" id="mHelp">How to swing</button><button class="mbtn" id="mRound">New round</button></div>
+  <div class="mlist setBlock">
     <div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
     <div class="mrow">Sound<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
     <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
     <div class="mrow mpRow">Live room<div class="mpRoom"><input id="mpCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code" enterkeyhint="go"><button class="mpb" id="mpJoin">Join</button></div></div>
     <div class="mpInfo" id="mpInfo">Play live with friends: everyone in the same room sees the others' balls fly on the same hole, and the scores.<div class="mpBtns"><button class="mpb" id="mpNew">New room</button><button class="mpb" id="mpShare">Share link</button></div></div>
-    <div class="sub"><span>Players online</span></div><div class="mpList" id="mpList"></div>
-    <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
   </div>
-  <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
-  <div class="mbtns"><button class="mbtn dark wide" id="mReplay">▶ Replay last shot</button><button class="mbtn dark wide" id="mStats">📊 Stats &amp; records</button><button class="mbtn dark" id="mBoard">Leaderboard</button><button class="mbtn dark" id="mCard">Scorecard</button><button class="mbtn" id="mHelp">How to swing</button><button class="mbtn" id="mRound">New round</button></div>
 </div>
 <div class="sheet" id="cardSheet"><div class="grab"></div><div id="cardBody"></div></div>
 <div class="sheet" id="boardSheet"><div class="grab"></div><div class="sht">Leaderboard <small id="boardName">Golf &amp; Country Club Basel</small></div><div id="boardBody"></div></div>
