@@ -249,11 +249,12 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 #mpPanel .mpr.on{background:rgba(255,255,255,.22)}
 #mpPanel .mpr.fol .n{color:#ffe28a;text-shadow:0 0 6px rgba(255,200,60,.95),0 0 14px rgba(255,190,40,.75)}
 #mpPanel .mpr.fol{box-shadow:0 0 0 1px rgba(255,214,90,.7),0 0 12px rgba(255,196,50,.55);background:rgba(255,200,60,.14)}
-#specBar{position:fixed;z-index:3;left:50%;bottom:calc(var(--sb) + 22px);transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:7px 7px 7px 14px;border-radius:22px;color:#fff;font:600 13px var(--cond);text-transform:uppercase;letter-spacing:.04em;text-shadow:var(--tsh);white-space:nowrap;max-width:calc(100vw - 24px)}
+#specBar{position:fixed;z-index:3;left:50%;top:calc(var(--st) + 72px);transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:7px 7px 7px 14px;border-radius:22px;color:#fff;font:600 13px var(--cond);text-transform:uppercase;letter-spacing:.04em;text-shadow:var(--tsh);white-space:nowrap;max-width:calc(100vw - 24px)}
 #specBar #specInfo{overflow:hidden;text-overflow:ellipsis;min-width:0}
 #specBar .btn{height:44px;padding:0 16px;font-size:16px;flex:none}
 body.spec #specBar{display:flex}
-body.spec #tempo,body.spec #strike,body.spec #pinTag,body.spec #ballTag,body.spec #aimHint,body.spec #skipBtn,body.spec #readout{display:none!important}
+body.spec #pinTag,body.spec #ballTag,body.spec #aimHint,body.spec #skipBtn,body.spec #readout{display:none!important}
+body.spec #tempo,body.spec #strike{opacity:.55!important}body.spec #tempo *,body.spec #strike *{pointer-events:none!important}body.spec #fx{opacity:.7}
 #mpPanel .mph{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.8;margin-bottom:2px}
 #mpPanel .mpr{display:flex;align-items:center;gap:6px;white-space:nowrap;line-height:1.5}
 #mpPanel .mpr i{width:8px;height:8px;border-radius:50%;flex:none}
@@ -4998,6 +4999,9 @@ function mpMsg(topic, buf) {
     const pr = MP.peers.get(id) || { id, col: mpCol(id) };
     Object.assign(pr, { n: cleanName(d.n) || 'Player', c: String(d.c || ''), h: d.h | 0, tp: +d.tp || 0, th: d.th | 0, s: d.s | 0, x: +d.x, z: +d.z, at: +d.at, pin: d.pin | 0, fo: String(d.fo || ''), seen: Date.now() });
     MP.peers.set(id, pr);
+  } else if (kind === 'i') { // the swing input of the player I follow
+    if (id !== MP.follow) return; let d; try { d = JSON.parse(txt); } catch (e) { return; }
+    if (d && typeof d.ph === 'string') MP.rin = Object.assign(d, { at: performance.now() });
   } else if (kind === 'f') {
     let d; try { d = JSON.parse(txt); } catch (e) { return; }
     const pr = MP.peers.get(id); if (!pr || !d || !Array.isArray(d.p) || d.p.length < 6) return;
@@ -5026,13 +5030,52 @@ function mpShot(res) {
   }
   try { c.publish(mpT('f/' + MP.id), JSON.stringify({ c: COURSE.key, h: G.hole, zb: G.C.zBase, dt, p: pts })); } catch (e) { }
 }
+// while someone follows me: my swing input (the tempo bar, the strike dot on the face, the result) ten times a second while swinging,
+// a few times a second otherwise; positions on the face are relative to it, so they map onto any screen
+function mpInput() {
+  const c = MP.client; if (!c || MP.st !== 'on' || MP.spec || !G.C || G.state === 'title' || G.state === 'intro') return;
+  const now = performance.now(), swinging = SW.phase === 'back' || SW.phase === 'down';
+  if (now - (MP.inT || 0) < (swinging ? 100 : 400)) return;
+  let fol = false; for (const pr of MP.peers.values()) if (pr.fo === MP.id && Date.now() - pr.seen < 120e3) { fol = true; break; }
+  if (!fol) return; MP.inT = now;
+  const f = UI.face || { hw: 50, hh: 26 }; let dot = null;
+  if (G.state === 'address' && SW.phase !== 'done') { const d = dotScreen(); dot = [(d.x - UI.faceCX) / f.hw, (d.y - UI.faceCY) / f.hh]; }
+  else if (SW.mark) dot = [(SW.mark.x - UI.faceCX) / f.hw, (SW.mark.y - UI.faceCY) / f.hh];
+  const L = SW.last, r3 = v => Math.round(v * 1000) / 1000;
+  const d = { ph: SW.phase, p: r3(SW.p || 0), pm: r3(SW.pMax || 0), el: SW.phase === 'back' ? Math.round(now - SW.t0) : 0, tb: Math.round((SW.tTop || 0) - (SW.t0 || 0)), td: SW.phase === 'down' ? Math.round(now - SW.tTop) : 0,
+    club: G.club, st: G.state, dot: dot && dot.map(r3), rt: Math.round(now - (SW.resultT || 0)), chip: G.chip ? [r3(G.chip.p), Math.round(G.chip.d)] : null, pr: G.puttRange,
+    last: L ? { loc: L.loc, shape: L.shape, q: L.qualityLevel, ratio: L.ratio, smash: L.smash, tg: L.tempoGrade, putt: !!L.putt, bs: L.ballSpeed } : null };
+  try { c.publish(mpT('i/' + MP.id), JSON.stringify(d)); } catch (e) { }
+}
+// following: their tempo bar, strike dial and dot, drawn see-through from their input (my own swing state is swapped out for the draw)
+const MP_SWK = ['phase', 'p', 'pMax', 'id', 't0', 'tTop', 'last', 'resultT', 'path', 'pathAt', 'topI', 'mark', 'trail', 'thumb', 'sid'];
+function mpDrawRemote(now) {
+  const R = MP.rin, fresh = R && now - R.at < 5000;
+  const keep = {}; for (const k of MP_SWK) keep[k] = SW[k];
+  const kg = { club: G.club, state: G.state, chip: G.chip, pr: G.puttRange };
+  try {
+    if (fresh) {
+      SW.phase = R.ph; SW.p = R.p; SW.pMax = R.pm; SW.id = R.ph === 'back' || R.ph === 'down' ? 1 : null; SW.path = null; SW.trail = []; SW.thumb = false; SW.sid = null;
+      if (R.ph === 'back') SW.t0 = now - R.el; else if (R.ph === 'down') { SW.tTop = now - R.td; SW.t0 = SW.tTop - R.tb; }
+      SW.resultT = now - R.rt;
+      SW.last = R.last ? { loc: R.last.loc, shape: R.last.shape, qualityLevel: R.last.q, ratio: R.last.ratio, smash: R.last.smash, tempoGrade: R.last.tg, putt: R.last.putt, ballSpeed: R.last.bs } : null;
+      if (CLUBS[R.club]) G.club = R.club; G.chip = R.chip ? { p: R.chip[0], d: R.chip[1] } : null; if (R.pr) G.puttRange = R.pr;
+      const f = UI.face || { hw: 50, hh: 26 }; SW.mark = R.dot ? { x: UI.faceCX + R.dot[0] * f.hw, y: UI.faceCY + R.dot[1] * f.hh } : null;
+      const c = CLUBS[G.club]; if (c) { const nm = c.type === 'putter' ? 'Putter' : c.name; if ($('clubName').textContent !== nm) $('clubName').textContent = nm; }
+    } else { SW.phase = 'idle'; SW.p = 0; SW.id = null; SW.last = null; SW.mark = null; SW.path = null; }
+    G.state = 'flight'; drawTempo(now); drawStrike(now);
+    G.state = 'settle'; if (!SW.mark && UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height); else { if (SW.phase !== 'done') SW.phase = 'done'; drawFx(now); }
+  } finally { for (const k of MP_SWK) SW[k] = keep[k]; G.club = kg.club; G.state = kg.state; G.chip = kg.chip; G.puttRange = kg.pr; }
+}
 // the others on my hole: a ball in their colour, a tracer while it flies, their name above it
 function mpObj(pr) {
   let o = MP.objs.get(pr.id); if (o) return o;
   const col = new THREE.Color(pr.col);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(VIS_R, 14, 10), new THREE.MeshLambertMaterial({ color: col, emissive: col.clone().multiplyScalar(.25) }));
-  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(400 * 3), 3)); tg.setDrawRange(0, 0);
-  const tr = new THREE.Line(tg, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: .85 }));
+  // the tracer: a ribbon facing the camera, like my own shot's, in their colour
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(400 * 6), 3));
+  const ix = []; for (let i = 0; i < 399; i++) { const a = i * 2; ix.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } tg.setIndex(ix); tg.setDrawRange(0, 0);
+  const tr = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .85, side: THREE.DoubleSide, depthWrite: false }));
   ball.frustumCulled = tr.frustumCulled = false; W.scene.add(ball); W.scene.add(tr);
   const tag = document.createElement('div'); tag.className = 'gtag'; tag.style.borderLeft = '3px solid ' + pr.col; $('mpTags').appendChild(tag);
   o = { ball, tr, tag, id: pr.id }; MP.objs.set(pr.id, o); return o;
@@ -5041,7 +5084,7 @@ function mpDrop(o) { W.scene.remove(o.ball); W.scene.remove(o.tr); o.ball.geomet
 const _mpv = new THREE.Vector3();
 function mpUpdate(dt) {
   if (!MP.room) return;
-  mpState(false);
+  mpState(false); mpInput();
   const C = G.C, show = C && G.state !== 'title' && G.state !== 'intro', now = performance.now(), seen = new Set();
   const list = [...MP.peers.values()]; if (MP.follow) list.sort((a, b) => (b.id === MP.follow) - (a.id === MP.follow)); // the one I follow is always drawn
   for (const pr of list) {
@@ -5058,8 +5101,13 @@ function mpUpdate(dt) {
       const dz = f.zb != null ? f.zb - C.zBase : 0; // heights come in their hole's frame: shifted into mine
       const at = j => { const q = C.loc(P[3 * j], P[3 * j + 1]); return [q[0], P[3 * j + 2] + dz, -q[1]]; };
       const A = at(i), B = at(i + 1); X = lerp(A[0], B[0], w); Y = lerp(A[1], B[1], w) + VIS_R; Z = lerp(A[2], B[2], w);
-      const nn = Math.min(400, i + 1); for (let j = 0; j < nn; j++) { const q = at(j); pa.array[3 * j] = q[0]; pa.array[3 * j + 1] = q[1] + VIS_R; pa.array[3 * j + 2] = q[2]; }
-      pa.needsUpdate = true; o.tr.geometry.setDrawRange(0, nn); o.tr.material.opacity = .85 * clamp(f.dur + 1.5 - el, 0, 1);
+      const nn = Math.min(400, i + 1), cam = W.cam.position;
+      for (let j = 0; j < nn; j++) {
+        const q = j === nn - 1 ? [X, Y - VIS_R, Z] : at(j); let sx = q[2] - cam.z, sz = -(q[0] - cam.x); const l = Math.hypot(sx, sz) || 1, wd = .09 + .004 * Math.hypot(q[0] - cam.x, q[2] - cam.z);
+        sx = sx / l * wd; sz = sz / l * wd; const k6 = j * 6;
+        pa.array[k6] = q[0] - sx; pa.array[k6 + 1] = q[1] + VIS_R; pa.array[k6 + 2] = q[2] - sz; pa.array[k6 + 3] = q[0] + sx; pa.array[k6 + 4] = q[1] + VIS_R; pa.array[k6 + 5] = q[2] + sz;
+      }
+      pa.needsUpdate = true; o.tr.geometry.setDrawRange(0, Math.max(0, (nn - 1) * 6)); o.tr.material.opacity = .85 * clamp(f.dur + 1.5 - el, 0, 1);
     } else {
       if (!Number.isFinite(pr.x)) { o.ball.visible = false; o.tag.style.opacity = 0; continue; }
       const q = C.loc(pr.x, pr.z); X = q[0]; Z = -q[1]; Y = groundY(X, Z) + VIS_R; o.tr.geometry.setDrawRange(0, 0);
@@ -5101,14 +5149,14 @@ function mpPanel() {
   mpPlace(el);
   if (MP.spec) { const pr = MP.peers.get(MP.follow); if (pr) $('specInfo').textContent = `Following ${pr.n} · Hole ${(pr.h | 0) + 1} · ${pr.th ? fmtToPar(pr.tp) : 'E'}`; }
 }
-function mpPlace(el) { const sr = $('strike').getBoundingClientRect(); el.style.top = (MP.spec || !sr.height ? 80 : Math.max(80, sr.top - el.offsetHeight - 10)) + 'px'; }
+function mpPlace(el) { const sr = $('strike').getBoundingClientRect(), sb = $('specBar').getBoundingClientRect(); el.style.top = (MP.spec ? sb.bottom + 8 : !sr.height ? 80 : Math.max(80, sr.top - el.offsetHeight - 10)) + 'px'; }
 // following: their hole is built and the camera rides with their ball; my round waits where it was (the ball at rest, aimed)
 function mpFollow(id) {
   const pr = MP.peers.get(id); if (!pr) return;
   if (pr.c !== COURSE.key) { readout(`<div class="r1">${pr.n} is playing ${(COURSES[pr.c] || {}).short || 'another course'}</div>`, 2.2); return; }
   if (!MP.spec && G.state !== 'address') { readout('<div class="r1">Follow once your ball is at rest</div>', 2.2); return; }
   if (!MP.spec) MP.spec = { C: G.C, hole: G.hole };
-  MP.follow = id; closeSheets(); mpSpecLoad(pr);
+  MP.follow = id; MP.rin = null; closeSheets(); mpSpecLoad(pr);
   document.body.classList.add('spec'); G.state = 'spec'; $('readout').classList.remove('on'); $('aimHint').classList.remove('on');
   mpState(true); MP.panelT = 0; SFX.blip();
 }
@@ -5140,7 +5188,7 @@ function mpSpecCam(dt) {
   const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
   const back = fl ? 22 : 11, up = fl ? 9 : 4.2, gy = Math.max(C.h(bx - dx * back, bz - dz * back), C.wl(bx - dx * back, bz - dz * back));
   _scP.set(bx - dx * back, Math.max(by, gy) + up, bz - dz * back); _scL.set(bx + dx * (fl ? 6 : 18), fl ? by : by + .5, bz + dz * (fl ? 6 : 18));
-  const k = MP.specCam ? 1 - Math.exp(-dt * (fl ? 3 : 1.6)) : 1;
+  const k = MP.specCam ? 1 - Math.exp(-dt * (fl ? 6 : 1.6)) : 1; // (in the air it keeps up with the ball)
   W.cam.position.lerp(_scP, k); G.camLook.lerp(_scL, k); W.cam.lookAt(G.camLook);
   MP.specCam = { x: bx, z: bz }; W.ball.position.set(bx, by, bz); // (the trees between the camera and their ball step aside)
 }
@@ -7149,7 +7197,7 @@ function frame(now) {
   updateSkipBtn();
   const hudOff = G.state === 'title' || G.state === 'intro';
   $('hud').classList.toggle('off', hudOff);
-  if (!hudOff) { drawTempo(now); drawStrike(now); drawFx(now); } else if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height);
+  if (!hudOff) { if (G.state === 'spec') mpDrawRemote(now); else { drawTempo(now); drawStrike(now); drawFx(now); } } else if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height);
   renderTiltShift(dt);
 }
 // the first hole of the course in play behind the title screen
