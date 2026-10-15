@@ -4900,7 +4900,8 @@ function wakeAudio(fromTouch) {
 // iOS can bring a context back reporting 'running' while it is silent (after another app or a call had the audio), and that state is not
 // reliable, so the context is dropped whenever the page is hidden; the next touch on return builds a fresh one (the decoded samples are reused)
 function dropAudio() { const a = AC; AC = null; if (a) { try { a.onstatechange = null; a.close(); } catch (e) { } } }
-document.addEventListener('visibilitychange', () => { if (document.hidden) dropAudio(); else wakeAudio(false); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { dropAudio(); try { saveRound(); } catch (e) { } } else wakeAudio(false); });
+window.addEventListener('pagehide', () => { try { saveRound(); } catch (e) { } });
 window.addEventListener('pagehide', dropAudio);
 window.addEventListener('pageshow', () => wakeAudio(false)); window.addEventListener('focus', () => wakeAudio(false));
 function tone(f, d, type, vol, f2, delay) {
@@ -5090,7 +5091,17 @@ function finishRound() {
 function saveRound() {
   if (G.practice || !G.C || !G.scores || G.state === 'title') return;
   if (G.scores.every(v => v != null)) { finishRound(); return; }
-  const h = G.hole, mid = G.scores[h] == null && G.strokes > 0 ? { strokes: G.strokes, x: G.ball.x, z: G.ball.z, teed: !!G.teed, prev: G.prev || null } : null;
+  const h = G.hole, sh = G.shot;
+  if (sh && sh.replay) return; // a replay changes nothing: the last save stands
+  // the exact point of play: the ball, the strokes, the aim, the wind and weather, and a shot in the air (its launch and how far into
+  // its flight; on resume it is simulated again - the same inputs give the same flight - and played on from there)
+  const flying = (G.state === 'flight' || G.state === 'holed') && sh && !sh.finished && G.prev;
+  const mid = G.scores[h] == null && (G.strokes > 0 || flying) ? {
+    strokes: G.strokes, x: G.ball.x, z: G.ball.z, teed: !!G.teed, prev: G.prev || null, yaw: G.yaw, club: G.club, target: G.target || null,
+    wind: G.wind, swirl: G.C.swirl || 0, sw: G.swirl || null,
+    wx: G.weather ? { id: G.weather.id, left: G.wxLeft, n: G.wxN, k: G.wxK, next: G.wxNext ? G.wxNext.id : null, prev: G.wxPrev || null } : null,
+    shot: flying ? { L: sh.L, x: G.prev.x, z: G.prev.z, teed: !!G.prev.teed, playT: Math.max(0, G.playT), summary: sh.summary } : null
+  } : null;
   const r = { v: 1, course: COURSE.key, hole: h, scores: G.scores, putts: G.putts, fir: G.fir, gir: G.gir, pens: G.pens, pins: G.pins, planes: G.planes, at: Date.now(), mid };
   try { localStorage.setItem(ROUND_KEY, JSON.stringify(r)); } catch (e) { }
   refreshResume();
@@ -5122,10 +5133,31 @@ function resumeRound() {
   G.scores = arr(r.scores, null); G.putts = arr(r.putts, 0); G.fir = arr(r.fir, null); G.gir = arr(r.gir, null); G.pens = arr(r.pens, 0); G.pins = arr(r.pins, 0);
   const h = resumeHole(r), mid = r.mid && h === r.hole ? r.mid : null, pu = G.putts[h], pe = G.pens[h];
   startHole(h);
-  if (mid) { // back where the ball lies, with the strokes already played on this hole
-    G.putts[h] = pu; G.pens[h] = pe; G.strokes = mid.strokes; G.target = null;
-    placeBall(mid.x, mid.z, mid.teed); G.prev = mid.prev || { x: mid.x, z: mid.z, teed: mid.teed }; autoClubAndAim(); updateHUD();
+  if (!mid) return true;
+  // back exactly where play stopped: the strokes, the weather and wind of the moment, then the ball at rest (aimed as it was) or in the air
+  G.putts[h] = pu; G.pens[h] = pe; G.strokes = mid.strokes;
+  if (mid.wx) { const w = WEATHERS.find(x => x.id === mid.wx.id); if (w) { G.weather = w; setWeather(w); G.wxLeft = mid.wx.left; G.wxN = mid.wx.n; G.wxK = mid.wx.k; G.wxNext = WEATHERS.find(x => x.id === mid.wx.next) || G.wxNext; G.wxPrev = mid.wx.prev; } }
+  if (Array.isArray(mid.wind)) G.wind = mid.wind.slice(); if (mid.sw) G.swirl = mid.sw; G.C.swirl = mid.swirl || 0;
+  G.prev = mid.prev || { x: mid.x, z: mid.z, teed: mid.teed };
+  $('intro').classList.remove('on');
+  if (mid.shot && mid.shot.L) {
+    const q = mid.shot, L = q.L;
+    placeBall(q.x, q.z, q.teed); if (mid.club != null) G.club = mid.club; if (mid.yaw != null) G.yaw = mid.yaw;
+    const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
+    G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res }; SW.last = L; SW.phase = 'done';
+    const t = Math.min(q.playT, Math.max(0, res.duration - .05)); let ei = 0; while (ei < res.events.length && res.events[ei].t <= t) ei++;
+    G.shot = { L, res, ei, finished: false, summary: q.summary || '' };
+    const cp = new THREE.Vector3(), lk = new THREE.Vector3(), v = L.v; addressCamFor(cp, lk, G.ball.x, G.ball.y, G.ball.z, Math.atan2(v[0], -v[2]), !!L.putt, G.teed);
+    W.cam.position.copy(cp); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
+    document.body.classList.add('flight'); if (G.rig) { G.rig.arr = null; G.rig.launch = null; }
+    W.tracerT0 = performance.now(); W.tracer.visible = !L.putt; W.tracer.material.opacity = .8; W.tracer.geometry.setDrawRange(0, 0);
+    W.aim.visible = W.ring.visible = W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; $('aimHint').classList.remove('on');
+    G.state = 'flight'; G.playT = t; G.shake = 0; updateHUD();
+    return true;
   }
+  placeBall(mid.x, mid.z, mid.teed);
+  if (mid.club != null && mid.yaw != null) { G.club = mid.club; G.suggested = mid.club; G.yaw = mid.yaw; G.target = mid.target || null; G.carryKey = ''; updateAim(true); } else autoClubAndAim();
+  beginHole(); G.snapCam = true; updateHUD(); // straight to the address view, no flyover
   return true;
 }
 function startRound() {
@@ -5416,7 +5448,7 @@ function impact(tImp) {
   G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res };
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '←' : '→'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
-  G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12;
+  G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12; saveRound(); G.savedT = 0;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
   W.tracer.geometry.setDrawRange(0, 0);
@@ -6823,7 +6855,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
   if (G.state === 'intro') G.introT += dt;
-  if (G.state === 'flight') updateFlight(dt);
+  if (G.state === 'flight') { updateFlight(dt); if ((G.savedT = (G.savedT || 0) + dt) > 1.5) { G.savedT = 0; saveRound(); } } // the round, with how far the ball has flown
   else if (G.state === 'holed') { G.holedT += dt; if (G.shot && G.shot.res.holed && G.holedT < 3) updateFlight(dt); }
   refreshMapLive(now);
   if (SW.kb && (SW.phase === 'back' || SW.phase === 'down')) {
