@@ -2690,7 +2690,7 @@ function setCourse(key) {
   $('courseLine').textContent = `${COURSE.name}\n${HOLE_DEFS.length} holes · Par ${PAR_TOTAL}`;
   $('boardName').textContent = COURSE.name;
   document.querySelectorAll('.segCourse button').forEach(b => b.classList.toggle('sel', b.dataset.v === COURSE.key));
-  showBest(); refreshBoards();
+  showBest(); refreshBoards(); try { loadWorld(); } catch (e) { }
 }
 
 /* ================= WORLD (three.js) ================= */
@@ -4319,7 +4319,7 @@ function makePlane(L) {
   const g = new THREE.Group(), mat = LIFE_MAT(); g.add(lmesh(hull, mat));
   const prop = lmesh(mergeParts([lbx(.14, 2.4, .08, 0, 0, 0, [.15, .15, .15]), lbx(2.4, .14, .08, 0, 0, 0, [.15, .15, .15]), lsp(.16, .16, .22, 0, 0, .12, red)]), mat); prop.position.set(0, 0, 3.4); g.add(prop);
   g.visible = false; L.grp.add(g);
-  const e = { kind: 'plane', mat, g, prop, st: 'wait', tmr: Math.random() < .7 ? 14 + Math.random() * 90 : 1e9, x: 0, y: 0, z: 0, yaw: 0, a: [0, 0], b: [0, 0], alt: 40, spd: 52, t: 0, T: 10, r: 1, shake: 0, played: false };
+  const e = { kind: 'plane', mat, g, prop, st: 'wait', tmr: 1e9, x: 0, y: 0, z: 0, yaw: 0, a: [0, 0], b: [0, 0], alt: 40, spd: 52, t: 0, T: 10, r: 1, shake: 0, played: false };
   e.hit = (x, y, z) => {
     if (e.st !== 'fly') return null; const dx = x - e.x, dy = y - e.y, dz = z - e.z, cs = Math.cos(e.yaw), sn = Math.sin(e.yaw), lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
     const inBody = Math.abs(lx) < .75 && Math.abs(dy) < .8 && lz > -4.4 && lz < 3.6, inWing = Math.abs(lx) < 5.6 && Math.abs(dy - .72) < .25 && Math.abs(lz - .25) < .85, inTail = Math.abs(lx) < 1.8 && Math.abs(dy - .2) < .25 && Math.abs(lz + 5.5) < .6;
@@ -4327,10 +4327,16 @@ function makePlane(L) {
     return { nx: (inWing ? 0 : cs * lx) / n, ny: ny / n, nz: (inWing ? 0 : -sn * lx) / n, keep: .55 };
   };
   e.onHit = () => { e.shake = 1.1; };
+  // planes only come by when a tee shot is struck: now and then one crosses the line of the drive, sometimes right through the ball's path
+  e.maybeSpawn = res => {
+    if (e.st !== 'wait' || Math.random() > .4 || !res || res.n < 8) return;
+    const tc = Math.min(res.duration * .55, 7), fr = res.frames; let i = Math.min(res.n - 1, Math.floor(tc * 60)); while (i > 0 && fr[i * 5] > tc) i--;
+    const cx = fr[i * 5 + 1], cy = fr[i * 5 + 2], cz = fr[i * 5 + 3], ang = Math.random() * Math.PI, dx = Math.sin(ang), dz = Math.cos(ang);
+    const hitIt = Math.random() < .25, alt = hitIt ? cy - groundY(cx, cz) : Math.max(24, cy - groundY(cx, cz)) + (Math.random() < .5 ? -1 : 1) * (7 + Math.random() * 10);
+    e.a = [cx - dx * e.spd * tc, cz - dz * e.spd * tc]; e.b = [cx + dx * e.spd * 9, cz + dz * e.spd * 9]; e.yaw = ang; e.alt = Math.max(14, alt); e.t = 0; e.T = tc + 9; e.st = 'fly'; e.g.visible = true; e.played = false;
+  };
   e.update = dt => {
-    if (e.st === 'wait') { e.tmr -= dt; if (e.tmr <= 0 && G.state !== 'title') { // a straight pass across the hole, low
-        const I = L.C.inner, cx = (I.minX + I.maxX) / 2 + (Math.random() - .5) * 60, cz = (I.minZ + I.maxZ) / 2 + (Math.random() - .5) * 60, ang = Math.random() * Math.PI, d = 330;
-        e.a = [cx - Math.sin(ang) * d, cz - Math.cos(ang) * d]; e.b = [cx + Math.sin(ang) * d, cz + Math.cos(ang) * d]; e.yaw = ang; e.alt = 26 + Math.random() * 20; e.t = 0; e.T = 2 * d / e.spd; e.st = 'fly'; e.g.visible = true; e.played = false; } return; }
+    if (e.st === 'wait') return;
     e.t += dt; const u = e.t / e.T; if (u >= 1) { e.st = 'wait'; e.g.visible = false; e.tmr = 70 + Math.random() * 90; return; }
     e.x = lerp(e.a[0], e.b[0], u); e.z = lerp(e.a[1], e.b[1], u); e.y = groundY(e.x, e.z) + e.alt + Math.sin(e.t * .8) * 1.2;
     if (!e.played) { const cam = W.cam.position, d = Math.hypot(cam.x - e.x, cam.z - e.z); if (d < 260) { e.played = true; try { SFX.plane(); } catch (er) { } } }
@@ -4901,6 +4907,7 @@ function impact(tImp) {
   if (L.putt && (G.surf === S.GREEN || G.surf === S.FRINGE)) G.putts[G.hole]++;
   G.prev = { x: G.ball.x, z: G.ball.z, teed: G.teed };
   const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
+  if (G.teed && !L.putt && W.life && W.life.plane) W.life.plane.maybeSpawn(res);
   G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res };
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '←' : '→'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
@@ -5936,7 +5943,33 @@ function openStats() {
 // Rounds go to a board on this device (always) and, when the page runs inside Claude with the db capability and the
 // viewer may write shared data, to a shared board everyone with the link can read.
 let BOARD_KEY = 'ssg-board-' + HOLE_DEFS.length;
-const Board = { db: null, canWrite: null, uid: null, shared: {}, ready: {}, err: {}, tab: null, lastShared: null, lastLocal: null };
+const Board = { db: null, canWrite: null, uid: null, shared: {}, ready: {}, err: {}, tab: null, lastShared: null, lastLocal: null, gh: {}, ghAt: {} };
+// The world board lives in the game's GitHub repository: leaderboard/<course>.json. A player posts a round by opening a pre-filled issue;
+// a workflow validates it, adds it to the file and closes the issue (see .github/workflows/leaderboard.yml).
+const GH_REPO = 'nephlonor/SweetSpot';
+async function loadWorld(force) {
+  const key = COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${key}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); if (!r.ok) throw new Error('http');
+    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18 })) : [];
+  } catch (e) { if (!Board.gh[key]) Board.gh[key] = null; }
+  refreshBoards();
+}
+const roundKey = r => r.name + '|' + r.at;
+// the world rows: the file's, plus my own rounds I have just posted that the workflow has not added yet
+function worldRows() {
+  const g = Board.gh[COURSE.key]; if (!g) return null; const have = new Set(g.map(roundKey));
+  return g.concat(localRounds().filter(r => r.posted && !have.has(roundKey(r))).map(r => Object.assign({}, r, { pending: true })));
+}
+function postUrl(r) {
+  const body = 'Posting a round from Sweet Spot Golf. Just press **Submit new issue**; a bot adds it to the board within a minute.\n\n```json\n' + JSON.stringify({ v: 1, course: COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at }) + '\n```\n';
+  return `https://github.com/${GH_REPO}/issues/new?title=${encodeURIComponent(`[score] ${r.name} ${fmtToPar(r.toPar)} (${r.strokes}) ${COURSE.short}`)}&body=${encodeURIComponent(body)}`;
+}
+function postWorld(r) {
+  const loc = localRounds(), q = loc.find(x => x.at === r.at && x.name === r.name); if (q) { q.posted = true; try { localStorage.setItem(BOARD_KEY, JSON.stringify(sortRounds(loc).slice(0, 60))); } catch (e) { } }
+  window.open(postUrl(r), '_blank', 'noopener') || (location.href = postUrl(r));
+  setTimeout(() => { Board.ghAt[COURSE.key] = 0; loadWorld(true); }, 45000); refreshBoards();
+}
 function playerName() { return cleanName(settings.name) || 'Player'; }
 function cleanName(s) { return String(s || '').replace(/[^\p{L}\p{N} ._'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14); }
 function validRound(r) {
@@ -5973,12 +6006,12 @@ async function submitRound(entry) {
 // list for the chosen tab; names are other people's text, so everything goes in with textContent
 function fillBoard(el, limit) {
   el.textContent = '';
-  const shared = !!Board.db, tab = shared ? (Board.tab || 'all') : 'device';
+  const shared = !!Board.db, tab = Board.tab || 'world';
   const head = document.createElement('div'); head.className = 'sub';
-  const lab = document.createElement('span'); lab.textContent = tab === 'all' ? 'Everyone' : 'This device'; head.appendChild(lab);
-  if (shared) {
+  const lab = document.createElement('span'); lab.textContent = tab === 'world' ? 'World' : tab === 'all' ? 'Everyone' : 'This device'; head.appendChild(lab);
+  {
     const tabs = document.createElement('div'); tabs.className = 'tabs';
-    for (const [k, t] of [['all', 'Everyone'], ['device', 'This device']]) {
+    for (const [k, t] of [['world', 'World']].concat(shared ? [['all', 'Everyone']] : [], [['device', 'This device']])) {
       const b = document.createElement('button'); b.textContent = t; if (k === tab) b.className = 'sel';
       b.onclick = () => { Board.tab = k; refreshBoards(); }; tabs.appendChild(b);
     }
@@ -5986,10 +6019,11 @@ function fillBoard(el, limit) {
   }
   el.appendChild(head);
   const list = document.createElement('div'); list.className = 'lb'; el.appendChild(list);
-  const rows = sortRounds(tab === 'all' ? (Board.shared[COURSE.coll] || []) : localRounds()).slice(0, limit || 25);
+  const wr = tab === 'world' ? worldRows() : null;
+  const rows = sortRounds(tab === 'world' ? wr || [] : tab === 'all' ? (Board.shared[COURSE.coll] || []) : localRounds()).slice(0, limit || 25);
   if (!rows.length) {
     const e = document.createElement('div'); e.className = 'empty';
-    e.textContent = tab === 'all' && !Board.ready[COURSE.coll] ? 'Loading…' : 'No rounds yet. Finish all ' + HOLE_DEFS.length + ' holes to post a score.';
+    e.textContent = tab === 'world' && wr == null ? (Board.gh[COURSE.key] === null ? 'The world board could not be reached.' : 'Loading…') : tab === 'all' && !Board.ready[COURSE.coll] ? 'Loading…' : 'No rounds yet. Finish all ' + HOLE_DEFS.length + ' holes to post a score.';
     list.appendChild(e);
   }
   rows.forEach((r, i) => {
@@ -5998,19 +6032,23 @@ function fillBoard(el, limit) {
     row.className = 'row' + (mine ? ' me' : '') + (i === 0 ? ' top1' : '');
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : String(i + 1);
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;
-    const dt = document.createElement('small'); dt.textContent = new Date(r.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); nm.appendChild(dt);
+    const dt = document.createElement('small'); dt.textContent = new Date(r.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + (r.pending ? ' · posting…' : ''); nm.appendChild(dt);
     const tp = document.createElement('span'); tp.className = 'tp ' + (r.toPar < 0 ? 'good' : r.toPar > 0 ? '' : ''); tp.textContent = fmtToPar(r.toPar);
     const st = document.createElement('span'); st.className = 'st'; st.textContent = r.strokes;
     row.append(rk, nm, tp, st); list.appendChild(row);
   });
-  if (shared && Board.canWrite === false) { const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = 'Your rounds are kept on this device. Posting to Everyone needs edit access to this game.'; el.appendChild(n); }
-  else if (!shared) { const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = 'Rounds are kept on this device.'; el.appendChild(n); }
+  // post my best round of this course to the world board
+  const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r)));
+  if (mineBest && tab !== 'all') {
+    const bt = document.createElement('button'); bt.className = 'mbtn dark wide'; bt.style.marginTop = '8px'; bt.textContent = '\u{1F30D} Post my best round (' + fmtToPar(mineBest.toPar) + ') to the world board'; bt.onclick = () => postWorld(mineBest); el.appendChild(bt);
+    const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = 'Opens GitHub with the score filled in: press "Submit new issue" (a free GitHub account is needed). A bot adds it to the board within a minute.'; el.appendChild(n);
+  } else if (tab === 'device' || (!shared && tab !== 'world')) { const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = 'Rounds are kept on this device.'; el.appendChild(n); }
 }
 function refreshBoards() {
   if ($('boardSheet').classList.contains('on')) fillBoard($('boardBody'), 30);
   const fb = $('finalBoard'); if (fb && $('cardSheet').classList.contains('on')) fillBoard(fb, 10);
 }
-function openBoard() { fillBoard($('boardBody'), 30); openSheet('boardSheet'); }
+function openBoard() { loadWorld(); fillBoard($('boardBody'), 30); openSheet('boardSheet'); }
 
 /* ================= INPUT + LOOP ================= */
 function initInput() {
