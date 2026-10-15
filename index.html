@@ -4940,6 +4940,7 @@ function noiseBurst(d, vol, freq, q, delay) {
 // path of points. On your own hole the others' balls are drawn with their name, and every shot of theirs flies with its tracer; a live
 // panel lists the room's scores. Nothing else is shared; there are no accounts.
 const MP_BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
+const MP_LOBBY = 'LOBBY'; // everyone not in a private room plays in this one public room
 const MP_COLS = ['#ff6b6b', '#4dabf7', '#ffd43b', '#b197fc', '#63e6be', '#ffa94d', '#f783ac', '#a9e34b'];
 const MP = { client: null, room: '', id: Math.random().toString(36).slice(2, 10), peers: new Map(), objs: new Map(), bi: 0, fails: 0, st: 'off', beat: 0, panelT: 0, lib: null };
 const mpT = s => `ssgolf/v1/${MP.room}/${s}`;
@@ -4953,7 +4954,7 @@ function mpLib() {
 function mpJoin(code) {
   code = mpClean(code); if (code.length < 3) return false;
   if (MP.client && MP.room === code) return true;
-  mpLeave(true); MP.room = code; settings.room = code; saveSettings(); MP.st = 'connecting'; mpSync();
+  mpLeave(true); MP.room = code; settings.room = code === MP_LOBBY ? '' : code; saveSettings(); MP.st = 'connecting'; mpSync();
   mpLib().then(lib => mpConnect(lib)).catch(() => { MP.st = 'error'; mpSync(); });
   return true;
 }
@@ -5032,7 +5033,7 @@ function mpUpdate(dt) {
   const C = G.C, show = C && G.state !== 'title' && G.state !== 'intro', now = performance.now(), seen = new Set();
   for (const pr of MP.peers.values()) {
     if (Date.now() - pr.seen > 15 * 60e3 && Date.now() - pr.at > 15 * 60e3) continue;
-    const here = show && pr.c === COURSE.key && pr.h === G.hole; if (!here) continue;
+    const here = show && pr.c === COURSE.key && pr.h === G.hole; if (!here || seen.size >= 8) continue; // (a busy lobby: eight balls at most)
     const o = mpObj(pr); seen.add(pr.id);
     let X, Y, Z; const f = pr.fly && pr.fly.c === COURSE.key && pr.fly.h === G.hole ? pr.fly : null, el = f ? (now - f.t0) / 1000 : 1e9;
     if (f && el <= f.dur + 1.5) {
@@ -5060,10 +5061,12 @@ function mpPanel() {
   const el = $('mpPanel'), on = !!MP.room && G.state !== 'title' && G.state !== 'intro';
   el.classList.toggle('on', on); if (!on) return;
   const rows = [{ id: MP.id, n: playerName(), tp: totalToPar().d, h: G.hole, c: COURSE.key, th: G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
-  for (const pr of MP.peers.values()) if (Date.now() - pr.at < 6 * 36e5) rows.push(pr);
-  rows.sort((a, b) => a.tp - b.tp || b.th - a.th);
+  // (a crowded lobby lists those nearest first: on my hole, then on my course, then the rest)
+  const near = pr => (pr.c === COURSE.key ? 0 : 2) + (pr.c === COURSE.key && pr.h === G.hole ? 0 : 1);
+  const others = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 6 * 36e5).sort((a, b) => near(a) - near(b) || b.at - a.at).slice(0, 7);
+  rows.push(...others); rows.sort((a, b) => a.tp - b.tp || b.th - a.th);
   el.textContent = '';
-  const hd = document.createElement('div'); hd.className = 'mph'; hd.textContent = 'Room ' + MP.room + (MP.st === 'on' ? '' : ' · ' + (MP.st === 'error' ? 'offline' : 'connecting…')); el.appendChild(hd);
+  const hd = document.createElement('div'); hd.className = 'mph'; hd.textContent = (MP.room === MP_LOBBY ? 'Public lobby' + (MP.peers.size > 7 ? ' · ' + (MP.peers.size + 1) + ' playing' : '') : 'Room ' + MP.room) + (MP.st === 'on' ? '' : ' · ' + (MP.st === 'error' ? 'offline' : 'connecting…')); el.appendChild(hd);
   for (const r of rows.slice(0, 8)) {
     const row = document.createElement('div'); row.className = 'mpr' + (r.me ? ' me' : '');
     const dot = document.createElement('i'); dot.style.background = r.col;
@@ -5076,23 +5079,27 @@ function mpPanel() {
 }
 function mpSync() {
   const i = $('mpCode'), b = $('mpJoin'); if (!i) return;
-  if (document.activeElement !== i) i.value = MP.room || settings.room || '';
-  b.textContent = MP.room ? 'Leave' : 'Join';
-  const st = $('mpInfo').firstChild; if (st && st.nodeType === 3) st.textContent = MP.room ? (MP.st === 'on' ? `In room ${MP.room} · ${MP.peers.size} other player${MP.peers.size === 1 ? '' : 's'} here. ` : MP.st === 'error' ? 'The room server could not be reached. ' : 'Connecting to the room… ') : 'Play live with friends: everyone in the same room sees the others\' balls fly on the same hole, and the scores. ';
+  const lobby = !MP.room || MP.room === MP_LOBBY, n = MP.peers.size;
+  if (document.activeElement !== i) i.value = lobby ? '' : MP.room;
+  b.textContent = lobby ? 'Join' : 'Leave';
+  const st = $('mpInfo').firstChild; if (st && st.nodeType === 3) st.textContent = MP.st === 'error' ? 'The room server could not be reached. ' : MP.st !== 'on' ? 'Connecting… ' : lobby
+    ? `In the public lobby · ${n} other player${n === 1 ? '' : 's'} online. Everyone sees the others' balls on the same hole and the scores; for a private round, join or start a room. `
+    : `In private room ${MP.room} · ${n} other player${n === 1 ? '' : 's'} here. Leave to go back to the public lobby. `;
   MP.panelT = 0;
 }
 function mpInit() {
-  $('mpJoin').onclick = () => { if (MP.room) mpLeave(); else if (!mpJoin($('mpCode').value)) { $('mpCode').focus(); } };
-  $('mpCode').addEventListener('keydown', e => { if (e.key === 'Enter') { $('mpCode').blur(); if (!MP.room) mpJoin($('mpCode').value); } });
+  const inPrivate = () => MP.room && MP.room !== MP_LOBBY;
+  $('mpJoin').onclick = () => { if (inPrivate()) { mpLeave(); mpJoin(MP_LOBBY); } else if (!mpJoin($('mpCode').value)) { $('mpCode').focus(); } };
+  $('mpCode').addEventListener('keydown', e => { if (e.key === 'Enter') { $('mpCode').blur(); if (!inPrivate()) mpJoin($('mpCode').value); } });
   $('mpNew').onclick = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let k = 0; k < 5; k++) c += a[(Math.random() * a.length) | 0]; mpJoin(c); };
   $('mpShare').onclick = async () => {
-    if (!MP.room) { $('mpNew').click(); }
+    if (!inPrivate()) { $('mpNew').click(); }
     const url = location.origin + location.pathname + '?room=' + MP.room;
     try { if (navigator.share) { await navigator.share({ title: 'Sweet Spot Golf', text: 'Play a live round with me · room ' + MP.room, url }); return; } } catch (e) { return; }
     try { await navigator.clipboard.writeText(url); $('mpShare').textContent = 'Link copied'; setTimeout(() => $('mpShare').textContent = 'Share link', 1800); } catch (e) { prompt('Room link', url); }
   };
   const q = mpClean(new URLSearchParams(location.search).get('room'));
-  if (q) mpJoin(q); else if (settings.room) mpJoin(settings.room);
+  mpJoin(q || settings.room || MP_LOBBY); // a private room from the link or from before, else the public lobby
   mpSync();
 }
 
