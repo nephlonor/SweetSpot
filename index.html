@@ -3047,7 +3047,7 @@ function setCourse(key) {
   $('courseLine').textContent = `${COURSE.name}\n${HOLE_DEFS.length} holes · Par ${PAR_TOTAL}`;
   $('boardName').textContent = COURSE.name;
   document.querySelectorAll('.segCourse button').forEach(b => b.classList.toggle('sel', b.dataset.v === COURSE.key));
-  showBest(); refreshBoards(); try { loadWorld(); } catch (e) { }
+  showBest(); refreshBoards(); try { loadWorld(); } catch (e) { } refreshResume();
   if (MP.inited && mpIsLobby(MP.room) && MP.room !== mpLobby()) { if (MP.spec) mpResume(true); mpJoin(mpLobby()); } // each course has its own lobby
 }
 
@@ -5450,7 +5450,9 @@ const SW = {
 /* ---------- the round in progress, kept on this device ---------- */
 // Saved whenever the next shot is ready (where the ball lies, strokes so far, the scorecard and the pin sheet) and when a hole is
 // finished; the start screen then offers "Resume round". Practice is never saved; a finished or a new round clears it.
+// Each course keeps its own round: switching courses leaves the round where it is, and coming back to that course picks it up again.
 const ROUND_KEY = 'ssg-round';
+const saveKey = c => ROUND_KEY + '-' + c;
 // the last hole is in: best score, stats and the leaderboards (local, shared, world) straight away - not only once the final
 // scorecard is opened, so closing the app on the last hole's card cannot lose the round. Runs once per round.
 function finishRound() {
@@ -5476,30 +5478,44 @@ function saveRound() {
     shot: flying ? { L: sh.L, x: G.prev.x, z: G.prev.z, teed: !!G.prev.teed, playT: Math.max(0, G.playT), summary: sh.summary } : null
   } : null;
   const r = { v: 1, course: COURSE.key, hole: h, scores: G.scores, putts: G.putts, fir: G.fir, gir: G.gir, pens: G.pens, pins: G.pins, planes: G.planes, at: Date.now(), mid };
-  try { localStorage.setItem(ROUND_KEY, JSON.stringify(r)); } catch (e) { }
+  try { localStorage.setItem(saveKey(COURSE.key), JSON.stringify(r)); } catch (e) { }
   refreshResume();
 }
-function clearRound() { try { localStorage.removeItem(ROUND_KEY); } catch (e) { } refreshResume(); }
-function savedRound() {
+function clearRound(course) {
+  const k = course || COURSE.key;
+  try { localStorage.removeItem(saveKey(k)); const o = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null'); if (o && o.course === k) localStorage.removeItem(ROUND_KEY); } catch (e) { }
+  refreshResume();
+}
+// the saved round of a course (a single round kept before each course had its own is still found), or null
+function loadRound(k) {
   try {
-    const r = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null'), c = r && COURSES[r.course];
-    if (!r || !c || !Array.isArray(r.scores) || r.scores.length !== c.defs.length || Date.now() - r.at > 30 * 864e5) return null;
+    let r = JSON.parse(localStorage.getItem(saveKey(k)) || 'null');
+    if (!r) { const o = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null'); if (o && o.course === k) r = o; }
+    const c = r && COURSES[r.course];
+    if (!r || !c || r.course !== k || !Array.isArray(r.scores) || r.scores.length !== c.defs.length || Date.now() - r.at > 30 * 864e5) return null;
     if (r.scores.every(v => v != null) || (!r.mid && r.scores.every(v => v == null))) return null;
     return r;
   } catch (e) { return null; }
 }
+// with a course: its round; without: the one on the course shown, else the most recent of the others
+function savedRound(course) {
+  if (course) return loadRound(course);
+  const own = loadRound(COURSE.key); if (own) return own;
+  let best = null; for (const k of Object.keys(COURSES)) { const r = k !== COURSE.key && k !== 'legacy' ? loadRound(k) : null; if (r && (!best || r.at > best.at)) best = r; }
+  return best;
+}
 // the hole to go back to: the one being played, else the next one not yet finished
-function resumeHole(r) { if (r.mid && r.scores[r.hole] == null) return r.hole; for (let k = 1; k <= r.scores.length; k++) { const i = (r.hole + k) % r.scores.length; if (r.scores[i] == null) return i; } return 0; }
+function resumeHole(r) { if (r.scores[r.hole] == null) return r.hole; for (let k = 1; k <= r.scores.length; k++) { const i = (r.hole + k) % r.scores.length; if (r.scores[i] == null) return i; } return 0; }
 function refreshResume() {
   const b = $('btnResume'); if (!b) return; const r = savedRound();
   if (!r) { b.style.display = 'none'; $('btnPlay').textContent = 'Tee off'; return; }
-  $('btnPlay').textContent = 'New round';
+  $('btnPlay').textContent = r.course === COURSE.key ? 'New round' : 'Tee off';
   const defs = COURSES[r.course].defs; let s = 0, p = 0; r.scores.forEach((v, i) => { if (v != null) { s += v; p += defs[i].par; } });
   $('resumeInfo').textContent = `${COURSES[r.course].short} · Hole ${resumeHole(r) + 1} · ${p ? fmtToPar(s - p) : 'E'}`;
   b.style.display = '';
 }
-function resumeRound() {
-  const r = savedRound(); if (!r) return false;
+function resumeRound(course) {
+  const r = savedRound(course); if (!r) return false;
   setCourse(r.course);
   const n = HOLE_DEFS.length, arr = (a, d) => Array.isArray(a) && a.length === n ? a : HOLE_DEFS.map(() => d);
   G.practice = false; G.submitted = false; if (r.planes != null) G.planes = r.planes;
@@ -7224,9 +7240,13 @@ function initInput() {
   document.querySelectorAll('#segCourse button').forEach(b => b.onclick = () => {
     if (b.dataset.v === COURSE.key) return; SFX.blip(); setCourse(b.dataset.v); showTitleHole();
   });
+  // (in the menu the round in progress is kept for when you come back to its course; a course with a round waiting resumes it, else a new one starts)
   document.querySelectorAll('#segCourseM button').forEach(b => b.onclick = () => {
-    if (b.dataset.v === COURSE.key) return; SFX.blip(); closeSheets(); setCourse(b.dataset.v);
-    if ($('title').classList.contains('on')) showTitleHole(); else startRound();
+    if (MP.spec) mpResume(true);
+    const k = b.dataset.v; if (k === COURSE.key) return; SFX.blip(); closeSheets();
+    if ($('title').classList.contains('on')) { setCourse(k); showTitleHole(); return; }
+    saveRound();
+    if (!resumeRound(k)) { setCourse(k); startRound(); }
   });
 }
 
