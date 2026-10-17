@@ -3163,7 +3163,7 @@ function setCourse(key) {
   $('boardName').textContent = COURSE.name;
   document.querySelectorAll('.segCourse button').forEach(b => b.classList.toggle('sel', b.dataset.v === COURSE.key));
   showBest(); refreshBoards(); try { loadWorld(); } catch (e) { } refreshResume();
-  if (MP.inited && mpIsLobby(MP.room) && MP.room !== mpLobby()) { if (MP.spec) mpResume(true); mpJoin(mpLobby()); } // each course has its own lobby
+  mpRelobby(); // each course has its own lobby
 }
 
 /* ================= WORLD (three.js) ================= */
@@ -5094,7 +5094,9 @@ function noiseBurst(d, vol, freq, q, delay) {
 // panel lists the room's scores. Nothing else is shared; there are no accounts.
 const MP_BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
 // everyone not in a private room plays in their course's public lobby (LGCCB, LALSACE, LAUGUSTA)
-const mpLobby = key => mpClean('L' + (key || COURSE.key)), mpIsLobby = r => !r || Object.keys(COURSES).some(k => mpLobby(k) === r);
+// (the daily challenge has a lobby of its own, LDAILY: only the players of the day see each other, so nobody sees a line or a shot before they play it)
+const mpLobby = key => key ? mpClean('L' + key) : G.daily ? 'LDAILY' : mpClean('L' + COURSE.key), mpIsLobby = r => !r || r === 'LDAILY' || Object.keys(COURSES).some(k => mpLobby(k) === r);
+function mpRelobby() { if (MP.inited && mpIsLobby(MP.room) && MP.room !== mpLobby()) { if (MP.spec) mpResume(true); mpJoin(mpLobby()); } } // the lobby that fits what I am playing: the daily's, or this course's
 const MP_COLS = ['#ff6b6b', '#4dabf7', '#ffd43b', '#b197fc', '#63e6be', '#ffa94d', '#f783ac', '#a9e34b'];
 const MP = { client: null, room: '', id: Math.random().toString(36).slice(2, 10), peers: new Map(), objs: new Map(), bi: 0, fails: 0, st: 'off', beat: 0, panelT: 0, lib: null };
 const mpT = s => `ssgolf/v1/${MP.room}/${s}`;
@@ -5285,7 +5287,7 @@ function mpPanel() {
   const sig = MP.room + MP.st + (MP.follow || '') + COURSE.key + rows.slice(0, 8).map(r => [r.id, r.n, r.tp, r.th, r.h, r.c, r.fo === MP.id].join(',')).join('|');
   if (sig === MP.sig) { mpPlace(el); return; } MP.sig = sig;
   el.textContent = '';
-  const hd = document.createElement('div'); hd.className = 'mph'; hd.textContent = (mpIsLobby(MP.room) ? 'Public lobby · ' + COURSE.short + (MP.peers.size > 7 ? ' · ' + (MP.peers.size + 1) + ' playing' : '') : 'Room ' + MP.room) + (MP.st === 'on' ? '' : ' · ' + (MP.st === 'error' ? 'offline' : 'connecting…')); el.appendChild(hd);
+  const hd = document.createElement('div'); hd.className = 'mph'; hd.textContent = (MP.room === 'LDAILY' ? 'Daily lobby' : mpIsLobby(MP.room) ? 'Public lobby · ' + COURSE.short + (MP.peers.size > 7 ? ' · ' + (MP.peers.size + 1) + ' playing' : '') : 'Room ' + MP.room) + (MP.st === 'on' ? '' : ' · ' + (MP.st === 'error' ? 'offline' : 'connecting…')); el.appendChild(hd);
   for (const r of rows.slice(0, 8)) {
     // tap a name to follow that player; a golden glow: they are following me
     const row = document.createElement(r.me ? 'div' : 'button'); row.className = 'mpr' + (r.me ? ' me' : '') + (!r.me && r.fo === MP.id ? ' fol' : '') + (r.id === MP.follow ? ' on' : '');
@@ -5310,7 +5312,7 @@ function mpPlace(el) {
 // every player online, on every course (their course's public lobby) and in my room: tap Watch to follow them anywhere
 function mpList() {
   const el = $('mpList'); if (!el) return;
-  const all = [...MP.peers.values()].filter(pr => !pr.clip && Date.now() - pr.at < 3 * 36e5 && COURSES[pr.c]).sort((a, b) => (a.c === COURSE.key ? 0 : 1) - (b.c === COURSE.key ? 0 : 1) || a.tp - b.tp);
+  const all = [...MP.peers.values()].filter(pr => !pr.clip && Date.now() - pr.at < 3 * 36e5 && COURSES[pr.c] && (!G.daily || pr.room === MP.room)).sort((a, b) => (a.c === COURSE.key ? 0 : 1) - (b.c === COURSE.key ? 0 : 1) || a.tp - b.tp);
   const sig = all.map(pr => [pr.id, pr.n, pr.c, pr.h, pr.tp, pr.th].join(',')).join('|') + (MP.follow || '');
   if (sig === MP.listSig) return; MP.listSig = sig; el.textContent = '';
   if (!all.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = MP.st === 'on' ? 'No one else is playing right now.' : 'Not connected.'; el.appendChild(e); return; }
@@ -5390,7 +5392,7 @@ function mpSync() {
   if (document.activeElement !== i) i.value = lobby ? '' : MP.room;
   b.textContent = lobby ? 'Join' : 'Leave';
   const st = $('mpInfo').firstChild; if (st && st.nodeType === 3) st.textContent = MP.st === 'error' ? 'The room server could not be reached. ' : MP.st !== 'on' ? 'Connecting… ' : lobby
-    ? `In the ${COURSE.short} public lobby · ${n} other player${n === 1 ? '' : 's'} online. Everyone sees the others' balls on the same hole and the scores; for a private round, join or start a room. `
+    ? MP.room === 'LDAILY' ? `In the daily challenge lobby · ${n} other player${n === 1 ? '' : 's'} playing today's challenge. Only they see your balls and you see theirs. ` : `In the ${COURSE.short} public lobby · ${n} other player${n === 1 ? '' : 's'} online. Everyone sees the others' balls on the same hole and the scores; for a private round, join or start a room. `
     : `In private room ${MP.room} · ${n} other player${n === 1 ? '' : 's'} here. Leave to go back to the public lobby. `;
   MP.panelT = 0;
 }
@@ -5750,7 +5752,7 @@ function refreshResume() {
 function resumeRound(course) {
   const r = savedRound(course); if (!r) return false;
   setCourse(r.course);
-  if (r.daily) G.daily = Object.assign({}, r.daily, { wx: dailyWeatherPlan(r.daily.seed, COURSES[r.course].defs.length) });
+  if (r.daily) { G.daily = Object.assign({}, r.daily, { wx: dailyWeatherPlan(r.daily.seed, COURSES[r.course].defs.length) }); mpRelobby(); }
   const n = HOLE_DEFS.length, arr = (a, d) => Array.isArray(a) && a.length === n ? a : HOLE_DEFS.map(() => d);
   G.practice = false; G.submitted = false; G.shotLog = Array.isArray(r.log) ? r.log : []; if (r.planes != null) G.planes = r.planes;
   G.scores = arr(r.scores, null); G.putts = arr(r.putts, 0); G.fir = arr(r.fir, null); G.gir = arr(r.gir, null); G.pens = arr(r.pens, 0); G.pins = arr(r.pins, 0);
@@ -5784,7 +5786,7 @@ function resumeRound(course) {
   return true;
 }
 function startRound(daily) {
-  if (!daily && G.daily) { saveRound(); G.daily = null; } // a new ordinary round: the daily challenge in play waits where it is
+  if (!daily && G.daily) { saveRound(); G.daily = null; mpRelobby(); } // a new ordinary round: the daily challenge in play waits where it is
   clearRound(G.daily ? 'daily' : undefined);
   G.practice = false; G.submitted = false; G.shotLog = []; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
@@ -6885,7 +6887,7 @@ function syncMenu() {
     else $('mSub').textContent = '';
     $('mvPlayer').textContent = playerName() + ' · ' + hand; $('mvAudio').textContent = 'Sound ' + (settings.sound ? 'on' : 'off') + ' · Music ' + (settings.music !== false ? 'on' : 'off');
     const n = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 3 * 36e5).length;
-    $('mvLive').textContent = MP.st === 'on' ? (mpIsLobby(MP.room) ? 'Public lobby' : 'Room ' + MP.room) + ' · ' + n + ' online' : MP.st === 'error' ? 'Offline' : 'Connecting…';
+    $('mvLive').textContent = MP.st === 'on' ? (MP.room === 'LDAILY' ? 'Daily lobby' : mpIsLobby(MP.room) ? 'Public lobby' : 'Room ' + MP.room) + ' · ' + n + ' online' : MP.st === 'error' ? 'Offline' : 'Connecting…';
   } }
   const ph = $('pracHoles');
   if (ph) {
@@ -7660,7 +7662,7 @@ function startDaily() {
   setCourse(dailyCourse(day));
   const seed = dailySeed(day); G.daily = { day, course: dailyCourse(day), seed, wx: dailyWeatherPlan(seed, HOLE_DEFS.length) };
   if (!rec) dlSet({ day, course: G.daily.course, status: 'playing', h: HOLE_DEFS.map(() => 0), tp: 0, startAt: Date.now() });
-  startRound(true); dlPublish();
+  mpRelobby(); startRound(true); dlPublish();
 }
 function dlRefresh() {
   dlPanel(); dlCards();
