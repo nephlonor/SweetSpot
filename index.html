@@ -215,21 +215,21 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .mbtn.dark{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
 
 /* sheets: the same see-through glass as the game's cards (the blurred 3D scene shows through), light text */
-#menuSheet,#dailySheet,#playerSheet,#boardSheet,#statsSheet,#cardSheet,#helpSheet,#bagSheet{--ink:#fff;--ink2:rgba(255,255,255,.82);--ink3:rgba(255,255,255,.66);--hair:rgba(255,255,255,.28);--soft:rgba(255,255,255,.14);
+#menuSheet,#dailySheet,#playerSheet,#boardSheet,#statsSheet,#cardSheet,#helpSheet,#bagSheet,#reelSheet{--ink:#fff;--ink2:rgba(255,255,255,.82);--ink3:rgba(255,255,255,.66);--hair:rgba(255,255,255,.28);--soft:rgba(255,255,255,.14);
   background:var(--gl-bg),rgba(18,48,28,.30);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);border-color:var(--gl-line);
   box-shadow:0 -10px 40px rgba(8,34,16,.28),inset 0 1px 0 rgba(255,255,255,.55);color:#fff;text-shadow:var(--tsh)}
-#menuSheet .grab,#dailySheet .grab,#playerSheet .grab,#boardSheet .grab,#statsSheet .grab,#cardSheet .grab,#helpSheet .grab,#bagSheet .grab{background:rgba(255,255,255,.5)}
-#menuSheet .shX,#dailySheet .shX,#playerSheet .shX,#boardSheet .shX,#statsSheet .shX,#cardSheet .shX,#helpSheet .shX,#bagSheet .shX{background:rgba(255,255,255,.2);color:#fff}
-#menuSheet .shX:active,#dailySheet .shX:active,#playerSheet .shX:active,#boardSheet .shX:active,#statsSheet .shX:active,#cardSheet .shX:active,#helpSheet .shX:active,#bagSheet .shX:active{background:rgba(255,255,255,.34)}
-#menuSheet .mpLr,#dailySheet .mpLr,#playerSheet .mpLr,#boardSheet .mpLr,#statsSheet .mpLr,#cardSheet .mpLr,#helpSheet .mpLr,#bagSheet .mpLr,#menuSheet .pracHoles button,#dailySheet .pracHoles button,#playerSheet .pracHoles button,#boardSheet .pracHoles button,#statsSheet .pracHoles button,#cardSheet .pracHoles button,#helpSheet .pracHoles button,#bagSheet .pracHoles button,#menuSheet .mbtn:not(.dark),#dailySheet .mbtn:not(.dark),#playerSheet .mbtn:not(.dark),#boardSheet .mbtn:not(.dark),#statsSheet .mbtn:not(.dark),#cardSheet .mbtn:not(.dark),#helpSheet .mbtn:not(.dark),#bagSheet .mbtn:not(.dark),#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.3)}
-#menuSheet .mrow input,#dailySheet .mrow input,#playerSheet .mrow input,#boardSheet .mrow input,#statsSheet .mrow input,#cardSheet .mrow input,#helpSheet .mrow input,#bagSheet .mrow input{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);text-shadow:var(--tsh)}
-#menuSheet .mrow input::placeholder,#dailySheet .mrow input::placeholder,#playerSheet .mrow input::placeholder,#boardSheet .mrow input::placeholder,#statsSheet .mrow input::placeholder,#cardSheet .mrow input::placeholder,#helpSheet .mrow input::placeholder,#bagSheet .mrow input::placeholder{color:rgba(255,255,255,.55)}
-#menuSheet .seg,#dailySheet .seg,#playerSheet .seg,#boardSheet .seg,#statsSheet .seg,#cardSheet .seg,#helpSheet .seg,#bagSheet .seg{background:rgba(255,255,255,.14)}
-#menuSheet .seg button,#dailySheet .seg button,#playerSheet .seg button,#boardSheet .seg button,#statsSheet .seg button,#cardSheet .seg button,#helpSheet .seg button,#bagSheet .seg button{color:rgba(255,255,255,.8)}
-#menuSheet .seg button.sel,#dailySheet .seg button.sel,#playerSheet .seg button.sel,#boardSheet .seg button.sel,#statsSheet .seg button.sel,#cardSheet .seg button.sel,#helpSheet .seg button.sel,#bagSheet .seg button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none;box-shadow:0 2px 6px rgba(8,34,16,.25)}
-#menuSheet .pracHoles button.sel,#dailySheet .pracHoles button.sel,#playerSheet .pracHoles button.sel,#boardSheet .pracHoles button.sel,#statsSheet .pracHoles button.sel,#cardSheet .pracHoles button.sel,#helpSheet .pracHoles button.sel,#bagSheet .pracHoles button.sel{background:var(--g1);color:#fff}
-#menuSheet .mbtn.dark,#dailySheet .mbtn.dark,#playerSheet .mbtn.dark,#boardSheet .mbtn.dark,#statsSheet .mbtn.dark,#cardSheet .mbtn.dark,#helpSheet .mbtn.dark,#bagSheet .mbtn.dark,#menuSheet .mpb,#dailySheet .mpb,#playerSheet .mpb,#boardSheet .mpb,#statsSheet .mpb,#cardSheet .mpb,#helpSheet .mpb,#bagSheet .mpb{text-shadow:none}
-#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb{background:rgba(255,255,255,.18);color:#fff;text-shadow:var(--tsh)}
+#menuSheet .grab,#dailySheet .grab,#playerSheet .grab,#boardSheet .grab,#statsSheet .grab,#cardSheet .grab,#helpSheet .grab,#bagSheet .grab,#reelSheet .grab{background:rgba(255,255,255,.5)}
+#menuSheet .shX,#dailySheet .shX,#playerSheet .shX,#boardSheet .shX,#statsSheet .shX,#cardSheet .shX,#helpSheet .shX,#bagSheet .shX,#reelSheet .shX{background:rgba(255,255,255,.2);color:#fff}
+#menuSheet .shX:active,#dailySheet .shX:active,#playerSheet .shX:active,#boardSheet .shX:active,#statsSheet .shX:active,#cardSheet .shX:active,#helpSheet .shX:active,#bagSheet .shX:active,#reelSheet .shX:active{background:rgba(255,255,255,.34)}
+#menuSheet .mpLr,#dailySheet .mpLr,#playerSheet .mpLr,#boardSheet .mpLr,#statsSheet .mpLr,#cardSheet .mpLr,#helpSheet .mpLr,#bagSheet .mpLr,#reelSheet .mpLr,#menuSheet .pracHoles button,#dailySheet .pracHoles button,#playerSheet .pracHoles button,#boardSheet .pracHoles button,#statsSheet .pracHoles button,#cardSheet .pracHoles button,#helpSheet .pracHoles button,#bagSheet .pracHoles button,#reelSheet .pracHoles button,#menuSheet .mbtn:not(.dark),#dailySheet .mbtn:not(.dark),#playerSheet .mbtn:not(.dark),#boardSheet .mbtn:not(.dark),#statsSheet .mbtn:not(.dark),#cardSheet .mbtn:not(.dark),#helpSheet .mbtn:not(.dark),#bagSheet .mbtn:not(.dark),#reelSheet .mbtn:not(.dark),#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb,#reelSheet .mpBtns .mpb{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.3)}
+#menuSheet .mrow input,#dailySheet .mrow input,#playerSheet .mrow input,#boardSheet .mrow input,#statsSheet .mrow input,#cardSheet .mrow input,#helpSheet .mrow input,#bagSheet .mrow input,#reelSheet .mrow input{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);text-shadow:var(--tsh)}
+#menuSheet .mrow input::placeholder,#dailySheet .mrow input::placeholder,#playerSheet .mrow input::placeholder,#boardSheet .mrow input::placeholder,#statsSheet .mrow input::placeholder,#cardSheet .mrow input::placeholder,#helpSheet .mrow input::placeholder,#bagSheet .mrow input::placeholder,#reelSheet .mrow input::placeholder{color:rgba(255,255,255,.55)}
+#menuSheet .seg,#dailySheet .seg,#playerSheet .seg,#boardSheet .seg,#statsSheet .seg,#cardSheet .seg,#helpSheet .seg,#bagSheet .seg,#reelSheet .seg{background:rgba(255,255,255,.14)}
+#menuSheet .seg button,#dailySheet .seg button,#playerSheet .seg button,#boardSheet .seg button,#statsSheet .seg button,#cardSheet .seg button,#helpSheet .seg button,#bagSheet .seg button,#reelSheet .seg button{color:rgba(255,255,255,.8)}
+#menuSheet .seg button.sel,#dailySheet .seg button.sel,#playerSheet .seg button.sel,#boardSheet .seg button.sel,#statsSheet .seg button.sel,#cardSheet .seg button.sel,#helpSheet .seg button.sel,#bagSheet .seg button.sel,#reelSheet .seg button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none;box-shadow:0 2px 6px rgba(8,34,16,.25)}
+#menuSheet .pracHoles button.sel,#dailySheet .pracHoles button.sel,#playerSheet .pracHoles button.sel,#boardSheet .pracHoles button.sel,#statsSheet .pracHoles button.sel,#cardSheet .pracHoles button.sel,#helpSheet .pracHoles button.sel,#bagSheet .pracHoles button.sel,#reelSheet .pracHoles button.sel{background:var(--g1);color:#fff}
+#menuSheet .mbtn.dark,#dailySheet .mbtn.dark,#playerSheet .mbtn.dark,#boardSheet .mbtn.dark,#statsSheet .mbtn.dark,#cardSheet .mbtn.dark,#helpSheet .mbtn.dark,#bagSheet .mbtn.dark,#reelSheet .mbtn.dark,#menuSheet .mpb,#dailySheet .mpb,#playerSheet .mpb,#boardSheet .mpb,#statsSheet .mpb,#cardSheet .mpb,#helpSheet .mpb,#bagSheet .mpb,#reelSheet .mpb{text-shadow:none}
+#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb,#reelSheet .mpBtns .mpb{background:rgba(255,255,255,.18);color:#fff;text-shadow:var(--tsh)}
 body:has(.sheet.on:not(#mapSheet)) #scrim{background:rgba(10,30,18,.08)}
 body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #strike,body:has(.sheet.on:not(#mapSheet)) #mpPanel,body:has(.sheet.on:not(#mapSheet)) #dlPanel{opacity:0!important;transition:opacity .2s}
 .sheet .tabs button{color:rgba(255,255,255,.8)}.sheet .tabs button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none}
@@ -320,7 +320,8 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .stGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .stCard{background:var(--soft);border-radius:16px;padding:10px 12px;position:relative;overflow:hidden}
 .stCard.rec{background:linear-gradient(135deg,#fff3b0,#ffd36a)}
-.stCard .em{position:absolute;right:8px;top:6px;font-size:22px;opacity:.9}
+.stCard .em{position:absolute;right:9px;top:8px;width:20px;height:20px;opacity:.75}.stCard .em svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.stCard.rec .v,.stCard.rec .n{color:#3a1d00}.stCard.rec .em{color:#3a1d00}
 .stCard .k{font:600 11px/1.15 var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding-right:26px}
 .stCard.rec .k{color:rgba(43,18,0,.6)}
 .stCard .v{font:700 28px/1.1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums;margin-top:3px}
@@ -345,6 +346,12 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 #specBar #specInfo{overflow:hidden;text-overflow:ellipsis;min-width:0}
 #specBar .btn{height:44px;padding:0 16px;font-size:16px;flex:none}
 body.spec #specBar{display:flex}
+#specAgain,#specNext{display:none}body.clip #specAgain,body.clip #specNext{display:inline-flex}
+#specBar .btn.alt{background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);color:#fff;padding:0 12px;font-size:15px}
+body.clip #specBar{flex-wrap:wrap;justify-content:center;width:calc(100vw - 24px);max-width:520px;padding:10px 10px 10px 14px}body.clip #specInfo{flex:1 1 100%;text-align:center;white-space:normal}
+body.clip #tempo,body.clip #strike,body.clip #mpPanel,body.clip #dlPanel{display:none!important}
+.mli.reel.off{opacity:.45;pointer-events:none}.mli.reel{padding:14px 6px}
+.bshot.pl{cursor:pointer}.bshot em.ic{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.2);padding:7px;margin-right:2px}.bsAll{margin-top:8px;width:100%}
 body.spec .tb-hole,body.spec #windCard,body.spec #pinCard{visibility:hidden}
 body.spec #pinTag,body.spec #ballTag,body.spec #aimHint,body.spec #skipBtn,body.spec #readout{display:none!important}
 body.spec #tempo,body.spec #strike{opacity:.55!important}body.spec #tempo *,body.spec #strike *{pointer-events:none!important}body.spec #fx{opacity:.7}
@@ -448,7 +455,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <canvas id="fx"></canvas>
 <div id="pinTag" class="gtag">0 m</div>
 <div id="dlPanel" class="glass"></div><div id="mpPanel" class="glass"></div><div id="mpTags"></div>
-<div id="specBar" class="glass"><span id="specInfo">Following</span><button class="btn" id="specResume">Resume play</button></div>
+<div id="specBar" class="glass"><span id="specInfo">Following</span><button class="btn alt" id="specAgain">Again</button><button class="btn alt" id="specNext">Next</button><button class="btn" id="specResume">Resume play</button></div>
 <div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small>M</small></div><div class="bt2" id="btC"></div></div>
 <div class="layer on" id="title">
   <div class="card logoCard"><h1>Sweet <span>Spot</span><br>Golf</h1><p id="courseLine">Golf &amp; Country Club Basel
@@ -466,8 +473,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
-<div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">▶ Replay last shot</button></div></div>
-<div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">🔊 Tap for sound</button></div>
+<div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">Replay</button></div></div>
+<div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
 <div id="scrim"></div>
 <div class="sheet" id="bagSheet"><div class="grab"></div><div class="sht">Your bag <small id="bagLie">From the tee</small></div><div class="bag" id="bag"></div></div>
@@ -518,6 +525,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 </div>
 <div class="sheet" id="cardSheet"><div class="grab"></div><div id="cardBody"></div></div>
 <div class="sheet" id="boardSheet"><div class="grab"></div><div class="sht">Leaderboard <small id="boardName">Golf &amp; Country Club Basel</small></div><div id="boardBody"></div></div>
+<div class="sheet" id="reelSheet"><div class="grab"></div><div class="sht"><span>Replay</span></div><div id="reelBody" class="mgrp mlistg"></div></div>
 <div class="sheet" id="dailySheet"><div class="grab"></div><div class="sht"><span id="dailyTitle">Daily challenge</span></div><div id="dailyBody"></div></div>
 <div class="sheet" id="playerSheet"><div class="grab"></div><div class="sht"><span><button class="plBack" id="plBack" aria-label="Back">‹</button><span id="plName">Player</span></span><small id="plSub"></small></div><div id="playerBody"></div></div>
 <div class="sheet" id="mapSheet"><div class="grab"></div><div class="sht"><span id="mapTitle">Hole map</span><small id="mapInfo"></small></div><div class="mapwrap"><canvas id="mapCv"></canvas></div><div class="maph"><span>Tap or drag to place your target</span><button class="mbtn dark" id="mapDone" style="height:44px;padding:0 22px">Done</button></div></div>
@@ -5148,16 +5156,20 @@ function mpState(force) {
   try { c.publish(mpT('s/' + MP.id), JSON.stringify(d), { retain: true }); } catch (e) { }
 }
 // a shot: its flight as east/north/height points every 0.1 s (heights in the hole's own frame: everyone on the hole shares it)
-function mpShot(res) {
-  const c = MP.client; if (!c || MP.st !== 'on' || !G.C || !res) return;
+function shotFlight(res, C) {
   const fr = res.frames, n = res.n, pts = [], dt = .1; let k = 0;
   for (let t = 0; t <= res.duration + 1e-6 && pts.length < 3 * 400; t += dt) {
     while (k < n - 2 && fr[(k + 1) * 5] <= t) k++;
     const a = k * 5, b = Math.min(n - 1, k + 1) * 5, sp = Math.max(1e-6, fr[b] - fr[a]), u = clamp((t - fr[a]) / sp, 0, 1);
-    const x = lerp(fr[a + 1], fr[b + 1], u), y = lerp(fr[a + 2], fr[b + 2], u), z = lerp(fr[a + 3], fr[b + 3], u), en = G.C.enu(x, z);
+    const x = lerp(fr[a + 1], fr[b + 1], u), y = lerp(fr[a + 2], fr[b + 2], u), z = lerp(fr[a + 3], fr[b + 3], u), en = C.enu(x, z);
     pts.push(+en[0].toFixed(2), +en[1].toFixed(2), +y.toFixed(2));
   }
-  try { c.publish(mpT('f/' + MP.id), JSON.stringify({ c: COURSE.key, h: G.hole, zb: G.C.zBase, dt, p: pts })); } catch (e) { }
+  return { p: pts, dt };
+}
+function mpShot(res) {
+  const c = MP.client; if (!c || MP.st !== 'on' || !G.C || !res) return;
+  const f = shotFlight(res, G.C);
+  try { c.publish(mpT('f/' + MP.id), JSON.stringify({ c: COURSE.key, h: G.hole, zb: G.C.zBase, dt: f.dt, p: f.p })); } catch (e) { }
 }
 // while someone follows me: my swing input (the tempo bar, the strike dot on the face, the result) ten times a second while swinging,
 // a few times a second otherwise; positions on the face are relative to it, so they map onto any screen
@@ -5247,7 +5259,7 @@ function mpUpdate(dt) {
     const d = W.cam.position.distanceTo(o.ball.position); o.ball.scale.setScalar(clamp(.02 * d / VIS_R, 1, 7));
     _mpv.set(X, Y + .6, Z).project(W.cam);
     const vis = _mpv.z < 1 && Math.abs(_mpv.x) < 1.1 && Math.abs(_mpv.y) < 1.1 && !sheetOpen();
-    o.tag.style.opacity = vis ? 1 : 0;
+    o.tag.style.opacity = vis && !pr.clip ? 1 : 0;
     if (vis) { o.tag.textContent = pr.n + '  ' + (pr.th ? fmtToPar(pr.tp) : 'E'); o.tag.style.transform = `translate(${(_mpv.x * .5 + .5) * window.innerWidth}px, ${(-_mpv.y * .5 + .5) * SH()}px) translate(-50%,-110%)`; }
   }
   for (const [id, o] of MP.objs) if (!seen.has(id)) { o.ball.visible = false; o.tr.geometry.setDrawRange(0, 0); o.tag.style.opacity = 0; }
@@ -5258,7 +5270,7 @@ function mpPanel() {
   const el = $('mpPanel');
   // (a crowded lobby lists those nearest first: on my hole, then on my course, then the rest)
   const near = pr => (pr.c === COURSE.key ? 0 : 2) + (pr.c === COURSE.key && pr.h === G.hole ? 0 : 1);
-  const others = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 6 * 36e5 && (pr.room === MP.room || pr.id === MP.follow)).sort((a, b) => near(a) - near(b) || b.at - a.at).slice(0, 7);
+  const others = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 6 * 36e5 && !pr.clip && (pr.room === MP.room || pr.id === MP.follow)).sort((a, b) => near(a) - near(b) || b.at - a.at).slice(0, 7);
   // the public lobby's box only shows once someone else is in it with me (a private room always shows)
   const on = !!MP.room && G.state !== 'title' && G.state !== 'intro' && (!mpIsLobby(MP.room) || others.length > 0 || !!MP.spec);
   el.classList.toggle('on', on); if (!on) return;
@@ -5280,7 +5292,7 @@ function mpPanel() {
     row.append(dot, nm, tp, hh); el.appendChild(row);
   }
   mpPlace(el);
-  if (MP.spec) { const pr = MP.peers.get(MP.follow); if (pr) $('specInfo').textContent = `Following ${pr.n} · Hole ${(pr.h | 0) + 1} · ${pr.th ? fmtToPar(pr.tp) : 'E'}`; }
+  if (MP.spec && !MP.clip) { const pr = MP.peers.get(MP.follow); if (pr) $('specInfo').textContent = `Following ${pr.n} · Hole ${(pr.h | 0) + 1} · ${pr.th ? fmtToPar(pr.tp) : 'E'}`; }
 }
 // top right, just under the top bar (under the Resume play bar while following someone)
 // (dropping below the shot readout while it is up, where the two would overlap)
@@ -5293,7 +5305,7 @@ function mpPlace(el) {
 // every player online, on every course (their course's public lobby) and in my room: tap Watch to follow them anywhere
 function mpList() {
   const el = $('mpList'); if (!el) return;
-  const all = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 3 * 36e5 && COURSES[pr.c]).sort((a, b) => (a.c === COURSE.key ? 0 : 1) - (b.c === COURSE.key ? 0 : 1) || a.tp - b.tp);
+  const all = [...MP.peers.values()].filter(pr => !pr.clip && Date.now() - pr.at < 3 * 36e5 && COURSES[pr.c]).sort((a, b) => (a.c === COURSE.key ? 0 : 1) - (b.c === COURSE.key ? 0 : 1) || a.tp - b.tp);
   const sig = all.map(pr => [pr.id, pr.n, pr.c, pr.h, pr.tp, pr.th].join(',')).join('|') + (MP.follow || '');
   if (sig === MP.listSig) return; MP.listSig = sig; el.textContent = '';
   if (!all.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = MP.st === 'on' ? 'No one else is playing right now.' : 'Not connected.'; el.appendChild(e); return; }
@@ -5331,7 +5343,7 @@ function mpSpecLoad(pr) {
   W.ball.visible = W.aim.visible = W.ring.visible = W.peg.visible = false; W.tracer.visible = false;
 }
 function mpResume(quiet) {
-  const sp = MP.spec; MP.follow = null; if (!sp) return; MP.spec = null;
+  const sp = MP.spec; MP.follow = null; if (!sp) return; MP.spec = null; if (MP.clip || MP.peers.has('clip')) { clipEnd(); if (G.weather) setWeather(G.weather); }
   document.body.classList.remove('spec');
   mpWorld(sp.course);
   if (sp.title) { showTitleHole(); $('title').classList.add('on'); MP.panelT = 0; return; } // back to the start screen
@@ -5448,7 +5460,7 @@ const MUS_SONG = (() => {
   return out;
 })();
 const mHz = m => 440 * Math.pow(2, (m - 69) / 12);
-function musicWanted() { return settings.sound && settings.music !== false && COURSE && COURSE.key === 'augusta' && !document.hidden; }
+function musicWanted() { return settings.sound && settings.music !== false && COURSE && (COURSE.key === 'augusta' || COURSE.key === 'gccb' || COURSE.key === 'alsace') && !document.hidden; }
 // a plucked steel string: Karplus-Strong, a soft pick (low-passed noise burst), 3 s
 function musKS(a, m) {
   const k = m; if (MUS.ks[k]) return MUS.ks[k];
@@ -5475,10 +5487,12 @@ function musSetup(a) {
   out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.2, a.currentTime + 3);
   bus.connect(out); bus.connect(rv).connect(wet).connect(out); out.connect(a.destination);
   const gtr = a.createBiquadFilter(); gtr.type = 'lowpass'; gtr.frequency.value = 2300; gtr.Q.value = .5; const gg = a.createGain(); gg.gain.value = 1.6; gtr.connect(gg).connect(bus); MUS.gtr = gtr; // a warmer, rounder string
-  MUS.ac = a; MUS.bus = bus; MUS.out = out; MUS.ks = {}; MUS.step = 0; MUS.next = a.currentTime + .4;
+  MUS.ac = a; MUS.bus = bus; MUS.out = out; MUS.ks = {}; MUS.step = 0; MUS.next = a.currentTime + .4; MUS.kind = COURSE.key; MUS.stops = [];
+  if (MUS.kind !== 'augusta') ambSetup(a, bus, out); // the two ambient pieces: a long echo and their own beds of sound
 }
 function musicStop() {
   if (!MUS.ac) return; const a = MUS.ac, o = MUS.out;
+  for (const n of MUS.stops || []) { try { n.stop(a.currentTime + 1); } catch (e) { } } MUS.stops = [];
   try { o.gain.cancelScheduledValues(a.currentTime); o.gain.setValueAtTime(o.gain.value, a.currentTime); o.gain.linearRampToValueAtTime(0, a.currentTime + .6); setTimeout(() => { try { o.disconnect(); } catch (e) { } }, 900); } catch (e) { }
   MUS.ac = null; MUS.bus = null;
 }
@@ -5501,12 +5515,119 @@ function musStep(a, st, t) {
     for (const [m, d] of B.mel) { if (o === e && m) musPiano(a, m, t + hum(), d * MUS_E, (B.quiet ? .075 : .115) * B.lv); o += d; }
   } else if (e === 0 && bi % 2 === 1) musPiano(a, ch[4] + 12, t + .05, 4 * MUS_E, .05);
 }
+/* ---------- two ambient soundscapes: GCC Basel and Alsace ---------- */
+// Not tunes but places. Basel is a slow morning by the Rhine: warm pads in F (Lydian), glass bells that drift over them, a faint shimmer of water.
+// Alsace is dusk over the vines: a music box and a soft harp turning in 6/8 over a low drone, A Dorian into C, a village bell now and then.
+// Both are generated live from a few rules, so the piece never repeats exactly; each takes about ten minutes to come round.
+const mkNoise = (a, sec) => { const n = Math.floor(a.sampleRate * sec), b = a.createBuffer(1, n, a.sampleRate), d = b.getChannelData(0); let l = 0; for (let i = 0; i < n; i++) { l = l * .92 + (Math.random() * 2 - 1) * .08; d[i] = l * 3; } return b; };
+function ambSetup(a, bus, out) {
+  // a long, soft echo that shimmers behind everything
+  const dl = a.createDelay(2), fb = a.createGain(), lp = a.createBiquadFilter(), wet = a.createGain(), per = AMB[COURSE.key].echo;
+  dl.delayTime.value = per; fb.gain.value = .42; lp.type = 'lowpass'; lp.frequency.value = 2200; wet.gain.value = .55;
+  bus.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(out);
+  out.gain.cancelScheduledValues(a.currentTime); out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(AMB[COURSE.key].level, a.currentTime + 5);
+  if (COURSE.key === 'gccb') { // water: a band of noise breathing slowly
+    const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+    src.buffer = mkNoise(a, 4); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = .6; g.gain.value = .02; lfo.frequency.value = .09; lg.gain.value = .014;
+    lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
+  } else { // a breath of wind in the vines
+    const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+    src.buffer = mkNoise(a, 5); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = .5; g.gain.value = .014; lfo.frequency.value = .05; lg.gain.value = .011;
+    lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
+  }
+}
+// voices
+function ambPad(a, notes, t, dur, vol, cut) {
+  const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = cut || 1500; lp.Q.value = .3; lp.connect(MUS.bus);
+  const att = Math.min(3.4, dur * .3), rel = Math.min(4.5, dur * .4);
+  notes.forEach(m => {
+    for (const [type, det] of [['sine', -6], ['triangle', 7]]) {
+      const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = mHz(m); o.detune.value = det + (Math.random() - .5) * 4;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol / notes.length, t + att); g.gain.setValueAtTime(vol / notes.length, t + dur - rel); g.gain.linearRampToValueAtTime(0, t + dur);
+      o.connect(g).connect(lp); o.start(t); o.stop(t + dur + .1);
+    }
+  });
+}
+function ambTone(a, m, t, dur, vol, type) { // a long soft bass or drone note
+  const o = a.createOscillator(), g = a.createGain(); o.type = type || 'sine'; o.frequency.value = mHz(m);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + Math.min(3, dur * .3)); g.gain.setValueAtTime(vol, t + dur - Math.min(4, dur * .35)); g.gain.linearRampToValueAtTime(0, t + dur);
+  o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dur + .1);
+}
+function ambBell(a, m, t, v, len) { // glass: a pure tone and two inharmonic partials that die away quicker
+  const f = mHz(m), L = len || 4;
+  for (const [mul, amp, dec] of [[1, 1, L], [2.756, .22, L * .35], [5.4, .07, L * .15]]) {
+    const o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.value = f * mul; o.detune.value = (Math.random() - .5) * 5;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * amp, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dec); o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dec + .1);
+  }
+}
+function ambBox(a, m, t, v) { // a music box tine: a bright, short ring
+  const f = mHz(m);
+  for (const [mul, amp, dec] of [[1, 1, 1.5], [4.01, .2, .28], [6.3, .05, .12]]) {
+    const o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.value = f * mul; o.detune.value = (Math.random() - .5) * 4;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * amp, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + dec); o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dec + .1);
+  }
+}
+function ambHarp(a, m, t, v) { // a soft plucked string, rounder than a guitar
+  const o = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = mHz(m); o.detune.value = (Math.random() - .5) * 6;
+  lp.type = 'lowpass'; lp.frequency.setValueAtTime(2600, t); lp.frequency.exponentialRampToValueAtTime(520, t + .6); lp.Q.value = .4;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + 1.9); o.connect(lp).connect(g).connect(MUS.bus); o.start(t); o.stop(t + 2);
+}
+const AMB = {
+  gccb: { per: 1.5, echo: .75, level: .34,
+    // F Lydian: chord = [bass, pad notes, bell notes]
+    ch: [[41, [53, 57, 60, 64, 69], [72, 76, 77, 79, 81, 84, 88]], [45, [57, 60, 64, 67, 72], [72, 74, 76, 79, 81, 84, 86]], [38, [50, 57, 60, 64, 65], [72, 74, 77, 81, 84, 86, 89]],
+      [46, [53, 58, 62, 65, 69], [74, 77, 79, 81, 84, 86, 89]], [43, [55, 59, 62, 64, 69], [71, 74, 76, 79, 81, 83, 86]], [36, [55, 60, 64, 67, 74], [72, 76, 79, 81, 84, 88, 91]]],
+    dens: [.45, .75, 1, .7, 1.1, .55, .9, .35] },
+  alsace: { per: .42, echo: .63, level: .27,
+    // A Dorian (bars 0-7), then C (bars 8-15): chord = [bass, pad, harp arpeggio notes]
+    ch: [[45, [57, 60, 64, 67], [57, 60, 64, 67, 72, 76]], [50, [57, 62, 66, 69], [62, 66, 69, 74, 78, 81]], [43, [55, 59, 62, 66], [55, 59, 62, 66, 71, 74]], [40, [52, 55, 59, 62], [52, 55, 59, 62, 67, 71]],
+      [48, [55, 60, 64, 67], [60, 64, 67, 71, 76, 79]], [43, [55, 62, 64, 67], [55, 59, 62, 67, 71, 74]], [45, [57, 60, 64, 67], [57, 60, 64, 67, 72, 76]], [41, [53, 57, 60, 64], [53, 57, 60, 64, 69, 72]]],
+    // the tune, bar by bar: [eighth, note, length]
+    mel: [[[0, 81, 3], [3, 79, 1], [4, 76, 2]], [[0, 72, 3], [3, 76, 3]], [[0, 74, 3], [3, 78, 1], [4, 81, 2]], [[0, 78, 6]], [[0, 79, 3], [3, 83, 1], [4, 79, 2]], [[0, 74, 3], [3, 76, 3]], [[0, 76, 3], [3, 71, 1], [4, 74, 2]], [[0, 72, 4], [4, 76, 2]],
+      [[0, 84, 3], [3, 79, 1], [4, 76, 2]], [[0, 72, 6]], [[0, 74, 3], [3, 79, 1], [4, 83, 2]], [[0, 81, 6]], [[0, 76, 3], [3, 72, 1], [4, 76, 2]], [[0, 77, 3], [3, 76, 3]], [[0, 74, 3], [3, 72, 1], [4, 69, 2]], [[0, 69, 6]]],
+    pat: [[0, 2, 4, 3, 4, 2], [0, 2, 4, 5, 4, 2], [0, 3, 1, 4, 2, 5], [0, 1, 2, 3, 4, 5]],
+    vars: ['plain', 'plain', 'echo', 'sparse', 'low', 'echo', 'plain', 'up'] }
+};
+function ambStep(a, kind, st, t) {
+  const K = AMB[kind], hum = () => (Math.random() - .5) * .02;
+  if (kind === 'gccb') {
+    const cyc = Math.floor(st / 48), ci = Math.floor(st / 8) % 6, p = st % 8, [bass, pad, bells] = K.ch[ci], dens = K.dens[cyc % 8];
+    if (p === 0) {
+      ambPad(a, pad, t, 15.5, .075, 1500 + 200 * (cyc % 3)); ambTone(a, bass, t, 13.5, .075);
+      if (cyc % 2 === 1) ambPad(a, pad.map(m => m + 12), t + 1, 12, .03, 2000);
+    }
+    // a little motif (rising through the chord) on some cycles, else bells wandering over the chord
+    if (cyc % 4 === 2 && p < 3) { ambBell(a, bells[[0, 2, 4][p]], t + hum(), .1, 5); return; }
+    if (Math.random() < dens * (p % 2 === 0 ? .6 : .32)) {
+      MUS.bi = clamp((MUS.bi == null ? 3 : MUS.bi) + [-2, -1, -1, 0, 1, 1, 2][(Math.random() * 7) | 0], 0, bells.length - 1);
+      ambBell(a, bells[MUS.bi] - (cyc % 5 === 4 ? 12 : 0), t + hum() + .2, .06 + Math.random() * .05, 4.5);
+    }
+    return;
+  }
+  // Alsace: 6/8, a bar of six eighths; sixteen bars to a cycle
+  const cyc = Math.floor(st / 96), bar = Math.floor(st / 6) % 16, e = st % 6, ch = K.ch[Math.floor(bar / 2)], v = K.vars[cyc % 8], intro = cyc === 0 ? Math.min(1, bar / 6) : 1;
+  if (st % 96 === 0) ambTone(a, 45, t, 42, .05); // the drone
+  if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, 5.6, .06, 1100); ambTone(a, ch[0], t, 4.6, .07); }
+  if (e === 3 && bar % 2 === 1) ambTone(a, ch[0] + 7, t, 2.6, .035);
+  // the harp turns over the chord
+  const pat = K.pat[(cyc + Math.floor(bar / 4)) % 4], hn = ch[2][pat[e]]; ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .1 : e === 3 ? .075 : .055) * intro);
+  // the music box tune, in its variations
+  const bm = K.mel[bar], skip = v === 'sparse' && bar % 2 === 1, late = 0;
+  if (!skip && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of bm) {
+    if (pos !== e) continue; const mm = m + (v === 'up' && bar % 4 === 3 ? 12 : 0) - (v === 'low' ? 12 : 0);
+    ambBox(a, mm, t + hum() + late, .09 * (v === 'low' ? .8 : 1) * intro);
+    if (v === 'echo') ambBox(a, mm, t + 3 * K.per, .038);
+  }
+  if (st % 96 === 48 && cyc % 3 === 2) { ambBell(a, 57, t + .3, .07, 9); ambBell(a, 64, t + 1.6, .04, 7); } // a village bell, far away
+}
 function musicTick() {
   if (!musicWanted()) { musicStop(); return; }
   const a = AC; if (!a || a.state !== 'running') return; // the context is made (and woken) by a touch; music joins in once it runs
+  if (MUS.ac === a && MUS.kind !== COURSE.key) musicStop(); // another course: its own piece
   if (MUS.ac !== a) musSetup(a);
   if (MUS.next < a.currentTime) { MUS.next = a.currentTime + .1; }
-  while (MUS.next < a.currentTime + .7) { musStep(a, MUS.step, MUS.next); MUS.next += MUS_E; MUS.step++; }
+  const per = MUS.kind === 'augusta' ? MUS_E : AMB[MUS.kind].per;
+  while (MUS.next < a.currentTime + .7) { if (MUS.kind === 'augusta') musStep(a, MUS.step, MUS.next); else ambStep(a, MUS.kind, MUS.step, MUS.next); MUS.next += per; MUS.step++; }
 }
 setInterval(musicTick, 200);
 const SFX = {
@@ -5949,7 +6070,7 @@ function impact(tImp) {
   G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res };
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '←' : '→'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
-  G.shot.pre = { s: G.surf, teed: G.teed, d0: distToPin(), par: G.C.def.par };
+  G.shot.pre = { s: G.surf, teed: G.teed, d0: distToPin(), par: G.C.def.par, wind: G.wind.slice(), sw: G.C.swirl || 0, pin: G.pins ? G.pins[G.hole] | 0 : 0, wi: Math.max(0, WEATHERS.indexOf(G.weather)) };
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12; saveRound(); G.savedT = 0; mpShot(res);
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
@@ -6722,12 +6843,7 @@ function readoutNote(text, cls) {
 function sheetOpen() { return !!document.querySelector('.sheet.on'); }
 function openSheet(id) { closeSheets(true); if (id === 'menuSheet') menuPage('home'); addStatsChip(id); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); }
 // every menu screen except the main menu (where Stats is a button) and Stats itself carries a small Stats shortcut with the player's level in its header
-function addStatsChip(id) {
-  if (id === 'menuSheet' || id === 'statsSheet' || id === 'playerSheet' || id === 'dailySheet') return;
-  const h = $(id).querySelector('.sht'); if (!h) return; let c = h.querySelector('.stChip');
-  if (!c) { c = document.createElement('button'); c.className = 'stChip'; c.onclick = e => { e.stopPropagation(); openStats(); }; h.appendChild(c); }
-  let li = 0; LEVELS.forEach((l, i) => { if (ST.holes >= l[0]) li = i; }); c.textContent = '📊 ' + LEVELS[li][1];
-}
+function addStatsChip(id) { /* the level is only shown in the menu and on the stats page: no chips on the other sheets */ document.querySelectorAll('.stChip').forEach(c => c.remove()); }
 function closeSheets(keepScrim) { const hv = $('howVid'); if (hv && !hv.paused) hv.pause(); document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
 function openBag() {
   if (G.state !== 'address' && G.state !== 'settle') return;
@@ -6756,11 +6872,11 @@ function syncMenu() {
   document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
   mpSync();
   { const mi = $('mRoundInfo'); if (mi) {
-    let li = 0; LEVELS.forEach((l, i) => { if (ST.holes >= l[0]) li = i; });
+    const lv = levelOf(ST.xp);
     const hand = settings.hand === -1 ? 'Lefty' : 'Righty', on = G.state !== 'title' && G.scores && !G.practice, tp = on ? totalToPar() : null;
     mi.textContent = G.daily ? 'Daily challenge' : COURSE.name; $('mRoundSub').textContent = G.practice ? 'Practice · nothing scored' : on ? `${G.daily ? COURSE.short + ' · ' : ''}Hole ${G.hole + 1} of ${HOLE_DEFS.length} · ${tp.s ? fmtToPar(tp.d) : 'E'}` : 'No round in play';
-    $('mLvl').textContent = LEVELS[li][1] + ' · ' + ST.holes + ' holes';
-    if ($('menuSheet').querySelector('.mpg.on[data-pg="home"]')) $('mSub').textContent = playerName() + ' · ' + LEVELS[li][1];
+    $('mLvl').textContent = lv.name + ' · level ' + lv.n;
+    if ($('menuSheet').querySelector('.mpg.on[data-pg="home"]')) $('mSub').textContent = playerName() + ' · ' + lv.name;
     else $('mSub').textContent = '';
     $('mvPlayer').textContent = playerName() + ' · ' + hand; $('mvAudio').textContent = 'Sound ' + (settings.sound ? 'on' : 'off') + ' · Music ' + (settings.music !== false ? 'on' : 'off');
     const n = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 3 * 36e5).length;
@@ -6946,20 +7062,20 @@ function drawFx(now) {
 const STATS_KEY = 'ssg-stats';
 function defStats() {
   return { v: 1, rounds: 0, holes: 0, shots: 0, strokes: 0, putts: 0, dist: 0, aces: 0, eagles: 0, birdies: 0, pars: 0, bogeys: 0, doubles: 0, fwHit: 0, fwTry: 0, gir: 0, girTry: 0,
-    water: 0, ob: 0, lost: 0, trees: 0, chipins: 0, holedShots: 0, rainHoles: 0, cur: { gir: 0, fw: 0, bird: 0 },
+    water: 0, ob: 0, lost: 0, trees: 0, chipins: 0, holedShots: 0, rainHoles: 0, xp: 0, cur: { gir: 0, fw: 0, bird: 0 },
     rec: { holed: { v: 10 }, putt: { v: 3 }, drive: { v: 200 }, girStreak: { v: 2 }, fwStreak: { v: 3 }, birdStreak: { v: 1 }, round: { v: 10 }, roundPutts: { v: 40 } } };
 }
-let ST = (() => { try { const s = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); if (s && s.v === 1) { const d = defStats(); for (const k in d) if (s[k] === undefined) s[k] = d[k]; for (const k in d.rec) if (!s.rec[k]) s.rec[k] = d.rec[k]; return s; } } catch (e) { } return defStats(); })();
+let ST = (() => { try { const s = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); if (s && s.v === 1) { if (s.xp === undefined) s.xp = (s.holes || 0) * 10 + (s.rounds || 0) * 30; const d = defStats(); for (const k in d) if (s[k] === undefined) s[k] = d[k]; for (const k in d.rec) if (!s.rec[k]) s.rec[k] = d.rec[k]; return s; } } catch (e) { } return defStats(); })();
 function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(ST)); } catch (e) { } }
 const REC = {
-  holed: { c: ['#ffe85a', '#ffab1f', '#ff5d3a', '#2b1200'], t: 'Longest shot holed', e: '🎯', u: 'm', f: v => v.toFixed(1) + ' m' },
-  putt: { c: ['#c6ff7a', '#3ecf5a', '#0f9d6b', '#052a12'], t: 'Longest putt holed', e: '⛳', u: 'm', f: v => v.toFixed(1) + ' m' },
-  drive: { c: ['#8be9ff', '#2f9bff', '#5a4bff', '#06123a'], t: 'Longest drive', e: '🚀', f: v => Math.round(v) + ' m' },
-  girStreak: { c: ['#7dffc8', '#1fd1a1', '#0a8f7a', '#032a22'], t: 'Greens in a row', e: '🟢', f: v => v + ' in a row' },
-  fwStreak: { c: ['#f4ff7a', '#b6e63a', '#4fa81f', '#1b2a05'], t: 'Fairways in a row', e: '🛣️', f: v => v + ' in a row' },
-  birdStreak: { c: ['#ffb3f0', '#ff5fd0', '#b13cff', '#2a0536'], t: 'Birdie streak', e: '🐦', f: v => v + ' in a row' },
-  round: { c: ['#ffd86a', '#c48bff', '#6a3dff', '#1c0a4a'], t: 'Best round', e: '🏆', low: true, f: v => (v > 0 ? '+' + v : v === 0 ? 'E' : '' + v) },
-  roundPutts: { c: ['#ff9a9a', '#ff4d6d', '#c1121f', '#3a0008'], t: 'Fewest putts in a round', e: '🪄', low: true, f: v => v + ' putts' }
+  holed: { c: ['#ffe85a', '#ffab1f', '#ff5d3a', '#2b1200'], t: 'Longest shot holed', e: 'target', u: 'm', f: v => v.toFixed(1) + ' m' },
+  putt: { c: ['#c6ff7a', '#3ecf5a', '#0f9d6b', '#052a12'], t: 'Longest putt holed', e: 'flag', u: 'm', f: v => v.toFixed(1) + ' m' },
+  drive: { c: ['#8be9ff', '#2f9bff', '#5a4bff', '#06123a'], t: 'Longest drive', e: 'rocket', f: v => Math.round(v) + ' m' },
+  girStreak: { c: ['#7dffc8', '#1fd1a1', '#0a8f7a', '#032a22'], t: 'Greens in a row', e: 'dot', f: v => v + ' in a row' },
+  fwStreak: { c: ['#f4ff7a', '#b6e63a', '#4fa81f', '#1b2a05'], t: 'Fairways in a row', e: 'road', f: v => v + ' in a row' },
+  birdStreak: { c: ['#ffb3f0', '#ff5fd0', '#b13cff', '#2a0536'], t: 'Birdie streak', e: 'feather', f: v => v + ' in a row' },
+  round: { c: ['#ffd86a', '#c48bff', '#6a3dff', '#1c0a4a'], t: 'Best round', e: 'trophy', low: true, f: v => (v > 0 ? '+' + v : v === 0 ? 'E' : '' + v) },
+  roundPutts: { c: ['#ff9a9a', '#ff4d6d', '#c1121f', '#3a0008'], t: 'Fewest putts in a round', e: 'sparkle', low: true, f: v => v + ' putts' }
 };
 const recQueue = []; let recBusy = false;
 function recordCard(kicker, title, big, sub, theme) {
@@ -6999,7 +7115,7 @@ function statsShot(sh, r) {
 // a hole finished in a real round
 function statsHole(h) {
   if (G.practice) return; const par = G.C.def.par, sc = G.scores[h], d = sc - par, S = ST;
-  S.holes++; S.strokes += sc; S.putts += G.putts[h] || 0; if (G.weather && G.weather.id === 'rain') S.rainHoles++;
+  S.holes++; S.xp += 10; S.strokes += sc; S.putts += G.putts[h] || 0; if (G.weather && G.weather.id === 'rain') S.rainHoles++;
   if (sc === 1 && par > 1) { /* counted as an ace in statsShot */ } else if (d <= -2) S.eagles++; else if (d === -1) S.birdies++; else if (d === 0) S.pars++; else if (d === 1) S.bogeys++; else S.doubles++;
   S.girTry++; if (G.gir[h] === true) { S.gir++; S.cur.gir++; beat('girStreak', S.cur.gir, 'Streak running'); } else S.cur.gir = 0;
   if (par >= 4) { S.fwTry++; if (G.fir[h] === true) { S.fwHit++; S.cur.fw++; beat('fwStreak', S.cur.fw, 'Streak running'); } else S.cur.fw = 0; }
@@ -7007,28 +7123,40 @@ function statsHole(h) {
   saveStats(); if (G.daily) dlHole();
 }
 function statsRound(tp) {
-  ST.rounds++; saveStats(); const pu = G.putts.reduce((a, b) => a + b, 0), c = COURSE.short;
+  ST.rounds++; ST.xp += 30; saveStats(); const pu = G.putts.reduce((a, b) => a + b, 0), c = COURSE.short;
   const b1 = beat('round', tp.d, c + ' · ' + tp.s + ' strokes'); setTimeout(() => beat('roundPutts', pu, c), b1 ? 4300 : 300);
 }
-const LEVELS = [[0, 'Rookie'], [18, 'Club Member'], [54, 'Fairway Regular'], [108, 'Scratch Hunter'], [216, 'Course Legend'], [432, 'Hall of Famer']];
+// The road from Rookie to Legend: 48 levels, roughly 200 rounds to Hall of Famer and 260 to Legend at a steady pace. A hole is worth 10 points, a finished
+// round 30 more, a great shot up to 80 (the better the shot, the more) and a hole in one 300, so a player who keeps hitting great shots climbs faster.
+// The progress is only shown in the menu and on the stats page, never during a round.
+const LEVEL_NAMES = ['Rookie', 'Range Rookie', 'Tee Time Regular', 'Weekend Swinger', 'Divot Digger', 'Fairway Finder', 'Green Reader', 'Club Member', 'Bogey Breaker', 'Par Seeker', 'Course Regular', 'Fairway Regular',
+  'Iron Player', 'Short Game Tinkerer', 'Bunker Escapologist', 'Wind Whisperer', 'Birdie Hunter', 'Steady Hand', 'Single-Digit Hopeful', 'Scratch Hunter', 'Club Champion', 'Tempo Master', 'Sweet Spot Seeker', 'Course Specialist',
+  'Links Veteran', 'Pin Seeker', 'Putting Maestro', 'Tour Hopeful', 'Scratch Golfer', 'Eagle Eye', 'Tournament Contender', 'Major Contender', 'Course Record Chaser', 'Fairway Master', 'Precision Artist', 'Grand Master',
+  'Champion', 'Titan of the Tee', 'Living Legend in the Making', 'Course Legend', 'Hall of Famer', 'Hall of Famer II', 'Hall of Famer III', 'Golf Immortal', 'Golf Immortal II', 'Golf Immortal III', 'Mythic', 'Legend'];
+const LEVEL_XP = LEVEL_NAMES.map((_, i) => Math.round(62000 * Math.pow(i / (LEVEL_NAMES.length - 1), 1.55)));
+function levelOf(xp) {
+  xp = Math.max(0, xp || 0); let i = 0; while (i + 1 < LEVEL_NAMES.length && xp >= LEVEL_XP[i + 1]) i++;
+  const last = i === LEVEL_NAMES.length - 1; return { i, n: i + 1, name: LEVEL_NAMES[i], next: last ? null : LEVEL_NAMES[i + 1], lo: LEVEL_XP[i], hi: last ? LEVEL_XP[i] : LEVEL_XP[i + 1], xp, f: last ? 1 : (xp - LEVEL_XP[i]) / (LEVEL_XP[i + 1] - LEVEL_XP[i]) };
+}
+const xpShot = (p, holed, ace) => ace ? 300 : p >= 60 ? Math.min(80, Math.round((p - 50) * .35)) : 0;
 function openStats() {
   const S = ST, el = $('statsBody'), pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–', km = S.dist / 1000;
-  let li = 0; LEVELS.forEach((l, i) => { if (S.holes >= l[0]) li = i; }); const nx = LEVELS[li + 1], lo = LEVELS[li][0];
-  const card = (k, e, v, n, rec) => `<div class="stCard${rec ? ' rec' : ''}"><span class="em">${e}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+  const lv = levelOf(S.xp);
+  const card = (k, e, v, n, rec) => `<div class="stCard${rec ? ' rec' : ''}"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
   const rc = k => { const R = S.rec[k], d = REC[k]; return card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', R.at != null); };
   const pace = S.holes ? (S.strokes / S.holes).toFixed(2) : '–';
   const fun = [];
   if (S.dist > 0) fun.push(`Your shots have flown <b>${km >= 1 ? km.toFixed(2) + ' km' : Math.round(S.dist) + ' m'}</b>, about <b>${(S.dist / 105).toFixed(1)}</b> football pitches.`);
-  if (S.water) fun.push(`<b>${S.water}</b> ball${S.water > 1 ? 's' : ''} fed the fish 🐟`);
-  if (S.trees) fun.push(`You clipped the timber <b>${S.trees}</b> time${S.trees > 1 ? 's' : ''} 🌳`);
+  if (S.water) fun.push(`<b>${S.water}</b> ball${S.water > 1 ? 's' : ''} fed the fish`);
+  if (S.trees) fun.push(`You clipped the timber <b>${S.trees}</b> time${S.trees > 1 ? 's' : ''}`);
   if (S.ob + S.lost) fun.push(`<b>${S.ob}</b> out of bounds, <b>${S.lost}</b> lost in the woods`);
-  if (S.rainHoles) fun.push(`<b>${S.rainHoles}</b> hole${S.rainHoles > 1 ? 's' : ''} played in the rain ☔`);
-  if (S.chipins) fun.push(`<b>${S.chipins}</b> holed-out shot${S.chipins > 1 ? 's' : ''} from off the green 🪄`);
-  if (S.aces) fun.push(`<b>${S.aces}</b> hole${S.aces > 1 ? 's' : ''} in one. Legend. 👑`);
+  if (S.rainHoles) fun.push(`<b>${S.rainHoles}</b> hole${S.rainHoles > 1 ? 's' : ''} played in the rain`);
+  if (S.chipins) fun.push(`<b>${S.chipins}</b> holed-out shot${S.chipins > 1 ? 's' : ''} from off the green`);
+  if (S.aces) fun.push(`<b>${S.aces}</b> hole${S.aces > 1 ? 's' : ''} in one. Legend.`);
   if (!fun.length) fun.push('Play a few holes and the fun facts will show up here.');
-  el.innerHTML = `<div class="stLvl"><b>${LEVELS[li][1]}</b><span>${nx ? (nx[0] - S.holes) + (nx[0] - S.holes === 1 ? ' hole to ' : ' holes to ') + nx[1] : 'Top level reached'} · ${S.holes} hole${S.holes === 1 ? '' : 's'} · ${S.rounds} round${S.rounds === 1 ? '' : 's'}</span>${nx ? `<div class="stBar"><i style="width:${Math.min(100, 100 * (S.holes - lo) / (nx[0] - lo))}%"></i></div>` : ''}</div>
+  el.innerHTML = `<div class="stLvl"><b>${lv.name}</b><span>Level ${lv.n} of ${LEVEL_NAMES.length} · ${lv.next ? Math.max(1, lv.hi - lv.xp).toLocaleString() + ' points to ' + lv.next : 'The top of the ladder'} · ${S.holes} hole${S.holes === 1 ? '' : 's'} · ${S.rounds} round${S.rounds === 1 ? '' : 's'}</span>${lv.next ? `<div class="stBar"><i style="width:${Math.round(100 * lv.f)}%"></i></div>` : ''}</div>
     <div class="sub"><span>Records</span></div><div class="stGrid">${['holed', 'putt', 'drive', 'girStreak', 'fwStreak', 'birdStreak', 'round', 'roundPutts'].map(rc).join('')}</div>
-    <div class="sub"><span>Streaks running now</span></div><div class="stGrid">${card('Greens in a row', '🟢', S.cur.gir, 'best ' + S.rec.girStreak.v)}${card('Fairways in a row', '🛣️', S.cur.fw, 'best ' + S.rec.fwStreak.v)}${card('Birdie streak', '🐦', S.cur.bird, 'best ' + S.rec.birdStreak.v)}${card('Holes in one', '👑', S.aces)}</div>
+    <div class="sub"><span>Streaks running now</span></div><div class="stGrid">${card('Greens in a row', 'dot', S.cur.gir, 'best ' + S.rec.girStreak.v)}${card('Fairways in a row', 'road', S.cur.fw, 'best ' + S.rec.fwStreak.v)}${card('Birdie streak', 'feather', S.cur.bird, 'best ' + S.rec.birdStreak.v)}${card('Holes in one', 'crown', S.aces)}</div>
     <div class="sub"><span>Scoring</span></div>
     <div class="stRow"><span>Eagles or better</span><span>${S.eagles}</span></div><div class="stRow"><span>Birdies</span><span>${S.birdies}</span></div><div class="stRow"><span>Pars</span><span>${S.pars}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bogeys}</span></div><div class="stRow"><span>Double or worse</span><span>${S.doubles}</span></div>
     <div class="stRow"><span>Fairways hit</span><span>${pct(S.fwHit, S.fwTry)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gir, S.girTry)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.holes ? (S.putts / S.holes).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${pace}</span></div>
@@ -7078,7 +7206,72 @@ function logShot(sh, r, holed, pen) {
   if (!putt && sg > -.15) pts += [15, 6, 0, -8][q] + (kind === 0 ? 10 * clamp((sm - 1.38) / .12, 0, 1) : 0); // a pure strike, a high smash factor
   if (holed) pts += 15;
   if (pen) pts = Math.min(pts, -20);
+  { const xp = xpShot(pts, holed, holed && G.strokes === 1); if (xp) { ST.xp += xp; saveStats(); } }
   (G.shotLog = G.shotLog || []).push({ h: G.hole, n: G.strokes - (pen ? 1 : 0), c: G.club, k: kind, l: pre.s, f: pre.teed ? 1 : 0, d: +pre.d0.toFixed(1), e: +d1.toFixed(1), t: +(r.total || 0).toFixed(0), o: holed ? 1 : 0, b: +bk.toFixed(2), q, sm: +sm.toFixed(2), s: G.surf, fw: kind === 0 && !holed && G.surf === S.FAIR ? 1 : 0, p: Math.round(pts) });
+  const cl = pts >= 40 ? clipOf(sh) : null; if (cl) { const ent = G.shotLog[G.shotLog.length - 1]; ent.cl = cl; if (pts >= 60) reelAdd(ent); }
+}
+/* ---------- clips: a shot as a handful of numbers, shown again by simulating it ---------- */
+// A great shot is kept as the course, hole, pin, weather, wind and how it left the club (18 numbers). Playing it builds that hole and flies the shot
+// again exactly as it happened - the same machinery as watching someone live - so a replay costs nothing to store, post and send.
+const CLIP_COURSES = ['gccb', 'alsace', 'augusta'];
+function clipOf(sh) {
+  const L = sh.L, pre = sh.pre, pv = G.prev, ci = CLIP_COURSES.indexOf(COURSE.key); if (!L || !pre || !pv || ci < 0 || !L.v || !L.w) return null;
+  const r = v => Math.round(v * 1e4) / 1e4;
+  return [ci, G.hole, pre.pin | 0, pre.wi | 0, r(pre.wind[0]), r(pre.wind[1]), r(pre.sw || 0), r(pv.x), r(pv.z), pv.teed ? 1 : 0, r(L.v[0]), r(L.v[1]), r(L.v[2]), r(L.w[0]), r(L.w[1]), r(L.w[2]), L.putt ? 1 : 0, G.club];
+}
+// the best shots of all time on this device (a few, with their clips)
+function reelList() { try { const a = JSON.parse(localStorage.getItem('ssg-reel') || '[]'); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.cl) && x.cl.length === 18) : []; } catch (e) { return []; } }
+function reelAdd(ent) {
+  const a = reelList(), key = ent.cl.slice(7, 9).join(',') + ent.cl[1]; if (a.some(x => x.cl.slice(7, 9).join(',') + x.cl[1] === key && x.cl[10] === ent.cl[10])) return;
+  a.push(ent); a.sort((x, y) => y.p - x.p); try { localStorage.setItem('ssg-reel', JSON.stringify(a.slice(0, 8))); } catch (e) { }
+}
+const clipItem = x => Object.assign({ cl: x.cl }, shotWords(x));
+function playClips(items, title) {
+  items = (items || []).filter(i => i && Array.isArray(i.cl) && i.cl.length === 18); if (!items.length) return;
+  if (!MP.spec && G.state !== 'address' && G.state !== 'title') { readout('<div class="r1">Watch once your ball is at rest</div>', 2.2); return; }
+  if (!MP.spec) MP.spec = { C: G.C, hole: G.hole, course: COURSE.key, tp: G.scores ? totalToPar().d : 0, th: G.scores ? G.scores.filter(v => v != null).length : 0, title: G.state === 'title' };
+  if (MP.spec.title) $('title').classList.remove('on');
+  MP.clip = { items, i: 0, title: title || '', done: false }; MP.follow = 'clip'; MP.rin = null; closeSheets();
+  document.body.classList.add('spec', 'clip'); G.state = 'spec'; $('readout').classList.remove('on'); $('aimHint').classList.remove('on'); $('specResume').textContent = 'Close';
+  mpState(true); clipLoad(0);
+}
+function clipLoad(i) {
+  const q = MP.clip; if (!q) return; i = (i + q.items.length) % q.items.length; q.i = i; q.done = false;
+  const it = q.items[i], [ci, h, pin, wi, wx, wz, sw, sx, sz, teed, vx, vy, vz, ox, oy, oz, putt] = it.cl, key = CLIP_COURSES[ci];
+  if (!COURSES[key] || !COURSES[key].defs[h]) { if (q.items.length > 1) { q.items.splice(i, 1); clipLoad(i); } else mpResume(); return; }
+  let pr = MP.peers.get('clip'); if (!pr) { pr = { id: 'clip', col: '#ffd36a', n: 'Replay', clip: true, tp: 0, th: 0, room: '' }; MP.peers.set('clip', pr); }
+  Object.assign(pr, { c: key, h, pin, at: Date.now(), seen: Date.now(), x: NaN, z: NaN, fly: null });
+  mpSpecLoad(pr); const C = G.C; C.swirl = sw; setWeather(WEATHERS[wi] || WEATHERS[1]);
+  const res = simulateShot(C, { x: sx, y: C.h(sx, sz) + (teed ? .03 : 0), z: sz, v: [vx, vy, vz], w: [ox, oy, oz], wind: putt ? null : [wx, wz], putt: !!putt, flag: !putt });
+  const en = C.enu(sx, sz), f = shotFlight(res, C); pr.x = en[0]; pr.z = en[1];
+  pr.fly = { x0: pr.x, z0: pr.z, c: key, h, zb: C.zBase, p: f.p, dt: f.dt, t0: performance.now() + 2400, dur: (f.p.length / 3 - 1) * f.dt };
+  MP.specCam = null; $('specInfo').textContent = `${q.title ? q.title + ' · ' : ''}${i + 1} of ${q.items.length} · ${it.t}`; $('specInfo').title = it.d || '';
+  $('specNext').style.display = q.items.length > 1 ? '' : 'none'; MP.panelT = 0;
+}
+// after the ball has come to rest and a moment has passed: on to the next clip of a reel
+function clipTick() {
+  const q = MP.clip, pr = MP.peers.get('clip'); if (!q || !pr || !pr.fly || q.done) return;
+  if ((performance.now() - pr.fly.t0) / 1000 > pr.fly.dur + 2.6) { q.done = true; if (q.items.length > 1 && q.i + 1 < q.items.length) clipLoad(q.i + 1); }
+}
+function clipEnd() { // back to my own round
+  const o = MP.objs.get('clip'); if (o) { mpDrop(o); MP.objs.delete('clip'); } MP.peers.delete('clip'); MP.clip = null;
+  document.body.classList.remove('clip'); $('specResume').textContent = 'Resume play'; $('specInfo').title = '';
+}
+// the Replay sheet: the last shot, the best shots of the round, the best shots ever
+document.addEventListener('click', e => {
+  const c = e.target.closest && e.target.closest('.bshot.pl, .bsAll'); if (!c || !BS_LAST.length) return;
+  const items = BS_LAST.filter(x => x.cl).map(clipItem); e.stopPropagation();
+  playClips(c.classList.contains('bsAll') ? items : [clipItem(BS_LAST[+c.dataset.i])], 'Best shots');
+}, true);
+function openReel() {
+  const body = $('reelBody'); body.textContent = '';
+  const here = G.state === 'address' || G.state === 'title', round = (G.shotLog || []).filter(x => x.cl && x.p >= 15), top = bestShots(round, 5).map(clipItem), ever = reelList().map(clipItem);
+  const last = G.lastShot && G.lastShot.C === G.C && G.lastShot.hole === G.hole && (G.state === 'address' || G.state === 'holed');
+  const opt = (ic, t, d, on, go) => { const b = document.createElement('button'); b.className = 'mli reel' + (on ? '' : ' off'); b.innerHTML = `<i class="ic">${ICONS[ic]}</i><span>${t}<small></small></span><i class="ic chev">${ICONS.chev}</i>`; b.querySelector('small').textContent = d; if (on) b.onclick = go; body.appendChild(b); };
+  opt('play', 'Last shot', last ? 'Your most recent shot, again' : 'No shot to replay on this hole yet', last, () => { closeSheets(); setTimeout(replayLast, 120); });
+  opt('film', 'Highlights of this round', top.length ? `${top.length} best shot${top.length === 1 ? '' : 's'}, one after the other` + (here ? '' : ' (while you line up a shot)') : 'Your best shots of the round show up here', top.length && here, () => playClips(top, 'Highlights'));
+  opt('star', 'My best shots ever', ever.length ? `${ever.length} saved on this device` + (here ? '' : ' (while you line up a shot)') : 'Great shots are kept here for good', ever.length && here, () => playClips(ever, 'Best ever'));
+  openSheet('reelSheet');
 }
 function shotWords(x) {
   const cl = CLUBS[x.c] ? CLUBS[x.c].name : '', lie = x.f ? 'the tee' : x.l === S.SAND ? 'the bunker' : x.l === S.ROUGH ? 'the rough' : x.l === S.DEEP ? 'deep rough' : x.l === S.FRINGE ? 'the fringe' : x.l === S.FIRST ? 'the first cut' : x.l === S.GREEN ? 'the green' : 'the fairway';
@@ -7093,10 +7286,11 @@ function shotWords(x) {
   return { t, d: `Hole ${x.h + 1} · stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
 }
 function bestShots(log, n) { return (log || []).filter(x => x.p >= 15).slice().sort((a, b) => b.p - a.p).slice(0, n || 3); }
+let BS_LAST = [];
 function bestShotsHtml(log, name) {
-  const b = bestShots(log); if (!b.length) return '';
+  const b = bestShots(log); if (!b.length) return ''; BS_LAST = b;
   const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-  return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div><span>★ ${x.p}</span></div>`; }).join('')}</div>`;
+  return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot${x.cl ? ' pl' : ''}" data-i="${i}"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div>${x.cl ? '<em class="ic">' + ICONS.play + '</em>' : ''}<span>★ ${x.p}</span></div>`; }).join('')}</div>${b.some(x => x.cl) ? '<button class="mbtn dark wide bsAll">Watch the highlights</button>' : ''}`;
 }
 /* ================= PLAYER + LEADERBOARD ================= */
 // Rounds go to a board on this device (always) and, when the page runs inside Claude with the db capability and the
@@ -7264,7 +7458,7 @@ function fillBoard(el, limit, key, pick) {
   // post my best round of this course to the world board
   const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r))) : null;
   if (mineBest && tab !== 'all') {
-    const bt = document.createElement('button'); bt.className = 'mbtn dark wide'; bt.style.marginTop = '8px'; bt.textContent = '\u{1F30D} Post my best round (' + fmtToPar(mineBest.toPar) + ') to the world board'; bt.onclick = async () => { if (ghKey()) { bt.disabled = true; bt.textContent = 'Posting\u2026'; if (!(await postAuto(mineBest))) postWorld(mineBest); } else postWorld(mineBest); }; el.appendChild(bt);
+    const bt = document.createElement('button'); bt.className = 'mbtn dark wide'; bt.style.marginTop = '8px'; bt.textContent = 'Post my best round (' + fmtToPar(mineBest.toPar) + ') to the world board'; bt.onclick = async () => { if (ghKey()) { bt.disabled = true; bt.textContent = 'Posting\u2026'; if (!(await postAuto(mineBest))) postWorld(mineBest); } else postWorld(mineBest); }; el.appendChild(bt);
     const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = ghKey() ? 'No account needed. It appears on the board within a minute.' : 'Opens GitHub with the score filled in: press "Submit new issue" (a free GitHub account is needed). A bot adds it to the board within a minute.'; el.appendChild(n);
   } else if (tab === 'device' || (!shared && tab !== 'world')) { const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = 'Rounds are kept on this device.'; el.appendChild(n); }
 }
@@ -7284,6 +7478,10 @@ const ICONS = {
   sound: '<svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4zM16.5 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10"/></svg>',
   users: '<svg viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 19a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 13.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>',
   target: '<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM12 12h.01"/></svg>',
+  rocket: '<svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>', dot: '<svg viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 12h.01"/></svg>',
+  road: '<svg viewBox="0 0 24 24"><path d="M9 4L6 20M15 4l3 16M12 6v2M12 11v2M12 16v2"/></svg>', feather: '<svg viewBox="0 0 24 24"><path d="M20 4c-8 0-13 5-13 12l-3 4M20 4c0 8-5 13-12 13M9 15l6-6"/></svg>',
+  sparkle: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16v4M17 18h4"/></svg>', crown: '<svg viewBox="0 0 24 24"><path d="M4 18h16l1-10-5 4-4-7-4 7-5-4z"/></svg>',
+  film: '<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14M16 5v14M4 9h4M4 15h4M16 9h4M16 15h4"/></svg>', star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
   help: '<svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.8.5-1.1 1-1.1 1.8M12 17h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>'
 };
 function initIcons() { document.querySelectorAll('.ic[data-ic]').forEach(e => { e.innerHTML = ICONS[e.dataset.ic] || ''; }); }
@@ -7326,12 +7524,12 @@ function dlRec(day) { return dlRecs()[day || dayId()] || null; }
 function dlSet(rec) { const a = dlRecs(); a[rec.day] = rec; for (const k of Object.keys(a).sort().slice(0, -5)) delete a[k]; try { localStorage.setItem('ssg-daily', JSON.stringify(a)); } catch (e) { } }
 // compact stats profile and best shots, as filed with a round (numbers only)
 function profileCompact() {
-  const S = ST, R = S.rec, o = { r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, tr: S.trees, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
+  const S = ST, R = S.rec, o = { xp: S.xp, r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, tr: S.trees, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
   if (R.round.at != null) o.br = R.round.v; return o;
 }
-function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, p: x.p })); }
-const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, p: x.p | 0 } : null;
-const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; return Object.keys(r).length ? r : null; };
+function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, p: x.p, cl: x.cl })); }
+const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, p: x.p | 0, cl: Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite) ? x.cl : undefined } : null;
+const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; return Object.keys(r).length ? r : null; };
 // ---- going out and coming in
 function dlSubscribe(c) {
   const t = dayId(), topics = [t, dayAdd(t, -1)].map(d => `ssgolf/v1/DAY${d}/d/+`); DL.subs = t;
@@ -7510,22 +7708,26 @@ function openDaily(tab) {
 // ---- a player's profile (from a name on a board)
 function openPlayer(o) {
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
-  const render = pf => {
+  const render = (pf, bs) => {
     const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]), S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
-    let li = 0; LEVELS.forEach((l, i) => { if ((S.h || 0) >= l[0]) li = i; }); const nx = LEVELS[li + 1];
-    const card = (k, e, v, n) => `<div class="stCard"><span class="em">${e}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
-    $('plSub').textContent = pf ? LEVELS[li][1] : '';
-    el.innerHTML = (pf ? `<div class="stLvl"><b>${LEVELS[li][1]}</b><span>${S.h || 0} holes · ${S.r || 0} round${S.r === 1 ? '' : 's'}${nx ? ' · ' + (nx[0] - S.h) + ' to ' + nx[1] : ''}</span></div>` : '<div class="empty">No stats published for this player yet.</div>')
-      + bestShotsHtml(o.bs, 'Best shots of the round')
-      + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', '🚀', S.dr ? S.dr + ' m' : '–')}${card('Longest shot holed', '🎯', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–')}${card('Longest putt holed', '⛳', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–')}${card('Best round', '🏆', S.br != null ? fmtToPar(S.br) : '–')}${card('Greens in a row', '🟢', S.gs || 0)}${card('Fairways in a row', '🛣️', S.fs || 0)}</div>
+    const lv = levelOf(S.xp != null ? S.xp : (S.h || 0) * 10 + (S.r || 0) * 30);
+    const card = (k, e, v, n) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+    $('plSub').textContent = pf ? lv.name : '';
+    el.innerHTML = (pf ? `<div class="stLvl"><b>${lv.name}</b><span>Level ${lv.n} of ${LEVEL_NAMES.length} · ${S.h || 0} holes · ${S.r || 0} round${S.r === 1 ? '' : 's'}</span>${lv.next ? `<div class="stBar"><i style="width:${Math.round(100 * lv.f)}%"></i></div>` : ''}</div>` : '<div class="empty">No stats published for this player yet.</div>')
+      + bestShotsHtml(bs, o.me ? 'Best shots ever' : 'Best shots')
+      + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? S.dr + ' m' : '–')}${card('Longest shot holed', 'target', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–')}${card('Longest putt holed', 'flag', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–')}${card('Greens in a row', 'dot', S.gs || 0)}${card('Fairways in a row', 'road', S.fs || 0)}</div>
       <div class="sub"><span>Scoring</span></div>
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
       <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h ? (S.st / S.h).toFixed(2) : '–'}</span></div>
       <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div>` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
   };
-  if (o.me) { render(profileCompact()); }
-  else { render(cleanPf(o.pf)); if (!cleanPf(o.pf) && o.id) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf)); }); }
+  const clean = a => (Array.isArray(a) ? a : []).map(cleanShot).filter(Boolean);
+  if (o.me) { const ev = reelList(); render(profileCompact(), ev.length ? ev.slice(0, 3) : o.bs); }
+  else {
+    render(cleanPf(o.pf), clean(o.bs));
+    if (o.id && !(cleanPf(o.pf) && clean(o.bs).length)) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs)); });
+  }
   openSheet('playerSheet');
 }
 
@@ -7668,6 +7870,8 @@ function initInput() {
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
   $('specResume').onclick = e => { e.stopPropagation(); mpResume(); };
+  $('specAgain').onclick = e => { e.stopPropagation(); if (MP.clip) clipLoad(MP.clip.i); };
+  $('specNext').onclick = e => { e.stopPropagation(); if (MP.clip) clipLoad(MP.clip.i + 1); };
   mpInit();
   // every sheet gets a close X at its top right (closes like a tap outside it)
   document.querySelectorAll('.sheet').forEach(sh => {
@@ -7677,8 +7881,8 @@ function initInput() {
     b.onclick = e => { e.stopPropagation(); closeSheets(); }; sh.appendChild(b);
   });
   $('mCard').onclick = () => showScorecard(false);
-  $('dReplay').onclick = () => { SFX.blip(); replayLast(); };
-  $('mReplay').onclick = () => { closeSheets(); setTimeout(replayLast, 120); };
+  $('dReplay').onclick = () => { SFX.blip(); openReel(); };
+  $('mReplay').onclick = () => openReel();
   $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
   $('mRound').onclick = () => { closeSheets(); startRound(); };
@@ -7726,7 +7930,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
-  swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') mpSpecCam(dt); else updateCamera(dt); updateWeatherVisuals(dt); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
+  swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') { mpSpecCam(dt); if (MP.clip) clipTick(); } else updateCamera(dt); updateWeatherVisuals(dt); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
     const ext = G.state === 'intro' ? 300 : 75, sc = W.sun.shadow.camera;
     if (sc.right !== ext) { sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = ext > 100 ? 900 : 420; sc.updateProjectionMatrix(); }

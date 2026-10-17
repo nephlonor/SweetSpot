@@ -41,11 +41,13 @@ jobs:
             if (!int(r.at) || r.at > Date.now() + 10 * 60e3 || r.at < Date.now() - 3 * 864e5) return finish(false, 'The round is too old (or from the future).');
             const name = r.name.trim(), by = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
             // the compact stats profile and the best shots of the round: numbers only, from a fixed list of keys
-            const PF = ['r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
+            const PF = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
             const BS = ['h', 'n', 'c', 'k', 'l', 'f', 'd', 'e', 't', 'o', 'b', 'q', 'sm', 's', 'fw', 'p'];
             const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e8;
             const pick = (o, keys) => { const out = {}; if (o && typeof o === 'object') for (const k of keys) if (num(o[k])) out[k] = Math.round(o[k] * 100) / 100; return out; };
-            const pf = pick(r.pf, PF), bs = Array.isArray(r.bs) ? r.bs.slice(0, 3).map(x => pick(x, BS)).filter(x => Object.keys(x).length >= 8) : [];
+            // a best shot also carries its clip: the 18 numbers that let the game fly it again
+            const pickShot = x => { const o = pick(x, BS); if (x && Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(num)) o.cl = x.cl.map(v => Math.round(v * 1e4) / 1e4); return o; };
+            const pf = pick(r.pf, PF), bs = Array.isArray(r.bs) ? r.bs.slice(0, 3).map(pickShot).filter(x => Object.keys(x).length >= 8) : [];
             const save = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', ...files]); await exec.exec('git', ['commit', '-m', msg]);
@@ -53,9 +55,9 @@ jobs:
             };
             const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
             const profiles = () => {
-              if (!Object.keys(pf).length) return null;
-              const f = 'leaderboard/players.json', all = readJson(f, {}); all[by] = { n: name, pf, at: r.at };
-              const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at).slice(0, 600), out = {}; for (const k of keys) out[k] = all[k];
+              if (!Object.keys(pf).length && !bs.length) return null;
+              const f = 'leaderboard/players.json', all = readJson(f, {}), old = all[by]; all[by] = { n: name, pf, bs: bs.length ? bs : (old && old.bs) || [], at: r.at };
+              const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at).slice(0, 300), out = {}; for (const k of keys) out[k] = all[k];
               fs.writeFileSync(f, JSON.stringify(out) + '\n'); return f;
             };
             if (isDaily) {
@@ -69,7 +71,7 @@ jobs:
               const file = `leaderboard/daily-${day}.json`; let rows = readJson(file, []);
               if (rows.some(x => x.by === by || x.name.toLowerCase() === name.toLowerCase())) return finish(true, 'There is already a result for this player on this daily challenge: one chance only.');
               if (rows.length >= 500) return finish(false, 'The board is full.');
-              rows.push({ name, strokes: r.strokes, toPar: r.toPar, h: r.h, at: r.at, by, c: r.course, bs });
+              rows.push({ name, strokes: r.strokes, toPar: r.toPar, h: r.h, at: r.at, by, c: r.course });
               rows.sort((a, b) => a.toPar - b.toPar || a.at - b.at);
               fs.writeFileSync(file, JSON.stringify(rows) + '\n');
               const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
@@ -81,7 +83,7 @@ jobs:
             if (rows.some(x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && x.strokes === r.strokes)) return finish(true, 'This score is already on the board for this player.'); // one player, one entry per score per course
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
             if (rows.filter(x => x.at > Date.now() - 36e5).length >= 120) return finish(false, 'The board is busy; try again later.');
-            rows.push(Object.assign({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by }, bs.length ? { bs } : {}));
+            rows.push({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by });
             rows.sort((a, b) => a.toPar - b.toPar || a.strokes - b.strokes || a.at - b.at); rows = rows.slice(0, 500);
             fs.writeFileSync(file, JSON.stringify(rows) + '\n');
             const rank = rows.findIndex(x => x.name === name && x.at === r.at) + 1;
