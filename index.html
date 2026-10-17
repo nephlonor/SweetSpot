@@ -135,6 +135,8 @@ body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 .how svg{width:30px;height:30px;display:block}
 body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.replay #done,body.replay #recCard,body.replay #confetti,body.replay #readout{display:none!important}
 .how svg.tut{width:100%;max-width:120px;height:auto;margin:0 auto 2px}
+@media (max-height:900px) and (max-width:700px){.how svg.tut{display:none}.how .card{padding:10px 12px}.how b{margin:0 0 3px;font-size:16px}.how p{font-size:12.5px;line-height:1.3}}
+@media (max-height:780px) and (max-width:700px){.how{display:none}}
 .tThumb{animation:tUp 4.2s infinite;transform-box:view-box}
 .tDown{stroke-dasharray:62;animation:tTrace 4.2s infinite}
 @keyframes tUp{0%{transform:translate(45px,20px);animation-timing-function:cubic-bezier(.45,0,.55,1)}56%{transform:translate(45px,80px)}60%{transform:translate(45px,80px);animation-timing-function:cubic-bezier(.5,0,.6,1)}76%{transform:translate(46px,20px)}100%{transform:translate(45px,20px)}}
@@ -212,23 +214,91 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .mbtn{height:50px;border-radius:16px;background:var(--soft);font:600 16px var(--cond);text-transform:uppercase;letter-spacing:.04em}
 .mbtn.dark{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
 
-/* settings: the same see-through glass as the game's cards (the blurred 3D scene shows through), light text */
-#menuSheet{--ink:#fff;--ink2:rgba(255,255,255,.82);--ink3:rgba(255,255,255,.66);--hair:rgba(255,255,255,.28);--soft:rgba(255,255,255,.14);
+/* sheets: the same see-through glass as the game's cards (the blurred 3D scene shows through), light text */
+#menuSheet,#dailySheet,#playerSheet,#boardSheet,#statsSheet,#cardSheet,#helpSheet,#bagSheet{--ink:#fff;--ink2:rgba(255,255,255,.82);--ink3:rgba(255,255,255,.66);--hair:rgba(255,255,255,.28);--soft:rgba(255,255,255,.14);
   background:var(--gl-bg),rgba(18,48,28,.30);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);border-color:var(--gl-line);
   box-shadow:0 -10px 40px rgba(8,34,16,.28),inset 0 1px 0 rgba(255,255,255,.55);color:#fff;text-shadow:var(--tsh)}
-#menuSheet .grab{background:rgba(255,255,255,.5)}
-#menuSheet .shX{background:rgba(255,255,255,.2);color:#fff}#menuSheet .shX:active{background:rgba(255,255,255,.34)}
-#menuSheet .mrow,#menuSheet .mpLr,#menuSheet .pracHoles button,#menuSheet .mbtn:not(.dark),#menuSheet .mpBtns .mpb{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.3)}
-#menuSheet .mrow input{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);text-shadow:var(--tsh)}
-#menuSheet .mrow input::placeholder{color:rgba(255,255,255,.55)}
-#menuSheet .seg{background:rgba(255,255,255,.14)}
-#menuSheet .seg button{color:rgba(255,255,255,.8)}
-#menuSheet .seg button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none;box-shadow:0 2px 6px rgba(8,34,16,.25)}
-#menuSheet .pracHoles button.sel{background:var(--g1);color:#fff}
-#menuSheet .mbtn.dark,#menuSheet .mpb{text-shadow:none}
-#menuSheet .mpBtns .mpb{background:rgba(255,255,255,.18);color:#fff;text-shadow:var(--tsh)}
-body:has(#menuSheet.on) #scrim{background:rgba(10,30,18,.08)}
-body:has(#menuSheet.on) #tempo,body:has(#menuSheet.on) #strike,body:has(#menuSheet.on) #mpPanel{opacity:0!important;transition:opacity .2s}
+#menuSheet .grab,#dailySheet .grab,#playerSheet .grab,#boardSheet .grab,#statsSheet .grab,#cardSheet .grab,#helpSheet .grab,#bagSheet .grab{background:rgba(255,255,255,.5)}
+#menuSheet .shX,#dailySheet .shX,#playerSheet .shX,#boardSheet .shX,#statsSheet .shX,#cardSheet .shX,#helpSheet .shX,#bagSheet .shX{background:rgba(255,255,255,.2);color:#fff}
+#menuSheet .shX:active,#dailySheet .shX:active,#playerSheet .shX:active,#boardSheet .shX:active,#statsSheet .shX:active,#cardSheet .shX:active,#helpSheet .shX:active,#bagSheet .shX:active{background:rgba(255,255,255,.34)}
+#menuSheet .mpLr,#dailySheet .mpLr,#playerSheet .mpLr,#boardSheet .mpLr,#statsSheet .mpLr,#cardSheet .mpLr,#helpSheet .mpLr,#bagSheet .mpLr,#menuSheet .pracHoles button,#dailySheet .pracHoles button,#playerSheet .pracHoles button,#boardSheet .pracHoles button,#statsSheet .pracHoles button,#cardSheet .pracHoles button,#helpSheet .pracHoles button,#bagSheet .pracHoles button,#menuSheet .mbtn:not(.dark),#dailySheet .mbtn:not(.dark),#playerSheet .mbtn:not(.dark),#boardSheet .mbtn:not(.dark),#statsSheet .mbtn:not(.dark),#cardSheet .mbtn:not(.dark),#helpSheet .mbtn:not(.dark),#bagSheet .mbtn:not(.dark),#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.3)}
+#menuSheet .mrow input,#dailySheet .mrow input,#playerSheet .mrow input,#boardSheet .mrow input,#statsSheet .mrow input,#cardSheet .mrow input,#helpSheet .mrow input,#bagSheet .mrow input{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);text-shadow:var(--tsh)}
+#menuSheet .mrow input::placeholder,#dailySheet .mrow input::placeholder,#playerSheet .mrow input::placeholder,#boardSheet .mrow input::placeholder,#statsSheet .mrow input::placeholder,#cardSheet .mrow input::placeholder,#helpSheet .mrow input::placeholder,#bagSheet .mrow input::placeholder{color:rgba(255,255,255,.55)}
+#menuSheet .seg,#dailySheet .seg,#playerSheet .seg,#boardSheet .seg,#statsSheet .seg,#cardSheet .seg,#helpSheet .seg,#bagSheet .seg{background:rgba(255,255,255,.14)}
+#menuSheet .seg button,#dailySheet .seg button,#playerSheet .seg button,#boardSheet .seg button,#statsSheet .seg button,#cardSheet .seg button,#helpSheet .seg button,#bagSheet .seg button{color:rgba(255,255,255,.8)}
+#menuSheet .seg button.sel,#dailySheet .seg button.sel,#playerSheet .seg button.sel,#boardSheet .seg button.sel,#statsSheet .seg button.sel,#cardSheet .seg button.sel,#helpSheet .seg button.sel,#bagSheet .seg button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none;box-shadow:0 2px 6px rgba(8,34,16,.25)}
+#menuSheet .pracHoles button.sel,#dailySheet .pracHoles button.sel,#playerSheet .pracHoles button.sel,#boardSheet .pracHoles button.sel,#statsSheet .pracHoles button.sel,#cardSheet .pracHoles button.sel,#helpSheet .pracHoles button.sel,#bagSheet .pracHoles button.sel{background:var(--g1);color:#fff}
+#menuSheet .mbtn.dark,#dailySheet .mbtn.dark,#playerSheet .mbtn.dark,#boardSheet .mbtn.dark,#statsSheet .mbtn.dark,#cardSheet .mbtn.dark,#helpSheet .mbtn.dark,#bagSheet .mbtn.dark,#menuSheet .mpb,#dailySheet .mpb,#playerSheet .mpb,#boardSheet .mpb,#statsSheet .mpb,#cardSheet .mpb,#helpSheet .mpb,#bagSheet .mpb{text-shadow:none}
+#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb{background:rgba(255,255,255,.18);color:#fff;text-shadow:var(--tsh)}
+body:has(.sheet.on:not(#mapSheet)) #scrim{background:rgba(10,30,18,.08)}
+body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #strike,body:has(.sheet.on:not(#mapSheet)) #mpPanel,body:has(.sheet.on:not(#mapSheet)) #dlPanel{opacity:0!important;transition:opacity .2s}
+.sheet .tabs button{color:rgba(255,255,255,.8)}.sheet .tabs button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none}
+/* ---- menu: pages, hero card, tiles, grouped rows ---- */
+.ic{display:inline-flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center}
+.ic svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mhead{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding-right:46px;min-height:44px}
+.mback{flex:none;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.34);color:#fff;display:flex;align-items:center;justify-content:center}
+.mback:active{background:rgba(255,255,255,.34)}.mback .ic{width:24px;height:24px}
+.mtitle{display:flex;flex-direction:column;min-width:0}
+.mtitle span{font:700 30px/1.05 var(--cond);text-transform:uppercase;letter-spacing:.02em}
+.mtitle small{font:600 12px var(--cond);letter-spacing:.14em;text-transform:uppercase;opacity:.78;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpg{display:none}.mpg.on{display:block;animation:pgIn .3s var(--ease)}
+@keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.dlCard{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px 12px 12px;border-radius:22px;text-align:left;color:#fff;text-shadow:var(--tsh);margin-bottom:10px;
+  background:linear-gradient(135deg,rgba(255,222,110,.46),rgba(255,150,50,.30));box-shadow:0 8px 22px rgba(8,34,16,.25),inset 0 0 0 1px rgba(255,232,150,.62),inset 0 1px 0 rgba(255,255,255,.6);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5)}
+.dlMini{margin:8px 0 6px;padding:9px 12px 9px 10px}.dlMini>.ic{width:34px!important;height:34px!important}.dlMini b{font-size:16px}
+.dlCard>.ic{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#ffe85a,#ffab1f);color:#3a1d00;text-shadow:none;box-shadow:0 2px 8px rgba(255,160,30,.5)}.dlCard>.ic svg{width:22px;height:22px}
+.dlCard span{flex:1;min-width:0;display:flex;flex-direction:column}
+.dlCard b{font:700 19px/1.1 var(--cond);text-transform:uppercase;letter-spacing:.03em}
+.dlCard small{font:500 13px var(--sans,system-ui);opacity:.92;margin-top:2px}
+.dlCard em{flex:none;font:700 12px var(--cond);font-style:normal;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.dlCard.dl-playing{animation:dlPulse 2.4s ease-in-out infinite}
+.dlCard.dl-playing em{background:#e0392b;color:#fff}
+.dlCard.dl-done{background:linear-gradient(135deg,rgba(120,230,150,.42),rgba(40,150,80,.30));box-shadow:0 8px 22px rgba(8,34,16,.25),inset 0 0 0 1px rgba(170,255,190,.55),inset 0 1px 0 rgba(255,255,255,.55)}
+.dlCard.dl-done>.ic{background:linear-gradient(135deg,#9bf0b0,#2fb25a);color:#06351a;box-shadow:0 2px 8px rgba(40,200,100,.45)}
+@keyframes dlPulse{50%{box-shadow:0 8px 26px rgba(255,170,40,.55),inset 0 0 0 1px rgba(255,232,150,.9),inset 0 1px 0 rgba(255,255,255,.6)}}
+.dailyCard{margin:0 0 8px;border:0}
+.mgrp{background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.28);border-radius:20px;padding:6px;margin-bottom:10px}
+.mgrp .mrow{background:none;box-shadow:none;border-radius:14px}
+.mgrp .mrow+.mrow{border-top:1px solid rgba(255,255,255,.16);border-radius:0 0 14px 14px}
+.mround{padding:12px}.mrl{display:flex;flex-direction:column;margin-bottom:10px}
+.mrl .mk{font:600 11px var(--cond);letter-spacing:.16em;text-transform:uppercase;opacity:.75}
+.mrl b{font:700 21px/1.1 var(--cond);text-transform:uppercase;letter-spacing:.02em}.mrl small{font:600 13px var(--cond);letter-spacing:.06em;text-transform:uppercase;opacity:.85;margin-top:1px}
+#menuSheet .segCourse{width:100%}#menuSheet .segCourse button{flex:1;height:40px;font-size:14px;white-space:nowrap}
+.mnote{font:500 12.5px/1.4 var(--sans,system-ui);opacity:.78;padding:8px 6px 0}.mround .mnote{padding:8px 2px 0}.mpg>.mnote{padding:2px 8px 10px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px;border-radius:20px;text-align:left;color:#fff;text-shadow:var(--tsh);background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.24),inset 0 1px 0 rgba(255,255,255,.34);transition:transform .12s}
+.tile:active{transform:scale(.97);background:rgba(255,255,255,.2)}
+.tile .ic{width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.2);padding:7px;margin-bottom:6px}
+.tile b{font:700 18px/1.1 var(--cond);text-transform:uppercase;letter-spacing:.03em}.tile small{font:500 12px var(--sans,system-ui);opacity:.78;line-height:1.25}
+.mlistg{padding:2px 6px}
+.mli{display:flex;align-items:center;gap:12px;width:100%;padding:11px 4px;text-align:left;color:#fff;text-shadow:var(--tsh)}
+.mli+.mli{border-top:1px solid rgba(255,255,255,.16)}
+.mli>.ic:first-child{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.2);padding:7px}
+.mli span{flex:1;min-width:0;display:flex;flex-direction:column;font:600 17px/1.15 var(--cond);text-transform:uppercase;letter-spacing:.03em}
+.mli small{font:500 12.5px var(--sans,system-ui);text-transform:none;letter-spacing:0;opacity:.78;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mli .chev{width:18px;height:18px;opacity:.6}.mli:active{background:rgba(255,255,255,.1);border-radius:12px}
+.mnew{margin-top:2px}
+#menuSheet .mpList .empty{color:var(--ink2)}
+/* daily sheet, player sheet, live panel */
+.dlHead{display:flex;flex-direction:column;margin:2px 0 10px}.dlHead b{font:700 22px/1.1 var(--cond);text-transform:uppercase}.dlHead small{font:600 12px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:2px}
+.dlText{font:500 13.5px/1.45 var(--sans,system-ui);color:var(--ink2);margin:0 0 12px}
+.plBack{width:34px;height:34px;margin-right:8px;border-radius:50%;background:rgba(0,0,0,.07);font:600 24px/1 var(--cond);color:var(--ink2,#334);vertical-align:middle}
+#dlPanel{position:fixed;z-index:2;left:calc(var(--sl) + 10px);top:0;min-width:138px;max-width:46vw;padding:6px 9px 7px;border-radius:16px;opacity:0;pointer-events:none;transition:opacity .3s,top .25s;font:600 13px var(--cond);color:#fff;text-shadow:var(--tsh);cursor:pointer}
+#dlPanel.on{opacity:1;pointer-events:auto}
+#dlPanel .mph{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-bottom:2px;color:#ffe28a}
+#dlPanel .mpr{display:flex;align-items:center;gap:6px;white-space:nowrap;line-height:1.5}
+#dlPanel .mpr i{font-style:normal;width:14px;text-align:right;opacity:.8;font-size:12px;flex:none}
+#dlPanel .mpr .n{flex:1;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}#dlPanel .mpr .t{font-variant-numeric:tabular-nums}#dlPanel .mpr .h{opacity:.75;font-size:11px;min-width:18px;text-align:right}
+#dlPanel .mpr.me .n{text-decoration:underline;text-underline-offset:2px}
+/* best shots of a round */
+.bshots{display:flex;flex-direction:column;gap:7px}
+.bshot{display:flex;align-items:center;gap:11px;background:var(--soft);border-radius:16px;padding:9px 12px 9px 9px}
+.bshot i{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 16px var(--cond);font-style:normal;background:linear-gradient(135deg,#ffe85a,#ffab1f);color:#2b1200}
+.bshot:nth-child(2) i{background:linear-gradient(135deg,#f2f5f7,#aab4bd)}.bshot:nth-child(3) i{background:linear-gradient(135deg,#f3c79a,#c07a3a)}
+.bshot div{flex:1;min-width:0}.bshot b{display:block;font:600 16px var(--cond);text-transform:uppercase;letter-spacing:.02em}
+.bshot small{display:block;font:500 12px var(--sans,system-ui);color:var(--ink2);line-height:1.25;margin-top:1px}
+.bshot span{flex:none;font:700 18px var(--cond);font-variant-numeric:tabular-nums;color:#f0a420;text-shadow:none}
 /* record card + stats */
 #recCard{position:fixed;left:50%;top:36%;z-index:12;width:min(92vw,430px);padding:20px 18px 18px;border-radius:28px;text-align:center;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-8deg);overflow:hidden;
   background:linear-gradient(135deg,var(--c1,#ffe85a),var(--c2,#ffab1f) 52%,var(--c3,#ff5d3a));color:var(--ink,#2b1200);box-shadow:0 18px 60px var(--c2,#ffab1f),inset 0 0 0 3px rgba(255,255,255,.85),inset 0 -10px 30px rgba(0,0,0,.18)}
@@ -377,7 +447,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 </div>
 <canvas id="fx"></canvas>
 <div id="pinTag" class="gtag">0 m</div>
-<div id="mpPanel" class="glass"></div><div id="mpTags"></div>
+<div id="dlPanel" class="glass"></div><div id="mpPanel" class="glass"></div><div id="mpTags"></div>
 <div id="specBar" class="glass"><span id="specInfo">Following</span><button class="btn" id="specResume">Resume play</button></div>
 <div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small>M</small></div><div class="bt2" id="btC"></div></div>
 <div class="layer on" id="title">
@@ -388,6 +458,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><rect x="31" y="6" width="28" height="88" rx="14" fill="#2f6b35"/><rect x="38" y="14" width="14" height="72" rx="7" fill="rgba(255,255,255,.16)"/><path class="tDown" d="M45 80V20" stroke="#ffe85a" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M17 34V62m0 0l-5-6m5 6l5-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".75"/><path d="M73 68V40m0 0l-5 6m5-6l5 6" stroke="#ffe85a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".9"/><g class="tThumb"><circle r="9" fill="#fff" stroke="#1d3d22" stroke-width="2"/></g></svg><b>Left thumb · tempo</b><p>Slide down, then slide straight up. A tempo of 3:1 gets the best smash factor.</p></div>
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b>Right thumb · strike</b><p>Your thumb jitters, and the ball rides up-left of it. Keep the ball on the club's sweet spot.</p></div>
     </div>
+    <button class="card dailyCard dlCard" id="dailyCard"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
     <div class="card nameRow courseRow"><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
     <label class="card nameRow" id="nameRow"><span>Player</span><input id="nameIn" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="go"></label>
     <div class="playRow"><button class="btn alt" id="btnResume" style="display:none">Resume<small id="resumeInfo"></small></button><button class="btn" id="btnPlay">Tee off</button></div>
@@ -400,24 +471,55 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
 <div id="scrim"></div>
 <div class="sheet" id="bagSheet"><div class="grab"></div><div class="sht">Your bag <small id="bagLie">From the tee</small></div><div class="bag" id="bag"></div></div>
-<div class="sheet" id="menuSheet"><div class="grab"></div><div class="sht">Settings</div>
-  <div class="mlist">
+<div class="sheet" id="menuSheet"><div class="grab"></div>
+  <div class="mhead"><button class="mback" id="mBack" aria-label="Back" style="display:none"><i class="ic" data-ic="back"></i></button><div class="mtitle"><span id="mTitle">Menu</span><small id="mSub"></small></div></div>
+  <section class="mpg on" data-pg="home">
+    <button class="dlCard" id="mDaily"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
+    <div class="mgrp mround">
+      <div class="mrl"><span class="mk">Round in play</span><b id="mRoundInfo">GCC Basel</b><small id="mRoundSub"></small></div>
+      <div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div>
+      <div class="mnote">Switching course keeps the round you are playing: come back and it resumes where you left it.</div>
+    </div>
+    <div class="tiles">
+      <button class="tile" id="mBoard"><i class="ic" data-ic="trophy"></i><b>Leaderboard</b><small>All courses · tap a name</small></button>
+      <button class="tile" id="mStats"><i class="ic" data-ic="chart"></i><b>Stats &amp; records</b><small id="mLvl"></small></button>
+      <button class="tile" id="mCard"><i class="ic" data-ic="card"></i><b>Scorecard</b><small>Best shots of the round</small></button>
+      <button class="tile" id="mReplay"><i class="ic" data-ic="play"></i><b>Replay</b><small>Your last shot</small></button>
+    </div>
+    <div class="mgrp mlistg">
+      <button class="mli" data-go="player"><i class="ic" data-ic="user"></i><span>Player &amp; golfer<small id="mvPlayer"></small></span><i class="ic chev" data-ic="chev"></i></button>
+      <button class="mli" data-go="audio"><i class="ic" data-ic="sound"></i><span>Sound &amp; music<small id="mvAudio"></small></span><i class="ic chev" data-ic="chev"></i></button>
+      <button class="mli" data-go="live"><i class="ic" data-ic="users"></i><span>Live play<small id="mvLive"></small></span><i class="ic chev" data-ic="chev"></i></button>
+      <button class="mli" data-go="practice"><i class="ic" data-ic="target"></i><span>Practice<small>Any hole, nothing scored</small></span><i class="ic chev" data-ic="chev"></i></button>
+      <button class="mli" id="mHelp"><i class="ic" data-ic="help"></i><span>How to swing<small>Tempo, strike, aim</small></span><i class="ic chev" data-ic="chev"></i></button>
+    </div>
+    <button class="mbtn dark wide mnew" id="mRound">Start a new round</button>
+  </section>
+  <section class="mpg" data-pg="player">
+    <div class="mgrp"><div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
+    <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div></div>
+    <div class="mnote">Your name shows on the leaderboards and to the players you meet live.</div>
+  </section>
+  <section class="mpg" data-pg="audio">
+    <div class="mgrp"><div class="mrow">Sound effects<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+    <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div></div>
+    <div class="mnote">The calm guitar and piano plays on Augusta, with sound and music on.</div>
+  </section>
+  <section class="mpg" data-pg="live">
     <div class="sub"><span>Players online</span></div><div class="mpList" id="mpList"></div>
-    <div class="mrow">Course<div class="seg segCourse" id="segCourseM"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
-  </div>
-  <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
-  <div class="mbtns"><button class="mbtn dark wide" id="mReplay">▶ Replay last shot</button><button class="mbtn dark wide" id="mStats">📊 Stats &amp; records</button><button class="mbtn dark" id="mBoard">Leaderboard</button><button class="mbtn dark" id="mCard">Scorecard</button><button class="mbtn dark" id="mHelp">How to swing</button><button class="mbtn dark" id="mRound">New round</button></div>
-  <div class="mlist setBlock">
-    <div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
-    <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div>
-    <div class="mrow">Sound<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
-    <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
-    <div class="mrow mpRow">Live room<div class="mpRoom"><input id="mpCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code" enterkeyhint="go"><button class="mpb" id="mpJoin">Join</button></div></div>
+    <div class="sub"><span>Private room</span></div>
+    <div class="mgrp"><div class="mrow mpRow">Room code<div class="mpRoom"><input id="mpCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code" enterkeyhint="go"><button class="mpb" id="mpJoin">Join</button></div></div></div>
     <div class="mpInfo" id="mpInfo">Play live with friends: everyone in the same room sees the others' balls fly on the same hole, and the scores.<div class="mpBtns"><button class="mpb" id="mpNew">New room</button><button class="mpb" id="mpShare">Share link</button></div></div>
-  </div>
+  </section>
+  <section class="mpg" data-pg="practice">
+    <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
+    <div class="mnote">Picking a hole ends the round in play. Practice is never scored or posted.</div>
+  </section>
 </div>
 <div class="sheet" id="cardSheet"><div class="grab"></div><div id="cardBody"></div></div>
 <div class="sheet" id="boardSheet"><div class="grab"></div><div class="sht">Leaderboard <small id="boardName">Golf &amp; Country Club Basel</small></div><div id="boardBody"></div></div>
+<div class="sheet" id="dailySheet"><div class="grab"></div><div class="sht"><span id="dailyTitle">Daily challenge</span></div><div id="dailyBody"></div></div>
+<div class="sheet" id="playerSheet"><div class="grab"></div><div class="sht"><span><button class="plBack" id="plBack" aria-label="Back">‹</button><span id="plName">Player</span></span><small id="plSub"></small></div><div id="playerBody"></div></div>
 <div class="sheet" id="mapSheet"><div class="grab"></div><div class="sht"><span id="mapTitle">Hole map</span><small id="mapInfo"></small></div><div class="mapwrap"><canvas id="mapCv"></canvas></div><div class="maph"><span>Tap or drag to place your target</span><button class="mbtn dark" id="mapDone" style="height:44px;padding:0 22px">Done</button></div></div>
 <div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
 <div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="howVid"><video id="howVid" src="swing-explainer.mp4" poster="swing-poster.jpg" controls playsinline webkit-playsinline preload="none"></video></div><div class="help">
@@ -3042,7 +3144,7 @@ function setCourse(key) {
   HOLE_LEN = HOLE_DEFS.map(d => Math.round(holeLength(d)));
   BEST_KEY = COURSE.best; BOARD_KEY = COURSE.board;
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
-  G.hole = 0; G.submitted = false; G.practice = false;
+  G.hole = 0; G.submitted = false; G.practice = false; G.shotLog = []; G.daily = null;
   if (settings.course !== COURSE.key) { settings.course = COURSE.key; saveSettings(); }
   $('courseLine').textContent = `${COURSE.name}\n${HOLE_DEFS.length} holes · Par ${PAR_TOTAL}`;
   $('boardName').textContent = COURSE.name;
@@ -5003,7 +5105,7 @@ function mpConnect(lib) {
   const c = lib.connect(url, { clientId: 'ssg_' + MP.id + '_' + Math.random().toString(36).slice(2, 6), clean: true, keepalive: 30, reconnectPeriod: 4000, connectTimeout: 15000,
     will: { topic: mpT('s/' + MP.id), payload: '', retain: true, qos: 0 } });
   MP.client = c;
-  c.on('connect', () => { MP.fails = 0; MP.st = 'on'; c.subscribe([mpT('+/+')].concat(Object.keys(COURSES).filter(k => k !== 'legacy').map(k => `ssgolf/v1/${mpLobby(k)}/+/+`).filter(t => !t.startsWith(mpT(''))))); mpState(true); mpSync(); }); // my room, and every course's public lobby (who is playing where)
+  c.on('connect', () => { MP.fails = 0; MP.st = 'on'; c.subscribe([mpT('+/+')].concat(Object.keys(COURSES).filter(k => k !== 'legacy').map(k => `ssgolf/v1/${mpLobby(k)}/+/+`).filter(t => !t.startsWith(mpT(''))))); mpState(true); dlSubscribe(c); dlFlush(); mpSync(); }); // my room, and every course's public lobby (who is playing where), and the daily challenge boards
   c.on('message', (topic, buf) => mpMsg(topic, buf));
   const fail = () => { if (MP.client !== c) return; MP.st = 'connecting'; mpSync(); if (++MP.fails >= 2 && !q) { MP.fails = 0; MP.bi++; try { c.end(true); } catch (e) { } MP.client = null; setTimeout(() => MP.room && mpConnect(lib), 500); } };
   c.on('error', fail); c.on('offline', fail);
@@ -5018,6 +5120,7 @@ function mpLeave(keep) {
 function mpMsg(topic, buf) {
   const p = topic.split('/'), room = p[2], kind = p[3], id = p[4]; if (!id || id === MP.id) return;
   const txt = buf && buf.length ? new TextDecoder().decode(buf) : '';
+  if (room && room.startsWith('DAY')) { if (kind === 'd') dlMsg(room.slice(3), id, txt); return; } // a daily challenge board entry
   if (kind === 's') {
     if (!txt) { const o = MP.objs.get(id); if (o) mpDrop(o); MP.objs.delete(id); MP.peers.delete(id); if (MP.follow === id) mpResume(); return; }
     let d; try { d = JSON.parse(txt); } catch (e) { return; }
@@ -5457,11 +5560,12 @@ const saveKey = c => ROUND_KEY + '-' + c;
 // scorecard is opened, so closing the app on the last hole's card cannot lose the round. Runs once per round.
 function finishRound() {
   if (G.practice || !G.scores || !G.scores.every(v => v != null)) return;
-  clearRound();
+  clearRound(G.daily ? 'daily' : undefined);
   if (G.submitted) return; G.submitted = true;
   const tp = totalToPar();
+  if (G.daily) { dailyDone(tp); if (dayId() === G.daily.day) return; } // (a daily round finished after the day closed counts as an ordinary round)
   try { const best = +localStorage.getItem(BEST_KEY) || null; if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { }
-  statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1 });
+  statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1, bs: bestShotsCompact() });
 }
 function saveRound() {
   if (G.practice || !G.C || !G.scores || G.state === 'title') return;
@@ -5475,10 +5579,11 @@ function saveRound() {
     strokes: G.strokes, x: G.ball.x, z: G.ball.z, teed: !!G.teed, prev: G.prev || null, yaw: G.yaw, club: G.club, target: G.target || null,
     wind: G.wind, swirl: G.C.swirl || 0, sw: G.swirl || null,
     wx: G.weather ? { id: G.weather.id, left: G.wxLeft, n: G.wxN, k: G.wxK, next: G.wxNext ? G.wxNext.id : null, prev: G.wxPrev || null } : null,
-    shot: flying ? { L: sh.L, x: G.prev.x, z: G.prev.z, teed: !!G.prev.teed, playT: Math.max(0, G.playT), summary: sh.summary } : null
+    shot: flying ? { L: sh.L, x: G.prev.x, z: G.prev.z, teed: !!G.prev.teed, playT: Math.max(0, G.playT), summary: sh.summary, pre: sh.pre || null } : null
   } : null;
-  const r = { v: 1, course: COURSE.key, hole: h, scores: G.scores, putts: G.putts, fir: G.fir, gir: G.gir, pens: G.pens, pins: G.pins, planes: G.planes, at: Date.now(), mid };
-  try { localStorage.setItem(saveKey(COURSE.key), JSON.stringify(r)); } catch (e) { }
+  const r = { v: 1, course: COURSE.key, hole: h, scores: G.scores, putts: G.putts, fir: G.fir, gir: G.gir, pens: G.pens, pins: G.pins, planes: G.planes, log: G.shotLog || [], at: Date.now(), mid };
+  if (G.daily) r.daily = { day: G.daily.day, course: G.daily.course, seed: G.daily.seed };
+  try { localStorage.setItem(saveKey(G.daily ? 'daily' : COURSE.key), JSON.stringify(r)); } catch (e) { }
   refreshResume();
 }
 function clearRound(course) {
@@ -5490,9 +5595,11 @@ function clearRound(course) {
 function loadRound(k) {
   try {
     let r = JSON.parse(localStorage.getItem(saveKey(k)) || 'null');
-    if (!r) { const o = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null'); if (o && o.course === k) r = o; }
+    if (!r && k !== 'daily') { const o = JSON.parse(localStorage.getItem(ROUND_KEY) || 'null'); if (o && o.course === k) r = o; }
     const c = r && COURSES[r.course];
-    if (!r || !c || r.course !== k || !Array.isArray(r.scores) || r.scores.length !== c.defs.length || Date.now() - r.at > 30 * 864e5) return null;
+    if (k === 'daily' && !(r && r.daily && r.daily.day === dayId() && r.daily.course === r.course)) return null; // the challenge of an earlier day is over
+    if (k !== 'daily' && r && r.daily) return null;
+    if (!r || !c || (k !== 'daily' && r.course !== k) || !Array.isArray(r.scores) || r.scores.length !== c.defs.length || Date.now() - r.at > 30 * 864e5) return null;
     if (r.scores.every(v => v != null) || (!r.mid && r.scores.every(v => v == null))) return null;
     return r;
   } catch (e) { return null; }
@@ -5517,8 +5624,9 @@ function refreshResume() {
 function resumeRound(course) {
   const r = savedRound(course); if (!r) return false;
   setCourse(r.course);
+  if (r.daily) G.daily = Object.assign({}, r.daily, { wx: dailyWeatherPlan(r.daily.seed, COURSES[r.course].defs.length) });
   const n = HOLE_DEFS.length, arr = (a, d) => Array.isArray(a) && a.length === n ? a : HOLE_DEFS.map(() => d);
-  G.practice = false; G.submitted = false; if (r.planes != null) G.planes = r.planes;
+  G.practice = false; G.submitted = false; G.shotLog = Array.isArray(r.log) ? r.log : []; if (r.planes != null) G.planes = r.planes;
   G.scores = arr(r.scores, null); G.putts = arr(r.putts, 0); G.fir = arr(r.fir, null); G.gir = arr(r.gir, null); G.pens = arr(r.pens, 0); G.pins = arr(r.pins, 0);
   const h = resumeHole(r), mid = r.mid && h === r.hole ? r.mid : null, pu = G.putts[h], pe = G.pens[h];
   startHole(h);
@@ -5535,7 +5643,7 @@ function resumeRound(course) {
     const res = simulateShot(G.C, { x: G.ball.x, y: G.ball.y + (G.teed ? .03 : 0), z: G.ball.z, v: L.v, w: L.w, wind: L.putt ? null : G.wind, putt: !!L.putt, flag: !L.putt });
     G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res }; SW.last = L; SW.phase = 'done';
     const t = Math.min(q.playT, Math.max(0, res.duration - .05)); let ei = 0; while (ei < res.events.length && res.events[ei].t <= t) ei++;
-    G.shot = { L, res, ei, finished: false, summary: q.summary || '' };
+    G.shot = { L, res, ei, finished: false, summary: q.summary || '', pre: q.pre || null };
     const cp = new THREE.Vector3(), lk = new THREE.Vector3(), v = L.v; addressCamFor(cp, lk, G.ball.x, G.ball.y, G.ball.z, Math.atan2(v[0], -v[2]), !!L.putt, G.teed);
     W.cam.position.copy(cp); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
     document.body.classList.add('flight'); if (G.rig) { G.rig.arr = null; G.rig.launch = null; }
@@ -5549,11 +5657,12 @@ function resumeRound(course) {
   beginHole(); G.snapCam = true; updateHUD(); // straight to the address view, no flyover
   return true;
 }
-function startRound() {
-  clearRound();
-  G.practice = false; G.submitted = false; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
+function startRound(daily) {
+  if (!daily && G.daily) { saveRound(); G.daily = null; } // a new ordinary round: the daily challenge in play waits where it is
+  clearRound(G.daily ? 'daily' : undefined);
+  G.practice = false; G.submitted = false; G.shotLog = []; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
-  G.pins = HOLE_DEFS.map(() => Math.floor(Math.random() * 4)); // a fresh pin sheet every round
+  { const pr = G.daily ? mulberry32(G.daily.seed + 99) : Math.random; G.pins = HOLE_DEFS.map(() => Math.floor(pr() * 4)); } // a fresh pin sheet every round (the same one for everyone on the daily challenge)
   startHole(0);
 }
 function startHole(i) {
@@ -5565,14 +5674,16 @@ function startHole(i) {
   G.C = courseFor(i);
   if (!G.C.real && G.C.def.par === 3) { G.C.center = mkPoly([[G.C.def.start.x, G.C.def.start.f], [G.C.cup.x, -G.C.cup.z]], null); G.C.length = G.C.center.L; }
   buildHole(G.C);
-  const r = mulberry32((Date.now() & 0xffff) + i * 7), wa = r() * TAU, ws = (.25 + .75 * r()) * G.C.def.windMax;
+  const r = mulberry32(G.daily ? (G.daily.seed + i * 7919) >>> 0 : (Date.now() & 0xffff) + i * 7), wa = r() * TAU, ws = (.25 + .75 * r()) * G.C.def.windMax;
   G.wind = [Math.sin(wa) * ws, -Math.cos(wa) * ws];
   // Amen Corner (Augusta 11-13): the wind swirls - it keeps shifting until the swing starts (swirlWind), and above the pines
   // it blows from 40-85 degrees round from the wind down low (simulateShot, C.swirl)
   G.swirl = G.C.def.swirl ? { a: wa, s: ws, ph: r() * TAU, t: 0 } : null;
   if (G.C.def.swirl) G.C.swirl = (r() < .5 ? -1 : 1) * (.7 + .78 * r());
   // weather: random, but one spell lasts 6-9 holes (a replayed practice hole keeps it)
-  if (!G.practice || G.wxLeft == null) {
+  if (G.daily) { // the daily challenge: the weather of every hole is the same for everyone
+    G.weather = G.daily.wx[i] || G.weather || WEATHERS[1]; G.wxN = 9; G.wxLeft = 5; G.wxK = 0; G.wxNext = null; G.sinceRain = G.weather.id === 'rain' ? 0 : G.sinceRain == null ? 99 : G.sinceRain + 1;
+  } else if (!G.practice || G.wxLeft == null) {
     if (G.wxLeft == null || G.wxLeft <= 0) {
       const prev = G.weather; G.wxPrev = prev ? prev.id : null;
       G.weather = G.wxNext && prev ? G.wxNext : prev ? nextWeather(prev.id, r) : drawWeather(r);
@@ -5838,6 +5949,7 @@ function impact(tImp) {
   G.lastShot = { C: G.C, hole: G.hole, x: G.ball.x, z: G.ball.z, teed: G.teed, L, res };
   G.shot = { L, res, ei: 0, finished: false, summary: `${L.quality} · ${L.shape} · Tempo ${L.ratio.toFixed(1)}:1` + (Math.abs(SW.pathDeg) >= .3 ? ` · Path ${SW.pathDeg > 0 ? '←' : '→'}${Math.abs(SW.pathDeg).toFixed(1)}°` : '') + (L.putt ? '' : ` · Smash ${L.smash.toFixed(2)}`) };
   if (G.rig) { G.rig.arr = null; G.rig.launch = null; } W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
+  G.shot.pre = { s: G.surf, teed: G.teed, d0: distToPin(), par: G.C.def.par };
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12; saveRound(); G.savedT = 0; mpShot(res);
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
@@ -5964,6 +6076,7 @@ function finishShot() {
   const sh = G.shot, r = sh.res, C = G.C, h = G.hole, par = C.def.par, first = G.strokes === 1;
   document.body.classList.remove('flight'); statsShot(sh, r);
   if (r.holed) {
+    logShot(sh, r, true, false);
     G.state = 'holed'; G.holedT = 0; G.scores[h] = G.strokes;
     if (G.gir[h] == null) G.gir[h] = G.strokes - 1 <= par - 2;
     if (first && par >= 4) G.fir[h] = false;
@@ -5996,6 +6109,7 @@ function finishShot() {
     if (first && par >= 4) G.fir[h] = G.surf === S.FAIR;
   }
   if (first && par >= 4 && G.fir[h] == null) G.fir[h] = false;
+  logShot(sh, r, false, !!(r.water || r.ob));
   if (G.surf === S.GREEN && G.gir[h] == null && G.strokes <= par - 2) G.gir[h] = true;
   if (G.strokes >= par + 5) {
     G.scores[h] = par + 5; G.state = 'holed'; G.holedT = 0; statsHole(h); saveRound();
@@ -6606,10 +6720,10 @@ function readoutNote(text, cls) {
 }
 /* ---------- sheets ---------- */
 function sheetOpen() { return !!document.querySelector('.sheet.on'); }
-function openSheet(id) { closeSheets(true); addStatsChip(id); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); }
+function openSheet(id) { closeSheets(true); if (id === 'menuSheet') menuPage('home'); addStatsChip(id); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); }
 // every menu screen except the main menu (where Stats is a button) and Stats itself carries a small Stats shortcut with the player's level in its header
 function addStatsChip(id) {
-  if (id === 'menuSheet' || id === 'statsSheet') return;
+  if (id === 'menuSheet' || id === 'statsSheet' || id === 'playerSheet' || id === 'dailySheet') return;
   const h = $(id).querySelector('.sht'); if (!h) return; let c = h.querySelector('.stChip');
   if (!c) { c = document.createElement('button'); c.className = 'stChip'; c.onclick = e => { e.stopPropagation(); openStats(); }; h.appendChild(c); }
   let li = 0; LEVELS.forEach((l, i) => { if (ST.holes >= l[0]) li = i; }); c.textContent = '📊 ' + LEVELS[li][1];
@@ -6641,6 +6755,17 @@ function syncMenu() {
   document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.sound ? 1 : 0)));
   document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
   mpSync();
+  { const mi = $('mRoundInfo'); if (mi) {
+    let li = 0; LEVELS.forEach((l, i) => { if (ST.holes >= l[0]) li = i; });
+    const hand = settings.hand === -1 ? 'Lefty' : 'Righty', on = G.state !== 'title' && G.scores && !G.practice, tp = on ? totalToPar() : null;
+    mi.textContent = G.daily ? 'Daily challenge' : COURSE.name; $('mRoundSub').textContent = G.practice ? 'Practice · nothing scored' : on ? `${G.daily ? COURSE.short + ' · ' : ''}Hole ${G.hole + 1} of ${HOLE_DEFS.length} · ${tp.s ? fmtToPar(tp.d) : 'E'}` : 'No round in play';
+    $('mLvl').textContent = LEVELS[li][1] + ' · ' + ST.holes + ' holes';
+    if ($('menuSheet').querySelector('.mpg.on[data-pg="home"]')) $('mSub').textContent = playerName() + ' · ' + LEVELS[li][1];
+    else $('mSub').textContent = '';
+    $('mvPlayer').textContent = playerName() + ' · ' + hand; $('mvAudio').textContent = 'Sound ' + (settings.sound ? 'on' : 'off') + ' · Music ' + (settings.music !== false ? 'on' : 'off');
+    const n = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 3 * 36e5).length;
+    $('mvLive').textContent = MP.st === 'on' ? (mpIsLobby(MP.room) ? 'Public lobby' : 'Room ' + MP.room) + ' · ' + n + ' online' : MP.st === 'error' ? 'Offline' : 'Connecting…';
+  } }
   const ph = $('pracHoles');
   if (ph) {
     if (ph.children.length !== HOLE_DEFS.length) { ph.innerHTML = ''; HOLE_DEFS.forEach((d, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.onclick = () => startPractice(i); ph.appendChild(b); }); }
@@ -6650,6 +6775,7 @@ function syncMenu() {
 }
 // practice: one hole at a time, nothing scored. Picking a hole ends the round in progress.
 function startPractice(i) {
+  if (G.daily) { readout('<div class="r1">No practice during the daily challenge</div>', 2.2); closeSheets(); return; }
   const inRound = !G.practice && (G.scores.some(v => v != null) || G.strokes > 0) && G.state !== 'title';
   if (inRound && !confirm('End the current round and practise hole ' + (i + 1) + '?')) return;
   G.practice = true; G.submitted = true; clearRound();
@@ -6682,10 +6808,11 @@ function showScorecard(final) {
   const played = G.scores.filter(s => s != null).length, firH = G.fir.filter((f, i) => f === true).length, firN = HOLE_DEFS.filter((d, i) => d.par >= 4 && G.fir[i] != null).length, girH = G.gir.filter(g => g === true).length;
   if (final) finishRound();
   let best = null; try { best = +localStorage.getItem(BEST_KEY) || null; } catch (e) { }
-  $('cardBody').innerHTML = `<div class="sht">${final ? 'Round complete' : 'Scorecard'} <small>${final ? playerName() + ' · ' + COURSE.short : COURSE.name}</small></div>${final ? '<div id="finalBoard"></div><div class="sub">Scorecard</div>' : ''}<div class="scw"><table class="vcard">${rows}</table></div>
+  $('cardBody').innerHTML = `<div class="sht">${final ? (G.daily ? 'Daily challenge complete' : 'Round complete') : 'Scorecard'} <small>${final ? playerName() + ' · ' + COURSE.short : COURSE.name}</small></div>${final ? '<div id="finalBoard"></div><div class="sub">Scorecard</div>' : ''}<div class="scw"><table class="vcard">${rows}</table></div>
     <div class="scsum"><div><b>${played ? fmtToPar(tp.d) : '–'}</b>To par</div><div><b>${firN ? firH + '/' + firN : '–'}</b>Fairways</div><div><b>${played ? girH + '/' + played : '–'}</b>Greens</div><div><b>${best || '–'}</b>Best</div></div>
+    ${bestShotsHtml(G.shotLog)}
     ${final ? '<div class="mbtns"><button class="mbtn dark" id="scAgain">Play again</button><button class="mbtn" id="scClose">Close</button></div>' : ''}`;
-  if (final) fillBoard($('finalBoard'), 10);
+  if (final) { if (G.daily && dlRec(G.daily.day) && dlRec(G.daily.day).status === 'done') fillDaily($('finalBoard'), true); else fillBoard($('finalBoard'), 10); }
   openSheet('cardSheet');
   if (final) { $('scAgain').onclick = () => { closeSheets(); startRound(); }; $('scClose').onclick = () => { closeSheets(); G.state = 'title'; $('title').classList.add('on'); showBest(); }; }
 }
@@ -6877,7 +7004,7 @@ function statsHole(h) {
   S.girTry++; if (G.gir[h] === true) { S.gir++; S.cur.gir++; beat('girStreak', S.cur.gir, 'Streak running'); } else S.cur.gir = 0;
   if (par >= 4) { S.fwTry++; if (G.fir[h] === true) { S.fwHit++; S.cur.fw++; beat('fwStreak', S.cur.fw, 'Streak running'); } else S.cur.fw = 0; }
   if (d < 0) { S.cur.bird++; beat('birdStreak', S.cur.bird, 'Streak running'); } else S.cur.bird = 0;
-  saveStats();
+  saveStats(); if (G.daily) dlHole();
 }
 function statsRound(tp) {
   ST.rounds++; saveStats(); const pu = G.putts.reduce((a, b) => a + b, 0), c = COURSE.short;
@@ -6911,6 +7038,66 @@ function openStats() {
   $('stReset').onclick = () => { if (confirm('Reset all stats and records on this device?')) { ST = defStats(); saveStats(); openStats(); } };
   openSheet('statsSheet');
 }
+/* ---------- how good a shot was: strokes gained ---------- */
+// Every shot of a round is logged with where it started, where it ended and how it was struck. Its worth is the strokes it gained: the
+// strokes a golfer is expected to need from where it started, less those from where it ended, less the one it took (and any penalty).
+// Distance and lie are in the expected-strokes tables, so a holed shot from off the green (a lot of strokes saved) or a long putt
+// (more with break) beats a perfect drive, which only saves a few tenths. Strike quality, smash factor and putt break add on top.
+const SG_FAIR = [[0, 1.9], [3, 2.05], [8, 2.3], [15, 2.45], [25, 2.58], [40, 2.7], [60, 2.78], [90, 2.84], [120, 2.92], [150, 3.05], [180, 3.2], [220, 3.42], [260, 3.62], [300, 3.8], [360, 4.05], [420, 4.3], [500, 4.6]];
+const SG_PUTT = [[0, 1], [.3, 1.0], [1, 1.04], [2, 1.35], [3, 1.55], [5, 1.78], [8, 1.93], [12, 2.05], [18, 2.2], [25, 2.35], [40, 2.6]];
+function sgTab(t, d) {
+  if (d <= 0) return t[0][1];
+  for (let i = 1; i < t.length; i++) if (d <= t[i][0]) { const a = t[i - 1], b = t[i]; return a[1] + (b[1] - a[1]) * (d - a[0]) / (b[0] - a[0]); }
+  const a = t[t.length - 2], b = t[t.length - 1]; return b[1] + (b[1] - a[1]) / (b[0] - a[0]) * (d - b[0]);
+}
+// strokes still to play from a lie (surface, metres to the pin)
+function expStrokes(surf, d) {
+  if (surf === S.GREEN) return sgTab(SG_PUTT, d);
+  if (surf === S.FRINGE && d < 22) return sgTab(SG_PUTT, d) + .12;
+  const f = sgTab(SG_FAIR, d);
+  return f + (surf === S.TEE ? .04 : surf === S.FIRST ? .06 : surf === S.ROUGH ? .28 : surf === S.DEEP ? .55 : surf === S.SAND ? (d < 35 ? .4 : .7) : 0);
+}
+// the sideways bend of a putt: the furthest the ball strays from the straight line between where it started and where it stopped
+function puttBreak(res) {
+  const fr = res.frames, n = res.n; if (!fr || n < 3) return 0;
+  const x0 = fr[1], z0 = fr[3], x1 = fr[(n - 1) * 5 + 1], z1 = fr[(n - 1) * 5 + 3], dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1; let m = 0;
+  for (let i = 0; i < n; i += 2) m = Math.max(m, Math.abs((fr[i * 5 + 1] - x0) * dz - (fr[i * 5 + 3] - z0) * dx) / L);
+  return m;
+}
+// kinds: 0 drive, 1 approach, 2 chip or pitch, 3 putt, 4 bunker shot, 5 recovery (from deep rough), 6 other
+function shotKind(pre, putt) { return putt ? 3 : pre.teed && pre.par >= 4 ? 0 : pre.s === S.SAND ? 4 : pre.s === S.DEEP ? 5 : pre.d0 < 45 ? 2 : pre.d0 > 55 ? 1 : 6; }
+// called from finishShot once the ball's new lie is known (holed: no lie)
+function logShot(sh, r, holed, pen) {
+  const pre = sh.pre; if (!pre || G.practice) return;
+  const putt = !!sh.L.putt, d1 = holed ? 0 : distToPin(), e1 = holed ? 0 : expStrokes(G.surf, d1);
+  const sg = expStrokes(pre.s, pre.d0) - e1 - 1 - (pen ? 1 : 0);
+  const bk = putt ? puttBreak(r) : 0, kind = shotKind(pre, putt);
+  let mult = 1; if (putt && pre.d0 > 1.5) mult += clamp(bk / Math.max(1.5, pre.d0 * .12), 0, 1) * .6; // a putt that bends is worth more
+  const q = sh.L.qualityLevel | 0, sm = sh.L.smash || 0;
+  let pts = sg * 100 * mult;
+  if (!putt && sg > -.15) pts += [15, 6, 0, -8][q] + (kind === 0 ? 10 * clamp((sm - 1.38) / .12, 0, 1) : 0); // a pure strike, a high smash factor
+  if (holed) pts += 15;
+  if (pen) pts = Math.min(pts, -20);
+  (G.shotLog = G.shotLog || []).push({ h: G.hole, n: G.strokes - (pen ? 1 : 0), c: G.club, k: kind, l: pre.s, f: pre.teed ? 1 : 0, d: +pre.d0.toFixed(1), e: +d1.toFixed(1), t: +(r.total || 0).toFixed(0), o: holed ? 1 : 0, b: +bk.toFixed(2), q, sm: +sm.toFixed(2), s: G.surf, fw: kind === 0 && !holed && G.surf === S.FAIR ? 1 : 0, p: Math.round(pts) });
+}
+function shotWords(x) {
+  const cl = CLUBS[x.c] ? CLUBS[x.c].name : '', lie = x.f ? 'the tee' : x.l === S.SAND ? 'the bunker' : x.l === S.ROUGH ? 'the rough' : x.l === S.DEEP ? 'deep rough' : x.l === S.FRINGE ? 'the fringe' : x.l === S.FIRST ? 'the first cut' : x.l === S.GREEN ? 'the green' : 'the fairway';
+  const m = v => v < 10 ? v.toFixed(1) + ' m' : Math.round(v) + ' m';
+  let t;
+  if (x.o && x.k === 3) t = m(x.d) + ' putt holed' + (x.b >= .3 ? ', ' + m(x.b).replace(' m', '') + ' m of break' : '');
+  else if (x.o) t = x.n === 1 ? 'Hole in one' : x.f ? 'Holed from the tee' : 'Holed out from ' + m(x.d) + (x.l === S.SAND ? ' in the sand' : x.l === S.GREEN ? '' : ' off the green');
+  else if (x.k === 0) t = 'Drive ' + x.t + ' m' + (x.fw ? ', in the fairway' : '');
+  else if (x.k === 3) t = m(x.d) + ' putt to ' + m(x.e);
+  else if ((x.s === S.GREEN || x.s === S.FRINGE)) t = (x.k === 4 ? 'Bunker shot' : x.k === 2 ? 'Chip' : cl) + ' to ' + m(x.e);
+  else t = cl + ' ' + x.t + ' m';
+  return { t, d: `Hole ${x.h + 1} · stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
+}
+function bestShots(log, n) { return (log || []).filter(x => x.p >= 15).slice().sort((a, b) => b.p - a.p).slice(0, n || 3); }
+function bestShotsHtml(log, name) {
+  const b = bestShots(log); if (!b.length) return '';
+  const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div><span>★ ${x.p}</span></div>`; }).join('')}</div>`;
+}
 /* ================= PLAYER + LEADERBOARD ================= */
 // Rounds go to a board on this device (always) and, when the page runs inside Claude with the db capability and the
 // viewer may write shared data, to a shared board everyone with the link can read.
@@ -6925,7 +7112,7 @@ const GH_REPO = 'nephlonor/SweetSpot';
 const GH_POST_KEY = ['Nnpt', 'VTZZcUtENzI0TVZGRWY4RmQw', 'QVBmeDF4R0ljTXVvM0VSa2RG', 'ODY0OUsyWmVaSlZ6SXJ0c2FL', 'SEEwcjVtdHN4NFdqQUNnX25L', 'Z2l0aHViX3BhdF8xMUEyNU1J']; // e.g. the base64 of the token, reversed, in a few strings
 const ghKey = () => { try { return GH_POST_KEY.length ? atob(GH_POST_KEY.slice().reverse().join('')) : ''; } catch (e) { return ''; } };
 function deviceId() { try { let d = localStorage.getItem('ssg-dev'); if (!d) { d = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('ssg-dev', d); } return d; } catch (e) { return 'x'; } }
-function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId() }; }
+function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId(), pf: profileCompact(), bs: r.bs || [] }; }
 // returns true when the round was filed (no account needed)
 async function postAuto(r) {
   const k = ghKey(); if (!k) return false;
@@ -6945,7 +7132,7 @@ async function loadWorld(force, key) {
   key = key || COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${key}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); if (!r.ok) throw new Error('http');
-    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18 })) : [];
+    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18, by: typeof x.by === 'string' ? x.by : '', bs: Array.isArray(x.bs) ? x.bs : [] })) : [];
   } catch (e) { if (!Board.gh[key]) Board.gh[key] = null; }
   refreshBoards();
 }
@@ -7033,6 +7220,8 @@ function fillBoard(el, limit, key, pick) {
       b.onclick = () => { Board.view = c.key; loadWorld(false, c.key); refreshBoards(); }; cs.appendChild(b);
     }
     el.appendChild(cs);
+    const dc = document.createElement('button'); dc.className = 'dlCard dlMini dl-' + dlStatus().k; dc.innerHTML = '<i class="ic"></i><span><b></b><small></small></span><em></em>'; dc.querySelector('.ic').innerHTML = ICONS.flag;
+    const st = dlStatus(); dc.querySelector('b').textContent = st.big; dc.querySelector('small').textContent = st.sub; dc.querySelector('em').textContent = st.tag; dc.onclick = dailyTap; el.appendChild(dc);
   }
   const shared = !!Board.db, tab = Board.tab || 'world';
   const head = document.createElement('div'); head.className = 'sub';
@@ -7069,6 +7258,8 @@ function fillBoard(el, limit, key, pick) {
     const tp = document.createElement('span'); tp.className = 'tp ' + (r.toPar < 0 ? 'good' : r.toPar > 0 ? '' : ''); tp.textContent = fmtToPar(r.toPar);
     const st = document.createElement('span'); st.className = 'st'; st.textContent = r.strokes;
     row.append(rk, nm, tp, st); list.appendChild(row);
+    row.style.cursor = 'pointer'; // a name opens that player's stats
+    row.onclick = () => openPlayer({ name: r.name, id: r.by, bs: r.bs, me: tab === 'device' || (!!r.by && r.by === dlMe()), back: pick ? () => { Board.view = key; fillBoard($('boardBody'), 30, key, true); openSheet('boardSheet'); } : null });
   });
   // post my best round of this course to the world board
   const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r))) : null;
@@ -7079,9 +7270,264 @@ function fillBoard(el, limit, key, pick) {
 }
 function refreshBoards() {
   if ($('boardSheet').classList.contains('on')) fillBoard($('boardBody'), 30, Board.view, true);
-  const fb = $('finalBoard'); if (fb && $('cardSheet').classList.contains('on')) fillBoard(fb, 10);
+  const fb = $('finalBoard'); if (fb && !fb.dataset.daily && $('cardSheet').classList.contains('on')) fillBoard(fb, 10);
 }
 function openBoard() { Board.view = COURSE.key; loadWorld(); fillBoard($('boardBody'), 30, Board.view, true); openSheet('boardSheet'); }
+
+/* ---------- menu: pages and icons ---------- */
+const ICONS = {
+  back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>', chev: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+  flag: '<svg viewBox="0 0 24 24"><path d="M6 21V4m0 0h11l-2.5 4L17 12H6"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4"/></svg>',
+  chart: '<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>', card: '<svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 9h8M8 13h8M8 17h5"/></svg>',
+  play: '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>', user: '<svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
+  sound: '<svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4zM16.5 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10"/></svg>',
+  users: '<svg viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 19a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 13.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>',
+  target: '<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM12 12h.01"/></svg>',
+  help: '<svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.8.5-1.1 1-1.1 1.8M12 17h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>'
+};
+function initIcons() { document.querySelectorAll('.ic[data-ic]').forEach(e => { e.innerHTML = ICONS[e.dataset.ic] || ''; }); }
+const MENU_PAGES = { player: 'Player & golfer', audio: 'Sound & music', live: 'Live play', practice: 'Practice' };
+function menuPage(n) {
+  n = MENU_PAGES[n] ? n : 'home';
+  document.querySelectorAll('#menuSheet .mpg').forEach(x => x.classList.toggle('on', x.dataset.pg === n));
+  $('mBack').style.display = n === 'home' ? 'none' : ''; $('mTitle').textContent = n === 'home' ? 'Menu' : MENU_PAGES[n];
+  $('menuSheet').scrollTop = 0; if (n === 'live') { MP.listSig = ''; mpList(); } syncMenu();
+}
+function dailyTap() { const r = dlRec(); if ((r && r.status !== 'playing') || G.daily) { openDaily(); return; } closeSheets(); startDaily(); }
+/* ================= DAILY CHALLENGE ================= */
+// One round a day, the same for everyone: the course of the day, its pins, wind and weather. One chance, finished before the day ends
+// (11:59 pm, Zurich time). Each hole you finish goes out live (MQTT, retained on the broker) and the board you see while you play is
+// everyone's score through the same number of holes you have finished - a round that was posted hours ago replays hole by hole as you
+// go, and someone still playing can be seen charging up it. The full board opens once your own round is done, and stays open for 24 hours
+// after the day closes (yesterday's final board). Final results are also filed in the repository (leaderboard/daily-<day>.json) so they last.
+const DAILY_ZONE = 'Europe/Zurich', DAILY_COURSES = ['gccb', 'alsace', 'augusta'];
+const _dFmt = new Intl.DateTimeFormat('en-CA', { timeZone: DAILY_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+function zParts(ms) { const o = {}; for (const q of _dFmt.formatToParts(new Date(ms))) o[q.type] = q.value; return o; }
+function dayId(ms) { const o = zParts(ms || Date.now()); return `${o.year}-${o.month}-${o.day}`; }
+function dayNum(id) { return Math.floor(Date.UTC(+id.slice(0, 4), +id.slice(5, 7) - 1, +id.slice(8, 10)) / 864e5); }
+function dayAdd(id, n) { return new Date((dayNum(id) + n) * 864e5).toISOString().slice(0, 10); }
+function dayLeftSec() { const o = zParts(Date.now()); return 86400 - (+o.hour * 3600 + +o.minute * 60 + +o.second); }
+const dailyCourse = id => DAILY_COURSES[dayNum(id) % 3];
+function dailySeed(id) { let h = 2166136261; for (const c of 'ssg-daily-' + id) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
+function dailyWeatherPlan(seed, n) { // one spell of weather lasts 6-9 holes, drawn from the day's seed
+  const r = mulberry32((seed ^ 0x5bd1e995) >>> 0), out = []; let w = null, left = 0;
+  for (let i = 0; i < n; i++) { if (left <= 0) { w = w ? nextWeather(w.id, r) : drawWeather(r); left = 6 + Math.floor(r() * 4); } out.push(w); left--; }
+  return out;
+}
+function fmtLeft(sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h} h ${m} min` : m ? `${m} min ${Math.floor(sec % 60)} s` : `${Math.floor(sec)} s`; }
+const DL = { rows: {}, files: {}, fileAt: {}, me: null, pub: null, tab: 'today', t: 0, day: dayId(), subs: '', players: null, playersAt: 0 };
+// my hash, the same one the workflow files my results under
+(async () => { try { const d = new TextEncoder().encode(String(deviceId()).toLowerCase()), h = await crypto.subtle.digest('SHA-1', d); DL.me = [...new Uint8Array(h)].slice(0, 4).map(b => b.toString(16).padStart(2, '0')).join(''); } catch (e) { DL.me = 'x' + String(deviceId()).slice(0, 7); } })();
+const dlMe = () => DL.me || 'x' + String(deviceId()).slice(0, 7);
+// this device's results (the last few days)
+function dlRecs() { try { const a = JSON.parse(localStorage.getItem('ssg-daily') || '{}'); return a && typeof a === 'object' ? a : {}; } catch (e) { return {}; } }
+function dlRec(day) { return dlRecs()[day || dayId()] || null; }
+function dlSet(rec) { const a = dlRecs(); a[rec.day] = rec; for (const k of Object.keys(a).sort().slice(0, -5)) delete a[k]; try { localStorage.setItem('ssg-daily', JSON.stringify(a)); } catch (e) { } }
+// compact stats profile and best shots, as filed with a round (numbers only)
+function profileCompact() {
+  const S = ST, R = S.rec, o = { r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, tr: S.trees, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
+  if (R.round.at != null) o.br = R.round.v; return o;
+}
+function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, p: x.p })); }
+const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, p: x.p | 0 } : null;
+const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; return Object.keys(r).length ? r : null; };
+// ---- going out and coming in
+function dlSubscribe(c) {
+  const t = dayId(), topics = [t, dayAdd(t, -1)].map(d => `ssgolf/v1/DAY${d}/d/+`); DL.subs = t;
+  try { c.subscribe(topics); } catch (e) { }
+}
+function dlFlush() { const c = MP.client; if (!c || MP.st !== 'on' || !DL.pub) return; try { c.publish(DL.pub.topic, DL.pub.payload, { retain: true, qos: 1 }); } catch (e) { } }
+function dlPublish() {
+  const d = G.daily; if (!d) return; const rec = dlRec(d.day); if (!rec) return;
+  const th = rec.h.filter(v => v > 0).length, e = { n: playerName(), c: rec.course, h: rec.h, th, tp: rec.tp || 0, done: rec.status === 'done', at: Date.now() };
+  if (e.done) { if (rec.pf) e.pf = rec.pf; if (rec.bs) e.bs = rec.bs; }
+  DL.pub = { topic: `ssgolf/v1/DAY${d.day}/d/${dlMe()}`, payload: JSON.stringify(e) }; dlFlush();
+}
+function dlMsg(day, id, txt) {
+  const m = DL.rows[day] || (DL.rows[day] = new Map());
+  if (!txt) { m.delete(id); dlRefresh(); return; }
+  let d; try { d = JSON.parse(txt); } catch (e) { return; }
+  if (!d || typeof d.n !== 'string' || !Array.isArray(d.h) || d.h.length !== 18) return;
+  const h = d.h.map(v => clamp(v | 0, 0, 20));
+  m.set(id, { n: cleanName(d.n) || 'Player', c: COURSES[d.c] ? d.c : dailyCourse(day), h, th: clamp(d.th | 0, 0, 18), done: !!d.done, at: +d.at || 0, pf: cleanPf(d.pf), bs: Array.isArray(d.bs) ? d.bs.slice(0, 3).map(cleanShot).filter(Boolean) : [] });
+  dlRefresh();
+}
+async function loadDailyFile(day, force) {
+  if (!force && DL.fileAt[day] && Date.now() - DL.fileAt[day] < 60000) return; DL.fileAt[day] = Date.now();
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/daily-${day}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' });
+    if (r.status === 404) DL.files[day] = []; else { if (!r.ok) throw new Error('http'); const a = await r.json(); DL.files[day] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Array.isArray(x.h) && x.h.length === 18 && typeof x.by === 'string').map(x => ({ id: x.by, n: cleanName(x.name) || 'Player', c: COURSES[x.c] ? x.c : dailyCourse(day), h: x.h.map(v => clamp(v | 0, 0, 20)), th: 18, done: true, at: +x.at || 0, pf: null, bs: Array.isArray(x.bs) ? x.bs.map(cleanShot).filter(Boolean) : [] })) : []; }
+  } catch (e) { if (!DL.files[day]) DL.files[day] = null; }
+  dlRefresh();
+}
+async function loadPlayers(force) {
+  if (!force && DL.players && Date.now() - DL.playersAt < 120000) return DL.players; DL.playersAt = Date.now();
+  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/players.json?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' }); DL.players = r.ok ? await r.json() : (DL.players || {}); } catch (e) { DL.players = DL.players || {}; }
+  return DL.players;
+}
+// everyone on a day's board: the retained live entries, the filed results, and my own record
+function dlAll(day) {
+  const out = new Map(), me = dlMe();
+  for (const e of DL.files[day] || []) out.set(e.id, e);
+  const m = DL.rows[day]; if (m) for (const [id, e] of m) { const o = out.get(id); if (!o || e.th > o.th || (e.done && !o.done) || (e.done && o.done && e.pf && !o.pf)) out.set(id, Object.assign({ id }, e, o && !e.pf ? { pf: o.pf } : {})); }
+  const rec = dlRec(day);
+  if (rec && rec.h) { const th = rec.h.filter(v => v > 0).length, o = out.get(me); if (!o || th >= o.th) out.set(me, { id: me, n: playerName(), c: rec.course, h: rec.h, th, done: rec.status === 'done', at: rec.at || 0, pf: rec.pf || (o && o.pf) || null, bs: rec.bs || (o && o.bs) || [], mine: true }); else o.mine = true; }
+  return [...out.values()];
+}
+// the standing after k holes (everyone's score through the same k, or through all they have played when that is fewer)
+function dlStanding(day, k, course) {
+  const pars = COURSES[course].defs.map(d => d.par);
+  return dlAll(day).filter(e => e.c === course).map(e => { const t = Math.min(k, e.th); let s = 0, p = 0; for (let i = 0; i < t; i++) { s += e.h[i]; p += pars[i]; } return { e, thru: t, tp: s - p, s, fin: e.done && t >= 18 }; })
+    .filter(x => x.thru > 0 || x.e.mine).sort((a, b) => a.tp - b.tp || b.thru - a.thru || (a.e.at || 0) - (b.e.at || 0));
+}
+const dlHoles = () => (G.daily && G.scores ? G.scores.filter(v => v != null).length : 0);
+let _dlMin = 0;
+function dlTick(dt) {
+  DL.t -= dt; if (DL.t > 0) return; DL.t = 1;
+  const d = dayId(); if (d !== DL.day) { DL.day = d; DL.tab = 'today'; if (MP.client && MP.st === 'on') dlSubscribe(MP.client); loadDailyFile(d); loadDailyFile(dayAdd(d, -1)); }
+  dlCards(); dlPanel(); if (++_dlMin >= 30) { _dlMin = 0; if ($('dailySheet').classList.contains('on')) fillDaily($('dailyBody')); }
+}
+// a hole is in: the record, and out to everyone
+function dlHole() {
+  const d = G.daily; if (!d || G.practice) return; const rec = dlRec(d.day) || { day: d.day, course: d.course, status: 'playing', startAt: Date.now() };
+  rec.h = G.scores.map(v => v == null ? 0 : v); rec.tp = totalToPar().d; dlSet(rec); dlPublish(); dlRefresh();
+}
+function dailyDone(tp) {
+  const d = G.daily, rec = dlRec(d.day) || { day: d.day, course: d.course, startAt: Date.now() }, inTime = dayId() === d.day;
+  rec.h = G.scores.slice(); rec.tp = tp.d; rec.strokes = tp.s; rec.at = Date.now(); rec.status = inTime ? 'done' : 'missed';
+  statsRound(tp); rec.pf = profileCompact(); rec.bs = bestShotsCompact(); dlSet(rec);
+  if (!inTime) return; // finished after the day closed: counts as an ordinary round (finishRound goes on)
+  G.submitted = true; dlPublish(); dlPost(rec); setTimeout(() => dlRefresh(), 300);
+}
+async function dlPost(rec) {
+  const k = ghKey(); if (!k || !rec || rec.status !== 'done') return false;
+  const CO = COURSES[rec.course]; if (!CO) return false;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: `[daily] ${playerName()} ${fmtToPar(rec.tp)} (${rec.strokes}) ${CO.short} ${rec.day}`, body: 'Daily challenge result from Sweet Spot Golf.\n\n```json\n' + JSON.stringify({ v: 1, daily: rec.day, course: rec.course, name: playerName(), h: rec.h, strokes: rec.strokes, toPar: rec.tp, holes: 18, at: rec.at, dev: deviceId(), pf: rec.pf || null, bs: rec.bs || [] }) + '\n```\n' }) });
+    if (!res.ok) return false; rec.posted = true; dlSet(rec); setTimeout(() => loadDailyFile(rec.day, true), 40000); return true;
+  } catch (e) { return false; }
+}
+// results of the last day and a half that never reached the repository (no network): tried again at start
+async function dlRetry() { const a = dlRecs(); for (const k of Object.keys(a)) { const r = a[k]; if (r.status === 'done' && !r.posted && r.at > Date.now() - 36 * 36e5) await dlPost(r); } }
+// ---- the daily entry points: start screen and menu card
+function dlStatus() {
+  const day = dayId(), rec = dlRec(day), c = COURSES[dailyCourse(day)], left = dayLeftSec();
+  if (rec && rec.status === 'done') { const st = dlStanding(day, 18, rec.course), i = st.findIndex(x => x.e.mine); return { k: 'done', big: `Daily challenge · ${fmtToPar(rec.tp)}`, sub: `${i >= 0 ? '#' + (i + 1) + ' of ' + st.length + ' · ' : ''}${c.short} · see the board`, tag: 'Done' }; }
+  if (rec && rec.status === 'playing') { const k = rec.h.filter(v => v > 0).length; return { k: 'playing', big: 'Daily challenge · resume', sub: `${c.short} · hole ${Math.min(18, k + 1)} · closes in ${fmtLeft(left)}`, tag: 'Live' }; }
+  return { k: 'new', big: 'Daily challenge', sub: `${c.short} · one chance · closes in ${fmtLeft(left)}`, tag: '1 chance' };
+}
+function dlNeedName() {
+  const ni = $('nameIn'), nr = $('nameRow');
+  if ($('title').classList.contains('on')) { nr.classList.remove('need'); void nr.offsetWidth; nr.classList.add('need'); ni.focus(); }
+  else { openSheet('menuSheet'); menuPage('player'); setTimeout(() => $('mName').focus(), 400); }
+}
+function startDaily() {
+  const day = dayId(), rec = dlRec(day);
+  if (rec && (rec.status === 'done' || rec.status === 'missed')) { openDaily(); return; }
+  if (!cleanName(settings.name)) { dlNeedName(); return; }
+  audio();
+  if (!rec || rec.status !== 'playing') {
+    const c = COURSES[dailyCourse(day)];
+    if (!confirm(`Daily challenge · ${c.name}\n\nOne chance: the same course, pins, wind and weather for everyone, and the round has to be finished before 11:59 pm Zurich time (${fmtLeft(dayLeftSec())} left). The leaderboard opens up hole by hole as you play. Start now?`)) return;
+  }
+  if (G.state !== 'title' && G.C && !G.practice) saveRound(); // the round in play waits where it is
+  if (MP.spec) mpResume(true);
+  closeSheets(); $('title').classList.remove('on');
+  const saved = rec && rec.status === 'playing' ? loadRound('daily') : null;
+  if (saved && resumeRound('daily')) return;
+  setCourse(dailyCourse(day));
+  const seed = dailySeed(day); G.daily = { day, course: dailyCourse(day), seed, wx: dailyWeatherPlan(seed, HOLE_DEFS.length) };
+  if (!rec) dlSet({ day, course: G.daily.course, status: 'playing', h: HOLE_DEFS.map(() => 0), tp: 0, startAt: Date.now() });
+  startRound(true); dlPublish();
+}
+function dlRefresh() {
+  dlPanel(); dlCards();
+  if ($('dailySheet').classList.contains('on')) fillDaily($('dailyBody'));
+  const fb = $('finalBoard'); if (fb && fb.dataset.daily && $('cardSheet').classList.contains('on')) fillDaily(fb, true);
+}
+function dlCards() {
+  const st = dlStatus();
+  for (const id of ['dailyCard', 'mDaily']) { const b = $(id); if (!b) continue; b.className = (b.className.replace(/\bdl-\w+/g, '') + ' dl-' + st.k).trim(); b.querySelector('b').textContent = st.big; b.querySelector('small').textContent = st.sub; b.querySelector('em').textContent = st.tag; }
+}
+// the live panel while playing: the board after the holes I have finished
+function dlPanel() {
+  const el = $('dlPanel'); if (!el) return; const d = G.daily, k = dlHoles();
+  const on = !!d && !G.practice && k > 0 && G.state !== 'title' && G.state !== 'intro' && !MP.spec && !(G.scores && G.scores.every(v => v != null));
+  el.classList.toggle('on', on); if (!on) return;
+  el.style.top = ($('topbar').getBoundingClientRect().bottom + 8) + 'px';
+  const st = dlStanding(d.day, k, d.course), me = st.findIndex(x => x.e.mine), rows = st.slice(0, 3);
+  if (me > 2) rows.push(st[me]);
+  const sig = k + '|' + rows.map(x => [x.e.id, x.tp, x.thru].join(',')).join(';') + '|' + me + '|' + st.length; if (el._sig === sig) return; el._sig = sig;
+  el.textContent = ''; const h = document.createElement('div'); h.className = 'mph'; h.textContent = `Daily · after hole ${k}`; el.appendChild(h);
+  for (const x of rows) {
+    const r = document.createElement('div'); r.className = 'mpr' + (x.e.mine ? ' me' : ''); const rk = document.createElement('i'); rk.textContent = st.indexOf(x) + 1;
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = x.e.n; const t = document.createElement('span'); t.className = 't'; t.textContent = fmtToPar(x.tp);
+    const hh = document.createElement('span'); hh.className = 'h'; hh.textContent = x.thru < k ? 'H' + x.thru : ''; r.append(rk, n, t, hh); el.appendChild(r);
+  }
+}
+// the daily board for the sheet (and the round-complete card): tabs, status, rows you can open
+function fillDaily(el, inCard) {
+  const today = dayId(), yday = dayAdd(today, -1), rec = dlRec(today), tab = inCard ? 'today' : DL.tab;
+  el.textContent = ''; if (inCard) el.dataset.daily = '1';
+  const add = (tag, cls, txt) => { const x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; el.appendChild(x); return x; };
+  if (!inCard) {
+    const sg = add('div', 'seg boardCourse'); for (const [k, t] of [['today', 'Today'], ['yesterday', 'Yesterday']]) { const b = document.createElement('button'); b.textContent = t; if (k === tab) b.className = 'sel'; b.onclick = () => { DL.tab = k; loadDailyFile(k === 'today' ? today : yday); fillDaily(el); }; sg.appendChild(b); }
+  }
+  const day = tab === 'today' ? today : yday, course = tab === 'today' ? dailyCourse(day) : (dlRecs()[day] || {}).course || dailyCourse(day), CO = COURSES[course];
+  const head = add('div', 'dlHead'); const l1 = document.createElement('b'); l1.textContent = `${CO.name}`; const l2 = document.createElement('small');
+  const dt = new Date(dayNum(day) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  l2.textContent = tab === 'today' ? `${dt} · closes in ${fmtLeft(dayLeftSec())} (11:59 pm Zurich)` : `${dt} · final result`; head.append(l1, l2);
+  const playing = rec && rec.status === 'playing', done = rec && rec.status === 'done';
+  if (tab === 'today' && !rec) {
+    add('div', 'dlText', 'One chance a day. Everyone plays the same course with the same pins, wind and weather, and has to finish all 18 holes before the day ends. While you play, the board shows everyone\'s score after the holes you have finished: someone who posted hours ago plays through again as you go, and anyone still out there climbs it live. The full board opens when your round is done.');
+    const b = add('button', 'mbtn dark wide', 'Play today\'s challenge'); b.onclick = () => { closeSheets(); startDaily(); };
+    const n = dlAll(today).length; if (n) add('div', 'lbnote', `${n} player${n === 1 ? '' : 's'} on today's board already. The board is locked until you have started.`); return;
+  }
+  if (tab === 'today' && rec && rec.status === 'missed') add('div', 'lbnote', 'The day closed before you finished: that round counted as an ordinary one.');
+  let k = 18, note = '';
+  if (tab === 'today' && playing) { k = rec.h.filter(v => v > 0).length; note = k ? `After hole ${k}: everyone's score through your ${k} hole${k === 1 ? '' : 's'}. The full board opens when you finish.` : 'Finish hole 1 and the board shows up.'; }
+  if (tab === 'today' && !playing && !done) { // missed: everything locked behind a finished round
+    if (!(rec && rec.status === 'missed')) return;
+  }
+  if (note) add('div', 'dlText', note);
+  const list = add('div', 'lb'), st = dlStanding(day, k, course);
+  if (!st.length) { add('div', 'empty', tab === 'yesterday' ? (DL.files[day] === null && !(DL.rows[day] && DL.rows[day].size) ? 'Yesterday\'s board could not be reached.' : 'No one played yesterday\'s challenge.') : k ? 'No one else on the board yet.' : 'Finish hole 1 and the board shows up.'); }
+  st.slice(0, 40).forEach((x, i) => {
+    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me' : '') + (i === 0 ? ' top1' : ''); row.style.cursor = 'pointer';
+    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.e.n; const sm = document.createElement('small'); sm.textContent = x.fin ? 'Final' : x.thru >= 18 ? 'Playing' : `Thru ${x.thru}` + (x.thru < k || !x.e.done ? '' : ''); nm.appendChild(sm);
+    const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.tp); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.s || '';
+    row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, bs: x.e.bs, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
+  });
+  if (tab === 'today' && playing && !inCard) { const b = add('button', 'mbtn dark wide', G.daily ? 'Back to my round' : 'Resume my round'); b.style.marginTop = '8px'; b.onclick = () => { closeSheets(); if (!G.daily) startDaily(); }; }
+}
+function openDaily(tab) {
+  DL.tab = tab || 'today'; const t = dayId(); loadDailyFile(t); loadDailyFile(dayAdd(t, -1));
+  fillDaily($('dailyBody')); $('dailyTitle').textContent = 'Daily challenge'; openSheet('dailySheet');
+}
+// ---- a player's profile (from a name on a board)
+function openPlayer(o) {
+  const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
+  const render = pf => {
+    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]), S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+    let li = 0; LEVELS.forEach((l, i) => { if ((S.h || 0) >= l[0]) li = i; }); const nx = LEVELS[li + 1];
+    const card = (k, e, v, n) => `<div class="stCard"><span class="em">${e}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+    $('plSub').textContent = pf ? LEVELS[li][1] : '';
+    el.innerHTML = (pf ? `<div class="stLvl"><b>${LEVELS[li][1]}</b><span>${S.h || 0} holes · ${S.r || 0} round${S.r === 1 ? '' : 's'}${nx ? ' · ' + (nx[0] - S.h) + ' to ' + nx[1] : ''}</span></div>` : '<div class="empty">No stats published for this player yet.</div>')
+      + bestShotsHtml(o.bs, 'Best shots of the round')
+      + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', '🚀', S.dr ? S.dr + ' m' : '–')}${card('Longest shot holed', '🎯', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–')}${card('Longest putt holed', '⛳', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–')}${card('Best round', '🏆', S.br != null ? fmtToPar(S.br) : '–')}${card('Greens in a row', '🟢', S.gs || 0)}${card('Fairways in a row', '🛣️', S.fs || 0)}</div>
+      <div class="sub"><span>Scoring</span></div>
+      <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
+      <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h ? (S.st / S.h).toFixed(2) : '–'}</span></div>
+      <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div>` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
+    if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
+  };
+  if (o.me) { render(profileCompact()); }
+  else { render(cleanPf(o.pf)); if (!cleanPf(o.pf) && o.id) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf)); }); }
+  openSheet('playerSheet');
+}
 
 /* ================= INPUT + LOOP ================= */
 function initInput() {
@@ -7091,7 +7537,7 @@ function initInput() {
   const strikeTop = () => { const r = $('strike').getBoundingClientRect(); return r.height ? r.top : zoneY(); };
   document.addEventListener('pointerdown', e => {
     const tg = e.target;
-    if (tg && tg.closest && tg.closest('button, .sheet, .layer.on, #scrim, #mpPanel, #specBar')) return;
+    if (tg && tg.closest && tg.closest('button, .sheet, .layer.on, #scrim, #mpPanel, #dlPanel, #specBar')) return;
     if (!canSwing()) return;
     audio();
     const x = e.clientX, y = e.clientY;
@@ -7236,6 +7682,9 @@ function initInput() {
   $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
   $('mRound').onclick = () => { closeSheets(); startRound(); };
+  $('mBack').onclick = () => menuPage('home');
+  document.querySelectorAll('#menuSheet .mli[data-go]').forEach(b => b.onclick = () => menuPage(b.dataset.go));
+  $('mDaily').onclick = dailyTap; $('dailyCard').onclick = dailyTap; $('dlPanel').onclick = () => openDaily();
   // course: on the title it just switches the course shown; in the menu it starts a new round on it
   document.querySelectorAll('#segCourse button').forEach(b => b.onclick = () => {
     if (b.dataset.v === COURSE.key) return; SFX.blip(); setCourse(b.dataset.v); showTitleHole();
@@ -7277,7 +7726,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
-  swirlWind(dt); updateSwirl(dt); mpUpdate(dt); if (G.state === 'spec') mpSpecCam(dt); else updateCamera(dt); updateWeatherVisuals(dt); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
+  swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') mpSpecCam(dt); else updateCamera(dt); updateWeatherVisuals(dt); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
     const ext = G.state === 'intro' ? 300 : 75, sc = W.sun.shadow.camera;
     if (sc.right !== ext) { sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = ext > 100 ? 900 : 420; sc.updateProjectionMatrix(); }
@@ -7324,7 +7773,7 @@ function boot(data) {
   initIntroVideo();
   initThree(); initInput(); syncMenu();
   // a round restored after an update stays on its course (rounds from before the course switch were on the Legacy Course)
-  setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard(); refreshResume(); setTimeout(retryUnposted, 4000);
+  setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard(); initIcons(); refreshResume(); dlCards(); loadDailyFile(dayId()); loadDailyFile(dayAdd(dayId(), -1)); setTimeout(retryUnposted, 4000); setTimeout(dlRetry, 6000);
   showTitleHole();
   sizeCanvases();
   if (data && data.scores) { G.practice = !!data.practice; G.scores = data.scores; G.putts = data.putts || G.putts; if (data.pins) G.pins = data.pins; $('title').classList.remove('on'); startHole(data.hole || 0); }

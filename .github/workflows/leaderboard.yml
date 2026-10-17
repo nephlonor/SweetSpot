@@ -1,6 +1,8 @@
 name: Leaderboard
 # A player posts a round by opening a pre-filled issue from the game ("[score] NAME +3 (75) Course"). This workflow validates the
 # JSON in the issue body (treated purely as data, never run as code), adds it to leaderboard/<course>.json and closes the issue.
+# A daily challenge result ("[daily] ...") goes to leaderboard/daily-<day>.json instead. The player's compact stats profile is kept in
+# leaderboard/players.json (by device hash) so a name on a board can be opened.
 on:
   issues:
     types: [opened]
@@ -12,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   record:
-    if: startsWith(github.event.issue.title, '[score]')
+    if: startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,22 +33,58 @@ jobs:
             let r; try { r = JSON.parse(m[1]); } catch (e) { return finish(false, 'No valid score JSON found in this issue.'); }
             const COURSES = { gccb: 72, alsace: 72, augusta: 72 };
             const int = v => Number.isInteger(v);
+            const isDaily = issue.title.startsWith('[daily]');
             if (!r || typeof r !== 'object' || !(r.course in COURSES)) return finish(false, 'Unknown course.');
             if (typeof r.name !== 'string' || !/^[\p{L}\p{N} ._'-]{1,14}$/u.test(r.name.trim())) return finish(false, 'Invalid name.');
-            if (r.holes !== 18 || !int(r.strokes) || r.strokes < 18 || r.strokes > 200 || !int(r.toPar) || r.toPar !== r.strokes - COURSES[r.course]) return finish(false, 'The score does not add up.');
+            if (r.holes !== 18 && !isDaily) return finish(false, 'The score does not add up.');
+            if (!int(r.strokes) || r.strokes < 18 || r.strokes > 200 || !int(r.toPar) || r.toPar !== r.strokes - COURSES[r.course]) return finish(false, 'The score does not add up.');
             if (!int(r.at) || r.at > Date.now() + 10 * 60e3 || r.at < Date.now() - 3 * 864e5) return finish(false, 'The round is too old (or from the future).');
-            const file = `leaderboard/${r.course}.json`; let rows = [];
-            try { rows = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { rows = []; }
             const name = r.name.trim(), by = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
+            // the compact stats profile and the best shots of the round: numbers only, from a fixed list of keys
+            const PF = ['r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
+            const BS = ['h', 'n', 'c', 'k', 'l', 'f', 'd', 'e', 't', 'o', 'b', 'q', 'sm', 's', 'fw', 'p'];
+            const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e8;
+            const pick = (o, keys) => { const out = {}; if (o && typeof o === 'object') for (const k of keys) if (num(o[k])) out[k] = Math.round(o[k] * 100) / 100; return out; };
+            const pf = pick(r.pf, PF), bs = Array.isArray(r.bs) ? r.bs.slice(0, 3).map(x => pick(x, BS)).filter(x => Object.keys(x).length >= 8) : [];
+            const save = async (files, msg) => {
+              await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
+              await exec.exec('git', ['add', ...files]); await exec.exec('git', ['commit', '-m', msg]);
+              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+            };
+            const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
+            const profiles = () => {
+              if (!Object.keys(pf).length) return null;
+              const f = 'leaderboard/players.json', all = readJson(f, {}); all[by] = { n: name, pf, at: r.at };
+              const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at).slice(0, 600), out = {}; for (const k of keys) out[k] = all[k];
+              fs.writeFileSync(f, JSON.stringify(out) + '\n'); return f;
+            };
+            if (isDaily) {
+              // the daily challenge: one chance per player and day, on the course of the day, finished within that day (Zurich time)
+              const zday = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+              const day = r.daily;
+              if (typeof day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day) || zday(r.at) !== day) return finish(false, 'The round was not finished on the day of the challenge.');
+              const dn = Math.floor(Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10)) / 864e5);
+              if (['gccb', 'alsace', 'augusta'][dn % 3] !== r.course) return finish(false, 'That is not the course of the day.');
+              if (!Array.isArray(r.h) || r.h.length !== 18 || !r.h.every(v => int(v) && v >= 1 && v <= 16) || r.h.reduce((a, b) => a + b, 0) !== r.strokes) return finish(false, 'The hole scores do not add up.');
+              const file = `leaderboard/daily-${day}.json`; let rows = readJson(file, []);
+              if (rows.some(x => x.by === by || x.name.toLowerCase() === name.toLowerCase())) return finish(true, 'There is already a result for this player on this daily challenge: one chance only.');
+              if (rows.length >= 500) return finish(false, 'The board is full.');
+              rows.push({ name, strokes: r.strokes, toPar: r.toPar, h: r.h, at: r.at, by, c: r.course, bs });
+              rows.sort((a, b) => a.toPar - b.toPar || a.at - b.at);
+              fs.writeFileSync(file, JSON.stringify(rows) + '\n');
+              const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
+              await save(files, `Daily ${day}: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar}`);
+              return finish(true, `Posted. You are #${rows.findIndex(x => x.by === by) + 1} of ${rows.length} on the daily challenge of ${day}.`);
+            }
+            const file = `leaderboard/${r.course}.json`; let rows = readJson(file, []);
             if (rows.some(x => x.name === name && x.at === r.at)) return finish(true, 'This round is already on the board.');
             if (rows.some(x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && x.strokes === r.strokes)) return finish(true, 'This score is already on the board for this player.'); // one player, one entry per score per course
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
             if (rows.filter(x => x.at > Date.now() - 36e5).length >= 120) return finish(false, 'The board is busy; try again later.');
-            rows.push({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by });
+            rows.push(Object.assign({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by }, bs.length ? { bs } : {}));
             rows.sort((a, b) => a.toPar - b.toPar || a.strokes - b.strokes || a.at - b.at); rows = rows.slice(0, 500);
             fs.writeFileSync(file, JSON.stringify(rows) + '\n');
             const rank = rows.findIndex(x => x.name === name && x.at === r.at) + 1;
-            await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
-            await exec.exec('git', ['add', file]); await exec.exec('git', ['commit', '-m', `Leaderboard: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar} on ${r.course}`]);
-            for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+            const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
+            await save(files, `Leaderboard: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar} on ${r.course}`);
             await finish(true, `Posted. You are #${rank} of ${rows.length} on the ${r.course} board.`);
