@@ -5355,6 +5355,7 @@ function mpResume(quiet) {
   mpWorld(sp.course);
   if (sp.title) { showTitleHole(); $('title').classList.add('on'); MP.panelT = 0; return; } // back to the start screen
   const C = courseFor(G.hole); C.swirl = sp.C.swirl; G.C = C; buildHole(C); // my own hole again, as it was
+  if (sp.st === 'holed') { W.ball.visible = true; G.state = 'holed'; G.holedT = 99; if (G.rig) G.rig.arr = null; mpState(true); MP.panelT = 0; if (!quiet) SFX.blip(); if (sp.fin) showScorecard(true); else $('done').classList.add('on'); return; } // back on the hole card or the final scorecard
   W.ball.visible = true; G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone(); G.snapCam = true; if (G.rig) G.rig.arr = null;
   G.carryKey = ''; updateAim(true); mpState(true); MP.panelT = 0; if (!quiet) SFX.blip();
 }
@@ -7236,8 +7237,10 @@ function reelAdd(ent) {
 const clipItem = x => Object.assign({ cl: x.cl }, shotWords(x));
 function playClips(items, title) {
   items = (items || []).filter(i => i && Array.isArray(i.cl) && i.cl.length === 18); if (!items.length) return;
-  if (!MP.spec && G.state !== 'address' && G.state !== 'title') { readout('<div class="r1">Watch once your ball is at rest</div>', 2.2); return; }
-  if (!MP.spec) MP.spec = { C: G.C, hole: G.hole, course: COURSE.key, tp: G.scores ? totalToPar().d : 0, th: G.scores ? G.scores.filter(v => v != null).length : 0, title: G.state === 'title' };
+  if (!MP.spec && !['address', 'title', 'holed', 'settle'].includes(G.state)) { readout('<div class="r1">Watch once your ball is at rest</div>', 2.2); return; }
+  // (also between holes and from the final scorecard: coming back puts the hole card, or the scorecard, up again)
+  if (!MP.spec) MP.spec = { C: G.C, hole: G.hole, course: COURSE.key, tp: G.scores ? totalToPar().d : 0, th: G.scores ? G.scores.filter(v => v != null).length : 0, title: G.state === 'title', st: G.state, fin: G.state === 'holed' && !!G.scores && !G.practice && G.scores.every(v => v != null) };
+  $('done').classList.remove('on');
   if (MP.spec.title) $('title').classList.remove('on');
   MP.clip = { items, i: 0, title: title || '', done: false }; MP.follow = 'clip'; MP.rin = null; closeSheets();
   document.body.classList.add('spec', 'clip'); G.state = 'spec'; $('readout').classList.remove('on'); $('aimHint').classList.remove('on'); $('specResume').textContent = 'Close';
@@ -7273,7 +7276,7 @@ document.addEventListener('click', e => {
 }, true);
 function openReel() {
   const body = $('reelBody'); body.textContent = '';
-  const here = G.state === 'address' || G.state === 'title', round = (G.shotLog || []).filter(x => x.cl && x.p >= 15), top = bestShots(round, 5).map(clipItem), ever = reelList().map(clipItem);
+  const here = ['address', 'title', 'holed', 'settle'].includes(G.state), round = (G.shotLog || []).filter(x => x.cl && x.p >= 15), top = bestShots(round, 5).map(clipItem), ever = reelList().map(clipItem);
   const last = G.lastShot && G.lastShot.C === G.C && G.lastShot.hole === G.hole && (G.state === 'address' || G.state === 'holed');
   const opt = (ic, t, d, on, go) => { const b = document.createElement('button'); b.className = 'mli reel' + (on ? '' : ' off'); b.innerHTML = `<i class="ic">${ICONS[ic]}</i><span>${t}<small></small></span><i class="ic chev">${ICONS.chev}</i>`; b.querySelector('small').textContent = d; if (on) b.onclick = go; body.appendChild(b); };
   opt('play', 'Last shot', last ? 'Your most recent shot, again' : 'No shot to replay on this hole yet', last, () => { closeSheets(); setTimeout(replayLast, 120); });
