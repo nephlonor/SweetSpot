@@ -47,7 +47,7 @@ jobs:
             const pick = (o, keys) => { const out = {}; if (o && typeof o === 'object') for (const k of keys) if (num(o[k])) out[k] = Math.round(o[k] * 100) / 100; return out; };
             // a best shot also carries its clip: the 18 numbers that let the game fly it again
             const pickShot = x => { const o = pick(x, BS); if (x && Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(num)) o.cl = x.cl.map(v => Math.round(v * 1e4) / 1e4); return o; };
-            const pf = pick(r.pf, PF), bs = Array.isArray(r.bs) ? r.bs.slice(0, 3).map(pickShot).filter(x => Object.keys(x).length >= 8) : [];
+            const pf = pick(r.pf, PF); if (r.pf && Array.isArray(r.pf.tw)) pf.tw = r.pf.tw.filter(num).slice(-40); const bs = Array.isArray(r.bs) ? r.bs.slice(0, 3).map(pickShot).filter(x => Object.keys(x).length >= 8) : [];
             const save = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', ...files]); await exec.exec('git', ['commit', '-m', msg]);
@@ -61,8 +61,8 @@ jobs:
               fs.writeFileSync(f, JSON.stringify(out) + '\n'); return f;
             };
             if (isDaily) {
-              // the daily challenge: one chance per player and day, on the course of the day, finished within that day (Zurich time)
-              const zday = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+              // the daily challenge: one chance per player and day, on the course of the day, finished within that day (US Eastern time)
+              const zday = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
               const day = r.daily;
               if (typeof day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day) || zday(r.at) !== day) return finish(false, 'The round was not finished on the day of the challenge.');
               const dn = Math.floor(Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10)) / 864e5);

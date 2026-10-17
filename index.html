@@ -291,6 +291,11 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 #dlPanel .mpr i{font-style:normal;width:14px;text-align:right;opacity:.8;font-size:12px;flex:none}
 #dlPanel .mpr .n{flex:1;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}#dlPanel .mpr .t{font-variant-numeric:tabular-nums}#dlPanel .mpr .h{opacity:.75;font-size:11px;min-width:18px;text-align:right}
 #dlPanel .mpr.me .n{text-decoration:underline;text-underline-offset:2px}
+.trophies{display:flex;flex-direction:column;gap:7px}
+.trophy{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;margin-bottom:8px;background:linear-gradient(135deg,rgba(255,226,120,.42),rgba(255,160,40,.26));box-shadow:inset 0 0 0 1px rgba(255,232,150,.55)}
+.trophies .trophy{margin-bottom:0}
+.trophy .ic{flex:none;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ffe85a,#ffab1f);color:#3a1d00;padding:8px;text-shadow:none}
+.trophy b{display:block;font:700 17px/1.15 var(--cond);text-transform:uppercase;letter-spacing:.03em}.trophy small{display:block;font:500 12.5px var(--sans,system-ui);opacity:.88;margin-top:1px}
 /* best shots of a round */
 .bshots{display:flex;flex-direction:column;gap:7px}
 .bshot{display:flex;align-items:center;gap:11px;background:var(--soft);border-radius:16px;padding:9px 12px 9px 9px}
@@ -7062,7 +7067,7 @@ function drawFx(now) {
 const STATS_KEY = 'ssg-stats';
 function defStats() {
   return { v: 1, rounds: 0, holes: 0, shots: 0, strokes: 0, putts: 0, dist: 0, aces: 0, eagles: 0, birdies: 0, pars: 0, bogeys: 0, doubles: 0, fwHit: 0, fwTry: 0, gir: 0, girTry: 0,
-    water: 0, ob: 0, lost: 0, trees: 0, chipins: 0, holedShots: 0, rainHoles: 0, xp: 0, cur: { gir: 0, fw: 0, bird: 0 },
+    water: 0, ob: 0, lost: 0, trees: 0, chipins: 0, holedShots: 0, rainHoles: 0, xp: 0, trophies: [], cur: { gir: 0, fw: 0, bird: 0 },
     rec: { holed: { v: 10 }, putt: { v: 3 }, drive: { v: 200 }, girStreak: { v: 2 }, fwStreak: { v: 3 }, birdStreak: { v: 1 }, round: { v: 10 }, roundPutts: { v: 40 } } };
 }
 let ST = (() => { try { const s = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); if (s && s.v === 1) { if (s.xp === undefined) s.xp = (s.holes || 0) * 10 + (s.rounds || 0) * 30; const d = defStats(); for (const k in d) if (s[k] === undefined) s[k] = d[k]; for (const k in d.rec) if (!s.rec[k]) s.rec[k] = d.rec[k]; return s; } } catch (e) { } return defStats(); })();
@@ -7155,6 +7160,7 @@ function openStats() {
   if (S.aces) fun.push(`<b>${S.aces}</b> hole${S.aces > 1 ? 's' : ''} in one. Legend.`);
   if (!fun.length) fun.push('Play a few holes and the fun facts will show up here.');
   el.innerHTML = `<div class="stLvl"><b>${lv.name}</b><span>Level ${lv.n} of ${LEVEL_NAMES.length} · ${lv.next ? Math.max(1, lv.hi - lv.xp).toLocaleString() + ' points to ' + lv.next : 'The top of the ladder'} · ${S.holes} hole${S.holes === 1 ? '' : 's'} · ${S.rounds} round${S.rounds === 1 ? '' : 's'}</span>${lv.next ? `<div class="stBar"><i style="width:${Math.round(100 * lv.f)}%"></i></div>` : ''}</div>
+    <div class="sub"><span>Achievements</span></div>${trophyHtml(S.trophies)}
     <div class="sub"><span>Records</span></div><div class="stGrid">${['holed', 'putt', 'drive', 'girStreak', 'fwStreak', 'birdStreak', 'round', 'roundPutts'].map(rc).join('')}</div>
     <div class="sub"><span>Streaks running now</span></div><div class="stGrid">${card('Greens in a row', 'dot', S.cur.gir, 'best ' + S.rec.girStreak.v)}${card('Fairways in a row', 'road', S.cur.fw, 'best ' + S.rec.fwStreak.v)}${card('Birdie streak', 'feather', S.cur.bird, 'best ' + S.rec.birdStreak.v)}${card('Holes in one', 'crown', S.aces)}</div>
     <div class="sub"><span>Scoring</span></div>
@@ -7493,13 +7499,18 @@ function menuPage(n) {
   $('menuSheet').scrollTop = 0; if (n === 'live') { MP.listSig = ''; mpList(); } syncMenu();
 }
 function dailyTap() { const r = dlRec(); if ((r && r.status !== 'playing') || G.daily) { openDaily(); return; } closeSheets(); startDaily(); }
+function trophyHtml(list) { // the trophies of daily challenges won: [{day, course, tp, s, n}] (a player's profile only knows the days)
+  if (!list || !list.length) return '<div class="stFun"><div>Win a daily challenge to put a trophy on your shelf.</div></div>';
+  const dt = d => new Date((typeof d === 'number' ? d : dayNum(d)) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return '<div class="trophies">' + list.slice().reverse().map(t => { const days = typeof t === 'number'; return `<div class="trophy"><i class="ic">${ICONS.trophy}</i><div><b>Daily champion</b><small>${days ? dt(t) : (COURSES[t.course] ? COURSES[t.course].short : '') + ' · ' + dt(t.day) + ' · ' + fmtToPar(t.tp) + ' (' + t.s + ')' + (t.n > 1 ? ' · of ' + t.n : '')}</small></div></div>`; }).join('') + '</div>';
+}
 /* ================= DAILY CHALLENGE ================= */
 // One round a day, the same for everyone: the course of the day, its pins, wind and weather. One chance, finished before the day ends
-// (11:59 pm, Zurich time). Each hole you finish goes out live (MQTT, retained on the broker) and the board you see while you play is
+// (11:59 pm US Eastern time). Each hole you finish goes out live (MQTT, retained on the broker) and the board you see while you play is
 // everyone's score through the same number of holes you have finished - a round that was posted hours ago replays hole by hole as you
 // go, and someone still playing can be seen charging up it. The full board opens once your own round is done, and stays open for 24 hours
 // after the day closes (yesterday's final board). Final results are also filed in the repository (leaderboard/daily-<day>.json) so they last.
-const DAILY_ZONE = 'Europe/Zurich', DAILY_COURSES = ['gccb', 'alsace', 'augusta'];
+const DAILY_ZONE = 'America/New_York', DAILY_COURSES = ['gccb', 'alsace', 'augusta'];
 const _dFmt = new Intl.DateTimeFormat('en-CA', { timeZone: DAILY_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
 function zParts(ms) { const o = {}; for (const q of _dFmt.formatToParts(new Date(ms))) o[q.type] = q.value; return o; }
 function dayId(ms) { const o = zParts(ms || Date.now()); return `${o.year}-${o.month}-${o.day}`; }
@@ -7525,11 +7536,11 @@ function dlSet(rec) { const a = dlRecs(); a[rec.day] = rec; for (const k of Obje
 // compact stats profile and best shots, as filed with a round (numbers only)
 function profileCompact() {
   const S = ST, R = S.rec, o = { xp: S.xp, r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, tr: S.trees, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
-  if (R.round.at != null) o.br = R.round.v; return o;
+  if (R.round.at != null) o.br = R.round.v; if (S.trophies.length) o.tw = S.trophies.map(t => dayNum(t.day)).slice(-40); return o;
 }
 function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, p: x.p, cl: x.cl })); }
 const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, p: x.p | 0, cl: Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite) ? x.cl : undefined } : null;
-const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; return Object.keys(r).length ? r : null; };
+const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; if (Array.isArray(o.tw)) r.tw = o.tw.filter(Number.isFinite).slice(-40); return Object.keys(r).length ? r : null; };
 // ---- going out and coming in
 function dlSubscribe(c) {
   const t = dayId(), topics = [t, dayAdd(t, -1)].map(d => `ssgolf/v1/DAY${d}/d/+`); DL.subs = t;
@@ -7557,7 +7568,7 @@ async function loadDailyFile(day, force) {
     const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/daily-${day}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' });
     if (r.status === 404) DL.files[day] = []; else { if (!r.ok) throw new Error('http'); const a = await r.json(); DL.files[day] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Array.isArray(x.h) && x.h.length === 18 && typeof x.by === 'string').map(x => ({ id: x.by, n: cleanName(x.name) || 'Player', c: COURSES[x.c] ? x.c : dailyCourse(day), h: x.h.map(v => clamp(v | 0, 0, 20)), th: 18, done: true, at: +x.at || 0, pf: null, bs: Array.isArray(x.bs) ? x.bs.map(cleanShot).filter(Boolean) : [] })) : []; }
   } catch (e) { if (!DL.files[day]) DL.files[day] = null; }
-  dlRefresh();
+  dlRefresh(); dlTrophyCheck();
 }
 async function loadPlayers(force) {
   if (!force && DL.players && Date.now() - DL.playersAt < 120000) return DL.players; DL.playersAt = Date.now();
@@ -7607,6 +7618,17 @@ async function dlPost(rec) {
     if (!res.ok) return false; rec.posted = true; dlSet(rec); setTimeout(() => loadDailyFile(rec.day, true), 40000); return true;
   } catch (e) { return false; }
 }
+// the winner of a closed day gets a trophy: checked once the day's file is in (a few minutes after it closed), then kept in the stats
+function dlTrophyCheck() {
+  const today = dayId(), rec = dlRecs(); let got = null;
+  for (const day of Object.keys(rec)) {
+    const r = rec[day]; if (day >= today || r.trophyChecked || r.status !== 'done' || !r.posted || dayId(Date.now() - 10 * 6e4) <= day) continue; // (posted, and the day closed ten minutes ago)
+    if (!Array.isArray(DL.files[day])) { loadDailyFile(day); continue; } // not in yet: look again later
+    const st = dlStanding(day, 18, r.course).filter(x => x.fin); r.trophyChecked = true; dlSet(r);
+    if (st.length && st[0].e.mine && !ST.trophies.some(t => t.day === day)) { ST.trophies.push({ day, course: r.course, tp: r.tp, s: r.strokes, n: st.length }); saveStats(); got = r; }
+  }
+  if (got && G.state === 'title') recordCard('Daily champion', 'You won the daily challenge', fmtToPar(got.tp), COURSES[got.course].name, ['#fff3b0', '#ffd36a', '#e8a317', '#3a1d00']);
+}
 // results of the last day and a half that never reached the repository (no network): tried again at start
 async function dlRetry() { const a = dlRecs(); for (const k of Object.keys(a)) { const r = a[k]; if (r.status === 'done' && !r.posted && r.at > Date.now() - 36 * 36e5) await dlPost(r); } }
 // ---- the daily entry points: start screen and menu card
@@ -7628,7 +7650,7 @@ function startDaily() {
   audio();
   if (!rec || rec.status !== 'playing') {
     const c = COURSES[dailyCourse(day)];
-    if (!confirm(`Daily challenge · ${c.name}\n\nOne chance: the same course, pins, wind and weather for everyone, and the round has to be finished before 11:59 pm Zurich time (${fmtLeft(dayLeftSec())} left). The leaderboard opens up hole by hole as you play. Start now?`)) return;
+    if (!confirm(`Daily challenge · ${c.name}\n\nOne chance: the same course, pins, wind and weather for everyone, and the round has to be finished before 11:59 pm US Eastern time (${fmtLeft(dayLeftSec())} left). The leaderboard opens up hole by hole as you play. Start now?`)) return;
   }
   if (G.state !== 'title' && G.C && !G.practice) saveRound(); // the round in play waits where it is
   if (MP.spec) mpResume(true);
@@ -7676,7 +7698,8 @@ function fillDaily(el, inCard) {
   const day = tab === 'today' ? today : yday, course = tab === 'today' ? dailyCourse(day) : (dlRecs()[day] || {}).course || dailyCourse(day), CO = COURSES[course];
   const head = add('div', 'dlHead'); const l1 = document.createElement('b'); l1.textContent = `${CO.name}`; const l2 = document.createElement('small');
   const dt = new Date(dayNum(day) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-  l2.textContent = tab === 'today' ? `${dt} · closes in ${fmtLeft(dayLeftSec())} (11:59 pm Zurich)` : `${dt} · final result`; head.append(l1, l2);
+  l2.textContent = tab === 'today' ? `${dt} · closes in ${fmtLeft(dayLeftSec())} (11:59 pm US Eastern)` : `${dt} · final result`; head.append(l1, l2);
+  if (tab === 'yesterday') { const w = dlStanding(day, 18, course).filter(x => x.fin)[0]; if (w) { const wb = add('div', 'trophy'); wb.innerHTML = `<i class="ic">${ICONS.trophy}</i><div><b></b><small>Winner of the daily challenge</small></div>`; wb.querySelector('b').textContent = w.e.n + ' · ' + fmtToPar(w.tp) + ' (' + w.s + ')'; } }
   const playing = rec && rec.status === 'playing', done = rec && rec.status === 'done';
   if (tab === 'today' && !rec) {
     add('div', 'dlText', 'One chance a day. Everyone plays the same course with the same pins, wind and weather, and has to finish all 18 holes before the day ends. While you play, the board shows everyone\'s score after the holes you have finished: someone who posted hours ago plays through again as you go, and anyone still out there climbs it live. The full board opens when your round is done.');
@@ -7718,8 +7741,9 @@ function openPlayer(o) {
       + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? S.dr + ' m' : '–')}${card('Longest shot holed', 'target', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–')}${card('Longest putt holed', 'flag', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–')}${card('Greens in a row', 'dot', S.gs || 0)}${card('Fairways in a row', 'road', S.fs || 0)}</div>
       <div class="sub"><span>Scoring</span></div>
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
-      <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h ? (S.st / S.h).toFixed(2) : '–'}</span></div>
-      <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div>` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
+      <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h && S.pu != null ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h && S.st != null ? (S.st / S.h).toFixed(2) : '–'}</span></div>
+      <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div>` : '')
+      + (pf && S.tw && S.tw.length ? `<div class="sub"><span>Achievements</span></div>${trophyHtml(S.tw)}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
   };
   const clean = a => (Array.isArray(a) ? a : []).map(cleanShot).filter(Boolean);
