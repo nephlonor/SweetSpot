@@ -7235,14 +7235,14 @@ function reelAdd(ent) {
   a.push(ent); a.sort((x, y) => y.p - x.p); try { localStorage.setItem('ssg-reel', JSON.stringify(a.slice(0, 8))); } catch (e) { }
 }
 const clipItem = x => Object.assign({ cl: x.cl }, shotWords(x));
-function playClips(items, title) {
+function playClips(items, title, after) {
   items = (items || []).filter(i => i && Array.isArray(i.cl) && i.cl.length === 18); if (!items.length) return;
   if (!MP.spec && !['address', 'title', 'holed', 'settle'].includes(G.state)) { readout('<div class="r1">Watch once your ball is at rest</div>', 2.2); return; }
   // (also between holes and from the final scorecard: coming back puts the hole card, or the scorecard, up again)
   if (!MP.spec) MP.spec = { C: G.C, hole: G.hole, course: COURSE.key, tp: G.scores ? totalToPar().d : 0, th: G.scores ? G.scores.filter(v => v != null).length : 0, title: G.state === 'title', st: G.state, fin: G.state === 'holed' && !!G.scores && !G.practice && G.scores.every(v => v != null) };
   $('done').classList.remove('on');
   if (MP.spec.title) $('title').classList.remove('on');
-  MP.clip = { items, i: 0, title: title || '', done: false }; MP.follow = 'clip'; MP.rin = null; closeSheets();
+  MP.clip = { items, i: 0, title: title || '', done: false, after: after || null }; MP.follow = 'clip'; MP.rin = null; closeSheets();
   document.body.classList.add('spec', 'clip'); G.state = 'spec'; $('readout').classList.remove('on'); $('aimHint').classList.remove('on'); $('specResume').textContent = 'Close';
   mpState(true); clipLoad(0);
 }
@@ -7272,7 +7272,8 @@ function clipEnd() { // back to my own round
 document.addEventListener('click', e => {
   const c = e.target.closest && e.target.closest('.bshot.pl, .bsAll'); if (!c || !BS_LAST.length) return;
   const items = BS_LAST.filter(x => x.cl).map(clipItem); e.stopPropagation();
-  playClips(c.classList.contains('bsAll') ? items : [clipItem(BS_LAST[+c.dataset.i])], 'Best shots');
+  const o = PL_LAST; // after the clips: back to the player's card
+  playClips(c.classList.contains('bsAll') ? items : [clipItem(BS_LAST[+c.dataset.i])], 'Best shots', o && $('playerSheet').classList.contains('on') ? () => openPlayer(o) : null);
 }, true);
 function openReel() {
   const body = $('reelBody'); body.textContent = '';
@@ -7297,7 +7298,7 @@ function shotWords(x) {
   return { t, d: `Hole ${x.h + 1} · stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
 }
 function bestShots(log, n) { return (log || []).filter(x => x.p >= 15).slice().sort((a, b) => b.p - a.p).slice(0, n || 3); }
-let BS_LAST = [];
+let BS_LAST = [], PL_LAST = null;
 function bestShotsHtml(log, name) {
   const b = bestShots(log); if (!b.length) return ''; BS_LAST = b;
   const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
@@ -7735,6 +7736,7 @@ function openDaily(tab) {
 }
 // ---- a player's profile (from a name on a board)
 function openPlayer(o) {
+  PL_LAST = o;
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
   const render = (pf, bs) => {
     const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]), S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
@@ -7898,7 +7900,7 @@ function initInput() {
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
-  $('specResume').onclick = e => { e.stopPropagation(); mpResume(); };
+  $('specResume').onclick = e => { e.stopPropagation(); const af = MP.clip && MP.clip.after; mpResume(); if (af) setTimeout(af, 80); }; // (after a player's clips: back to that player's card)
   $('specAgain').onclick = e => { e.stopPropagation(); if (MP.clip) clipLoad(MP.clip.i); };
   $('specNext').onclick = e => { e.stopPropagation(); if (MP.clip) clipLoad(MP.clip.i + 1); };
   mpInit();
