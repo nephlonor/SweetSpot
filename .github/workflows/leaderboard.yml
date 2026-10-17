@@ -41,7 +41,7 @@ jobs:
             if (!int(r.at) || r.at > Date.now() + 10 * 60e3 || r.at < Date.now() - 3 * 864e5) return finish(false, 'The round is too old (or from the future).');
             const name = r.name.trim(), by = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
             // the compact stats profile and the best shots of the round: numbers only, from a fixed list of keys
-            const PF = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
+            const PF = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
             const BS = ['h', 'n', 'c', 'k', 'l', 'f', 'd', 'e', 't', 'o', 'b', 'q', 'sm', 's', 'fw', 'p'];
             const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e8;
             const pick = (o, keys) => { const out = {}; if (o && typeof o === 'object') for (const k of keys) if (num(o[k])) out[k] = Math.round(o[k] * 100) / 100; return out; };
