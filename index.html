@@ -3270,7 +3270,7 @@ function initTiltShift() {
 function resizeTiltShift() {
   const P = W.post; if (!P) return;
   const s = W.ren.getDrawingBufferSize(new THREE.Vector2());
-  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.mat.uniforms.maxR.value = Math.max(2, s.y * .0070);
+  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.maxR0 = Math.max(2, s.y * .0070); P.mat.uniforms.maxR.value = P.maxR0;
 }
 function renderTiltShift(dt) {
   const P = W.post;
@@ -3284,6 +3284,8 @@ function renderTiltShift(dt) {
   }
   if (tgt) { P.v.copy(tgt).project(W.cam); if (P.v.z < 1) want = clamp(P.v.y * .5 + .5, .3, .8); }
   P.fy += (want - P.fy) * (1 - Math.exp(-dt * 2.2)); P.mat.uniforms.fy.value = P.fy;
+  // the depth-of-field blur is off while enjoying the rainbow, so the whole view is sharp (it fades out and back in)
+  P.off = (P.off || 0) + ((G.rbow ? 1 : 0) - (P.off || 0)) * (1 - Math.exp(-dt * 3)); P.mat.uniforms.maxR.value = (P.maxR0 || 5) * (1 - P.off);
   // camera speed (real time) -> motion blur strength, only while a full shot is in the air
   const nowT = performance.now(), cp = W.cam.position;
   if (P.t0) { const k = Math.max(.004, (nowT - P.t0) / 1000), v = cp.distanceTo(P.prev) / k; P.spd += (v - P.spd) * (1 - Math.exp(-k * 8)); }
