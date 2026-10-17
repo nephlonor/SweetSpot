@@ -3364,23 +3364,23 @@ function rbowU(dt) {
   return Math.min(smoother(R.t / RBOW.up), smoother((T - R.t) / RBOW.down));
 }
 function rbowCam(pos, look, u) {
-  const d = W.rainbow.dir, hl = Math.hypot(d.x, d.z) || 1, ux = d.x / hl, uz = d.z / hl, e = 30 * DEG, C = G.C;
-  const hy = Math.max(pos.y, C.h(pos.x, pos.z)) + 52; // above the tallest trees
+  const d = W.rainbow.dir, hl = Math.hypot(d.x, d.z) || 1, ux = d.x / hl, uz = d.z / hl, e = 15 * DEG, C = G.C;
+  const hy = Math.max(pos.y, C.h(pos.x, pos.z)) + 46; // above the tallest trees, the treetops and the course still at the bottom of the screen
   const hp = _pm.set(pos.x, hy, pos.z), hlk = _pk.set(pos.x + ux * Math.cos(e) * 100, hy + Math.sin(e) * 100, pos.z + uz * Math.cos(e) * 100);
   pos.lerp(hp, u); look.lerp(hlk, u);
 }
 function updateRainbow(dt) {
   const B = W.rainbow; if (!B) return;
   // only while it rains and the sun is out at the same time
-  const want = .26 * smooth(.03, .1, G.rainLvl || 0) * (1 - smooth(.35, .6, G.rainLvl || 0)) * (1 - smooth(.55, .8, G.cloud == null ? 1 : G.cloud));
+  const want = .34 * smooth(.03, .1, G.rainLvl || 0) * (1 - smooth(.35, .6, G.rainLvl || 0)) * (1 - smooth(.55, .8, G.cloud == null ? 1 : G.cloud));
   B.v += (want - B.v) * (1 - Math.exp(-dt / 6));
   if (B.v > .04 && !B.sang) { B.sang = true; try { SFX.rainbow(); } catch (e) { } } else if (B.v < .01) B.sang = false; // the jingle plays once each time it appears
   // a rainbow seen in play is counted once; the first quiet moment while it is bright, the camera rises above the trees to enjoy it for a few seconds
   if (B.v < .01) { B.seen = false; B.shown = false; }
   const playing = G.C && G.scores && !MP.spec && ['address', 'flight', 'settle', 'holed'].includes(G.state);
-  if (B.v > .1 && playing && !B.seen) { B.seen = true; ST.rainbows = (ST.rainbows || 0) + 1; saveStats(); }
+  if (B.v > .12 && playing && !B.seen) { B.seen = true; ST.rainbows = (ST.rainbows || 0) + 1; saveStats(); }
   if (G.rbow && (G.state !== 'address' || MP.spec)) rbowEnd();
-  if (B.v > .1 && !B.shown && !G.rbow && G.state === 'address' && SW.phase === 'idle' && !sheetOpen() && !MP.spec && !G.practice) { B.shown = true; rbowStart(); }
+  if (B.v > .12 && !B.shown && !G.rbow && G.state === 'address' && SW.phase === 'idle' && !sheetOpen() && !MP.spec && !G.practice) { B.shown = true; rbowStart(); }
   B.grp.visible = B.v > .005; if (!B.grp.visible) return;
   B.mat.uniforms.uOp.value = B.v; B.grp.position.copy(W.cam.position);
 }
@@ -3426,7 +3426,7 @@ function initThree() {
   scene.add(W.clouds);
   // rainbow: the 42 degree circle around the point opposite the sun (sun low in the west, so a high arc in the east)
   {
-    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], Math.hypot(SUN_OFF[0], SUN_OFF[2]) * Math.tan(4 * DEG), -SUN_OFF[2]).normalize() /* centre a little above the horizon, so the arc stays low */, D = R * Math.cos(42 * DEG), rO = D * Math.tan(50 * DEG), rI = D * Math.tan(33 * DEG);
+    const R = 1800, a = new THREE.Vector3(-SUN_OFF[0], -Math.hypot(SUN_OFF[0], SUN_OFF[2]) * Math.tan(6 * DEG), -SUN_OFF[2]).normalize() /* centre a little below the horizon, as it is in life: the arc rises out of the ground and its top stays low */, D = R * Math.cos(42 * DEG), rO = D * Math.tan(41 * DEG), rI = D * Math.tan(33 * DEG);
     const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, uniforms: { uOp: { value: 0 }, uIn: { value: rI }, uOut: { value: rO } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
       fragmentShader: 'varying vec2 vP; uniform float uOp, uIn, uOut; vec3 hsv(float h){ return clamp(abs(mod(h*6.+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.); } void main(){ float t = clamp((length(vP)-uIn)/(uOut-uIn),0.,1.); float al = pow(sin(3.14159*t),1.4) * uOp; gl_FragColor = vec4(hsv((1.-t)*.78), al); }' });
@@ -6411,7 +6411,7 @@ function updateCamera(dt) {
   if (G.state === 'settle' && ((w >= 1 && cam.position.distanceTo(R.aPos) < .05 && R.pv.length() < .05 && R.lv.length() < .05) || R.t - A.t0 > A.D + 5)) enterAddress();
 }
 function enterAddress() {
-  saveRound(); mpState(true);
+  saveRound(); mpState(true); if (G.pendingReel) { G.pendingReel = false; setTimeout(() => { if (G.state === 'address') openReel(); }, 350); }
   if (G.rig) G.rig.arr = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
@@ -7172,6 +7172,16 @@ function levelOf(xp) {
   const last = i === LEVEL_NAMES.length - 1; return { i, n: i + 1, name: LEVEL_NAMES[i], next: last ? null : LEVEL_NAMES[i + 1], lo: LEVEL_XP[i], hi: last ? LEVEL_XP[i] : LEVEL_XP[i + 1], xp, f: last ? 1 : (xp - LEVEL_XP[i]) / (LEVEL_XP[i + 1] - LEVEL_XP[i]) };
 }
 const xpShot = (p, holed, ace) => ace ? 300 : p >= 60 ? Math.min(80, Math.round((p - 50) * .35)) : 0;
+// the distance of all shots in something silly, a bigger yardstick as the total grows
+const FUN_UNITS = [[.2, 'bananas laid end to end', 'enough bananas for a very long smoothie'], [.75, 'dachshunds, nose to tail', 'a dachshund queue with no end in sight'], [1.8, 'sunbathing tourists in a row', 'a line of sunburnt tourists'],
+  [5.5, 'giraffes lying head to toe', 'a very patient line of giraffes'], [18.3, 'bowling lanes', 'a bowling alley built for giants'], [25, 'blue whales, tail to nose', 'a pod of blue whales in single file'],
+  [70.7, 'jumbo jets, nose to tail', 'a traffic jam of jumbo jets'], [105, 'football pitches', 'a stadium tour that never ends'], [330, 'Eiffel Towers on their sides', 'Paris, lying down'], [828, 'Burj Khalifas lying in a row', 'a very flat Dubai'],
+  [2737, 'Golden Gate Bridges', 'San Francisco, rolled out flat'], [8849, 'Mount Everests laid on their sides', 'the Himalayas, tipped over'], [42195, 'marathons', 'a marathon of marathons'],
+  [1233e3, 'Rhines, source to sea', 'the Rhine, many times over'], [40075e3, 'trips round the planet', 'a world tour, with golf clubs'], [384400e3, 'trips to the Moon', 'a golf tour of the Moon']];
+function distFun(d) {
+  let u = FUN_UNITS[0]; for (const x of FUN_UNITS) if (d / x[0] >= 2) u = x; const n = d / u[0];
+  return `about <b>${n >= 100 ? Math.round(n).toLocaleString() : n >= 10 ? n.toFixed(0) : n.toFixed(1)}</b> ${u[1]}: ${u[2]}.`;
+}
 function openStats() {
   const S = ST, el = $('statsBody'), pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–', km = S.dist / 1000;
   const lv = levelOf(S.xp);
@@ -7179,7 +7189,7 @@ function openStats() {
   const rc = k => { const R = S.rec[k], d = REC[k]; return card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', R.at != null); };
   const pace = S.holes ? (S.strokes / S.holes).toFixed(2) : '–';
   const fun = [];
-  if (S.dist > 0) fun.push(`Your shots have flown <b>${km >= 1 ? km.toFixed(2) + ' km' : Math.round(S.dist) + ' m'}</b>, about <b>${(S.dist / 105).toFixed(1)}</b> football pitches.`);
+  if (S.dist > 0) fun.push(`Your shots have flown <b>${km >= 1 ? (km >= 100 ? Math.round(km).toLocaleString() : km.toFixed(2)) + ' km' : Math.round(S.dist) + ' m'}</b>, ${distFun(S.dist)}`);
   if (S.water) fun.push(`<b>${S.water}</b> ball${S.water > 1 ? 's' : ''} fed the fish`);
   if (S.trees) fun.push(`You clipped the timber <b>${S.trees}</b> time${S.trees > 1 ? 's' : ''}`);
   if (S.ob + S.lost) fun.push(`<b>${S.ob}</b> out of bounds, <b>${S.lost}</b> lost in the woods`);
@@ -7301,6 +7311,9 @@ document.addEventListener('click', e => {
   playClips(c.classList.contains('bsAll') ? items : [clipItem(BS_LAST[+c.dataset.i])], 'Best shots', o && $('playerSheet').classList.contains('on') ? () => openPlayer(o) : null);
 }, true);
 function openReel() {
+  if (MP.spec) { // watching someone: Replay means my own round, at once (the Replay sheet opens as soon as my ball is at rest)
+    const wasClip = !!MP.clip; closeSheets(); mpResume(true); G.pendingReel = true; if (G.state === 'title' || G.state === 'holed') { G.pendingReel = false; setTimeout(openReel, 60); } return;
+  }
   const body = $('reelBody'); body.textContent = '';
   const here = ['address', 'title', 'holed', 'settle'].includes(G.state), round = (G.shotLog || []).filter(x => x.cl && x.p >= 15), top = bestShots(round, 5).map(clipItem), ever = reelList().map(clipItem);
   const last = G.lastShot && G.lastShot.C === G.C && G.lastShot.hole === G.hole && (G.state === 'address' || G.state === 'holed');
