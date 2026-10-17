@@ -7163,7 +7163,7 @@ function openStats() {
   if (S.aces) fun.push(`<b>${S.aces}</b> hole${S.aces > 1 ? 's' : ''} in one. Legend.`);
   if (!fun.length) fun.push('Play a few holes and the fun facts will show up here.');
   el.innerHTML = `<div class="stLvl"><b>${lv.name}</b><span>Level ${lv.n} of ${LEVEL_NAMES.length} · ${lv.next ? Math.max(1, lv.hi - lv.xp).toLocaleString() + ' points to ' + lv.next : 'The top of the ladder'} · ${S.holes} hole${S.holes === 1 ? '' : 's'} · ${S.rounds} round${S.rounds === 1 ? '' : 's'}</span>${lv.next ? `<div class="stBar"><i style="width:${Math.round(100 * lv.f)}%"></i></div>` : ''}</div>
-    <div class="sub"><span>Achievements</span></div>${trophyHtml(S.trophies)}
+    <div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${S.trophies.length}</span></div>${trophyHtml(S.trophies)}
     <div class="sub"><span>Records</span></div><div class="stGrid">${['holed', 'putt', 'drive', 'girStreak', 'fwStreak', 'birdStreak', 'round', 'roundPutts'].map(rc).join('')}</div>
     <div class="sub"><span>Streaks running now</span></div><div class="stGrid">${card('Greens in a row', 'dot', S.cur.gir, 'best ' + S.rec.girStreak.v)}${card('Fairways in a row', 'road', S.cur.fw, 'best ' + S.rec.fwStreak.v)}${card('Birdie streak', 'feather', S.cur.bird, 'best ' + S.rec.birdStreak.v)}${card('Holes in one', 'crown', S.aces)}</div>
     <div class="sub"><span>Scoring</span></div>
@@ -7750,7 +7750,7 @@ function openPlayer(o) {
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
       <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h && S.pu != null ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h && S.st != null ? (S.st / S.h).toFixed(2) : '–'}</span></div>
       <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div>` : '')
-      + (pf && S.tw && S.tw.length ? `<div class="sub"><span>Achievements</span></div>${trophyHtml(S.tw)}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
+      + (pf ? `<div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${(S.tw || []).length}</span></div>${S.tw && S.tw.length ? trophyHtml(S.tw) : ''}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
   };
   const clean = a => (Array.isArray(a) ? a : []).map(cleanShot).filter(Boolean);
