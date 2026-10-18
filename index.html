@@ -3028,7 +3028,8 @@ function buildAzaleas(C, grp) {
   for (const f of GC.flowers) {
     const q = C.loc(f.e, f.n), X = q[0], Z = -q[1];
     if (X < I.minX - 70 || X > I.maxX + 70 || Z < I.minZ - 70 || Z > I.maxZ + 70) continue;
-    if (Math.hypot(X - C.startPos.x, Z - C.startPos.z) < 18 || C.fieldAt(C.F.green, X, Z) < 2 || C.fieldAt(C.F.tee, X, Z) < 1 || C.fieldAt(C.F.sand, X, Z) < 1 || C.fieldAt(C.F.fair, X, Z) < .5 || C.wl(X, Z) > C.h(X, Z) - .1) continue;
+    const tdx = X - C.startPos.x, tdz = Z - C.startPos.z, td = Math.hypot(tdx, tdz), ahead = tdx * (C.cup.x - C.startPos.x) + tdz * (C.cup.z - C.startPos.z) > 0;
+    if (td < 18 || (td < 34 && ahead) || C.fieldAt(C.F.green, X, Z) < 2 || C.fieldAt(C.F.tee, X, Z) < 1 || C.fieldAt(C.F.sand, X, Z) < 1 || C.fieldAt(C.F.fair, X, Z) < .5 || C.wl(X, Z) > C.h(X, Z) - .1) continue;
     list.push({ X, Z, r: f.r, c: f.c });
   }
   if (!list.length) return;
