@@ -6,6 +6,9 @@ name: Leaderboard
 on:
   issues:
     types: [opened]
+  schedule:
+    - cron: '20 5 * * *' # just after the daily challenge closes (midnight US Eastern): the day's points are counted
+  workflow_dispatch:
 permissions:
   contents: write
   issues: write
@@ -13,8 +16,20 @@ concurrency:
   group: leaderboard
   cancel-in-progress: false
 jobs:
+  overall:
+    if: github.event_name != 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: |
+          node -e "const z=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());require('./.github/scripts/daily-overall.js')(z)"
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add leaderboard
+          git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]')
+    if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,6 +93,7 @@ jobs:
               rows.sort((a, b) => a.toPar - b.toPar || a.at - b.at);
               fs.writeFileSync(file, JSON.stringify(rows) + '\n');
               const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
+              try { files.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(zday(Date.now()))); } catch (e) { core.warning('overall: ' + e.message); }
               await save(files, `Daily ${day}: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar}`);
               return finish(true, `Posted. You are #${rows.findIndex(x => x.by === by) + 1} of ${rows.length} on the daily challenge of ${day}.`);
             }
