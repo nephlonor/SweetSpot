@@ -7304,7 +7304,7 @@ function showScorecard(final) {
     <div class="scsum"><div><b>${played ? fmtToPar(tp.d) : '–'}</b>To par</div><div><b>${firN ? firH + '/' + firN : '–'}</b>Fairways</div><div><b>${played ? girH + '/' + played : '–'}</b>Greens</div><div><b>${best || '–'}</b>Best</div></div>
     ${bestShotsHtml(G.shotLog)}
     ${final ? '<div class="mbtns"><button class="mbtn dark" id="scAgain">Play again</button><button class="mbtn" id="scClose">Close</button></div>' : ''}`;
-  if (final) { const w = $('rcWatch'), sh = $('rcShare'); if (w) w.onclick = () => { const top = bestShots((G.shotLog || []).filter(x => x.cl && x.p >= 15), 5).map(clipItem); closeSheets(); setTimeout(() => playClips(top, 'Highlights'), 150); }; if (sh) sh.onclick = shareRecap; }
+  if (final) { const w = $('rcWatch'), sh = $('rcShare'); if (w) w.onclick = () => { const top = chrono(bestShots((G.shotLog || []).filter(x => x.cl && x.p >= 15), 5)).map(clipItem); closeSheets(); setTimeout(() => playClips(top, 'Highlights'), 150); }; if (sh) sh.onclick = shareRecap; }
   if (final) { if (G.daily && dlRec(G.daily.day) && dlRec(G.daily.day).status === 'done') fillDaily($('finalBoard'), true); else fillBoard($('finalBoard'), 10); }
   openSheet('cardSheet');
   if (final) { $('scAgain').onclick = () => { closeSheets(); startRound(); }; $('scClose').onclick = () => { closeSheets(); G.state = 'title'; $('title').classList.add('on'); showBest(); }; }
@@ -7709,7 +7709,7 @@ function openReel() {
     closeSheets(); mpResume(true); G.pendingReel = true; if (G.state === 'title' || G.state === 'holed') { G.pendingReel = false; setTimeout(openReel, 60); } return;
   }
   const body = $('reelBody'); body.textContent = '';
-  const here = ['address', 'title', 'holed', 'settle'].includes(G.state), round = (G.shotLog || []).filter(x => x.cl && x.p >= 15), top = bestShots(round, 5).map(clipItem), ever = reelList().map(clipItem);
+  const here = ['address', 'title', 'holed', 'settle'].includes(G.state), round = (G.shotLog || []).filter(x => x.cl && x.p >= 15), top = chrono(bestShots(round, 5)).map(clipItem), ever = reelList().map(clipItem);
   const last = G.lastShot && G.lastShot.C === G.C && G.lastShot.hole === G.hole && (G.state === 'address' || G.state === 'holed');
   const opt = (ic, t, d, on, go) => { const b = document.createElement('button'); b.className = 'mli reel' + (on ? '' : ' off'); b.innerHTML = `<i class="ic">${ICONS[ic]}</i><span>${t}<small></small></span><i class="ic chev">${ICONS.chev}</i>`; b.querySelector('small').textContent = d; if (on) b.onclick = go; body.appendChild(b); };
   opt('play', 'Last shot', last ? 'Your most recent shot, again' : 'No shot to replay on this hole yet', last, () => { closeSheets(); setTimeout(replayLast, 120); });
@@ -7723,16 +7723,22 @@ function openReel() {
 function shotWords(x) {
   const cl = CLUBS[x.c] ? CLUBS[x.c].name : '', lie = x.f ? 'the tee' : x.l === S.SAND ? 'the bunker' : x.l === S.ROUGH ? 'the rough' : x.l === S.DEEP ? 'deep rough' : x.l === S.FRINGE ? 'the fringe' : x.l === S.FIRST ? 'the first cut' : x.l === S.GREEN ? 'the green' : 'the fairway';
   const m = v => v < 10 ? v.toFixed(1) + ' m' : Math.round(v) + ' m';
+  // what the shot was for: the score a holing would have made on this hole (par from the hole's own course)
+  const co = COURSES[x.cl ? CLIP_COURSES[x.cl[0]] : COURSE.key] || COURSE, par = co.defs[x.h] ? co.defs[x.h].par : 4, rel = x.n - par;
+  const fo = rel <= -3 ? 'albatross' : rel === -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 0 ? 'par' : rel === 1 ? 'bogey' : 'double bogey';
+  const hole = 'Hole ' + (x.h + 1) + ' · ';
   let t;
-  if (x.o && x.k === 3) t = m(x.d) + ' putt holed' + (x.b >= .3 ? ', ' + m(x.b).replace(' m', '') + ' m of break' : '');
-  else if (x.o) t = x.n === 1 ? 'Hole in one' : x.f ? 'Holed from the tee' : 'Holed out from ' + m(x.d) + (x.l === S.SAND ? ' in the sand' : x.l === S.GREEN ? '' : ' off the green');
-  else if (x.lp) t = (x.k === 3 ? m(x.d) + ' putt' : x.k === 0 ? 'Drive ' + x.t + ' m' : (CLUBS[x.c] ? CLUBS[x.c].name + ' from ' : '') + m(x.d)) + ' lipped out';
+  if (x.o && x.k === 3) t = 'Putt for ' + fo + ' holed, ' + m(x.d) + (x.b >= .3 ? ' with ' + m(x.b).replace(' m', '') + ' m of break' : '');
+  else if (x.o) t = x.n === 1 ? 'Hole in one' : x.f ? 'Holed from the tee' : (x.k === 2 || x.k === 4 ? (x.k === 4 ? 'Bunker shot' : 'Chip') + ' holed for ' + fo + ', ' + m(x.d) : 'Holed out for ' + fo + ' from ' + m(x.d) + (x.l === S.SAND ? ' in the sand' : x.l === S.GREEN ? '' : ' off the green'));
+  else if (x.lp) t = (x.k === 3 ? 'Putt for ' + fo + ', ' + m(x.d) : x.k === 0 ? 'Drive ' + x.t + ' m' : (x.k === 1 || x.k === 6 ? 'Approach' : cl) + ' from ' + m(x.d)) + ', lipped out';
   else if (x.k === 0) t = 'Drive ' + x.t + ' m' + (x.fw ? ', in the fairway' : '');
-  else if (x.k === 3) t = m(x.d) + ' putt to ' + m(x.e);
+  else if (x.k === 3) t = 'Putt for ' + fo + ', ' + m(x.d) + ' to ' + m(x.e);
+  else if (x.k === 1 || x.k === 6) t = 'Approach ' + m(x.d) + ' to ' + m(x.e);
   else if ((x.s === S.GREEN || x.s === S.FRINGE)) t = (x.k === 4 ? 'Bunker shot' : x.k === 2 ? 'Chip' : cl) + ' to ' + m(x.e);
   else t = cl + ' ' + x.t + ' m';
-  return { t, d: `Hole ${x.h + 1} · stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
+  return { t: hole + t, d: `Stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
 }
+const chrono = a => a.slice().sort((p, q) => p.h - q.h || p.n - q.n); // a round's highlights play in the order they happened, hole 1 to 18
 // the best n by points, but a round's highlights are not all putts: at most three putts (two in a short list), and one approach when there is a decent one
 function bestShots(log, n) {
   n = n || 3; const all = (log || []).filter(x => x.p >= 15).slice().sort((a, b) => b.p - a.p), maxPutts = n >= 4 ? 3 : 2, out = [];
@@ -7743,7 +7749,7 @@ function bestShots(log, n) {
 }
 const BS_SETS = {}; let PL_LAST = null;
 function bestShotsHtml(log, name, set) {
-  const b = bestShots(log); if (!b.length) return ''; set = set || 'a'; BS_SETS[set] = b;
+  set = set || 'a'; let b = bestShots(log); if (!b.length) return ''; if (set === 'a') b = chrono(b); BS_SETS[set] = b;
   const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
   return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot${x.cl ? ' pl' : ''}" data-set="${set}" data-i="${i}"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div>${x.cl ? '<em class="ic">' + ICONS.play + '</em>' : ''}<span>★ ${x.p}</span></div>`; }).join('')}</div>${b.some(x => x.cl) ? '<button class="mbtn dark wide bsAll" data-set="' + set + '">' + (set === 'b' ? 'Watch player highlights' : 'Watch best shots of the round') + '</button>' : ''}`;
 }
