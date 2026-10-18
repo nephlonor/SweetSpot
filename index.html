@@ -6252,10 +6252,11 @@ function dotScreen() {
     return { x: UI.faceCX - hand * h * f.hw, y: UI.faceCY - v * f.hh, loose: true };
   }
   const wx = -hand * (SW.dH + SW.jH) * f.hw, wy = -(SW.dV + SW.jV) * f.hh;
-  let x = SW.tx + THUMB_OFF.x + wx, y = SW.ty + THUMB_OFF.y + wy;
+  const sg = settings.swap ? -1 : 1; // swapped controls: the thumb is bottom-left of the ball, so the ball rides up-right of it
+  let x = SW.tx + THUMB_OFF.x * sg + wx, y = SW.ty + THUMB_OFF.y + wy;
   // the wobble may never pull the dot back under the thumb: keep it at least THUMB_CLEAR px up-left of the touch
-  const u = Math.SQRT1_2, proj = -(x - SW.tx) * u - (y - SW.ty) * u;
-  if (proj < THUMB_CLEAR) { x -= u * (THUMB_CLEAR - proj); y -= u * (THUMB_CLEAR - proj); }
+  const u = Math.SQRT1_2, proj = -(x - SW.tx) * u * sg - (y - SW.ty) * u;
+  if (proj < THUMB_CLEAR) { x -= sg * u * (THUMB_CLEAR - proj); y -= u * (THUMB_CLEAR - proj); }
   return { x, y };
 }
 function strikeNow() {
