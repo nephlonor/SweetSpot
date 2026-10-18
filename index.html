@@ -5504,6 +5504,7 @@ function mpSpecLoad(pr) {
   G.pins[h] = pr.pin | 0; // their pin, for their green
   const C = courseFor(h); G.pins[h] = keep; if (!had) G.pins = null;
   G.C = C; buildHole(C); MP.specHole = h; MP.specCam = null;
+  for (const o of MP.objs.values()) { o.ball.visible = false; o.tag.style.opacity = 0; o.tr.geometry.setDrawRange(0, 0); } // (what was drawn belongs to the old hole)
   W.ball.visible = W.aim.visible = W.ring.visible = W.peg.visible = false; W.tracer.visible = false;
 }
 function mpResume(quiet) {
