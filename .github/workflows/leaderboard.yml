@@ -104,7 +104,18 @@ jobs:
             }
             const file = `leaderboard/${r.course}.json`; let rows = readJson(file, []);
             if (rows.some(x => x.name === name && x.at === r.at)) return finish(true, 'This round is already on the board.');
-            if (rows.some(x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && x.strokes === r.strokes)) return finish(true, 'This score is already on the board for this player.'); // one player, one entry per score per course
+            // one player, one entry per score per course: the same score again is counted on that entry (shown as NAME (x3)), not listed again
+            const dup = rows.find(x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && x.strokes === r.strokes);
+            if (dup) {
+              const ats = dup.ats || [dup.at];
+              if (ats.includes(r.at)) return finish(true, 'This round is already on the board.');
+              if (ats.length >= 200) return finish(false, 'Too many rounds with this score.');
+              ats.push(r.at); dup.ats = ats.slice(-60); dup.n = ats.length;
+              fs.writeFileSync(file, JSON.stringify(rows) + '\n');
+              const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
+              await save(files, `Leaderboard: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar} again on ${r.course} (x${dup.n})`);
+              return finish(true, `Counted: you have posted this score ${dup.n} times, shown once on the ${r.course} board.`);
+            }
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
             if (rows.filter(x => x.at > Date.now() - 36e5).length >= 120) return finish(false, 'The board is busy; try again later.');
             const holes = ints(r.h, 1, 16) && r.h.reduce((a, b) => a + b, 0) === r.strokes ? r.h : null;

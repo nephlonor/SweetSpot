@@ -7751,7 +7751,7 @@ async function loadWorld(force, key) {
   key = key || COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${key}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); if (!r.ok) throw new Error('http');
-    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18, by: typeof x.by === 'string' ? x.by : '', bs: Array.isArray(x.bs) ? x.bs : [], h: Array.isArray(x.h) && x.h.length === 18 ? x.h : null, pt: Array.isArray(x.pt) && x.pt.length === 18 ? x.pt : null })) : [];
+    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18, n: Number.isFinite(x.n) && x.n > 1 ? Math.min(999, x.n | 0) : 1, by: typeof x.by === 'string' ? x.by : '', bs: Array.isArray(x.bs) ? x.bs : [], h: Array.isArray(x.h) && x.h.length === 18 ? x.h : null, pt: Array.isArray(x.pt) && x.pt.length === 18 ? x.pt : null })) : [];
   } catch (e) { if (!Board.gh[key]) Board.gh[key] = null; }
   refreshBoards();
 }
@@ -7759,7 +7759,11 @@ const roundKey = r => r.name + '|' + r.at;
 // the world rows: the file's, plus my own rounds I have just posted that the workflow has not added yet
 function worldRows(key) {
   key = key || COURSE.key; const g = Board.gh[key]; if (!g) return null; const have = new Set(g.map(roundKey));
-  return g.concat(localRounds(key).filter(r => r.posted && !have.has(roundKey(r))).map(r => Object.assign({}, r, { pending: true })));
+  // the same score again is counted on the first entry (NAME (x3)), so it is never listed, or waiting, a second time
+  const same = r => g.some(x => String(x.name).toLowerCase() === String(r.name).toLowerCase() && x.strokes === r.strokes);
+  const mine = new Set(), out = [];
+  for (const r of localRounds(key).filter(r => r.posted && !have.has(roundKey(r)) && !same(r))) { const k = String(r.name).toLowerCase() + '|' + r.strokes; if (mine.has(k)) continue; mine.add(k); out.push(Object.assign({}, r, { pending: true })); }
+  return g.concat(out);
 }
 function postUrl(r) {
   const body = 'Posting a round from Sweet Spot Golf. Just press **Submit new issue**; a bot adds it to the board within a minute.\n\n```json\n' + JSON.stringify(roundPayload(r)) + '\n```\n';
@@ -7872,7 +7876,7 @@ function fillBoard(el, limit, key, pick) {
     const mine = own && (tab === 'all' ? (r.id && r.id === Board.lastShared) : r.at === Board.lastLocal);
     row.className = 'row' + (mine ? ' me' : '') + (i === 0 ? ' top1' : '');
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : String(i + 1);
-    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name + (r.n > 1 ? ' (x' + (r.n | 0) + ')' : '');
     const dt = document.createElement('small'); dt.textContent = new Date(r.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + (r.pending ? ' · posting…' : ''); nm.appendChild(dt);
     const tp = document.createElement('span'); tp.className = 'tp ' + (r.toPar < 0 ? 'good' : r.toPar > 0 ? '' : ''); tp.textContent = fmtToPar(r.toPar);
     const st = document.createElement('span'); st.className = 'st'; st.textContent = r.strokes;
