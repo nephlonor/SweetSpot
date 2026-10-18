@@ -558,7 +558,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </section>
   <section class="mpg" data-pg="gfx">
     <div class="mgrp"><div class="mrow">Graphics<div class="seg" id="segGfx"><button data-v="auto">Auto</button><button data-v="high">High</button><button data-v="saver">Saver</button></div></div></div>
-    <div class="mnote" id="gfxNote">Auto picks Saver on slower phones, on low battery, or if the game stutters. Saver drops shadows and the depth blur, renders at a lower resolution and caps the frame rate at 30.</div>
+    <div class="mnote">Auto picks Saver on slower phones, on low battery, or if the game stutters. Saver drops shadows and the depth blur, renders at a lower resolution and caps the frame rate at 30.</div>
   </section>
   <section class="mpg" data-pg="live">
     <div class="sub"><span>Players online</span></div><div class="mpList" id="mpList"></div>
@@ -603,7 +603,6 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-const easeOut = t => 1 - Math.pow(1 - t, 3);
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function hash2(i, j, s) {
   let h = Math.imul(i | 0, 374761393) + Math.imul(j | 0, 668265263) + Math.imul(s | 0, 1442695041) | 0;
@@ -636,7 +635,6 @@ function hslToRgb(h, s, l) {
   const f = t => { t = ((t % 1) + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)];
 }
-function fmtM(m) { return Math.round(m) + ' m'; }
 function fmtDistShort(m) { return m < 10 ? m.toFixed(1) + ' m' : Math.round(m) + ' m'; }
 
 /* ================= PHYSICS ================= */
@@ -2177,7 +2175,7 @@ function altiH(RA) {
 // an ordinary green: the real lattice, lightly smoothed and shrunk toward its own best-fit plane so lattice noise does not roughen it
 function realGreen(RA, sd, ww, hh, i0, j0, cx, cz) {
   const f = tierGreen.f, raH = altiH(RA), sm = (X, Z) => (raH(X, Z) * 2 + raH(X + 1.5, Z) + raH(X - 1.5, Z) + raH(X, Z + 1.5) + raH(X, Z - 1.5)) / 6;
-  let n = 0, mx = 0, mz = 0, mh = 0, pts = [];
+  let n = 0, mh = 0, pts = [];
   for (let j = 0; j < hh; j++) for (let i = 0; i < ww; i++) if (sd[j * ww + i] < 0) { const X = f.x0 + (i + i0) * f.res, Z = f.z0 + (j + j0) * f.res, h = sm(X, Z); pts.push([X - cx, Z - cz, h]); n++; mh += h; }
   mh /= n || 1; let Sxx = 0, Szz = 0, Sxz = 0, Sxh = 0, Szh = 0;
   for (const p of pts) { Sxx += p[0] * p[0]; Szz += p[1] * p[1]; Sxz += p[0] * p[1]; Sxh += p[0] * (p[2] - mh); Szh += p[1] * (p[2] - mh); }
@@ -2187,7 +2185,7 @@ function realGreen(RA, sd, ww, hh, i0, j0, cx, cz) {
 // where the step sits, as the share of the green below it (hole 3: close to the front, a small lower tier in front of the main plateau)
 const TIER_CUT_GCCB = { 2: .3 }; let TIER_CUT = TIER_CUT_GCCB;
 function tierGreen(RA, sd, ww, hh, i0, j0, cx, cz, maxS, fixCut) {
-  const f = tierGreen.f, res = f.res, x0 = f.x0, z0 = f.z0, zBase = f.zBase;
+  const f = tierGreen.f, res = f.res, x0 = f.x0, z0 = f.z0;
   const raH = altiH(RA);
   const P = [];
   for (let j = 0; j < hh; j++) for (let i = 0; i < ww; i++) if (sd[j * ww + i] < 0) { const X = x0 + (i + i0) * res, Z = z0 + (j + j0) * res; P.push([X - cx, Z - cz, raH(X, Z)]); }
@@ -2798,7 +2796,7 @@ function buildRealTrees(C, grp) {
 }
 // near trees standing between the camera and the ball (within the first 45 m from the camera) step aside while they
 // would block the view, leaving a faint silhouette; they come back once clear of the line by a margin, so they don't flicker
-const _rd = new THREE.Vector3(), _oq = new THREE.Vector3(), _ogc = new THREE.Color(), _ogw = new THREE.Color(0xeef6ea);
+const _oq = new THREE.Vector3(), _ogc = new THREE.Color(), _ogw = new THREE.Color(0xeef6ea);
 function updateTreeOcc() {
   const O = W.treeOcc; if (!O || !G.C) return;
   const cam = W.cam.position, tgt = G.state === 'title' ? _oq.set(G.C.cup.x, G.C.cup.y + 2, G.C.cup.z) : G.state === 'intro' ? null : W.ball.position;
@@ -3642,7 +3640,7 @@ function buildHole(C) {
   const grp = new THREE.Group(); W.holeGroup = grp; W.scene.add(grp);
   W.treeOcc = null;
   if (C.real) { buildRealHole(C, grp); return; }
-  const I = C.inner, seed = C.def.seed;
+  const I = C.inner;
   const xs = axisCoords(I.minX, I.maxX, 2.5, 1100), zs = axisCoords(I.minZ, I.maxZ, 2.5, 1100);
   const nx = xs.length, nz = zs.length;
   const PX = new Float32Array(nx * nz), PZ = new Float32Array(nx * nz), PY = new Float32Array(nx * nz);
@@ -4404,7 +4402,7 @@ function buildBuildings(C, grp) {
     } else {
       // seafront hotel: four storeys of cream render with windows, slate mansard roof, chimneys, a flag
       const tex = windowTex(Math.round(w / 4), 4, '#f1e6d2', '#7f9aa6', '#ffffff'), texE = tex.clone(); texE.needsUpdate = true; texE.repeat.set(Math.max(1, Math.round(d / 4)) / Math.max(1, Math.round(w / 4)), 1);
-      const sideM = new THREE.MeshLambertMaterial({ map: tex }), endM = new THREE.MeshLambertMaterial({ map: texE }), slate = lambert(0x56606a);
+      const sideM = new THREE.MeshLambertMaterial({ map: tex }), endM = new THREE.MeshLambertMaterial({ map: texE });
       const body = new THREE.Mesh(unitBox, [endM, endM, lambert(0xe9dcc6), lambert(0xe9dcc6), sideM, sideM]); body.scale.set(w, h * .8, d); body.position.y = h * .4; g.add(body);
       box(w + .8, 2, d + .8, lambert(0xcfc3ad), 0, -.6, 0);
       const roof = new THREE.Mesh(gableRoof(w - 2, d - 2, h * .2, .6), new THREE.MeshLambertMaterial({ color: 0x56606a, side: THREE.DoubleSide, flatShading: true })); roof.position.y = h * .8; g.add(roof);
@@ -4748,16 +4746,11 @@ function crossingPoints(L, margin) {
   }
   return null;
 }
-function ballThreat(L) { // {x,y,z, fly, near(x,z,rFly,rRest)}
-  const b = W.ball.position, fly = G.state === 'flight' && !(G.shot && G.shot.L && G.shot.L.putt);
-  return { x: b.x, y: b.y, z: b.z, fly };
-}
 function threatened(L, x, z, rFly, rRest) {
   const T = L.T, d = Math.hypot(T.x - x, T.z - z);
   if (T.fly) return d < rFly && T.y < 45;
   return d < rRest && !L.ballMovingAway;
 }
-const lifeTreeBlocked = (L, x, z) => !!(L.C.treeHit && L.C.treeHit(x, groundY(x, z) + .7, z, false) >= 0);
 
 /* --- ground animals: deer cross the fairway, rabbits hop about; both bolt from the ball --- */
 function deerParts(stag) {
@@ -4858,7 +4851,7 @@ function initBirds(L, grp) {
   L.flocks = [];
   for (let f = 0; f < 2; f++) { const n = f ? 8 : 11, kind = f ? 3 : 2, members = []; for (let i = 0; i < n; i++) members.push(add(kind, 'gone', { flock: f, off: [(Math.random() - .5) * 9, (Math.random() - .5) * 3.4, -Math.random() * 9 - (i === 0 ? 0 : 1)] })); members[0].off = [0, 0, 0]; L.flocks.push({ members, st: 'wait', tmr: 6 + f * 22 + Math.random() * 14, p: [0, 0, 0], dir: [0, 1], speed: 11, t: 0, T: 1, a: [0, 0], b: [0, 0], h: 30 }); }
   // wheeling high over the hole
-  for (let i = 0; i < 4; i++) { const b = add(2, 'circle', { ph: Math.random() * TAU, rad: 30 + Math.random() * 28, h: 34 + Math.random() * 14, sp: .16 + Math.random() * .07, off: [Math.random() * 16 - 8, Math.random() * 16 - 8], vis: 1 }); }
+  for (let i = 0; i < 4; i++) { add(2, 'circle', { ph: Math.random() * TAU, rad: 30 + Math.random() * 28, h: 34 + Math.random() * 14, sp: .16 + Math.random() * .07, off: [Math.random() * 16 - 8, Math.random() * 16 - 8], vis: 1 }); }
   L.cx = (I.minX + I.maxX) / 2; L.cz = (I.minZ + I.maxZ) / 2 + (I.maxZ - I.minZ) * .15; L.cbase = L.C.h(L.cx, L.cz);
 }
 function randomGroundSpot(L, near) {
@@ -5082,7 +5075,7 @@ function lifeFade(e, dt) {
 }
 function updateLife(dt, now) {
   const L = W.life; if (!L || L.C !== G.C) return; dt = Math.min(dt, .1); L.t += dt; LIFE_T.value = now;
-  const b = W.ball.position, T = L.T, px = T.x, pz = T.z; T.x = b.x; T.y = b.y; T.z = b.z; T.fly = G.state === 'flight' && !!G.shot && !G.shot.replay && !(G.shot.L && G.shot.L.putt);
+  const b = W.ball.position, T = L.T; T.x = b.x; T.y = b.y; T.z = b.z; T.fly = G.state === 'flight' && !!G.shot && !G.shot.replay && !(G.shot.L && G.shot.L.putt);
   L.ballMovingAway = false;
   // grass around the camera and ball (rebuilt when they move on)
   const cam = W.cam.position, fx = cam.x, fz = cam.z; LIFE_CAM.value.copy(cam);
@@ -5132,7 +5125,7 @@ function lifeHitNote(hit) {
   const txt = { deer: 'Off a deer!', rabbit: 'Clipped a rabbit!', bird: 'Birdie… literally!', plane: 'Hit the plane!', glider: 'Hit the paraglider!' }[k];
   if (txt) readoutNote(txt, 'bad');
   try { if (k === 'plane' || k === 'glider') SFX.trunk(); else SFX.leaves(); } catch (er) { }
-  if (bd) { bd.st = 'hit'; bd.t = 0; const n = hit.h; bd.hitV = [-n.nx * 3 + (Math.random() - .5) * 2, 3, -n.nz * 3 + (Math.random() - .5) * 2]; bd.flock = bd.flock; }
+  if (bd) { bd.st = 'hit'; bd.t = 0; const n = hit.h; bd.hitV = [-n.nx * 3 + (Math.random() - .5) * 2, 3, -n.nz * 3 + (Math.random() - .5) * 2]; }
   else if (e && e.onHit) e.onHit();
 }
 
@@ -5783,7 +5776,7 @@ function ambStep(a, kind, st, t) {
   const pat = K.pat[(cyc + Math.floor(bar / 4)) % 4], hn = ch[2][pat[e]]; ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .1 : e === 3 ? .075 : .055) * intro);
   // the music box tune, in its variations
   const bm = K.mel[bar], skip = v === 'sparse' && bar % 2 === 1, late = 0;
-  if (!skip && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of bm) {
+  if (!skip && (cyc > 0 || bar >= 4)) for (const [pos, m] of bm) {
     if (pos !== e) continue; const mm = m + (v === 'up' && bar % 4 === 3 ? 12 : 0) - (v === 'low' ? 12 : 0);
     ambBox(a, mm, t + hum() + late, .09 * (v === 'low' ? .8 : 1) * intro);
     if (v === 'echo') ambBox(a, mm, t + 3 * K.per, .038);
@@ -6147,7 +6140,7 @@ function placeAimGeo() {
     }
   }
   W.ring.position.set(rx, Math.max(groundY(rx, rz), C.wl(rx, rz)) + .07, rz);
-  const rs = putt ? .62 : Math.max(1.4, L * .022); W.ring.scale.set(rs, rs, rs); W.ring.userData.s = rs;
+  const rs = putt ? .62 : Math.max(1.4, L * .022); W.ring.scale.set(rs, rs, rs);
 }
 function predictCarry() {
   const L = computeLaunch(G.club, { p: 1, Tb: .45, Td: .15 }, { h: 0, v: 0 }, G.surf, G.yaw, settings.hand, G.teed);
@@ -6581,7 +6574,7 @@ function updateUnplayBtn() {
 
 /* ---------- camera ---------- */
 const camTmp = new THREE.Vector3(), lookTmp = new THREE.Vector3();
-const _pc = new THREE.Vector3(), _pl = new THREE.Vector3(), _pm = new THREE.Vector3(), _pk = new THREE.Vector3();
+const _pm = new THREE.Vector3(), _pk = new THREE.Vector3();
 // the address camera for a ball lying at (bx, by, bz), aimed along yaw
 function addressCamFor(out, look, bx, by, bz, yaw, putt, teed) {
   const C = G.C, tc = teed && !putt ? C.def.teeCam : null, d = [Math.sin(yaw), -Math.cos(yaw)];
@@ -6727,7 +6720,6 @@ function enterAddress() {
 const UI = { dpr: 1, trackPx: 220, face: null, tc: null, sc: null, tw: 0, th: 0, sw: 0, readT: 0 };
 const HAND = new Path2D('M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z');
 const FONT = (w, s) => `${w} ${s}px Oswald, "Arial Narrow", sans-serif`;
-function safeTop() { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--st')) || 0; }
 function sizeCanvases() {
   UI.dpr = Math.min(window.devicePixelRatio || 1, 2);
   const t = $('tempoCv'), s = $('strikeCv');
@@ -7677,7 +7669,7 @@ document.addEventListener('click', e => {
 }, true);
 function openReel() {
   if (MP.spec) { // watching someone: Replay means my own round, at once (the Replay sheet opens as soon as my ball is at rest)
-    const wasClip = !!MP.clip; closeSheets(); mpResume(true); G.pendingReel = true; if (G.state === 'title' || G.state === 'holed') { G.pendingReel = false; setTimeout(openReel, 60); } return;
+    closeSheets(); mpResume(true); G.pendingReel = true; if (G.state === 'title' || G.state === 'holed') { G.pendingReel = false; setTimeout(openReel, 60); } return;
   }
   const body = $('reelBody'); body.textContent = '';
   const here = ['address', 'title', 'holed', 'settle'].includes(G.state), round = (G.shotLog || []).filter(x => x.cl && x.p >= 15), top = bestShots(round, 5).map(clipItem), ever = reelList().map(clipItem);
@@ -8265,7 +8257,7 @@ function openPlayer(o) {
   PL_LAST = o;
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
   const render = (pf, bs, rs) => {
-    const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]), S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+    const S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
     const lv = levelOf(S.xp != null ? S.xp : (S.h || 0) * 10 + (S.r || 0) * 30);
     const card = (k, e, v, n) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
     $('plSub').textContent = pf ? lv.name : '';
@@ -8504,7 +8496,7 @@ function frame(now) {
   if (C) { const t = G.camLook; W.sun.position.set(t.x + SUN_OFF[0], t.y + SUN_OFF[1], t.z + SUN_OFF[2]); W.sun.target.position.copy(t); }
   const tt = now / 1000;
   if (W.windDot) W.windDot.visible = W.windLine.visible = !!W.windOn && W.ring.visible && !isPutt();
-  if (W.ring.visible) { const s = W.ring.userData.s || 1, k = 1 + Math.sin(tt * 3) * .05; W.ringPulse.scale.set(k, k, 1); }
+  if (W.ring.visible) { const k = 1 + Math.sin(tt * 3) * .05; W.ringPulse.scale.set(k, k, 1); }
   if (W.flag && C) { const pa = W.flag.geometry.attributes.position, b = W.flagBase, ws = Math.hypot(G.wind[0], G.wind[1]); for (let i = 0; i < pa.count; i++) { const x0 = b[i * 3]; pa.array[i * 3 + 2] = Math.sin(x0 * 5 - tt * (3 + ws)) * .08 * x0 * (1 + (G.gust || 0) * .8); } pa.needsUpdate = true; W.flag.rotation.y = Math.atan2(-G.wind[1], G.wind[0]); }
   W.clouds.children.forEach(c => { c.position.x += c.userData.sp * dt; if (c.position.x > 1400) c.position.x = -1400; });
   if (UI.readT > 0) { UI.readT -= dt; if (UI.readT <= 0) { $('readout').classList.remove('on'); if ($('mpPanel').classList.contains('on')) mpPlace($('mpPanel')); } }
