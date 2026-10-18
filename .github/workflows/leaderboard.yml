@@ -46,7 +46,7 @@ jobs:
             };
             const m = /```json\s*([\s\S]*?)```/.exec(issue.body || '');
             let r; try { r = JSON.parse(m[1]); } catch (e) { return finish(false, 'No valid score JSON found in this issue.'); }
-            const COURSES = { gccb: 72, alsace: 72, augusta: 72 };
+            const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71 };
             const int = v => Number.isInteger(v);
             const isDaily = issue.title.startsWith('[daily]');
             if (!r || typeof r !== 'object' || !(r.course in COURSES)) return finish(false, 'Unknown course.');
@@ -89,7 +89,8 @@ jobs:
               const day = r.daily;
               if (typeof day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day) || zday(r.at) !== day) return finish(false, 'The round was not finished on the day of the challenge.');
               const dn = Math.floor(Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10)) / 864e5);
-              if (['gccb', 'alsace', 'augusta'][dn % 3] !== r.course) return finish(false, 'That is not the course of the day.');
+              const cod = dn >= 20745 ? ['rothley', 'gccb', 'alsace', 'augusta'][(dn - 20745) % 4] : ['gccb', 'alsace', 'augusta'][dn % 3]; // Rothley Park joins the turn on 2026-10-19
+              if (cod !== r.course) return finish(false, 'That is not the course of the day.');
               if (!Array.isArray(r.h) || r.h.length !== 18 || !r.h.every(v => int(v) && v >= 1 && v <= 16) || r.h.reduce((a, b) => a + b, 0) !== r.strokes) return finish(false, 'The hole scores do not add up.');
               const file = `leaderboard/daily-${day}.json`; let rows = readJson(file, []);
               if (rows.some(x => x.by === by || x.name.toLowerCase() === name.toLowerCase())) return finish(true, 'There is already a result for this player on this daily challenge: one chance only.');
