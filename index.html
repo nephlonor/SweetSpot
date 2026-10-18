@@ -3276,7 +3276,7 @@ const RDS = {
   augusta: { lush: true, data: RD_AUGUSTA, alti: RD_AUGUSTA.alti, z0: RD_AUGUSTA.z0, gr: RD_AUGUSTA.gr, tweak: { 22889: { hide: true }, 22950: { hide: true }, 22835: { hide: true } }, // hole 17: the three dogwoods in the line of play off the tee
     tiers: [], tierCut: {}, benches: [], greenK: .85 },
   // an English parkland in October: cool, damp emerald turf, oaks turning copper and gold; Rothley Brook is a penalty area like Rae's Creek
-  rothley: { autumn: true, creek: true, data: RD_ROTHLEY, alti: RD_ROTHLEY.alti, z0: RD_ROTHLEY.z0, gr: RD_ROTHLEY.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .7 }
+  rothley: { autumn: true, creek: true, data: RD_ROTHLEY, alti: RD_ROTHLEY.alti, z0: RD_ROTHLEY.z0, gr: RD_ROTHLEY.gr, tweak: { 7634: { hide: true } } /* hole 7: the oak just right of the line, 26 m off the tee */, tiers: [], tierCut: {}, benches: [], greenK: .7 }
 };
 // Alsace, Augusta and Rothley Park bring their terrain, features, trees and relief as separate files (data-<course>.js), fetched the first time the course is used and then kept
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
