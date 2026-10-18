@@ -48,6 +48,9 @@ jobs:
             // a best shot also carries its clip: the 18 numbers that let the game fly it again
             const pickShot = x => { const o = pick(x, BS); if (x && Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(num)) o.cl = x.cl.map(v => Math.round(v * 1e4) / 1e4); return o; };
             const pf = pick(r.pf, PF); if (r.pf && Array.isArray(r.pf.tw)) pf.tw = r.pf.tw.filter(num).slice(-40); const bs = Array.isArray(r.bs) ? r.bs.slice(0, 3).map(pickShot).filter(x => Object.keys(x).length >= 8) : [];
+            // the scorecard: strokes and putts per hole, kept only when they are whole numbers that add up
+            const ints = (a, lo, hi) => Array.isArray(a) && a.length === 18 && a.every(v => int(v) && v >= lo && v <= hi);
+            const putts = ints(r.pt, 0, 9) ? r.pt : null;
             const save = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', ...files]); await exec.exec('git', ['commit', '-m', msg]);
@@ -71,7 +74,7 @@ jobs:
               const file = `leaderboard/daily-${day}.json`; let rows = readJson(file, []);
               if (rows.some(x => x.by === by || x.name.toLowerCase() === name.toLowerCase())) return finish(true, 'There is already a result for this player on this daily challenge: one chance only.');
               if (rows.length >= 500) return finish(false, 'The board is full.');
-              rows.push({ name, strokes: r.strokes, toPar: r.toPar, h: r.h, at: r.at, by, c: r.course });
+              rows.push(Object.assign({ name, strokes: r.strokes, toPar: r.toPar, h: r.h, at: r.at, by, c: r.course }, putts ? { pt: putts } : {}));
               rows.sort((a, b) => a.toPar - b.toPar || a.at - b.at);
               fs.writeFileSync(file, JSON.stringify(rows) + '\n');
               const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
@@ -83,7 +86,8 @@ jobs:
             if (rows.some(x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && x.strokes === r.strokes)) return finish(true, 'This score is already on the board for this player.'); // one player, one entry per score per course
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
             if (rows.filter(x => x.at > Date.now() - 36e5).length >= 120) return finish(false, 'The board is busy; try again later.');
-            rows.push({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by });
+            const holes = ints(r.h, 1, 16) && r.h.reduce((a, b) => a + b, 0) === r.strokes ? r.h : null;
+            rows.push(Object.assign({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by }, holes ? { h: holes } : {}, holes && putts ? { pt: putts } : {}));
             rows.sort((a, b) => a.toPar - b.toPar || a.strokes - b.strokes || a.at - b.at); rows = rows.slice(0, 500);
             fs.writeFileSync(file, JSON.stringify(rows) + '\n');
             const rank = rows.findIndex(x => x.name === name && x.at === r.at) + 1;
