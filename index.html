@@ -7643,10 +7643,10 @@ function clipEnd() { // back to my own round
 }
 // the Replay sheet: the last shot, the best shots of the round, the best shots ever
 document.addEventListener('click', e => {
-  const c = e.target.closest && e.target.closest('.bshot.pl, .bsAll'); if (!c || !BS_LAST.length) return;
-  const items = BS_LAST.filter(x => x.cl).map(clipItem); e.stopPropagation();
+  const c = e.target.closest && e.target.closest('.bshot.pl, .bsAll'); const BL = c && BS_SETS[c.dataset.set || 'a']; if (!c || !BL || !BL.length) return;
+  const items = BL.filter(x => x.cl).map(clipItem); e.stopPropagation();
   const o = PL_LAST; // after the clips: back to the player's card
-  playClips(c.classList.contains('bsAll') ? items : [clipItem(BS_LAST[+c.dataset.i])], 'Best shots', o && $('playerSheet').classList.contains('on') ? () => openPlayer(o) : null);
+  playClips(c.classList.contains('bsAll') ? items : [clipItem(BL[+c.dataset.i])], 'Best shots', o && $('playerSheet').classList.contains('on') ? () => openPlayer(o) : null);
 }, true);
 function openReel() {
   if (MP.spec) { // watching someone: Replay means my own round, at once (the Replay sheet opens as soon as my ball is at rest)
@@ -7674,11 +7674,11 @@ function shotWords(x) {
   return { t, d: `Hole ${x.h + 1} · stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
 }
 function bestShots(log, n) { return (log || []).filter(x => x.p >= 15).slice().sort((a, b) => b.p - a.p).slice(0, n || 3); }
-let BS_LAST = [], PL_LAST = null;
-function bestShotsHtml(log, name) {
-  const b = bestShots(log); if (!b.length) return ''; BS_LAST = b;
+const BS_SETS = {}; let PL_LAST = null;
+function bestShotsHtml(log, name, set) {
+  const b = bestShots(log); if (!b.length) return ''; set = set || 'a'; BS_SETS[set] = b;
   const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-  return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot${x.cl ? ' pl' : ''}" data-i="${i}"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div>${x.cl ? '<em class="ic">' + ICONS.play + '</em>' : ''}<span>★ ${x.p}</span></div>`; }).join('')}</div>${b.some(x => x.cl) ? '<button class="mbtn dark wide bsAll">Watch the highlights</button>' : ''}`;
+  return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot${x.cl ? ' pl' : ''}" data-set="${set}" data-i="${i}"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div>${x.cl ? '<em class="ic">' + ICONS.play + '</em>' : ''}<span>★ ${x.p}</span></div>`; }).join('')}</div>${b.some(x => x.cl) ? '<button class="mbtn dark wide bsAll" data-set="${set}">Watch the highlights</button>' : ''}`;
 }
 /* ================= PLAYER + LEADERBOARD ================= */
 // Rounds go to a board on this device (always) and, when the page runs inside Claude with the db capability and the
@@ -7841,7 +7841,7 @@ function fillBoard(el, limit, key, pick) {
     const st = document.createElement('span'); st.className = 'st'; st.textContent = r.strokes;
     row.append(rk, nm, tp, st); list.appendChild(row);
     row.style.cursor = 'pointer'; // a name opens that player's stats
-    row.onclick = () => openPlayer({ name: r.name, id: r.by, bs: r.bs, card: { course: key, h: r.h, pt: r.pt, at: r.at }, me: tab === 'device' || (!!r.by && r.by === dlMe()), back: pick ? () => { Board.view = key; fillBoard($('boardBody'), 30, key, true); openSheet('boardSheet'); } : null });
+    row.onclick = () => openPlayer({ name: r.name, id: r.by, rbs: r.bs, card: { course: key, h: r.h, pt: r.pt, at: r.at }, me: tab === 'device' || (!!r.by && r.by === dlMe()), back: pick ? () => { Board.view = key; fillBoard($('boardBody'), 30, key, true); openSheet('boardSheet'); } : null });
   });
   // post my best round of this course to the world board
   const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r))) : null;
@@ -8164,7 +8164,7 @@ function fillDaily(el, inCard) {
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.e.n; const sm = document.createElement('small'); sm.textContent = x.fin ? 'Final' : x.thru >= 18 ? 'Playing' : `Thru ${x.thru}` + (x.thru < k || !x.e.done ? '' : ''); nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.tp); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.s || '';
-    row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, bs: x.e.bs, card: { course: x.e.c, h: x.e.h, pt: x.e.pt, at: x.e.at }, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
+    row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, rbs: x.e.bs, card: { course: x.e.c, h: x.e.h, pt: x.e.pt, at: x.e.at }, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
   });
   if (tab === 'today' && playing && !inCard) { const b = add('button', 'mbtn dark wide', G.daily ? 'Back to my round' : 'Resume my round'); b.style.marginTop = '8px'; b.onclick = () => { closeSheets(); if (!G.daily) startDaily(); }; }
 }
@@ -8222,15 +8222,16 @@ function cardHtml(c) {
 function openPlayer(o) {
   PL_LAST = o;
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
-  const render = (pf, bs) => {
+  const render = (pf, bs, rs) => {
     const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]), S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
     const lv = levelOf(S.xp != null ? S.xp : (S.h || 0) * 10 + (S.r || 0) * 30);
     const card = (k, e, v, n) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
     $('plSub').textContent = pf ? lv.name : '';
     el.innerHTML = (pf ? `<div class="stLvl"><b>${lv.name}</b><span>Level ${lv.n} of ${LEVEL_NAMES.length} · ${S.h || 0} holes · ${S.r || 0} round${S.r === 1 ? '' : 's'}</span>${lv.next ? `<div class="stBar"><i style="width:${Math.round(100 * lv.f)}%"></i></div>` : ''}</div>` : '<div class="empty">No stats published for this player yet.</div>')
       + (cardHtml(o.card) || (o.card ? '<div class="lbnote" style="margin:8px 0">The scorecard of this round was not filed.</div>' : ''))
-      + bestShotsHtml(bs, o.me ? 'Best shots ever' : 'Best shots')
+      + bestShotsHtml(rs, 'Best shots of the round', 'a')
       + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? S.dr + ' m' : '–')}${card('Longest shot holed', 'target', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–')}${card('Longest putt holed', 'flag', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–')}${card('Greens in a row', 'dot', S.gs || 0)}${card('Fairways in a row', 'road', S.fs || 0)}</div>
+      ${bestShotsHtml(bs, 'Player highlights', 'b')}
       <div class="sub"><span>Scoring</span></div>
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
       <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h && S.pu != null ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h && S.st != null ? (S.st / S.h).toFixed(2) : '–'}</span></div>
@@ -8239,10 +8240,12 @@ function openPlayer(o) {
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
   };
   const clean = a => (Array.isArray(a) ? a : []).map(cleanShot).filter(Boolean);
-  if (o.me) { const ev = reelList(); render(profileCompact(), ev.length ? ev.slice(0, 3) : o.bs); }
+  // the round's own best shots (carried by the row, or kept for the player's last rounds), and the player's highlights over the career
+  const roundOf = q => { const own = clean(o.rbs); if (own.length) return own; const hit = q && Array.isArray(q.rb) && q.rb.find(x => x && o.card && x.at === o.card.at); return hit ? clean(hit.bs) : []; };
+  if (o.me) { const ev = reelList(); render(profileCompact(), ev.slice(0, 3), roundOf(null)); }
   else {
-    render(cleanPf(o.pf), clean(o.bs));
-    if (o.id && !(cleanPf(o.pf) && clean(o.bs).length)) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs)); });
+    render(cleanPf(o.pf), clean(o.bs), roundOf(null));
+    if (o.id) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs), roundOf(q)); });
   }
   openSheet('playerSheet');
 }
