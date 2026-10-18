@@ -3179,7 +3179,8 @@ const RDS = {
   gccb: { data: RD_GCCB, alti: GREEN_ALTI_GCCB, z0: 300, gr: { e0: -1300, n0: -760, res: 2, W: 1300, H: 760 }, tweak: TREE_TWEAK_GCCB, tiers: [2, 6, 14, 16], tierCut: TIER_CUT_GCCB, benches: GCCB_BENCHES_G },
   alsace: { dry: true, obOther: { 9: 17, 17: 9 }, data: RD_ALSACE, alti: RD_ALSACE.alti, z0: RD_ALSACE.z0, gr: RD_ALSACE.gr, tweak: {}, tiers: [], tierCut: {}, benches: [] },
   // lush, pine straw under the stands, the greens keep their full LiDAR contours
-  augusta: { lush: true, data: RD_AUGUSTA, alti: RD_AUGUSTA.alti, z0: RD_AUGUSTA.z0, gr: RD_AUGUSTA.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .85 }
+  augusta: { lush: true, data: RD_AUGUSTA, alti: RD_AUGUSTA.alti, z0: RD_AUGUSTA.z0, gr: RD_AUGUSTA.gr, tweak: { 22889: { hide: true }, 22950: { hide: true }, 22835: { hide: true } }, // hole 17: the three dogwoods in the line of play off the tee
+    tiers: [], tierCut: {}, benches: [], greenK: .85 }
 };
 // Alsace and Augusta bring their terrain, features, trees and relief as separate files (data-<course>.js), fetched the first time the course is used and then kept
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
