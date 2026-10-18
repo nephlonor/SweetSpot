@@ -8045,7 +8045,18 @@ function dlTrophyCheck() {
   if (got && G.state === 'title') recordCard('Daily champion', 'You won the daily challenge', fmtToPar(got.tp), COURSES[got.course].name, ['#fff3b0', '#ffd36a', '#e8a317', '#3a1d00']);
 }
 // results of the last day and a half that never reached the repository (no network): tried again at start
-async function dlRetry() { const a = dlRecs(); for (const k of Object.keys(a)) { const r = a[k]; if (r.status === 'done' && !r.posted && r.at > Date.now() - 36 * 36e5) await dlPost(r); } }
+// The day used to close at midnight Zurich time and now closes at midnight US Eastern. Results of a day that is still open under the new
+// rule but were marked as late, and trophies for a day that has not closed yet, are put right here.
+function dlFix() {
+  const a = dlRecs(), today = dayId();
+  for (const k of Object.keys(a)) {
+    const r = a[k];
+    if (r.status === 'missed' && r.day === today && r.at && dayId(r.at) === r.day && Array.isArray(r.h) && r.h.length === 18 && r.h.every(v => v > 0)) { r.status = 'done'; r.posted = false; delete r.trophyChecked; dlSet(r); }
+    if (r.day >= today && r.trophyChecked) { delete r.trophyChecked; dlSet(r); }
+  }
+  if (ST.trophies.some(t => t.day >= today)) { ST.trophies = ST.trophies.filter(t => t.day < today); saveStats(); }
+}
+async function dlRetry() { dlFix(); const a = dlRecs(); for (const k of Object.keys(a)) { const r = a[k]; if (r.status === 'done' && !r.posted && r.at > Date.now() - 36 * 36e5) await dlPost(r); } }
 // ---- the daily entry points: start screen and menu card
 function dlStatus() {
   const day = dayId(), rec = dlRec(day), c = COURSES[dailyCourse(day)], left = dayLeftSec();
@@ -8152,9 +8163,9 @@ function fillArchive(el, add) {
   const mine = dlRecs(), list = add('div', 'lb');
   if (DL.index === undefined) { add('div', 'empty', 'Loading the archive'); return; }
   if (DL.index === null) { add('div', 'empty', 'The archive could not be reached.'); return; }
-  if (!DL.index.length) { add('div', 'empty', 'Finished daily challenges are kept here.'); return; }
+  if (!DL.index.filter(x => x.d < dayId()).length) { add('div', 'empty', 'Finished daily challenges are kept here.'); return; }
   el.appendChild(list);
-  DL.index.slice(0, 120).forEach(x => {
+  DL.index.filter(x => x.d < dayId()).slice(0, 120).forEach(x => {
     const row = document.createElement('div'); row.className = 'row'; row.style.cursor = 'pointer';
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = fmt(x.d).split(' ').slice(1).join(' ');
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (COURSES[x.c] ? COURSES[x.c].short : x.c); const sm = document.createElement('small'); sm.textContent = `${fmt(x.d).split(' ')[0]} · ${x.n} player${x.n === 1 ? '' : 's'}${mine[x.d] && mine[x.d].status === 'done' ? ' · played' : ''}`; nm.appendChild(sm);
