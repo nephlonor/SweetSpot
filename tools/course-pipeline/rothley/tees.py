@@ -27,13 +27,13 @@ for h in sorted(F['holes'],key=lambda h:int(h['tags']['ref'])):
     # length to the traced green centre
     gc=np.mean(G[str(ref)],axis=0); L0=L0-math.dist(P[-1],P[-2])+math.dist(P[-2],gc) if len(P)>2 else math.dist(t,gc)
     ux,uy=(nx[0]-t[0])/math.dist(t,nx),(nx[1]-t[1])/math.dist(t,nx)
-    want=max(0,CARD[ref]*.9144-L0)+8; ok=0; why=''
-    for k in np.arange(1,want+.1,1.0):
+    want=max(0,CARD[ref]*.9144-L0); ok=0; why=''   # play to the card (white tees) exactly, if the ground allows
+    for k in np.arange(.5,want+.01,.5):
         c=(t[0]-ux*k,t[1]-uy*k); bad=''
         for s in (-2,0,2):
-            for a in (-3,0,3,-6,-9,-12):   # the box and the camera's spot behind it
+            for a in (-3,0,3,-6,-9):   # the box and the camera's spot behind it (about 9 m back)
                 q=(c[0]-uy*s+ux*a,c[1]+ux*s+uy*a)
-                if can[int(q[1]-MN0),int(q[0]-ME0)]>3.5: bad='trees'
+                pass   # (trees no longer stop a tee: build.py clears a chute behind and in front of the moved tee, as the club would)
         if not bad:
             for g,poly in G.items():
                 if dpoly(c,poly)<(8 if int(g)!=ref else -2): bad='green '+g

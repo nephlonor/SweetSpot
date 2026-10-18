@@ -78,19 +78,23 @@ Tools: `bunk.py`, `bunk2.py`, `hsheet.py`.
    - **Missed bunkers:** add them by number from the second pass.
    - **Pitfall:** the white blob I dropped as a "false bunker" on the 6th was a **footbridge over a ditch**. A false hit is still worth a second look, because it may be a feature you should model.
 
-## 5. Tees: the real back tee, not further
+## 5. Tees: play to the card
 
-Tools: `tcrop2.py`, `tees.py`.
+The player's rule, which went through three rounds: **the course must play as close as possible to the scorecard yardage from the back (white) tees.**
 
-- **The back tee goes at the back of the real rearmost tee box, at most 4 m behind it.** Read it off rotated tee crops with 2 m ticks behind the OSM tee point (`tcrop2.py`), using both photo sources.
-  - **Pitfall:** pushing tees "as far back as the ground allows" to match the card was wrong. The player wants the real tee boxes.
-- Then run the safety checks in `tees.py` on that position, and move it **forward** if any of them fail:
-  - open sky over the box **and 12 m behind it, where the camera stands**;
-  - clear of other greens (8 m), bunkers (6 m), water (6 m), buildings (8 m) and other holes' fairways;
-  - inside the course boundary.
-  - **Pitfall:** a tee moved back into a tree chute put the camera inside a tree crown.
-- **Forward tees:** set them along the opening leg using the scorecard differences between tee sets.
-- **Report** each hole's played length against the card, and say plainly where the real tees can't match the card.
+1. Find the real rearmost tee box first, on rotated tee crops with 2 m ticks behind the OSM tee point (`tcrop2.py`), using both photo sources. That's the starting point and the sanity check.
+2. Move the back tee back along the opening line until the hole measures the card length: `want = card_m − current_length`, in 0.5 m steps (`tees.py`). Stop early only for these:
+   - another hole's green (8 m), a bunker (6 m), water (6 m), a building (8 m);
+   - another hole's fairway;
+   - the course boundary.
+
+   Trees don't stop a tee. `build.py` clears a 10 m wide **tee chute**, from 12 m behind the tee (where the camera stands, about 9 m back) to 15 m in front of the old box, the way a club cuts a chute.
+3. **Report** each hole's played length against the card, and name any hole that can't reach it and why. At Rothley the 2nd stops at 307 m of 312 because of the 1st green's bunker.
+4. **Check** every tee shot (`tests/rot.js`) for a clear view and a tee that reports `surf 0`.
+   - **Pitfalls:**
+     - a tee in a tree chute without clearing puts the camera inside a crown;
+     - clearing the chute shifts tree indices (see step 7).
+5. **Forward tees:** set them along the opening leg using the scorecard differences between tee sets.
 
 ## 6. Water: streams, ditches, ponds
 
@@ -153,7 +157,7 @@ Work from the club photos and Google Images. Write down what is **specific** to 
   - pick a colour scheme that no other course uses;
   - keep the rough a **classic, close-cut green** unless the photos show otherwise;
   - **Pitfall:** tall straw-coloured grass read as "not a golf course".
-- **Mowing pattern:** match it exactly, including the **angle**, the **pass width** and the **contrast**. Rothley cross-cuts **on the diagonal**: two sets of mowing lines at **45° to the hole** in both directions, 9 m passes, clearly light and dark. Where they cross they form **diamonds** (`crossCut(p, angle, width)` in the shader, `crossCutJS` for the map; both must use the same numbers).
+- **Mowing pattern:** match it exactly, including the **angle**, the **pass width** and the **contrast**. On top of the cross-cut, the **last pass** (the mower always finishes on one diagonal) shows strongest and shifts the hue slightly: lighter and a touch yellower (`lastPass()` in the shader; in the map, `crossCutJS` gives it a 45% weight). Rothley cross-cuts **on the diagonal**: two sets of mowing lines at **45° to the hole** in both directions, 9 m passes, clearly light and dark. Where they cross they form **diamonds** (`crossCut(p, angle, width)` in the shader, `crossCutJS` for the map; both must use the same numbers).
   - **Check:** compare against the club's drone photos with a drone-height render (`tests/drone.js hole name`: 45 m up, 30 m behind the ball). A view from the tee foreshortens everything, so it can't judge the pattern.
   - **Pitfall:** it took four rounds. A 45° checkerboard of squares, then lines at 34° (which read as nearly lengthwise from the tee), then too narrow and faint. Measure the angle on the photo before writing the shader.
 - **Furniture:**
@@ -178,6 +182,8 @@ Run headless Chromium with `--use-gl=swiftshader`, three.js served from the scra
    - the line of play looks right on every hole.
 3. **Hole maps** (`tests/mapt.js <course>`): opens and captures on every hole, with contrast greater than 0.
 4. **Close views** (`tests/d7.js hole e n name`): the water crossings, bridges, ditch edging, a ball in the rough, and a rain view.
+   - **Drone view** (`tests/drone.js hole name`): the mowing pattern against the club's photos.
+   - **Overlays never cover the play cards:** the live boards (`#dlPanel` and `#mpPanel`) sit below the HUD and fade back while the lie and strike card (`#readout`) is up. Keep any new floating panel at `z-index: 1`.
 5. **The other courses** still build (`rot.js` with `setCourse('gccb' | 'alsace' | 'augusta')`).
 6. **Course-wide numbers:** the daily rotation for yesterday, today and tomorrow; the share of rain if the weather changed (simulate it); the total length against the card.
 

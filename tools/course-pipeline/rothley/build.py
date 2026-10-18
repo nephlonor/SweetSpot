@@ -239,6 +239,21 @@ n0_ = len(trees); trees = [t for t in trees if not mown_t[int(t[1]-MN0), int(t[0
 wet = raster([c[0] for c in creek_polys] + [w['pts'] for w in water], 1)
 n2_ = len(trees); trees = [t for t in trees if not wet[int(t[1]-MN0), int(t[0]-ME0)]]
 print('trees out of the water', n2_ - len(trees))
+# tee chutes: where a back tee was moved back to play to the card, the trees in a 10 m wide chute are cleared, from 12 m behind the tee
+# (where the camera stands) to 15 m in front of where the tee box was
+CH = []
+for h in H:
+    ref = int(h['tags']['ref']); k = TB[ref]
+    if k <= 0: continue
+    t0 = h['pts'][0]; ux, uy = h['pts'][1][0]-t0[0], h['pts'][1][1]-t0[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul
+    CH.append((t0, ux, uy, -k - 12, 15))
+def in_chute(e, n):
+    for t0, ux, uy, a0, a1 in CH:
+        a = (e-t0[0])*ux + (n-t0[1])*uy; b = abs(-(e-t0[0])*uy + (n-t0[1])*ux)
+        if a0 < a < a1 and b < 5: return True
+    return False
+n3_ = len(trees); trees = [t for t in trees if not in_chute(t[0], t[1])]
+print('trees cleared from tee chutes', n3_ - len(trees))
 print('trees off mown ground', n0_ - len(trees), 'trees', len(trees), collections.Counter(t[3] for t in trees))
 tarr = []
 for e, n, d, kind, h_ in trees: tarr += [e*10, n*10, d*10, kind*1000 + min(99.9, h_)*10]
