@@ -109,8 +109,8 @@ jobs:
             if (dup) {
               const ats = dup.ats || [dup.at];
               if (ats.includes(r.at)) return finish(true, 'This round is already on the board.');
-              if (ats.length >= 200) return finish(false, 'Too many rounds with this score.');
-              ats.push(r.at); dup.ats = ats.slice(-60); dup.n = ats.length;
+              if ((dup.n || ats.length) >= 200) return finish(false, 'Too many rounds with this score.');
+              dup.n = (dup.n || ats.length) + 1; ats.push(r.at); dup.ats = ats.slice(-60);
               fs.writeFileSync(file, JSON.stringify(rows) + '\n');
               const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
               await save(files, `Leaderboard: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar} again on ${r.course} (x${dup.n})`);
