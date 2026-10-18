@@ -5949,7 +5949,7 @@ function startRound(daily) {
 }
 function startHole(i) {
   if (MP.spec) { const sp = MP.spec; MP.spec = null; MP.follow = null; document.body.classList.remove('spec'); mpWorld(sp.course); } // a new hole ends following (back on my own course)
-  closeSheets(); $('done').classList.remove('on'); $('readout').classList.remove('on'); UI.readT = 0;
+  closeSheets(); $('done').classList.remove('on'); $('readout').classList.remove('on'); UI.readT = 0; G.holeClips = [];
   document.body.classList.remove('flight', 'swing');
   G.hole = i; if (G.rig) G.rig.arr = null;
   if (G.practice && G.pins) G.pins[i] = ((G.pins[i] | 0) + 1 + Math.floor(Math.random() * 3)) % 4; // practice: a different pin every time the hole is played
@@ -7592,7 +7592,9 @@ function logShot(sh, r, holed, pen) {
   if (pen) pts = Math.min(pts, -20);
   { const xp = xpShot(pts, holed, holed && G.strokes === 1); if (xp) { ST.xp += xp; saveStats(); } }
   (G.shotLog = G.shotLog || []).push({ h: G.hole, n: G.strokes - (pen ? 1 : 0), c: G.club, k: kind, l: pre.s, f: pre.teed ? 1 : 0, d: +pre.d0.toFixed(1), e: +d1.toFixed(1), t: +(r.total || 0).toFixed(0), o: holed ? 1 : 0, b: +bk.toFixed(2), q, sm: +sm.toFixed(2), s: G.surf, fw: kind === 0 && !holed && G.surf === S.FAIR ? 1 : 0, p: Math.round(pts) });
-  const cl = pts >= 40 ? clipOf(sh) : null; if (cl) { const ent = G.shotLog[G.shotLog.length - 1]; ent.cl = cl; if (pts >= 60) reelAdd(ent); }
+  const c18 = clipOf(sh), ent = G.shotLog[G.shotLog.length - 1];
+  if (c18) (G.holeClips = G.holeClips || []).push(Object.assign({}, ent, { cl: c18 })); // every shot of this hole, for "Replay this hole so far"
+  if (c18 && pts >= 40) { ent.cl = c18; if (pts >= 60) reelAdd(ent); }
 }
 /* ---------- clips: a shot as a handful of numbers, shown again by simulating it ---------- */
 // A great shot is kept as the course, hole, pin, weather, wind and how it left the club (18 numbers). Playing it builds that hole and flies the shot
@@ -7660,6 +7662,8 @@ function openReel() {
   const last = G.lastShot && G.lastShot.C === G.C && G.lastShot.hole === G.hole && (G.state === 'address' || G.state === 'holed');
   const opt = (ic, t, d, on, go) => { const b = document.createElement('button'); b.className = 'mli reel' + (on ? '' : ' off'); b.innerHTML = `<i class="ic">${ICONS[ic]}</i><span>${t}<small></small></span><i class="ic chev">${ICONS.chev}</i>`; b.querySelector('small').textContent = d; if (on) b.onclick = go; body.appendChild(b); };
   opt('play', 'Last shot', last ? 'Your most recent shot, again' : 'No shot to replay on this hole yet', last, () => { closeSheets(); setTimeout(replayLast, 120); });
+  const hole = (G.holeClips || []).filter(x => x.h === G.hole).map(clipItem);
+  opt('film', 'This hole so far', hole.length ? `All ${hole.length} shot${hole.length === 1 ? '' : 's'} of hole ${G.hole + 1}, from the tee` + (here ? '' : ' (while you line up a shot)') : 'Your shots on this hole show up here', hole.length && here, () => playClips(hole, 'Hole ' + (G.hole + 1)));
   opt('film', 'Highlights of this round', top.length ? `${top.length} best shot${top.length === 1 ? '' : 's'}, one after the other` + (here ? '' : ' (while you line up a shot)') : 'Your best shots of the round show up here', top.length && here, () => playClips(top, 'Highlights'));
   opt('star', 'My best shots ever', ever.length ? `${ever.length} saved on this device` + (here ? '' : ' (while you line up a shot)') : 'Great shots are kept here for good', ever.length && here, () => playClips(ever, 'Best ever'));
   openSheet('reelSheet');
