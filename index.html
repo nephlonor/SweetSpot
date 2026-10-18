@@ -115,6 +115,10 @@ body.swing #topbar{opacity:0}
 body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 #skipBtn{position:absolute;z-index:6;transform:translate(-50%,6px) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .3s var(--spring);padding:7px 16px 8px;border-radius:18px;color:#fff;font:600 15px Oswald,"Arial Narrow",sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:5px;cursor:pointer}
 #skipBtn.on{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
+#unplayBtn{position:absolute;z-index:6;transform:translate(-50%,6px) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .3s var(--spring);padding:8px 16px 9px;border-radius:18px;color:#fff;font:600 15px Oswald,"Arial Narrow",sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;background:linear-gradient(135deg,rgba(255,222,110,.5),rgba(255,150,50,.34))}
+#unplayBtn.on{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
+body.rbow #unplayBtn,body.spec #unplayBtn{opacity:0!important;pointer-events:none!important}
+.mli.reel small{white-space:normal;line-height:1.3}.mli.reel .rt{font-style:normal}.mli.reel.rec .rt:after{content:'Recommended';margin-left:8px;font:700 10px var(--cond);letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(255,226,120,.35);vertical-align:2px}
 #skipBtn svg{width:15px;height:15px}
 #tempo,#strike{transition:opacity .4s}
 /* in motion, a panel the ball passes behind turns see-through */
@@ -215,21 +219,21 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .mbtn.dark{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
 
 /* sheets: the same see-through glass as the game's cards (the blurred 3D scene shows through), light text */
-#menuSheet,#dailySheet,#playerSheet,#boardSheet,#statsSheet,#cardSheet,#helpSheet,#bagSheet,#reelSheet{--ink:#fff;--ink2:rgba(255,255,255,.82);--ink3:rgba(255,255,255,.66);--hair:rgba(255,255,255,.28);--soft:rgba(255,255,255,.14);
+#menuSheet,#dailySheet,#playerSheet,#boardSheet,#statsSheet,#cardSheet,#helpSheet,#bagSheet,#reelSheet,#reliefSheet{--ink:#fff;--ink2:rgba(255,255,255,.82);--ink3:rgba(255,255,255,.66);--hair:rgba(255,255,255,.28);--soft:rgba(255,255,255,.14);
   background:var(--gl-bg),rgba(18,48,28,.30);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);border-color:var(--gl-line);
   box-shadow:0 -10px 40px rgba(8,34,16,.28),inset 0 1px 0 rgba(255,255,255,.55);color:#fff;text-shadow:var(--tsh)}
-#menuSheet .grab,#dailySheet .grab,#playerSheet .grab,#boardSheet .grab,#statsSheet .grab,#cardSheet .grab,#helpSheet .grab,#bagSheet .grab,#reelSheet .grab{background:rgba(255,255,255,.5)}
-#menuSheet .shX,#dailySheet .shX,#playerSheet .shX,#boardSheet .shX,#statsSheet .shX,#cardSheet .shX,#helpSheet .shX,#bagSheet .shX,#reelSheet .shX{background:rgba(255,255,255,.2);color:#fff}
-#menuSheet .shX:active,#dailySheet .shX:active,#playerSheet .shX:active,#boardSheet .shX:active,#statsSheet .shX:active,#cardSheet .shX:active,#helpSheet .shX:active,#bagSheet .shX:active,#reelSheet .shX:active{background:rgba(255,255,255,.34)}
-#menuSheet .mpLr,#dailySheet .mpLr,#playerSheet .mpLr,#boardSheet .mpLr,#statsSheet .mpLr,#cardSheet .mpLr,#helpSheet .mpLr,#bagSheet .mpLr,#reelSheet .mpLr,#menuSheet .pracHoles button,#dailySheet .pracHoles button,#playerSheet .pracHoles button,#boardSheet .pracHoles button,#statsSheet .pracHoles button,#cardSheet .pracHoles button,#helpSheet .pracHoles button,#bagSheet .pracHoles button,#reelSheet .pracHoles button,#menuSheet .mbtn:not(.dark),#dailySheet .mbtn:not(.dark),#playerSheet .mbtn:not(.dark),#boardSheet .mbtn:not(.dark),#statsSheet .mbtn:not(.dark),#cardSheet .mbtn:not(.dark),#helpSheet .mbtn:not(.dark),#bagSheet .mbtn:not(.dark),#reelSheet .mbtn:not(.dark),#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb,#reelSheet .mpBtns .mpb{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.3)}
-#menuSheet .mrow input,#dailySheet .mrow input,#playerSheet .mrow input,#boardSheet .mrow input,#statsSheet .mrow input,#cardSheet .mrow input,#helpSheet .mrow input,#bagSheet .mrow input,#reelSheet .mrow input{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);text-shadow:var(--tsh)}
-#menuSheet .mrow input::placeholder,#dailySheet .mrow input::placeholder,#playerSheet .mrow input::placeholder,#boardSheet .mrow input::placeholder,#statsSheet .mrow input::placeholder,#cardSheet .mrow input::placeholder,#helpSheet .mrow input::placeholder,#bagSheet .mrow input::placeholder,#reelSheet .mrow input::placeholder{color:rgba(255,255,255,.55)}
-#menuSheet .seg,#dailySheet .seg,#playerSheet .seg,#boardSheet .seg,#statsSheet .seg,#cardSheet .seg,#helpSheet .seg,#bagSheet .seg,#reelSheet .seg{background:rgba(255,255,255,.14)}
-#menuSheet .seg button,#dailySheet .seg button,#playerSheet .seg button,#boardSheet .seg button,#statsSheet .seg button,#cardSheet .seg button,#helpSheet .seg button,#bagSheet .seg button,#reelSheet .seg button{color:rgba(255,255,255,.8)}
-#menuSheet .seg button.sel,#dailySheet .seg button.sel,#playerSheet .seg button.sel,#boardSheet .seg button.sel,#statsSheet .seg button.sel,#cardSheet .seg button.sel,#helpSheet .seg button.sel,#bagSheet .seg button.sel,#reelSheet .seg button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none;box-shadow:0 2px 6px rgba(8,34,16,.25)}
-#menuSheet .pracHoles button.sel,#dailySheet .pracHoles button.sel,#playerSheet .pracHoles button.sel,#boardSheet .pracHoles button.sel,#statsSheet .pracHoles button.sel,#cardSheet .pracHoles button.sel,#helpSheet .pracHoles button.sel,#bagSheet .pracHoles button.sel,#reelSheet .pracHoles button.sel{background:var(--g1);color:#fff}
-#menuSheet .mbtn.dark,#dailySheet .mbtn.dark,#playerSheet .mbtn.dark,#boardSheet .mbtn.dark,#statsSheet .mbtn.dark,#cardSheet .mbtn.dark,#helpSheet .mbtn.dark,#bagSheet .mbtn.dark,#reelSheet .mbtn.dark,#menuSheet .mpb,#dailySheet .mpb,#playerSheet .mpb,#boardSheet .mpb,#statsSheet .mpb,#cardSheet .mpb,#helpSheet .mpb,#bagSheet .mpb,#reelSheet .mpb{text-shadow:none}
-#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb,#reelSheet .mpBtns .mpb{background:rgba(255,255,255,.18);color:#fff;text-shadow:var(--tsh)}
+#menuSheet .grab,#dailySheet .grab,#playerSheet .grab,#boardSheet .grab,#statsSheet .grab,#cardSheet .grab,#helpSheet .grab,#bagSheet .grab,#reelSheet .grab,#reliefSheet .grab{background:rgba(255,255,255,.5)}
+#menuSheet .shX,#dailySheet .shX,#playerSheet .shX,#boardSheet .shX,#statsSheet .shX,#cardSheet .shX,#helpSheet .shX,#bagSheet .shX,#reelSheet .shX,#reliefSheet .shX{background:rgba(255,255,255,.2);color:#fff}
+#menuSheet .shX:active,#dailySheet .shX:active,#playerSheet .shX:active,#boardSheet .shX:active,#statsSheet .shX:active,#cardSheet .shX:active,#helpSheet .shX:active,#bagSheet .shX:active,#reelSheet .shX:active,#reliefSheet .shX:active{background:rgba(255,255,255,.34)}
+#menuSheet .mpLr,#dailySheet .mpLr,#playerSheet .mpLr,#boardSheet .mpLr,#statsSheet .mpLr,#cardSheet .mpLr,#helpSheet .mpLr,#bagSheet .mpLr,#reelSheet .mpLr,#reliefSheet .mpLr,#menuSheet .pracHoles button,#dailySheet .pracHoles button,#playerSheet .pracHoles button,#boardSheet .pracHoles button,#statsSheet .pracHoles button,#cardSheet .pracHoles button,#helpSheet .pracHoles button,#bagSheet .pracHoles button,#reelSheet .pracHoles button,#reliefSheet .pracHoles button,#menuSheet .mbtn:not(.dark),#dailySheet .mbtn:not(.dark),#playerSheet .mbtn:not(.dark),#boardSheet .mbtn:not(.dark),#statsSheet .mbtn:not(.dark),#cardSheet .mbtn:not(.dark),#helpSheet .mbtn:not(.dark),#bagSheet .mbtn:not(.dark),#reelSheet .mbtn:not(.dark),#reliefSheet .mbtn:not(.dark),#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb,#reelSheet .mpBtns .mpb,#reliefSheet .mpBtns .mpb{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.3)}
+#menuSheet .mrow input,#dailySheet .mrow input,#playerSheet .mrow input,#boardSheet .mrow input,#statsSheet .mrow input,#cardSheet .mrow input,#helpSheet .mrow input,#bagSheet .mrow input,#reelSheet .mrow input,#reliefSheet .mrow input{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);text-shadow:var(--tsh)}
+#menuSheet .mrow input::placeholder,#dailySheet .mrow input::placeholder,#playerSheet .mrow input::placeholder,#boardSheet .mrow input::placeholder,#statsSheet .mrow input::placeholder,#cardSheet .mrow input::placeholder,#helpSheet .mrow input::placeholder,#bagSheet .mrow input::placeholder,#reelSheet .mrow input::placeholder,#reliefSheet .mrow input::placeholder{color:rgba(255,255,255,.55)}
+#menuSheet .seg,#dailySheet .seg,#playerSheet .seg,#boardSheet .seg,#statsSheet .seg,#cardSheet .seg,#helpSheet .seg,#bagSheet .seg,#reelSheet .seg,#reliefSheet .seg{background:rgba(255,255,255,.14)}
+#menuSheet .seg button,#dailySheet .seg button,#playerSheet .seg button,#boardSheet .seg button,#statsSheet .seg button,#cardSheet .seg button,#helpSheet .seg button,#bagSheet .seg button,#reelSheet .seg button,#reliefSheet .seg button{color:rgba(255,255,255,.8)}
+#menuSheet .seg button.sel,#dailySheet .seg button.sel,#playerSheet .seg button.sel,#boardSheet .seg button.sel,#statsSheet .seg button.sel,#cardSheet .seg button.sel,#helpSheet .seg button.sel,#bagSheet .seg button.sel,#reelSheet .seg button.sel,#reliefSheet .seg button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none;box-shadow:0 2px 6px rgba(8,34,16,.25)}
+#menuSheet .pracHoles button.sel,#dailySheet .pracHoles button.sel,#playerSheet .pracHoles button.sel,#boardSheet .pracHoles button.sel,#statsSheet .pracHoles button.sel,#cardSheet .pracHoles button.sel,#helpSheet .pracHoles button.sel,#bagSheet .pracHoles button.sel,#reelSheet .pracHoles button.sel,#reliefSheet .pracHoles button.sel{background:var(--g1);color:#fff}
+#menuSheet .mbtn.dark,#dailySheet .mbtn.dark,#playerSheet .mbtn.dark,#boardSheet .mbtn.dark,#statsSheet .mbtn.dark,#cardSheet .mbtn.dark,#helpSheet .mbtn.dark,#bagSheet .mbtn.dark,#reelSheet .mbtn.dark,#reliefSheet .mbtn.dark,#menuSheet .mpb,#dailySheet .mpb,#playerSheet .mpb,#boardSheet .mpb,#statsSheet .mpb,#cardSheet .mpb,#helpSheet .mpb,#bagSheet .mpb,#reelSheet .mpb,#reliefSheet .mpb{text-shadow:none}
+#menuSheet .mpBtns .mpb,#dailySheet .mpBtns .mpb,#playerSheet .mpBtns .mpb,#boardSheet .mpBtns .mpb,#statsSheet .mpBtns .mpb,#cardSheet .mpBtns .mpb,#helpSheet .mpBtns .mpb,#bagSheet .mpBtns .mpb,#reelSheet .mpBtns .mpb,#reliefSheet .mpBtns .mpb{background:rgba(255,255,255,.18);color:#fff;text-shadow:var(--tsh)}
 body:has(.sheet.on:not(#mapSheet)) #scrim{background:rgba(10,30,18,.08)}
 body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #strike,body:has(.sheet.on:not(#mapSheet)) #mpPanel,body:has(.sheet.on:not(#mapSheet)) #dlPanel{opacity:0!important;transition:opacity .2s}
 .sheet .tabs button{color:rgba(255,255,255,.8)}.sheet .tabs button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none}
@@ -445,6 +449,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
   <div id="aimHint" class="glass"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Drag to aim</div>
   <div class="card" id="readout"></div>
+  <button class="glass" id="unplayBtn" aria-label="Unplayable lie or retake the shot">Unplayable lie?</button>
   <button class="glass" id="skipBtn" aria-label="Skip to the next shot">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"/></svg></button>
   <div class="card" id="tempo">
     <div class="ptitle" id="tTitle">Tempo (3:1)</div>
@@ -531,6 +536,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 </div>
 <div class="sheet" id="cardSheet"><div class="grab"></div><div id="cardBody"></div></div>
 <div class="sheet" id="boardSheet"><div class="grab"></div><div class="sht">Leaderboard <small id="boardName">Golf &amp; Country Club Basel</small></div><div id="boardBody"></div></div>
+<div class="sheet" id="reliefSheet"><div class="grab"></div><div class="sht"><span id="reliefTitle">Drop</span></div><div id="reliefText" class="dlText"></div><div id="reliefBody" class="mgrp mlistg"></div></div>
 <div class="sheet" id="reelSheet"><div class="grab"></div><div class="sht"><span>Replay</span></div><div id="reelBody" class="mgrp mlistg"></div></div>
 <div class="sheet" id="dailySheet"><div class="grab"></div><div class="sht"><span id="dailyTitle">Daily challenge</span></div><div id="dailyBody"></div></div>
 <div class="sheet" id="playerSheet"><div class="grab"></div><div class="sht"><span><button class="plBack" id="plBack" aria-label="Back">‹</button><span id="plName">Player</span></span><small id="plSub"></small></div><div id="playerBody"></div></div>
@@ -541,7 +547,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide down for the backswing. The scale shows the carry for your club. Slide back up past where you started to strike. The upstroke must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the upstroke straight: the sideways drift of your thumb on the way up (traced in yellow on the tempo scale, fading after the strike) sets the starting line, so drifting right sends the ball right of your aim line and drifting left sends it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · right thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
-  <div><b>Rules</b>Water costs a penalty stroke and a drop. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
+  <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, within two club lengths of where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
   <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu.</div>
 </div></div>
@@ -6240,23 +6246,8 @@ function finishShot() {
     setTimeout(() => { if (G.state === 'holed') showDone(false); }, 1300); updateHUD(); return;
   }
   let big = '', sub = '';
-  if (r.water) {
-    G.strokes++; G.pens[h]++;
-    let dx = r.lastDry[0], dz = r.lastDry[1];
-    const wi = C.surfInfo(r.final.x, r.final.z).water, dzn = wi >= 0 && wi < 100 && C.waters[wi] ? C.waters[wi].o.dropZone : wi === 200 && C.def.coast ? C.def.coast.dropZone || null : null;
-    if (dzn) { dx = dzn.x; dz = -dzn.f; sub = 'Penalty stroke · drop zone'; }
-    else {
-      const bx = G.prev.x - dx, bz = G.prev.z - dz, bl = Math.hypot(bx, bz) || 1;
-      const g3 = [0, 0];
-      for (let k = 0; k < 160; k++) {
-        const s = C.surf(dx, dz); C.grad(dx, dz, g3);
-        if (s !== S.WATER && C.wl(dx, dz) < C.h(dx, dz) - .05 && s !== S.SAND && Math.hypot(g3[0], g3[1]) < .35 && C.coastS(dx, dz) < -7) break;
-        dx += bx / bl; dz += bz / bl;
-      }
-      dx += bx / bl * 1.5; dz += bz / bl * 1.5; sub = 'Penalty stroke · take a drop';
-    }
-    placeBall(dx, dz, false); big = '<span class="bad">Water hazard</span>';
-  } else if (r.ob) {
+  if (r.water) { G.strokes++; G.pens[h]++; waterRelief(sh, r, first); return; } // one penalty stroke, then the player picks where to drop
+  else if (r.ob) {
     G.strokes++; G.pens[h]++;
     placeBall(G.prev.x, G.prev.z, G.prev.teed); big = `<span class="bad">${r.lost ? 'Ball not found' : 'Out of bounds'}</span>`; sub = 'Stroke and distance';
   } else {
@@ -6264,18 +6255,141 @@ function finishShot() {
     big = SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${Math.round(r.total)} m · carry ${Math.round(r.carry)} m`;
     if (first && par >= 4) G.fir[h] = G.surf === S.FAIR;
   }
+  finishTail(sh, r, big, sub, first);
+}
+// the rest of a shot once the ball has its new lie
+function finishTail(sh, r, big, sub, first) {
+  const C = G.C, h = G.hole, par = C.def.par;
   if (first && par >= 4 && G.fir[h] == null) G.fir[h] = false;
   logShot(sh, r, false, !!(r.water || r.ob));
   if (G.surf === S.GREEN && G.gir[h] == null && G.strokes <= par - 2) G.gir[h] = true;
-  if (G.strokes >= par + 5) {
-    G.scores[h] = par + 5; G.state = 'holed'; G.holedT = 0; statsHole(h); saveRound();
-    readout('<div class="r1">Picked up <span class="r1s">Max score · par + 5</span></div>', 2);
-    setTimeout(() => { if (G.state === 'holed') showDone(true); }, 1200); updateHUD(); return;
-  }
+  if (G.strokes >= par + 5) { pickUpHole(); return; }
   if (!restsOnGreen(r)) readout(`<div class="r1">${big}</div><div class="r3"><span>${sub}</span><span>To pin <b>${fmtDistShort(distToPin())}</b></span></div>`, 3.2);
+  settleAtNewLie();
+}
+function settleAtNewLie() {
   G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone();
-  SW.phase = 'idle';
+  SW.phase = 'idle'; G.unplay = null;
   autoClubAndAim(); drawMapThumb();
+}
+function pickUpHole() {
+  const h = G.hole, par = G.C.def.par;
+  G.scores[h] = par + 5; G.state = 'holed'; G.holedT = 0; statsHole(h); saveRound();
+  readout('<div class="r1">Picked up <span class="r1s">Max score · par + 5</span></div>', 2);
+  setTimeout(() => { if (G.state === 'holed') showDone(true); }, 1200); updateHUD();
+}
+
+/* ---------- penalty drops: water, and an unplayable lie ---------- */
+// Water (a red penalty area), one penalty stroke, then: a drop zone where the hole has one; lateral relief (within two club lengths of where the ball last crossed
+// the edge, no nearer the hole); back on the line (the line from the hole through that point, as far back as you like); or stroke and distance (play it again).
+const CLUB_LEN = 1.15;
+const treeRad = t => t.r || t.R || 2.2 * (t.s || 1);
+function treesNear(x, z, R) { const o = []; for (const t of W.trees || []) { if (t.far) continue; const dx = t.x - x, dz = t.z - z; if (dx * dx + dz * dz < R * R) o.push(t); } return o; }
+function clearOfTrees(list, x, z, m) { for (const t of list) { const dx = t.x - x, dz = t.z - z, rr = treeRad(t) + m; if (dx * dx + dz * dz < rr * rr) return false; } return true; }
+function dryGround(x, z) { const C = G.C; return C.surf(x, z) !== S.WATER && C.wl(x, z) < C.h(x, z) - .05 && !C.isOB(x, z); }
+function waterDist(x, z) { for (const rr of [1.5, 3, 5, 8]) for (let a = 0; a < 12; a++) if (G.C.surf(x + Math.cos(a * TAU / 12) * rr, z + Math.sin(a * TAU / 12) * rr) === S.WATER) return rr; return 10; }
+function waterOptions(r) {
+  const C = G.C, E = r.lastDry, cup = C.cup, prev = G.prev, opts = [], dEnt = Math.hypot(cup.x - E[0], cup.z - E[1]) || 1;
+  const wi = C.surfInfo(r.final.x, r.final.z).water, dzn = wi >= 0 && wi < 100 && C.waters[wi] ? C.waters[wi].o.dropZone : wi === 200 && C.def.coast ? C.def.coast.dropZone || null : null;
+  const toPin = (x, z) => Math.round(Math.hypot(cup.x - x, cup.z - z));
+  if (dzn) opts.push({ k: 'zone', t: 'Drop zone', d: `The marked drop area for this hazard · ${toPin(dzn.x, -dzn.f)} m to the pin`, x: dzn.x, z: -dzn.f });
+  // lateral relief: the best-lying dry spot within two club lengths of where it crossed the edge, no nearer the hole
+  let lat = null, ld = -1;
+  for (const rr of [.6, 1.2, 1.8, 2 * CLUB_LEN]) for (let a = 0; a < 24; a++) {
+    const x = E[0] + Math.cos(a * TAU / 24) * rr, z = E[1] + Math.sin(a * TAU / 24) * rr; if (!dryGround(x, z) || C.surf(x, z) === S.SAND) continue;
+    if (Math.hypot(cup.x - x, cup.z - z) < dEnt - .05) continue; const wd = waterDist(x, z); if (wd > ld) { ld = wd; lat = [x, z]; }
+  }
+  if (lat) opts.push({ k: 'lateral', t: 'Lateral relief', d: `Within two club lengths of where it went in, no nearer the hole · ${toPin(lat[0], lat[1])} m to the pin`, x: lat[0], z: lat[1] });
+  // back on the line: from the hole through the entry point and back from there, on dry, level ground with room to swing
+  const ux = (E[0] - cup.x) / dEnt, uz = (E[1] - cup.z) / dEnt; let back = null; const g3 = [0, 0];
+  for (let t = 4; t <= 150 && !back; t += 2) {
+    const x = E[0] + ux * t, z = E[1] + uz * t; if (!dryGround(x, z) || waterDist(x, z) < 3) continue;
+    const sf = C.surf(x, z); if (sf === S.SAND || sf === S.DEEP) continue; C.grad(x, z, g3); if (Math.hypot(g3[0], g3[1]) > .3) continue; back = [x, z, t];
+  }
+  if (back) opts.push({ k: 'back', t: 'Back on the line', d: `${Math.round(back[2])} m back from where it went in, in line with the hole · ${toPin(back[0], back[1])} m to the pin`, x: back[0], z: back[1] });
+  opts.push({ k: 'replay', t: 'Play it again', d: `From where you hit it (stroke and distance) · ${toPin(prev.x, prev.z)} m to the pin`, x: prev.x, z: prev.z, teed: prev.teed });
+  return opts;
+}
+function waterRelief(sh, r, first) {
+  const opts = waterOptions(r); G.relief = { kind: 'water', opts, forced: true, sh, r, first };
+  openRelief('Ball in the water', 'One penalty stroke. Where do you drop?', opts, 0);
+}
+function openRelief(title, text, opts, rec) {
+  $('reliefTitle').textContent = title; $('reliefText').textContent = text; const body = $('reliefBody'); body.textContent = '';
+  opts.forEach((o, i) => {
+    const b = document.createElement('button'); b.className = 'mli reel' + (i === rec ? ' rec' : ''); b.innerHTML = `<i class="ic">${ICONS[o.ic || 'flag']}</i><span><em class="rt">${o.t}</em><small></small></span><i class="ic chev">${ICONS.chev}</i>`;
+    b.querySelector('small').textContent = o.d; b.onclick = () => chooseRelief(i); body.appendChild(b);
+  });
+  openSheet('reliefSheet');
+}
+function chooseRelief(i) {
+  const R = G.relief; if (!R) return; const o = R.opts[i]; if (!o) return; G.relief = null; closeSheets();
+  if (R.kind === 'water') {
+    placeBall(o.x, o.z, !!o.teed && o.k === 'replay'); const sub = 'Penalty stroke · ' + ({ zone: 'drop zone', lateral: 'lateral relief', back: 'back on the line', replay: 'stroke and distance' })[o.k];
+    finishTail(R.sh, R.r, '<span class="bad">Water hazard</span>', sub, R.first); return;
+  }
+  // an unplayable lie: one penalty stroke, then the same ball dropped at the edge of the rough, or played again from where it was hit
+  const h = G.hole; G.strokes++; G.pens[h]++; const par = G.C.def.par;
+  if (o.k === 'retake') placeBall(G.prev.x, G.prev.z, G.prev.teed); else placeBall(o.x, o.z, false);
+  saveRound(); mpState(true);
+  if (G.strokes >= par + 5) { pickUpHole(); return; }
+  readout(`<div class="r1">Unplayable lie</div><div class="r3"><span>${o.k === 'retake' ? 'Penalty stroke · stroke and distance' : 'Penalty stroke · dropped ' + Math.round(o.dist) + ' m away'}</span><span>To pin <b>${fmtDistShort(distToPin())}</b></span></div>`, 3.2);
+  settleAtNewLie();
+}
+// the sheet was closed without a choice: after water the recommended drop is taken; an unplayable lie is simply not taken
+function reliefClosed() { const R = G.relief; if (!R) return; if (R.forced) chooseRelief(0); else G.relief = null; }
+
+// Unplayable lie: offered when the ball is boxed in (no club gets 100 m away from here, trees in every line) or deep in a forest (50 m from open ground).
+// It is played as "retake the shot" (stroke and distance, one stroke) or, when there is a good spot close by, as a drop at the nearest edge of the rough with no tree
+// in the way (one stroke).
+function forestDepth() {
+  const C = G.C, bx = G.ball.x, bz = G.ball.z; if (C.surf(bx, bz) !== S.DEEP) return 0; let best = 999;
+  for (let a = 0; a < 24 && best > 50; a++) { const ca = Math.cos(a * TAU / 24), sa = Math.sin(a * TAU / 24); for (let d = 4; d <= 90 && d < best; d += 4) { const sf = C.surf(bx + ca * d, bz + sa * d); if (sf !== S.DEEP && sf !== S.WATER) { best = d; break; } } }
+  return best;
+}
+function boxedIn() {
+  const C = G.C, bx = G.ball.x, bz = G.ball.z; if (treesNear(bx, bz, 45).length < 3) return false;
+  const base = Math.atan2(C.cup.x - bx, -(C.cup.z - bz)), ids = ['5i', '8i', 'SW'].map(id => CLUBS.findIndex(c => c.id === id)).filter(i => i >= 0); let best = 0;
+  for (let o = -90; o <= 90 && best < 100; o += 15) for (const ci of ids) {
+    const L = computeLaunch(ci, { p: 1, Tb: .45, Td: .15 }, { h: 0, v: 0 }, G.surf, base + o * DEG, settings.hand, false);
+    const r = simulateShot(C, { x: bx, y: G.ball.y, z: bz, v: L.v, w: L.w, maxT: 9, dt: 1 / 90 }), t = r.events.find(e => e.type === 'tree');
+    best = Math.max(best, t ? Math.hypot(t.x - bx, t.z - bz) : r.total); if (best >= 100) break;
+  }
+  return best < UNPLAY.reach;
+}
+const UNPLAY = { deep: 50, reach: 100, near: 100 };
+function unplaySpot() { // the nearest open ground at the edge of the rough with no tree in the way, searched outward ring by ring, toward the hole first
+  const C = G.C, bx = G.ball.x, bz = G.ball.z, tl = treesNear(bx, bz, UNPLAY.near + 40), toward = Math.atan2(C.cup.z - bz, C.cup.x - bx);
+  const ok = (x, z) => {
+    const sf = C.surf(x, z); if (sf !== S.FAIR && sf !== S.FIRST && sf !== S.ROUGH) return false;
+    if (!dryGround(x, z) || !clearOfTrees(tl, x, z, 3.5)) return false;
+    const yaw = Math.atan2(C.cup.x - x, -(C.cup.z - z)), ax = Math.sin(yaw), az = -Math.cos(yaw);
+    for (const d of [4, 8, 12]) if (!clearOfTrees(tl, x + ax * d, z + az * d, 1.2)) return false; // room to play it
+    return true;
+  };
+  for (let d = 3; d <= UNPLAY.near; d += 3) for (let a = 0; a < 40; a++) {
+    const ang = toward + (a % 2 ? 1 : -1) * Math.ceil(a / 2) * (TAU / 40), x = bx + Math.cos(ang) * d, z = bz + Math.sin(ang) * d;
+    if (ok(x, z)) return { x, z, dist: d };
+  }
+  return null;
+}
+function unplayCheck() {
+  G.unplay = null; if (G.state !== 'address' || !G.C || isPutt() || G.teed || onGreenish()) return;
+  const sf = G.surf; if (sf === S.GREEN || sf === S.FRINGE || sf === S.TEE) return;
+  const deep = forestDepth() >= UNPLAY.deep, boxed = !deep && (sf === S.DEEP || sf === S.ROUGH) && boxedIn();
+  if (deep || boxed) G.unplay = { why: deep ? 'forest' : 'boxed', spot: unplaySpot(), key: G.ball.x.toFixed(1) + ',' + G.ball.z.toFixed(1) };
+}
+function openUnplay() {
+  const U = G.unplay; if (!U || G.state !== 'address') return;
+  const opts = [{ k: 'retake', ic: 'play', t: 'Retake the shot', d: `Back to where you hit it from · one penalty stroke (stroke and distance) · ${Math.round(Math.hypot(G.C.cup.x - G.prev.x, G.C.cup.z - G.prev.z))} m to the pin` }];
+  if (U.spot) opts.push({ k: 'drop', ic: 'flag', t: 'Unplayable lie', d: `Drop at the nearest edge of the rough, ${Math.round(U.spot.dist)} m away, clear of the trees · one penalty stroke · ${Math.round(Math.hypot(G.C.cup.x - U.spot.x, G.C.cup.z - U.spot.z))} m to the pin`, x: U.spot.x, z: U.spot.z, dist: U.spot.dist });
+  G.relief = { kind: 'unplay', opts, forced: false };
+  openRelief('Unplayable?', U.why === 'forest' ? 'Deep in the woods. Take a penalty stroke and go on from somewhere better.' : 'The trees box you in: no club gets 100 m away from here. Take a penalty stroke and go on from somewhere better.', opts, U.spot ? 1 : 0);
+}
+function updateUnplayBtn() {
+  const b = $('unplayBtn'), want = !!(G.unplay && G.state === 'address' && SW.phase === 'idle' && !sheetOpen() && !G.rbow && !MP.spec);
+  if (want && !b.classList.contains('on')) { const r = $('tempo').getBoundingClientRect(); b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top - 52) + 'px'; }
+  b.classList.toggle('on', want);
 }
 
 /* ---------- camera ---------- */
@@ -6413,6 +6527,7 @@ function updateCamera(dt) {
   if (G.state === 'settle' && ((w >= 1 && cam.position.distanceTo(R.aPos) < .05 && R.pv.length() < .05 && R.lv.length() < .05) || R.t - A.t0 > A.D + 5)) enterAddress();
 }
 function enterAddress() {
+  G.unplay = null; setTimeout(unplayCheck, 400);
   saveRound(); mpState(true); if (G.pendingReel) { G.pendingReel = false; setTimeout(() => { if (G.state === 'address') openReel(); }, 350); }
   if (G.rig) G.rig.arr = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
@@ -6879,7 +6994,7 @@ function sheetOpen() { return !!document.querySelector('.sheet.on'); }
 function openSheet(id) { closeSheets(true); if (id === 'menuSheet') menuPage('home'); addStatsChip(id); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); }
 // every menu screen except the main menu (where Stats is a button) and Stats itself carries a small Stats shortcut with the player's level in its header
 function addStatsChip(id) { /* the level is only shown in the menu and on the stats page: no chips on the other sheets */ document.querySelectorAll('.stChip').forEach(c => c.remove()); }
-function closeSheets(keepScrim) { const hv = $('howVid'); if (hv && !hv.paused) hv.pause(); document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
+function closeSheets(keepScrim) { if (G.relief && !keepScrim) reliefClosed(); const hv = $('howVid'); if (hv && !hv.paused) hv.pause(); document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
 function openBag() {
   if (G.state !== 'address' && G.state !== 'settle') return;
   const b = $('bag'); b.innerHTML = '';
@@ -7940,6 +8055,7 @@ function initInput() {
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
+  $('unplayBtn').onclick = e => { e.stopPropagation(); SFX.blip(); openUnplay(); };
   $('specResume').onclick = e => { e.stopPropagation(); const af = MP.clip && MP.clip.after; mpResume(); if (af) setTimeout(af, 80); }; // (after a player's clips: back to that player's card)
   $('specAgain').onclick = e => { e.stopPropagation(); if (MP.clip) clipLoad(MP.clip.i); };
   $('specNext').onclick = e => { e.stopPropagation(); if (MP.clip) clipLoad(MP.clip.i + 1); };
@@ -8013,7 +8129,7 @@ function frame(now) {
   W.clouds.children.forEach(c => { c.position.x += c.userData.sp * dt; if (c.position.x > 1400) c.position.x = -1400; });
   if (UI.readT > 0) { UI.readT -= dt; if (UI.readT <= 0) { $('readout').classList.remove('on'); if ($('mpPanel').classList.contains('on')) mpPlace($('mpPanel')); } }
   if (C) { updateSeeThru(); updatePinTag(); updateWindArrow(); updateBallTag(); }
-  updateSkipBtn();
+  updateSkipBtn(); updateUnplayBtn();
   const hudOff = G.state === 'title' || G.state === 'intro';
   $('hud').classList.toggle('off', hudOff);
   if (!hudOff) { if (G.state === 'spec') mpDrawRemote(now); else { drawTempo(now); drawStrike(now); drawFx(now); } } else if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height);
