@@ -59,6 +59,7 @@ Tools: `fair.py`, `fairpoly.py`.
 - Fairways are fitted as a **ribbon** along the hole line. At every 4 m, the left and right edges are found from the photo: brightness minus texture, with no canopy (`fair.py`). Widths are median-filtered and smoothed (`fairpoly.py`).
 - The fairway starts about 20% of the way along on par 4s and 5s (or wherever the photo shows it) and ends about 12 m short of the green. Par 3s get no fairway.
 - **Check:** overlay all the fairway polygons on the photo, cluster by cluster (6 crops), and look at every hole. Mown bands in the photo must sit inside the ribbons.
+  - **Where the fairway starts:** check it per hole on the aerial photo, using a crop with distance marks from the tee. A club photo taken mid-hole can make it look as if the fairway starts at the tee.
 
 ## 4. Bunkers
 
@@ -152,8 +153,9 @@ Work from the club photos and Google Images. Write down what is **specific** to 
   - pick a colour scheme that no other course uses;
   - keep the rough a **classic, close-cut green** unless the photos show otherwise;
   - **Pitfall:** tall straw-coloured grass read as "not a golf course".
-- **Mowing pattern:** match it exactly. Rothley **cross-cuts**: two sets of mowing lines running diagonally both ways, so light and dark stripes cross into **rhombi** (`crossCut()` in the shader, with the matching `crossCutJS` for the map).
-  - **Pitfall:** a 45° checkerboard of alternating squares isn't the same look. The player asked twice.
+- **Mowing pattern:** match it exactly, including the **angle**, the **pass width** and the **contrast**. Rothley cross-cuts **on the diagonal**: two sets of mowing lines at **45° to the hole** in both directions, 9 m passes, clearly light and dark. Where they cross they form **diamonds** (`crossCut(p, angle, width)` in the shader, `crossCutJS` for the map; both must use the same numbers).
+  - **Check:** compare against the club's drone photos with a drone-height render (`tests/drone.js hole name`: 45 m up, 30 m behind the ball). A view from the tee foreshortens everything, so it can't judge the pattern.
+  - **Pitfall:** it took four rounds. A 45° checkerboard of squares, then lines at 34° (which read as nearly lengthwise from the tee), then too narrow and faint. Measure the angle on the photo before writing the shader.
 - **Furniture:**
   - flags (colour, pennant or rectangle);
   - tee markers;

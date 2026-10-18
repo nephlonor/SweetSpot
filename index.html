@@ -3808,10 +3808,10 @@ vec3 surfaceColor() {
     float nd = fract(sin(dot(floor(vWPos.xz * 2.3), vec2(12.9898, 78.233))) * 43758.5453);
     col = mix(col, cStraw * (.8 + .34 * mix(.5, c.a, inF) + .12 * nd), ins(st));
   }
-  // Rothley Park: the rough cut in broad bands; fairways cross-cut, two sets of mowing lines running diagonally both ways (34 degrees to the
-  // hole, 5 m passes), so the light and dark stripes cross into rhombi; the greens cross-cut finer
+  // Rothley Park: the rough cut in broad bands; fairways cross-cut on the diagonal, two sets of mowing lines at 45 degrees to the hole both
+  // ways (9 m passes), so the light and dark stripes cross into diamonds; the greens cross-cut finer
   col *= 1. + isCheck * .03 * clamp(sin(vWPos.z * .2244) * 5., -1., 1.);
-  vec3 fair = isCheck > .5 ? mix(cFairB, cFairA, crossCut(vWPos.xz, .6, 5.)) : mix(cFairB, cFairA, ins(c.r * 2. - 1.));
+  vec3 fair = isCheck > .5 ? mix(cFairB, cFairA, crossCut(vWPos.xz, .7854, 9.)) : mix(cFairB, cFairA, ins(c.r * 2. - 1.));
   col = mix(col, fair, ins(fw));
   col *= 1. - .07 * lineAt(fw, .13);
   col = mix(col, cPath, ins(path));
@@ -3863,7 +3863,7 @@ const NO_FAR = { tex: null };
 // course, an optional course-wide class map for everything beyond the fields
 // Rothley Park in October: [dl, ds, dh] on the base colours. Cool, damp emerald turf (hue toward blue-green, richer), the deep rough gone over to bronze and
 // bracken, pale washed sand. Shared by the ground and the yardage map.
-const crossCutJS = (x, z, a = .6, wd = 5) => { const k = Math.PI / wd, s = Math.sin(a), c = Math.cos(a); return ((Math.sin((x * c - z * s) * k) > 0) + (Math.sin((x * c + z * s) * k) > 0)) / 2; }; // (the map's version of the shader's cross-cut)
+const crossCutJS = (x, z, a = .7854, wd = 9) => { const k = Math.PI / wd, s = Math.sin(a), c = Math.cos(a); return ((Math.sin((x * c - z * s) * k) > 0) + (Math.sin((x * c + z * s) * k) > 0)) / 2; }; // (the map's version of the shader's cross-cut)
 const AUT_OFF = { ROUGH: [-.035, .03, .03], DEEP: [-.035, .02, .02], FIRST: [-.025, .04, .03], FAIR: [-.005, .06, .035], GREEN: [-.01, .07, .045], FRINGE: [-.02, .06, .04], TEE: [-.02, .06, .04], SAND: [.05, -.16, .005], PATH: [-.04, -.12, 0] };
 function terrainMatFrom(o) {
   const { A, B, T, w, h, x0, z0, res, R, wlo, whi } = o;
@@ -3888,7 +3888,7 @@ function terrainMatFrom(o) {
   };
   if (o.autumn) {
     const q = (k, dl) => { const f = AUT_OFF[k]; return pc(S[k], (dl || 0) + f[0], f[1], f[2]); };
-    U.cRough.value = q('ROUGH'); U.cDeep.value = q('DEEP'); U.cFirst.value = q('FIRST'); U.cFairA.value = q('FAIR', .06); U.cFairB.value = q('FAIR', -.04);
+    U.cRough.value = q('ROUGH'); U.cDeep.value = q('DEEP'); U.cFirst.value = q('FIRST'); U.cFairA.value = q('FAIR', .075); U.cFairB.value = q('FAIR', -.055);
     U.cGreenA.value = q('GREEN', .02); U.cGreenB.value = q('GREEN', -.01); U.cFringe.value = q('FRINGE'); U.cTee.value = q('TEE'); U.cSand.value = q('SAND'); U.cPath.value = q('PATH');
   }
   const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x000000, shininess: 1 });
