@@ -7920,7 +7920,7 @@ function menuPage(n) {
   $('mBack').style.display = n === 'home' ? 'none' : ''; $('mTitle').textContent = n === 'home' ? 'Menu' : MENU_PAGES[n];
   $('menuSheet').scrollTop = 0; if (n === 'live') { MP.listSig = ''; mpList(); } syncMenu();
 }
-function dailyTap() { const r = dlRec(); if ((r && r.status !== 'playing') || G.daily) { openDaily(); return; } closeSheets(); startDaily(); }
+function dailyTap() { openDaily('today'); } // the daily sheet first (Today, Yesterday, Archive, Overall); starting is one more tap there
 function trophyHtml(list) { // the trophies of daily challenges won: [{day, course, tp, s, n}] (a player's profile only knows the days)
   if (!list || !list.length) return '<div class="stFun"><div>Win a daily challenge to put a trophy on your shelf.</div></div>';
   const dt = d => new Date((typeof d === 'number' ? d : dayNum(d)) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -8089,10 +8089,6 @@ function startDaily() {
   if (rec && (rec.status === 'done' || rec.status === 'missed')) { openDaily(); return; }
   if (!cleanName(settings.name)) { dlNeedName(); return; }
   audio();
-  if (!rec || rec.status !== 'playing') {
-    const c = COURSES[dailyCourse(day)];
-    if (!confirm(`Daily challenge · ${c.name}\n\nOne chance: the same course, pins, wind and weather for everyone, and the round has to be finished before 11:59 pm US Eastern time (${fmtLeft(dayLeftSec())} left). The leaderboard opens up hole by hole as you play. Start now?`)) return;
-  }
   if (G.state !== 'title' && G.C && !G.practice) saveRound(); // the round in play waits where it is
   if (MP.spec) mpResume(true);
   closeSheets(); needData(dailyCourse(day), () => startDailyNow(day, rec));
