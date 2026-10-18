@@ -7678,7 +7678,7 @@ const BS_SETS = {}; let PL_LAST = null;
 function bestShotsHtml(log, name, set) {
   const b = bestShots(log); if (!b.length) return ''; set = set || 'a'; BS_SETS[set] = b;
   const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-  return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot${x.cl ? ' pl' : ''}" data-set="${set}" data-i="${i}"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div>${x.cl ? '<em class="ic">' + ICONS.play + '</em>' : ''}<span>★ ${x.p}</span></div>`; }).join('')}</div>${b.some(x => x.cl) ? '<button class="mbtn dark wide bsAll" data-set="${set}">${set === 'b' ? 'Watch player highlights' : 'Watch best shots of the round'}</button>' : ''}`;
+  return `<div class="sub"><span>${esc(name || 'Best shots')}</span></div><div class="bshots">${b.map((x, i) => { const w = shotWords(x); return `<div class="bshot${x.cl ? ' pl' : ''}" data-set="${set}" data-i="${i}"><i>${i + 1}</i><div><b>${esc(w.t)}</b><small>${esc(w.d)}</small></div>${x.cl ? '<em class="ic">' + ICONS.play + '</em>' : ''}<span>★ ${x.p}</span></div>`; }).join('')}</div>${b.some(x => x.cl) ? '<button class="mbtn dark wide bsAll" data-set="' + set + '">' + (set === 'b' ? 'Watch player highlights' : 'Watch best shots of the round') + '</button>' : ''}`;
 }
 /* ================= PLAYER + LEADERBOARD ================= */
 // Rounds go to a board on this device (always) and, when the page runs inside Claude with the db capability and the
