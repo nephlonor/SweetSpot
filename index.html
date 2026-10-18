@@ -117,6 +117,8 @@ body.spec #coach{display:none!important}
 .stitle{align-self:center;font:600 19px/1 var(--cond);text-transform:uppercase;letter-spacing:.01em;white-space:nowrap;margin:1px 0 7px}
 #strikeCv{width:100%;aspect-ratio:1/1;display:block;position:relative}
 body.swing #topbar{opacity:0}
+body.swap #tempo{left:auto;right:calc(var(--sr) + 10px)}
+body.swap #strike{right:auto;left:calc(var(--sl) + 38px)}
 body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
 #skipBtn{position:absolute;z-index:6;transform:translate(-50%,6px) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .3s var(--spring);padding:7px 16px 8px;border-radius:18px;color:#fff;font:600 15px Oswald,"Arial Narrow",sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:5px;cursor:pointer}
 #dataLoad{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;padding:14px 22px;border-radius:20px;color:#fff;font:600 17px var(--cond);letter-spacing:.06em;text-transform:uppercase;opacity:0;pointer-events:none;transition:opacity .2s;text-align:center;max-width:80vw}#dataLoad.on{opacity:1}
@@ -451,6 +453,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   #readout{top:calc(var(--st) + 76px)}
   #tempo{height:calc(100% - var(--st) - var(--sb) - 110px);max-height:340px;width:134px}
   #strike{width:min(220px,28vw);right:calc(var(--sr) + 60px);bottom:calc(var(--sb) + 30px)}
+  body.swap #strike{right:auto;left:calc(var(--sl) + 60px)}
   .icard{max-width:600px}
   #title{flex-direction:row;align-items:flex-end;gap:20px}
   .logoCard{align-self:flex-start}
@@ -494,8 +497,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 18 holes · Par 72</p></div>
   <div class="tb">
     <div class="how">
-      <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><rect x="31" y="6" width="28" height="88" rx="14" fill="#2f6b35"/><rect x="38" y="14" width="14" height="72" rx="7" fill="rgba(255,255,255,.16)"/><path class="tDown" d="M45 80V20" stroke="#ffe85a" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M17 34V62m0 0l-5-6m5 6l5-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".75"/><path d="M73 68V40m0 0l-5 6m5-6l5 6" stroke="#ffe85a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".9"/><g class="tThumb"><circle r="9" fill="#fff" stroke="#1d3d22" stroke-width="2"/></g></svg><b>Left thumb · tempo</b><p>Slide down, then slide straight up. A tempo of 3:1 gets the best smash factor.</p></div>
-      <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b>Right thumb · strike</b><p>Keep the ball on the sweet spot during impact.</p></div>
+      <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><rect x="31" y="6" width="28" height="88" rx="14" fill="#2f6b35"/><rect x="38" y="14" width="14" height="72" rx="7" fill="rgba(255,255,255,.16)"/><path class="tDown" d="M45 80V20" stroke="#ffe85a" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M17 34V62m0 0l-5-6m5 6l5-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".75"/><path d="M73 68V40m0 0l-5 6m5-6l5 6" stroke="#ffe85a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".9"/><g class="tThumb"><circle r="9" fill="#fff" stroke="#1d3d22" stroke-width="2"/></g></svg><b><span class="thT">Left</span> thumb · tempo</b><p>Slide down, then slide straight up. A tempo of 3:1 gets the best smash factor.</p></div>
+      <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b><span class="thS">Right</span> thumb · strike</b><p>Keep the ball on the sweet spot during impact.</p></div>
     </div>
     <button class="card dailyCard dlCard" id="dailyCard"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
     <div class="card nameRow courseRow"><span>Course</span><div class="seg segCourse" id="segCourse"><button data-v="gccb">GCC Basel</button><button data-v="alsace">Alsace</button><button data-v="augusta">Augusta</button></div></div>
@@ -539,6 +542,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <section class="mpg" data-pg="player">
     <div class="mgrp"><div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="mrow">Golfer<div class="seg" id="segHand"><button data-v="1">Righty</button><button data-v="-1">Lefty</button></div></div></div>
+    <div class="mrow">Controls<div class="seg" id="segSwap"><button data-v="0">Standard</button><button data-v="1">Swapped</button></div></div>
+    <div class="mnote">Standard: tempo (power) with the left thumb, club face with the right. Swapped puts the club face on the left and the power on the right.</div>
     <div class="mnote">Your name shows on the leaderboards and to the players you meet live.</div>
   </section>
   <section class="mpg" data-pg="audio">
@@ -575,8 +580,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="sheet" id="statsSheet"><div class="grab"></div><div class="sht">Stats <small id="stSub"></small></div><div id="statsBody"></div></div>
 <div class="sheet" id="helpSheet"><div class="grab"></div><div class="sht">How to swing</div><div class="howVid"><video id="howVid" src="swing-explainer.mp4" poster="swing-poster.jpg" controls playsinline webkit-playsinline preload="none"></video></div><div class="help">
   <div><b>Aim</b>Drag across the course, or open the map and tap a target. The white ring is where a pure, full swing lands with no wind.</div>
-  <div><b>Tempo · left thumb</b>Touch anywhere on the left and slide down for the backswing. The scale shows the carry for your club. Slide back up past where you started to strike. The upstroke must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the upstroke straight: the sideways drift of your thumb on the way up (traced in yellow on the tempo scale, fading after the strike) sets the starting line, so drifting right sends the ball right of your aim line and drifting left sends it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
-  <div><b>Strike · right thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
+  <div><b>Tempo · <span class="thTl">left</span> thumb</b>Touch anywhere on the <span class="thTl">left</span> and slide down for the backswing. The scale shows the carry for your club. Slide back up past where you started to strike. The upstroke must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the upstroke straight: the sideways drift of your thumb on the way up (traced in yellow on the tempo scale, fading after the strike) sets the starting line, so drifting right sends the ball right of your aim line and drifting left sends it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
+  <div><b>Strike · <span class="thSl">right</span> thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, within two club lengths of where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
@@ -3566,7 +3571,7 @@ function initThree() {
     W.windLine = new THREE.Line(lg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .7, depthTest: false, depthWrite: false })); W.windLine.renderOrder = 6; W.windLine.frustumCulled = false; W.windLine.visible = false; scene.add(W.windLine);
   }
   initParticles();
-  window.addEventListener('resize', onResize); onResize(); applyPerf();
+  window.addEventListener('resize', onResize); onResize(); applyPerf(); applySwap();
 }
 
 /* ---------- particles ---------- */
@@ -6143,6 +6148,14 @@ function predictCarry() {
 }
 
 /* ---------- swing ---------- */
+// Which thumb does what: standard is power on the left and the club face on the right; "Swapped" flips them
+const thumbT = () => settings.swap ? 'Right' : 'Left', thumbS = () => settings.swap ? 'Left' : 'Right';
+function applySwap() {
+  document.body.classList.toggle('swap', !!settings.swap);
+  document.querySelectorAll('.thT').forEach(e => e.textContent = thumbT()); document.querySelectorAll('.thS').forEach(e => e.textContent = thumbS());
+  document.querySelectorAll('.thTl').forEach(e => e.textContent = thumbT().toLowerCase()); document.querySelectorAll('.thSl').forEach(e => e.textContent = thumbS().toLowerCase());
+  if (W.ren) onResize();
+}
 // First-swing coach: shown until the player has made one good swing (smooth tempo, clean strike), then never again.
 function coachFeedback(L) {
   if (settings.swungWell || L.putt) return;
@@ -6150,8 +6163,8 @@ function coachFeedback(L) {
   settings.swungWell = true; saveSettings(); // the coach speaks once: after the first swing it is gone for good
   if (good) { UI.coachFb = ['Nice swing', 'That is the whole game. Smooth tempo, clean strike.', 'good']; UI.coachEnd = performance.now() + 4500; return; }
   const tips = [];
-  if (L.loose) tips.push('Keep your right thumb on the dial.');
-  else if (L.qualityLevel > 1) tips.push('Off the sweet spot (' + L.loc + '). Hold the ball steady in the middle with your right thumb.');
+  if (L.loose) tips.push('Keep your ' + thumbS().toLowerCase() + ' thumb on the dial.');
+  else if (L.qualityLevel > 1) tips.push('Off the sweet spot (' + L.loc + '). Hold the ball steady in the middle with your ' + thumbS().toLowerCase() + ' thumb.');
   if (L.tempoGrade !== 'good') tips.push(L.ratio < 3 ? 'Tempo ' + L.ratio.toFixed(1) + ':1. Slide down more slowly, then up in one quick move.' : 'Tempo ' + L.ratio.toFixed(1) + ':1. Slide down a little quicker, or come up more slowly.');
   UI.coachFb = ['Your first swing', tips.join(' ') || 'Nice and smooth.', '']; UI.coachEnd = performance.now() + 6000;
 }
@@ -6161,7 +6174,7 @@ function updateCoach() {
   if (!settings.swungWell || UI.coachEnd > 0) {
     const idle = (G.state === 'address' && !sheetOpen() && (SW.phase === 'ready' || SW.phase === 'idle' || SW.phase === 'done' || !SW.phase)) || G.state === 'flight' || G.state === 'holed' || G.state === 'settle';
     if (UI.coachFb && idle && !(G.state === 'address' && SW.phase === 'ready' && SW.p > .02)) { h = '<b>' + UI.coachFb[0] + '</b>' + UI.coachFb[1]; cls = UI.coachFb[2]; }
-    else if (!UI.coachFb && !settings.swungWell && G.state === 'address' && idle && !isPutt() && (UI.coachT0 = UI.coachT0 || performance.now()) && performance.now() - UI.coachT0 < 12000) h = '<b>Your first swing</b>Left thumb: slide down slowly, then straight up, quickly. Right thumb: keep the ball on the sweet spot.';
+    else if (!UI.coachFb && !settings.swungWell && G.state === 'address' && idle && !isPutt() && (UI.coachT0 = UI.coachT0 || performance.now()) && performance.now() - UI.coachT0 < 12000) h = `<b>Your first swing</b>${thumbT()} thumb: slide down slowly, then straight up, quickly. ${thumbS()} thumb: keep the ball on the sweet spot.`;
   }
   if (UI.coachEnd > 0 && G.state === 'address' && performance.now() > UI.coachEnd) { UI.coachFb = null; UI.coachEnd = 0; h = ''; }
   if (el._h !== h) { el._h = h; if (h) el.innerHTML = h; }
@@ -6282,7 +6295,7 @@ function impact(tImp) {
     : [`Tempo <b class="${tq}">${L.ratio.toFixed(1)}:1</b>`, `Down <b class="${L.downF >= .995 ? 'good' : 'ok'}">${L.Td.toFixed(2)}s</b>`, `Smash <b>${L.smash.toFixed(2)}</b>`, `<b>${Math.round(L.ballSpeed * 3.6)}</b> km/h`, `<b>${(L.spin / 1000).toFixed(1)}k</b> rpm`];
   if (!L.putt && L.downF < .995) chips.push(`Slow <b class="ok">\u2212${Math.round((1 - L.downF) * 100)}%</b>`);
   if (!L.putt && L.lieF != null) { const lp = Math.round((L.lieF - 1) * 100); chips.push(`Lie <b class="${lp >= 0 ? 'good' : 'ok'}">${lp >= 0 ? '+' : '\u2212'}${Math.abs(lp)}%</b>`); }
-  if (L.loose) chips.unshift(`Right thumb <b class="bad">not on the dial</b>`);
+  if (L.loose) chips.unshift(`${thumbS()} thumb <b class="bad">not on the dial</b>`);
   // two lines: the verdict with where it hit and how it curved, then the numbers
   readout(`<div class="r1 ${qq}">${L.quality}${L.extra ? '' : ' strike'} <span class="r1s">${L.loc} · ${L.shape}</span></div><div class="r3">${chips.map(c => '<span>' + c + '</span>').join('')}</div>`, Infinity);
   updateHUD();
@@ -7178,6 +7191,7 @@ function syncMenu() {
   document.querySelectorAll('#segHand button').forEach(b => b.classList.toggle('sel', +b.dataset.v === settings.hand));
   document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.sound ? 1 : 0)));
   document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
+  document.querySelectorAll('#segSwap button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.swap ? 1 : 0)));
   document.querySelectorAll('#segGfx button').forEach(b => b.classList.toggle('sel', b.dataset.v === (settings.gfx || 'auto')));
   { const g = $('mvGfx'); if (g) g.textContent = ({ auto: 'Auto', high: 'High', saver: 'Battery saver' })[settings.gfx || 'auto'] + (settings.gfx !== 'saver' && settings.gfx !== 'high' && PERF.lite ? ' · Saver on' : ''); }
   mpSync();
@@ -8248,7 +8262,7 @@ function initInput() {
     if (!canSwing()) return;
     audio();
     const x = e.clientX, y = e.clientY;
-    const left = x < window.innerWidth / 2;
+    const left = settings.swap ? x >= window.innerWidth / 2 : x < window.innerWidth / 2; // (the tempo side)
     if (left ? y > zoneY() : y > strikeTop()) {
       if (left) {
         if (SW.id == null && (SW.phase === 'idle' || SW.phase === 'done')) { SW.id = e.pointerId; swingBegin(x, y, e.timeStamp); }
@@ -8263,7 +8277,7 @@ function initInput() {
   document.addEventListener('pointermove', e => {
     // desktop: the mouse resting low on the right half holds the strike dot like a thumb (not while it drags the swing or the aim)
     if (e.pointerType === 'mouse') {
-      SW.mouseR = SW.sid == null && e.pointerId !== SW.id && e.pointerId !== aim.id && e.clientX > window.innerWidth / 2 && e.clientY > strikeTop();
+      SW.mouseR = SW.sid == null && e.pointerId !== SW.id && e.pointerId !== aim.id && (settings.swap ? e.clientX < window.innerWidth / 2 : e.clientX > window.innerWidth / 2) && e.clientY > strikeTop();
       if (SW.mouseR) { SW.tx = e.clientX; SW.ty = e.clientY; SW.thumb = true; }
     }
     if (e.pointerId === SW.id) { swingMove(e.clientY, e.timeStamp, e.clientX); e.preventDefault(); return; }
@@ -8316,7 +8330,7 @@ function initInput() {
     if (!cs || cs.id !== e.pointerId) return;
     if (cs.swing) return;   // the swing now owns this pointer (document-level handlers)
     const dx = e.clientX - cs.x0, dy = e.clientY - cs.y0;
-    if (dy > mm() && dy > Math.abs(dx) * .8 && cs.x0 < window.innerWidth / 2 && cs.y0 > zoneY() && canSwing() && SW.id == null && (SW.phase === 'idle' || SW.phase === 'done')) {
+    if (dy > mm() && dy > Math.abs(dx) * .8 && (settings.swap ? cs.x0 >= window.innerWidth / 2 : cs.x0 < window.innerWidth / 2) && cs.y0 > zoneY() && canSwing() && SW.id == null && (SW.phase === 'idle' || SW.phase === 'done')) {
       audio(); cs.swing = true; cs.moved = true; SW.id = e.pointerId; swingBegin(cs.x0, cs.y0, cs.t0); swingMove(e.clientY, e.timeStamp, e.clientX); return;
     }
     if (steps && Math.abs(dx) > 24) { changeClub(dx < 0 ? 1 : -1); cs.x0 = e.clientX; cs.moved = true; }
@@ -8373,6 +8387,7 @@ function initInput() {
   $('mBoard').onclick = () => { closeSheets(true); openBoard(); };
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
+  document.querySelectorAll('#segSwap button').forEach(b => b.onclick = () => { settings.swap = b.dataset.v === '1'; saveSettings(); applySwap(); syncMenu(); });
   document.querySelectorAll('#segGfx button').forEach(b => b.onclick = () => { settings.gfx = b.dataset.v; if (b.dataset.v === 'auto') PERF.slow = false; saveSettings(); PERF.did = false; applyPerf(); syncMenu(); });
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
