@@ -5735,7 +5735,7 @@ function finishRound() {
   const tp = totalToPar();
   if (G.daily) { dailyDone(tp); if (dayId() === G.daily.day) return; } // (a daily round finished after the day closed counts as an ordinary round)
   try { const best = +localStorage.getItem(BEST_KEY) || null; if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { }
-  statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1, bs: bestShotsCompact() });
+  statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1, bs: bestShotsCompact(), h: G.scores.slice(), pt: G.putts.slice() });
 }
 function saveRound() {
   if (G.practice || !G.C || !G.scores || G.state === 'title') return;
@@ -6355,13 +6355,15 @@ function forestDepth() {
   for (let a = 0; a < 24 && best > 50; a++) { const ca = Math.cos(a * TAU / 24), sa = Math.sin(a * TAU / 24); for (let d = 4; d <= 90 && d < best; d += 4) { const sf = C.surf(bx + ca * d, bz + sa * d); if (sf !== S.DEEP && sf !== S.WATER) { best = d; break; } } }
   return best;
 }
+// no club projected to go further than 100 m, whatever the cause (trees, a ditch, a lip, a glitch): pure full shots from a long, a middle and a high club,
+// all the way round the ball; the first one that gets 100 m away ends the check (a normal lie answers at once)
 function boxedIn() {
-  const C = G.C, bx = G.ball.x, bz = G.ball.z; if (treesNear(bx, bz, 45).length < 3) return false;
+  const C = G.C, bx = G.ball.x, bz = G.ball.z;
   const base = Math.atan2(C.cup.x - bx, -(C.cup.z - bz)), ids = ['5i', '8i', 'SW'].map(id => CLUBS.findIndex(c => c.id === id)).filter(i => i >= 0); let best = 0;
-  for (let o = -90; o <= 90 && best < 100; o += 15) for (const ci of ids) {
+  for (let o = 0; o < 360 && best < 100; o += 24) for (const ci of ids) {
     const L = computeLaunch(ci, { p: 1, Tb: .45, Td: .15 }, { h: 0, v: 0 }, G.surf, base + o * DEG, settings.hand, false);
     const r = simulateShot(C, { x: bx, y: G.ball.y, z: bz, v: L.v, w: L.w, maxT: 9, dt: 1 / 90 }), t = r.events.find(e => e.type === 'tree');
-    best = Math.max(best, t ? Math.hypot(t.x - bx, t.z - bz) : r.total); if (best >= 100) break;
+    best = Math.max(best, t ? Math.hypot(t.x - bx, t.z - bz) : Math.hypot(r.final.x - bx, r.final.z - bz)); if (best >= 100) break;
   }
   return best < UNPLAY.reach;
 }
@@ -6384,7 +6386,7 @@ function unplaySpot() { // the nearest open ground at the edge of the rough with
 function unplayCheck() {
   G.unplay = null; if (G.state !== 'address' || !G.C || isPutt() || G.teed || onGreenish()) return;
   const sf = G.surf; if (sf === S.GREEN || sf === S.FRINGE || sf === S.TEE) return;
-  const deep = forestDepth() >= UNPLAY.deep, boxed = !deep && (sf === S.DEEP || sf === S.ROUGH) && boxedIn();
+  const deep = forestDepth() >= UNPLAY.deep, boxed = !deep && boxedIn();
   if (deep || boxed) G.unplay = { why: deep ? 'forest' : 'boxed', spot: unplaySpot(), key: G.ball.x.toFixed(1) + ',' + G.ball.z.toFixed(1) };
 }
 function openUnplay() {
@@ -6392,7 +6394,7 @@ function openUnplay() {
   const opts = [{ k: 'retake', ic: 'play', t: 'Retake the shot', d: `Back to where you hit it from · one penalty stroke (stroke and distance) · ${Math.round(Math.hypot(G.C.cup.x - G.prev.x, G.C.cup.z - G.prev.z))} m to the pin` }];
   if (U.spot) opts.push({ k: 'drop', ic: 'flag', t: 'Unplayable lie', d: `Drop at the nearest edge of the rough, clear of the trees · one penalty stroke · ${Math.round(Math.hypot(G.C.cup.x - U.spot.x, G.C.cup.z - U.spot.z))} m to the pin`, x: U.spot.x, z: U.spot.z, dist: U.spot.dist });
   G.relief = { kind: 'unplay', opts, forced: false };
-  openRelief('Unplayable?', U.why === 'forest' ? 'Deep in the woods. Take a penalty stroke and go on from somewhere better.' : 'The trees box you in: no club gets 100 m away from here. Take a penalty stroke and go on from somewhere better.', opts, U.spot ? 1 : 0);
+  openRelief('Unplayable?', U.why === 'forest' ? 'Deep in the woods. Take a penalty stroke and go on from somewhere better.' : 'No club gets 100 m away from here. Take a penalty stroke and go on from somewhere better.', opts, U.spot ? 1 : 0);
 }
 function updateUnplayBtn() {
   const b = $('unplayBtn'), want = !!(G.unplay && G.state === 'address' && SW.phase === 'idle' && !sheetOpen() && !G.rbow && !MP.spec);
@@ -7481,7 +7483,7 @@ const GH_REPO = 'nephlonor/SweetSpot';
 const GH_POST_KEY = ['Nnpt', 'VTZZcUtENzI0TVZGRWY4RmQw', 'QVBmeDF4R0ljTXVvM0VSa2RG', 'ODY0OUsyWmVaSlZ6SXJ0c2FL', 'SEEwcjVtdHN4NFdqQUNnX25L', 'Z2l0aHViX3BhdF8xMUEyNU1J']; // e.g. the base64 of the token, reversed, in a few strings
 const ghKey = () => { try { return GH_POST_KEY.length ? atob(GH_POST_KEY.slice().reverse().join('')) : ''; } catch (e) { return ''; } };
 function deviceId() { try { let d = localStorage.getItem('ssg-dev'); if (!d) { d = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('ssg-dev', d); } return d; } catch (e) { return 'x'; } }
-function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId(), pf: profileCompact(), bs: r.bs || [] }; }
+function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId(), pf: profileCompact(), bs: r.bs || [], h: r.h || null, pt: r.pt || null }; }
 // returns true when the round was filed (no account needed)
 async function postAuto(r) {
   const k = ghKey(); if (!k) return false;
@@ -7501,7 +7503,7 @@ async function loadWorld(force, key) {
   key = key || COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${key}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); if (!r.ok) throw new Error('http');
-    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18, by: typeof x.by === 'string' ? x.by : '', bs: Array.isArray(x.bs) ? x.bs : [] })) : [];
+    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18, by: typeof x.by === 'string' ? x.by : '', bs: Array.isArray(x.bs) ? x.bs : [], h: Array.isArray(x.h) && x.h.length === 18 ? x.h : null, pt: Array.isArray(x.pt) && x.pt.length === 18 ? x.pt : null })) : [];
   } catch (e) { if (!Board.gh[key]) Board.gh[key] = null; }
   refreshBoards();
 }
@@ -7628,7 +7630,7 @@ function fillBoard(el, limit, key, pick) {
     const st = document.createElement('span'); st.className = 'st'; st.textContent = r.strokes;
     row.append(rk, nm, tp, st); list.appendChild(row);
     row.style.cursor = 'pointer'; // a name opens that player's stats
-    row.onclick = () => openPlayer({ name: r.name, id: r.by, bs: r.bs, me: tab === 'device' || (!!r.by && r.by === dlMe()), back: pick ? () => { Board.view = key; fillBoard($('boardBody'), 30, key, true); openSheet('boardSheet'); } : null });
+    row.onclick = () => openPlayer({ name: r.name, id: r.by, bs: r.bs, card: { course: key, h: r.h, pt: r.pt, at: r.at }, me: tab === 'device' || (!!r.by && r.by === dlMe()), back: pick ? () => { Board.view = key; fillBoard($('boardBody'), 30, key, true); openSheet('boardSheet'); } : null });
   });
   // post my best round of this course to the world board
   const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r))) : null;
@@ -7668,15 +7670,16 @@ function installSteps() {
     ['iPhone and iPad', 'Safari', ios, [[IOS_SHARE, 'Tap the Share button, the square with the arrow, at the bottom (top right on an iPad).'], [PLUS, 'Scroll down and tap Add to Home Screen.'], [ICONS.flag, 'Tap Add. The icon is on your home screen.']]],
     ['Android', 'Chrome', android, [[DOTS, 'Tap the menu with the three dots, top right.'], [PLUS, 'Tap Install app, or Add to Home screen.'], [ICONS.flag, 'Tap Install. The icon is on your home screen.']]]
   ];
-  blocks.sort((a, b) => (b[2] ? 1 : 0) - (a[2] ? 1 : 0));
-  return blocks.map(([t, br, me, st]) => `<div class="mgrp inst${me ? ' me' : ''}"><div class="instH"><b>${t}</b><small>${br}${me ? ' · this device' : ''}</small></div>${st.map((x, i) => `<div class="instS"><i class="ic">${x[0]}</i><span><u>${i + 1}</u>${x[1]}</span></div>`).join('')}</div>`).join('');
+  // only the steps for this device
+  return blocks.filter(b => b[2]).map(([t, br, me, st]) => `<div class="mgrp inst${me ? ' me' : ''}"><div class="instH"><b>${t}</b><small>${br}</small></div>${st.map((x, i) => `<div class="instS"><i class="ic">${x[0]}</i><span><u>${i + 1}</u>${x[1]}</span></div>`).join('')}</div>`).join('');
 }
 function maybeInstallHint() {
   let n = 0, last = 0, shown = false;
   try { const v = JSON.parse(localStorage.getItem('ssg-visits') || '{}'); n = v.n | 0; last = +v.t || 0; shown = !!v.shown; } catch (e) { }
   const now = Date.now(); if (now - last > 20 * 60e3) n++; // a new visit: the app was left alone for a while
   const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: fullscreen)').matches);
-  const show = n === 2 && !shown && !standalone;
+  const ua = navigator.userAgent || '', mobile = /iPhone|iPad|iPod|Android/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // (nothing to say on a computer)
+  const show = n === 2 && !shown && !standalone && mobile;
   try { localStorage.setItem('ssg-visits', JSON.stringify({ n, t: now, shown: shown || show })); } catch (e) { }
   if (!show) return;
   setTimeout(() => {
@@ -7765,7 +7768,7 @@ async function loadDailyFile(day, force) {
   if (!force && DL.fileAt[day] && Date.now() - DL.fileAt[day] < 60000) return; DL.fileAt[day] = Date.now();
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/daily-${day}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' });
-    if (r.status === 404) DL.files[day] = []; else { if (!r.ok) throw new Error('http'); const a = await r.json(); DL.files[day] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Array.isArray(x.h) && x.h.length === 18 && typeof x.by === 'string').map(x => ({ id: x.by, n: cleanName(x.name) || 'Player', c: COURSES[x.c] ? x.c : dailyCourse(day), h: x.h.map(v => clamp(v | 0, 0, 20)), th: 18, done: true, at: +x.at || 0, pf: null, bs: Array.isArray(x.bs) ? x.bs.map(cleanShot).filter(Boolean) : [] })) : []; }
+    if (r.status === 404) DL.files[day] = []; else { if (!r.ok) throw new Error('http'); const a = await r.json(); DL.files[day] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Array.isArray(x.h) && x.h.length === 18 && typeof x.by === 'string').map(x => ({ id: x.by, n: cleanName(x.name) || 'Player', c: COURSES[x.c] ? x.c : dailyCourse(day), h: x.h.map(v => clamp(v | 0, 0, 20)), th: 18, done: true, at: +x.at || 0, pf: null, pt: Array.isArray(x.pt) && x.pt.length === 18 ? x.pt : null, bs: Array.isArray(x.bs) ? x.bs.map(cleanShot).filter(Boolean) : [] })) : []; }
   } catch (e) { if (!DL.files[day]) DL.files[day] = null; }
   dlRefresh(); dlTrophyCheck();
 }
@@ -7778,9 +7781,9 @@ async function loadPlayers(force) {
 function dlAll(day) {
   const out = new Map(), me = dlMe();
   for (const e of DL.files[day] || []) out.set(e.id, e);
-  const m = DL.rows[day]; if (m) for (const [id, e] of m) { const o = out.get(id); if (!o || e.th > o.th || (e.done && !o.done) || (e.done && o.done && e.pf && !o.pf)) out.set(id, Object.assign({ id }, e, o && !e.pf ? { pf: o.pf } : {})); }
+  const m = DL.rows[day]; if (m) for (const [id, e] of m) { const o = out.get(id); if (!o || e.th > o.th || (e.done && !o.done) || (e.done && o.done && e.pf && !o.pf)) out.set(id, Object.assign({ id }, e, o && !e.pf ? { pf: o.pf } : {}, o && o.pt ? { pt: o.pt } : {})); }
   const rec = dlRec(day);
-  if (rec && rec.h) { const th = rec.h.filter(v => v > 0).length, o = out.get(me); if (!o || th >= o.th) out.set(me, { id: me, n: playerName(), c: rec.course, h: rec.h, th, done: rec.status === 'done', at: rec.at || 0, pf: rec.pf || (o && o.pf) || null, bs: rec.bs || (o && o.bs) || [], mine: true }); else o.mine = true; }
+  if (rec && rec.h) { const th = rec.h.filter(v => v > 0).length, o = out.get(me); if (!o || th >= o.th) out.set(me, { id: me, n: playerName(), c: rec.course, h: rec.h, pt: rec.pt || (o && o.pt) || null, th, done: rec.status === 'done', at: rec.at || 0, pf: rec.pf || (o && o.pf) || null, bs: rec.bs || (o && o.bs) || [], mine: true }); else o.mine = true; }
   return [...out.values()];
 }
 // the standing after k holes (everyone's score through the same k, or through all they have played when that is fewer)
@@ -7803,7 +7806,7 @@ function dlHole() {
 }
 function dailyDone(tp) {
   const d = G.daily, rec = dlRec(d.day) || { day: d.day, course: d.course, startAt: Date.now() }, inTime = dayId() === d.day;
-  rec.h = G.scores.slice(); rec.tp = tp.d; rec.strokes = tp.s; rec.at = Date.now(); rec.status = inTime ? 'done' : 'missed';
+  rec.h = G.scores.slice(); rec.pt = G.putts.slice(); rec.tp = tp.d; rec.strokes = tp.s; rec.at = Date.now(); rec.status = inTime ? 'done' : 'missed';
   statsRound(tp); rec.pf = profileCompact(); rec.bs = bestShotsCompact(); dlSet(rec);
   if (!inTime) return; // finished after the day closed: counts as an ordinary round (finishRound goes on)
   G.submitted = true; dlPublish(); dlPost(rec); setTimeout(() => dlRefresh(), 300);
@@ -7813,7 +7816,7 @@ async function dlPost(rec) {
   const CO = COURSES[rec.course]; if (!CO) return false;
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: `[daily] ${playerName()} ${fmtToPar(rec.tp)} (${rec.strokes}) ${CO.short} ${rec.day}`, body: 'Daily challenge result from Sweet Spot Golf.\n\n```json\n' + JSON.stringify({ v: 1, daily: rec.day, course: rec.course, name: playerName(), h: rec.h, strokes: rec.strokes, toPar: rec.tp, holes: 18, at: rec.at, dev: deviceId(), pf: rec.pf || null, bs: rec.bs || [] }) + '\n```\n' }) });
+      body: JSON.stringify({ title: `[daily] ${playerName()} ${fmtToPar(rec.tp)} (${rec.strokes}) ${CO.short} ${rec.day}`, body: 'Daily challenge result from Sweet Spot Golf.\n\n```json\n' + JSON.stringify({ v: 1, daily: rec.day, course: rec.course, name: playerName(), h: rec.h, strokes: rec.strokes, toPar: rec.tp, holes: 18, at: rec.at, dev: deviceId(), pf: rec.pf || null, bs: rec.bs || [], pt: rec.pt || null }) + '\n```\n' }) });
     if (!res.ok) return false; rec.posted = true; dlSet(rec); setTimeout(() => loadDailyFile(rec.day, true), 40000); return true;
   } catch (e) { return false; }
 }
@@ -7919,7 +7922,7 @@ function fillDaily(el, inCard) {
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.e.n; const sm = document.createElement('small'); sm.textContent = x.fin ? 'Final' : x.thru >= 18 ? 'Playing' : `Thru ${x.thru}` + (x.thru < k || !x.e.done ? '' : ''); nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.tp); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.s || '';
-    row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, bs: x.e.bs, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
+    row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, bs: x.e.bs, card: { course: x.e.c, h: x.e.h, pt: x.e.pt, at: x.e.at }, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
   });
   if (tab === 'today' && playing && !inCard) { const b = add('button', 'mbtn dark wide', G.daily ? 'Back to my round' : 'Resume my round'); b.style.marginTop = '8px'; b.onclick = () => { closeSheets(); if (!G.daily) startDaily(); }; }
 }
@@ -7928,6 +7931,22 @@ function openDaily(tab) {
   fillDaily($('dailyBody')); $('dailyTitle').textContent = 'Daily challenge'; openSheet('dailySheet');
 }
 // ---- a player's profile (from a name on a board)
+// a round's scorecard: hole, length, par, handicap, score, putts (the same table as the game's own scorecard)
+function cardHtml(c) {
+  if (!c || !COURSES[c.course] || !Array.isArray(c.h)) return '';
+  const CO = COURSES[c.course], defs = CO.defs, n = defs.length; if (c.h.length !== n || !c.h.some(v => v > 0)) return '';
+  const len = defs.map(d => Math.round(holeLength(d))), pt = Array.isArray(c.pt) && c.pt.length === n ? c.pt : null, has = i => c.h[i] > 0;
+  const sub = (label, a, b, cls) => { let m = 0, par = 0, sc = 0, pu = 0, k = 0; for (let i = a; i < b; i++) { m += len[i]; par += defs[i].par; if (has(i)) { sc += c.h[i]; if (pt) pu += pt[i]; k++; } } return `<tr class="${cls}"><td>${label}</td><td>${m}</td><td>${par}</td><td></td><td><b>${k ? sc : '–'}</b></td><td>${k && pt ? pu : '–'}</td></tr>`; };
+  let rows = '<tr><th>Hole</th><th>M</th><th>Par</th><th>Hcp</th><th>Score</th><th>Putts</th></tr>';
+  defs.forEach((d, i) => {
+    const sc = has(i) ? c.h[i] : null, dd = sc == null ? 0 : sc - d.par;
+    rows += `<tr><td><b>${i + 1}</b>${d.rh ? '' : d.name}</td><td>${len[i]}</td><td>${d.par}</td><td>${d.hcp}</td><td>${sc == null ? '–' : `<span class="sc ${dd < 0 ? 'u' : dd > 0 ? 'o' : ''}${dd <= -2 ? ' u2' : ''}">${sc}</span>`}</td><td>${sc != null && pt ? pt[i] : '–'}</td></tr>`;
+    if (n === 18 && i === 8) rows += sub('Out', 0, 9, 'subt'); if (n === 18 && i === 17) rows += sub('In', 9, 18, 'subt');
+  });
+  rows += sub('Total', 0, n, 'tot');
+  const dt = c.at ? new Date(c.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  return `<div class="sub"><span>Scorecard</span><small>${CO.short}${dt ? ' · ' + dt : ''}</small></div><div class="scw"><table class="vcard">${rows}</table></div>`;
+}
 function openPlayer(o) {
   PL_LAST = o;
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
@@ -7937,6 +7956,7 @@ function openPlayer(o) {
     const card = (k, e, v, n) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
     $('plSub').textContent = pf ? lv.name : '';
     el.innerHTML = (pf ? `<div class="stLvl"><b>${lv.name}</b><span>Level ${lv.n} of ${LEVEL_NAMES.length} · ${S.h || 0} holes · ${S.r || 0} round${S.r === 1 ? '' : 's'}</span>${lv.next ? `<div class="stBar"><i style="width:${Math.round(100 * lv.f)}%"></i></div>` : ''}</div>` : '<div class="empty">No stats published for this player yet.</div>')
+      + (cardHtml(o.card) || (o.card ? '<div class="lbnote" style="margin:8px 0">The scorecard of this round was not filed.</div>' : ''))
       + bestShotsHtml(bs, o.me ? 'Best shots ever' : 'Best shots')
       + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? S.dr + ' m' : '–')}${card('Longest shot holed', 'target', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–')}${card('Longest putt holed', 'flag', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–')}${card('Greens in a row', 'dot', S.gs || 0)}${card('Fairways in a row', 'road', S.fs || 0)}</div>
       <div class="sub"><span>Scoring</span></div>
