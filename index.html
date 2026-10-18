@@ -7683,7 +7683,8 @@ function openReel() {
   const opt = (ic, t, d, on, go) => { const b = document.createElement('button'); b.className = 'mli reel' + (on ? '' : ' off'); b.innerHTML = `<i class="ic">${ICONS[ic]}</i><span>${t}<small></small></span><i class="ic chev">${ICONS.chev}</i>`; b.querySelector('small').textContent = d; if (on) b.onclick = go; body.appendChild(b); };
   opt('play', 'Last shot', last ? 'Your most recent shot, again' : 'No shot to replay on this hole yet', last, () => { closeSheets(); setTimeout(replayLast, 120); });
   const hole = (G.holeClips || []).filter(x => x.h === G.hole).map(clipItem);
-  opt('film', 'This hole so far', hole.length ? `All ${hole.length} shot${hole.length === 1 ? '' : 's'} of hole ${G.hole + 1}, from the tee` + (here ? '' : ' (while you line up a shot)') : 'Your shots on this hole show up here', hole.length && here, () => playClips(hole, 'Hole ' + (G.hole + 1)));
+  const holed = G.state === 'holed' || (G.scores && G.scores[G.hole] != null);
+  opt('film', holed ? 'Replay Hole' : 'This hole so far', hole.length ? `All ${hole.length} shot${hole.length === 1 ? '' : 's'} of hole ${G.hole + 1}, from the tee` + (here ? '' : ' (while you line up a shot)') : 'Your shots on this hole show up here', hole.length && here, () => playClips(hole, 'Hole ' + (G.hole + 1)));
   opt('film', 'Highlights of this round', top.length ? `${top.length} best shot${top.length === 1 ? '' : 's'}, one after the other` + (here ? '' : ' (while you line up a shot)') : 'Your best shots of the round show up here', top.length && here, () => playClips(top, 'Highlights'));
   opt('star', 'My best shots ever', ever.length ? `${ever.length} saved on this device` + (here ? '' : ' (while you line up a shot)') : 'Great shots are kept here for good', ever.length && here, () => playClips(ever, 'Best ever'));
   openSheet('reelSheet');
