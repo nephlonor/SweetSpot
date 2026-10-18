@@ -7598,9 +7598,19 @@ function logShot(sh, r, holed, pen) {
   let pts = sg * 100 * mult;
   if (!putt && sg > -.15) pts += [15, 6, 0, -8][q] + (kind === 0 ? 10 * clamp((sm - 1.38) / .12, 0, 1) : 0); // a pure strike, a high smash factor
   if (holed) pts += 15;
+  // so close it counts: a ball that lips out (or grazes the cup), or a long shot that finishes next to the hole, is worth a highlight
+  let lp = 0;
+  if (!holed && !pen && r && r.frames && G.C) {
+    const fr = r.frames, n = r.n, cu = G.C.cup; let md = 99;
+    for (let i = 0; i < n; i++) if (fr[i * 5 + 2] - cu.y < .45) md = Math.min(md, Math.hypot(fr[i * 5 + 1] - cu.x, fr[i * 5 + 3] - cu.z));
+    const lipped = (r.events || []).some(e => (e.type === 'lip' || e.type === 'rim') && Math.hypot(e.x - cu.x, e.z - cu.z) < .6);
+    if (lipped || md < .22) { lp = 1; pts += putt ? 45 : 70 + 40 * clamp(pre.d0 / 120, 0, 1); }
+    else if (!putt && d1 < 1.5 && pre.d0 >= 25) pts += (20 + 30 * clamp(pre.d0 / 120, 0, 1)) * (1 - d1 / 1.5);
+  }
+  if (!putt && (kind === 1 || kind === 6) && pre.d0 >= 100 && sg > .1) pts += 25 * clamp((pre.d0 - 100) / 100, 0, 1); // a long approach that works out
   if (pen) pts = Math.min(pts, -20);
   { const xp = xpShot(pts, holed, holed && G.strokes === 1); if (xp) { ST.xp += xp; saveStats(); } }
-  (G.shotLog = G.shotLog || []).push({ h: G.hole, n: G.strokes - (pen ? 1 : 0), c: G.club, k: kind, l: pre.s, f: pre.teed ? 1 : 0, d: +pre.d0.toFixed(1), e: +d1.toFixed(1), t: +(r.total || 0).toFixed(0), o: holed ? 1 : 0, b: +bk.toFixed(2), q, sm: +sm.toFixed(2), s: G.surf, fw: kind === 0 && !holed && G.surf === S.FAIR ? 1 : 0, p: Math.round(pts) });
+  (G.shotLog = G.shotLog || []).push({ h: G.hole, n: G.strokes - (pen ? 1 : 0), c: G.club, k: kind, l: pre.s, f: pre.teed ? 1 : 0, d: +pre.d0.toFixed(1), e: +d1.toFixed(1), t: +(r.total || 0).toFixed(0), o: holed ? 1 : 0, b: +bk.toFixed(2), q, sm: +sm.toFixed(2), s: G.surf, fw: kind === 0 && !holed && G.surf === S.FAIR ? 1 : 0, lp, p: Math.round(pts) });
   const c18 = clipOf(sh), ent = G.shotLog[G.shotLog.length - 1];
   if (c18) (G.holeClips = G.holeClips || []).push(Object.assign({}, ent, { cl: c18 })); // every shot of this hole, for "Replay this hole so far"
   if (c18 && pts >= 40) { ent.cl = c18; if (pts >= 60) reelAdd(ent); }
@@ -7683,13 +7693,21 @@ function shotWords(x) {
   let t;
   if (x.o && x.k === 3) t = m(x.d) + ' putt holed' + (x.b >= .3 ? ', ' + m(x.b).replace(' m', '') + ' m of break' : '');
   else if (x.o) t = x.n === 1 ? 'Hole in one' : x.f ? 'Holed from the tee' : 'Holed out from ' + m(x.d) + (x.l === S.SAND ? ' in the sand' : x.l === S.GREEN ? '' : ' off the green');
+  else if (x.lp) t = (x.k === 3 ? m(x.d) + ' putt' : x.k === 0 ? 'Drive ' + x.t + ' m' : (CLUBS[x.c] ? CLUBS[x.c].name + ' from ' : '') + m(x.d)) + ' lipped out';
   else if (x.k === 0) t = 'Drive ' + x.t + ' m' + (x.fw ? ', in the fairway' : '');
   else if (x.k === 3) t = m(x.d) + ' putt to ' + m(x.e);
   else if ((x.s === S.GREEN || x.s === S.FRINGE)) t = (x.k === 4 ? 'Bunker shot' : x.k === 2 ? 'Chip' : cl) + ' to ' + m(x.e);
   else t = cl + ' ' + x.t + ' m';
   return { t, d: `Hole ${x.h + 1} · stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
 }
-function bestShots(log, n) { return (log || []).filter(x => x.p >= 15).slice().sort((a, b) => b.p - a.p).slice(0, n || 3); }
+// the best n by points, but a round's highlights are not all putts: at most three putts (two in a short list), and one approach when there is a decent one
+function bestShots(log, n) {
+  n = n || 3; const all = (log || []).filter(x => x.p >= 15).slice().sort((a, b) => b.p - a.p), maxPutts = n >= 4 ? 3 : 2, out = [];
+  let putts = 0; for (const x of all) { if (out.length >= n) break; if (x.k === 3 && putts >= maxPutts) continue; if (x.k === 3) putts++; out.push(x); }
+  const appr = x => x.k === 1 || x.k === 6;
+  if (n >= 3 && !out.some(appr)) { const a = all.find(x => appr(x)); if (a) { if (out.length < n) out.push(a); else out[out.length - 1] = a; out.sort((x, y) => y.p - x.p); } }
+  return out;
+}
 const BS_SETS = {}; let PL_LAST = null;
 function bestShotsHtml(log, name, set) {
   const b = bestShots(log); if (!b.length) return ''; set = set || 'a'; BS_SETS[set] = b;
@@ -7976,8 +7994,8 @@ function profileCompact() {
   const S = ST, R = S.rec, o = { xp: S.xp, r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, tr: S.trees, rb: S.rainbows || 0, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
   if (R.round.at != null) o.br = R.round.v; if (S.trophies.length) o.tw = S.trophies.map(t => dayNum(t.day)).slice(-40); return o;
 }
-function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, p: x.p, cl: x.cl })); }
-const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, p: x.p | 0, cl: Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite) ? x.cl : undefined } : null;
+function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, lp: x.lp, p: x.p, cl: x.cl })); }
+const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, lp: x.lp ? 1 : 0, p: x.p | 0, cl: Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite) ? x.cl : undefined } : null;
 const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; if (Array.isArray(o.tw)) r.tw = o.tw.filter(Number.isFinite).slice(-40); return Object.keys(r).length ? r : null; };
 // ---- going out and coming in
 function dlSubscribe(c) {
