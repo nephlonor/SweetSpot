@@ -6147,12 +6147,13 @@ function predictCarry() {
 function coachFeedback(L) {
   if (settings.swungWell || L.putt) return;
   const good = L.tempoGrade === 'good' && L.qualityLevel <= 1;
-  if (good) { settings.swungWell = true; saveSettings(); UI.coachFb = ['Nice swing', 'That is the whole game. Smooth tempo, clean strike.', 'good']; UI.coachEnd = performance.now() + 4500; return; }
+  settings.swungWell = true; saveSettings(); // the coach speaks once: after the first swing it is gone for good
+  if (good) { UI.coachFb = ['Nice swing', 'That is the whole game. Smooth tempo, clean strike.', 'good']; UI.coachEnd = performance.now() + 4500; return; }
   const tips = [];
   if (L.loose) tips.push('Keep your right thumb on the dial.');
   else if (L.qualityLevel > 1) tips.push('Off the sweet spot (' + L.loc + '). Hold the ball steady in the middle with your right thumb.');
   if (L.tempoGrade !== 'good') tips.push(L.ratio < 3 ? 'Tempo ' + L.ratio.toFixed(1) + ':1. Slide down more slowly, then up in one quick move.' : 'Tempo ' + L.ratio.toFixed(1) + ':1. Slide down a little quicker, or come up more slowly.');
-  UI.coachFb = ['Try again', tips.join(' '), '']; UI.coachEnd = 0;
+  UI.coachFb = ['Your first swing', tips.join(' ') || 'Nice and smooth.', '']; UI.coachEnd = performance.now() + 6000;
 }
 function updateCoach() {
   const el = $('coach'); if (!el) return;
@@ -6160,8 +6161,7 @@ function updateCoach() {
   if (!settings.swungWell || UI.coachEnd > 0) {
     const idle = (G.state === 'address' && !sheetOpen() && (SW.phase === 'ready' || SW.phase === 'idle' || SW.phase === 'done' || !SW.phase)) || G.state === 'flight' || G.state === 'holed' || G.state === 'settle';
     if (UI.coachFb && idle && !(G.state === 'address' && SW.phase === 'ready' && SW.p > .02)) { h = '<b>' + UI.coachFb[0] + '</b>' + UI.coachFb[1]; cls = UI.coachFb[2]; }
-    else if (!UI.coachFb && !settings.swungWell && G.state === 'address' && idle && !isPutt()) h = '<b>Your first swing</b>Left thumb: slide down slowly, then straight up, quickly. Right thumb: keep the ball on the sweet spot.';
-    else if (!UI.coachFb && !settings.swungWell && G.state === 'address' && idle) h = '<b>Putting</b>Same move, shorter: slide down and up smoothly with your left thumb.';
+    else if (!UI.coachFb && !settings.swungWell && G.state === 'address' && idle && !isPutt() && (UI.coachT0 = UI.coachT0 || performance.now()) && performance.now() - UI.coachT0 < 12000) h = '<b>Your first swing</b>Left thumb: slide down slowly, then straight up, quickly. Right thumb: keep the ball on the sweet spot.';
   }
   if (UI.coachEnd > 0 && G.state === 'address' && performance.now() > UI.coachEnd) { UI.coachFb = null; UI.coachEnd = 0; h = ''; }
   if (el._h !== h) { el._h = h; if (h) el.innerHTML = h; }
