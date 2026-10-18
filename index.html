@@ -360,6 +360,10 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .mpBtns{display:flex;gap:6px;margin-top:6px}.mpBtns .mpb{flex:1;background:var(--soft);color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair)}
 #mpPanel{position:fixed;z-index:2;right:calc(var(--sr) + 10px);top:0;min-width:128px;max-width:46vw;padding:6px 9px 7px;border-radius:16px;pointer-events:none;opacity:0;transition:opacity .3s,top .25s;font:600 13px var(--cond);color:#fff;text-shadow:var(--tsh)}
 #mpPanel.on{opacity:1}
+#specGlow{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .8s;box-shadow:inset 0 0 38px 6px rgba(255,200,70,.4),inset 0 0 90px 10px rgba(255,180,40,.16)}
+#specGlow span{position:absolute;left:0;right:0;top:calc(var(--st,0px) + 1px);text-align:center;font:600 9.5px var(--cond);letter-spacing:.16em;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#specGlow.on{opacity:1}
+body.spec #specGlow,body.clip #specGlow{display:none}
 #mpPanel button.mpr{pointer-events:auto;width:100%;background:none;border:0;padding:0 4px;margin:0 -4px;font:inherit;color:inherit;text-shadow:inherit;border-radius:8px;cursor:pointer;text-align:left}
 #mpPanel .mpr.on{background:rgba(255,255,255,.22)}
 #mpPanel .mpr.fol .n{color:#ffe28a;text-shadow:0 0 6px rgba(255,200,60,.95),0 0 14px rgba(255,190,40,.75)}
@@ -513,6 +517,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
 <div id="scrim"></div>
 <div id="dataLoad" class="glass"></div>
+<div id="specGlow"><span>You've got a spectator</span></div>
 <div class="sheet" id="bagSheet"><div class="grab"></div><div class="sht">Your bag <small id="bagLie">From the tee</small></div><div class="bag" id="bag"></div></div>
 <div class="sheet" id="menuSheet"><div class="grab"></div>
   <div class="mhead"><button class="mback" id="mBack" aria-label="Back" style="display:none"><i class="ic" data-ic="back"></i></button><div class="mtitle"><span id="mTitle">Menu</span><small id="mSub"></small></div></div>
@@ -5415,6 +5420,10 @@ function mpUpdate(dt) {
     const vis = _mpv.z < 1 && Math.abs(_mpv.x) < 1.1 && Math.abs(_mpv.y) < 1.1 && !sheetOpen();
     o.tag.style.opacity = vis && !pr.clip ? 1 : 0;
     if (vis) { o.tag.textContent = pr.n + '  ' + (pr.th ? fmtToPar(pr.tp) : 'E'); o.tag.style.transform = `translate(${(_mpv.x * .5 + .5) * window.innerWidth}px, ${(-_mpv.y * .5 + .5) * SH()}px) translate(-50%,-110%)`; }
+  }
+  { // someone is following me: a golden glow round the screen and a quiet note at the top
+    let fol = false; if (MP.st === 'on' && !MP.spec && G.state !== 'title' && G.state !== 'intro') for (const pr of MP.peers.values()) if (pr.fo === MP.id && Date.now() - pr.seen < 120e3) { fol = true; break; }
+    const g = $('specGlow'); if (g && g.classList.contains('on') !== fol) g.classList.toggle('on', fol);
   }
   for (const [id, o] of MP.objs) if (!seen.has(id)) { o.ball.visible = false; o.tr.geometry.setDrawRange(0, 0); o.tag.style.opacity = 0; }
   if ((MP.panelT -= dt) <= 0) { MP.panelT = 1; mpPanel(); if ($('menuSheet').classList.contains('on')) mpList(); }
