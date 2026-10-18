@@ -3587,7 +3587,8 @@ function burst(x, y, z, dirx, dirz, col, n, spd, up) {
   }
 }
 // gusts: while the ball is in the air, leaves and grass blades blow through the view with the wind, thicker in each gust
-const LEAF_COL = [0xc9b458, 0xa7c25a, 0xd89c3a, 0x8fb04e];
+// what blows past depends on the course: Basel meadow leaves, Alsace vineyard reds and golds, Augusta azalea petals and pine straw
+const GUST_COLS = { gccb: [0xc9b458, 0xa7c25a, 0xd89c3a, 0x8fb04e], alsace: [0xb5532e, 0xd9a441, 0xc98a2b, 0x9a3f3a], augusta: [0xf2a1c0, 0xf7d3e2, 0xd98aa8, 0xb98a4c] };
 function gustTick(dt, tt) {
   if (G.state !== 'flight' || !G.shot || G.shot.L.putt || G.rbow) { G.gustAcc = 0; return; }
   const ws = Math.hypot(G.wind[0], G.wind[1]); if (ws < 2.2) return;
@@ -3597,7 +3598,7 @@ function gustTick(dt, tt) {
   while (G.gustAcc >= 1) {
     G.gustAcc--; if (L.length >= 160) L.shift();
     const f = 6 + Math.random() * 22, sd = (Math.random() - .5) * 26, s = ws * (.75 + .5 * gust);
-    L.push({ x: cp.x + fx / fl * f - fz / fl * sd - G.wind[0] * 1.5, y: cp.y + (Math.random() - .45) * 9, z: cp.z + fz / fl * f + fx / fl * sd - G.wind[1] * 1.5, vx: G.wind[0] * s / ws * 1.1, vy: (Math.random() - .5) * 1.5, vz: G.wind[1] * s / ws * 1.1, life: 1.6 + Math.random(), t: 0, col: LEAF_COL[(Math.random() * 4) | 0], r: Math.random() * 6, s: .35 + Math.random() * .45, fl: 1 });
+    L.push({ x: cp.x + fx / fl * f - fz / fl * sd - G.wind[0] * 1.5, y: cp.y + (Math.random() - .45) * 9, z: cp.z + fz / fl * f + fx / fl * sd - G.wind[1] * 1.5, vx: G.wind[0] * s / ws * 1.1, vy: (Math.random() - .5) * 1.5, vz: G.wind[1] * s / ws * 1.1, life: 1.6 + Math.random(), t: 0, col: (GUST_COLS[COURSE.key] || GUST_COLS.gccb)[(Math.random() * 4) | 0], r: Math.random() * 6, s: .7 + Math.random() * .8, fl: 1 });
   }
 }
 function updateParticles(dt) {
@@ -7275,7 +7276,7 @@ function showScorecard(final) {
   });
   rows += sub('Total', 0, HOLE_DEFS.length, 'tot');
   const played = G.scores.filter(s => s != null).length, firH = G.fir.filter((f, i) => f === true).length, firN = HOLE_DEFS.filter((d, i) => d.par >= 4 && G.fir[i] != null).length, girH = G.gir.filter(g => g === true).length;
-  if (final) finishRound();
+  if (final) { finishRound(); instAfterRound(tp); }
   let best = null; try { best = +localStorage.getItem(BEST_KEY) || null; } catch (e) { }
   $('cardBody').innerHTML = `<div class="sht">${final ? (G.daily ? 'Daily challenge complete' : 'Round complete') : 'Scorecard'} <small>${final ? playerName() + ' · ' + COURSE.short : COURSE.name}</small></div>${final ? recapHtml(tp) + '<div id="finalBoard"></div><div class="sub">Scorecard</div>' : ''}<div class="scw"><table class="vcard">${rows}</table></div>
     <div class="scsum"><div><b>${played ? fmtToPar(tp.d) : '–'}</b>To par</div><div><b>${firN ? firH + '/' + firN : '–'}</b>Fairways</div><div><b>${played ? girH + '/' + played : '–'}</b>Greens</div><div><b>${best || '–'}</b>Best</div></div>
@@ -7868,6 +7869,15 @@ function installSteps() {
   // only the steps for this device
   return blocks.filter(b => b[2]).map(([t, br, me, st]) => `<div class="mgrp inst${me ? ' me' : ''}"><div class="instH"><b>${t}</b><small>${br}</small></div>${st.map((x, i) => `<div class="instS"><i class="ic">${x[0]}</i><span><u>${i + 1}</u>${x[1]}</span></div>`).join('')}</div>`).join('');
 }
+// A second nudge to install, after the first finished round if it was +3 or better (once, only on a phone that has not installed it)
+function instAfterRound(tp) {
+  if (G._instRound) return; G._instRound = true;
+  let v = {}; try { v = JSON.parse(localStorage.getItem('ssg-visits') || '{}') || {}; } catch (e) { }
+  v.r = (v.r | 0) + 1;
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true, ua = navigator.userAgent || '', mobile = /iPhone|iPad|iPod|Android/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (v.r === 1 && tp.d <= 3 && !v.again && !standalone && mobile) { v.again = true; UI.instPend = true; }
+  try { localStorage.setItem('ssg-visits', JSON.stringify(v)); } catch (e) { }
+}
 function maybeInstallHint() {
   let n = 0, last = 0, shown = false;
   try { const v = JSON.parse(localStorage.getItem('ssg-visits') || '{}'); n = v.n | 0; last = +v.t || 0; shown = !!v.shown; } catch (e) { }
@@ -7875,7 +7885,7 @@ function maybeInstallHint() {
   const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: fullscreen)').matches);
   const ua = navigator.userAgent || '', mobile = /iPhone|iPad|iPod|Android/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // (nothing to say on a computer)
   const show = n === 2 && !shown && !standalone && mobile;
-  try { localStorage.setItem('ssg-visits', JSON.stringify({ n, t: now, shown: shown || show })); } catch (e) { }
+  try { const o = JSON.parse(localStorage.getItem('ssg-visits') || '{}') || {}; o.n = n; o.t = now; o.shown = shown || show; localStorage.setItem('ssg-visits', JSON.stringify(o)); } catch (e) { }
   if (!show) return;
   setTimeout(() => {
     if (sheetOpen() || G.state === 'intro' || $('vidIntro').classList.contains('on')) { setTimeout(() => { if (!sheetOpen()) openInstall(); }, 8000); return; }
@@ -7967,6 +7977,13 @@ async function loadDailyFile(day, force) {
   } catch (e) { if (!DL.files[day]) DL.files[day] = null; }
   dlRefresh(); dlTrophyCheck();
 }
+// the archive (one line per finished daily) and the overall standings, both kept up to date by the leaderboard workflow
+async function loadDailyMeta(force) {
+  if (!force && DL.metaAt && Date.now() - DL.metaAt < 120000) return; DL.metaAt = Date.now();
+  const get = async f => { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${f}?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' }); return r.status === 404 ? [] : r.ok ? r.json() : null; };
+  try { const [a, o] = await Promise.all([get('daily-index.json'), get('daily-overall.json')]); if (Array.isArray(a)) DL.index = a; if (Array.isArray(o)) DL.overall = o; if (!a && !o) throw 0; } catch (e) { if (!DL.index) DL.index = null; DL.metaAt = 0; }
+  if ($('dailySheet').classList.contains('on') && (DL.tab === 'archive' || DL.tab === 'overall')) fillDaily($('dailyBody'));
+}
 async function loadPlayers(force) {
   if (!force && DL.players && Date.now() - DL.playersAt < 120000) return DL.players; DL.playersAt = Date.now();
   try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/players.json?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' }); DL.players = r.ok ? await r.json() : (DL.players || {}); } catch (e) { DL.players = DL.players || {}; }
@@ -7992,6 +8009,7 @@ let _dlMin = 0;
 function dlTick(dt) {
   DL.t -= dt; if (DL.t > 0) return; DL.t = 1;
   const d = dayId(); if (d !== DL.day) { DL.day = d; DL.tab = 'today'; if (MP.client && MP.st === 'on') dlSubscribe(MP.client); loadDailyFile(d); loadDailyFile(dayAdd(d, -1)); }
+  if (UI.instPend && !sheetOpen() && !$('done').classList.contains('on') && G.state !== 'spec') { UI.instPend = false; setTimeout(() => { if (!sheetOpen()) openInstall(); }, 1200); }
   dlCards(); dlPanel(); if (++_dlMin >= 30) { _dlMin = 0; if ($('dailySheet').classList.contains('on')) fillDaily($('dailyBody')); }
 }
 // a hole is in: the record, and out to everyone
@@ -8093,13 +8111,17 @@ function fillDaily(el, inCard) {
   el.textContent = ''; if (inCard) el.dataset.daily = '1';
   const add = (tag, cls, txt) => { const x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; el.appendChild(x); return x; };
   if (!inCard) {
-    const sg = add('div', 'seg boardCourse'); for (const [k, t] of [['today', 'Today'], ['yesterday', 'Yesterday']]) { const b = document.createElement('button'); b.textContent = t; if (k === tab) b.className = 'sel'; b.onclick = () => { DL.tab = k; loadDailyFile(k === 'today' ? today : yday); fillDaily(el); }; sg.appendChild(b); }
+    const sg = add('div', 'seg boardCourse'); for (const [k, t] of [['today', 'Today'], ['yesterday', 'Yesterday'], ['archive', 'Archive'], ['overall', 'Overall']]) { const b = document.createElement('button'); b.textContent = t; if (k === tab || (k === 'archive' && tab === 'day')) b.className = 'sel'; b.onclick = () => { DL.tab = k; if (k === 'today' || k === 'yesterday') loadDailyFile(k === 'today' ? today : yday); else loadDailyMeta(); fillDaily(el); }; sg.appendChild(b); }
   }
-  const day = tab === 'today' ? today : yday, course = tab === 'today' ? dailyCourse(day) : (dlRecs()[day] || {}).course || dailyCourse(day), CO = COURSES[course];
+  if (!inCard && tab === 'archive') return fillArchive(el, add);
+  if (!inCard && tab === 'overall') return fillOverall(el, add);
+  const past = tab === 'yesterday' || tab === 'day';
+  const day = tab === 'today' ? today : tab === 'day' ? DL.arch : yday, course = tab === 'today' ? dailyCourse(day) : (dlRecs()[day] || {}).course || dailyCourse(day), CO = COURSES[course];
+  if (tab === 'day') { const bk = add('button', 'mbtn wide', 'Back to the archive'); bk.onclick = () => { DL.tab = 'archive'; fillDaily(el); }; bk.style.marginBottom = '8px'; }
   const head = add('div', 'dlHead'); const l1 = document.createElement('b'); l1.textContent = `${CO.name}`; const l2 = document.createElement('small');
   const dt = new Date(dayNum(day) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   l2.textContent = tab === 'today' ? `${dt} · closes in ${fmtLeft(dayLeftSec())} (11:59 pm US Eastern)` : `${dt} · final result`; head.append(l1, l2);
-  if (tab === 'yesterday') { const w = dlStanding(day, 18, course).filter(x => x.fin)[0]; if (w) { const wb = add('div', 'trophy'); wb.innerHTML = `<i class="ic">${ICONS.trophy}</i><div><b></b><small>Winner of the daily challenge</small></div>`; wb.querySelector('b').textContent = w.e.n + ' · ' + fmtToPar(w.tp) + ' (' + w.s + ')'; } }
+  if (past) { const w = dlStanding(day, 18, course).filter(x => x.fin)[0]; if (w) { const wb = add('div', 'trophy'); wb.innerHTML = `<i class="ic">${ICONS.trophy}</i><div><b></b><small>Winner of the daily challenge</small></div>`; wb.querySelector('b').textContent = w.e.n + ' · ' + fmtToPar(w.tp) + ' (' + w.s + ')'; } }
   const playing = rec && rec.status === 'playing', done = rec && rec.status === 'done';
   if (tab === 'today' && !rec) {
     add('div', 'dlText', 'One chance a day. Everyone plays the same course with the same pins, wind and weather, and has to finish all 18 holes before the day ends. While you play, the board shows everyone\'s score after the holes you have finished: someone who posted hours ago plays through again as you go, and anyone still out there climbs it live. The full board opens when your round is done.');
@@ -8114,7 +8136,7 @@ function fillDaily(el, inCard) {
   }
   if (note) add('div', 'dlText', note);
   const list = add('div', 'lb'), st = dlStanding(day, k, course);
-  if (!st.length) { add('div', 'empty', tab === 'yesterday' ? (DL.files[day] === null && !(DL.rows[day] && DL.rows[day].size) ? 'Yesterday\'s board could not be reached.' : 'No one played yesterday\'s challenge.') : k ? 'No one else on the board yet.' : 'Finish hole 1 and the board shows up.'); }
+  if (!st.length) { add('div', 'empty', past ? (DL.files[day] === null && !(DL.rows[day] && DL.rows[day].size) ? 'This board could not be reached.' : 'No one played this challenge.') : k ? 'No one else on the board yet.' : 'Finish hole 1 and the board shows up.'); }
   st.slice(0, 40).forEach((x, i) => {
     const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me' : '') + (i === 0 ? ' top1' : ''); row.style.cursor = 'pointer';
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
@@ -8123,6 +8145,36 @@ function fillDaily(el, inCard) {
     row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, bs: x.e.bs, card: { course: x.e.c, h: x.e.h, pt: x.e.pt, at: x.e.at }, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
   });
   if (tab === 'today' && playing && !inCard) { const b = add('button', 'mbtn dark wide', G.daily ? 'Back to my round' : 'Resume my round'); b.style.marginTop = '8px'; b.onclick = () => { closeSheets(); if (!G.daily) startDaily(); }; }
+}
+function fillArchive(el, add) {
+  loadDailyMeta();
+  const fmt = d => new Date(dayNum(d) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const mine = dlRecs(), list = add('div', 'lb');
+  if (DL.index === undefined) { add('div', 'empty', 'Loading the archive'); return; }
+  if (DL.index === null) { add('div', 'empty', 'The archive could not be reached.'); return; }
+  if (!DL.index.length) { add('div', 'empty', 'Finished daily challenges are kept here.'); return; }
+  el.appendChild(list);
+  DL.index.slice(0, 120).forEach(x => {
+    const row = document.createElement('div'); row.className = 'row'; row.style.cursor = 'pointer';
+    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = fmt(x.d).split(' ').slice(1).join(' ');
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (COURSES[x.c] ? COURSES[x.c].short : x.c); const sm = document.createElement('small'); sm.textContent = `${fmt(x.d).split(' ')[0]} · ${x.n} player${x.n === 1 ? '' : 's'}${mine[x.d] && mine[x.d].status === 'done' ? ' · played' : ''}`; nm.appendChild(sm);
+    const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.t); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.w;
+    row.append(rk, nm, tp, sc); row.onclick = () => { DL.tab = 'day'; DL.arch = x.d; loadDailyFile(x.d); fillDaily(el); }; list.appendChild(row);
+  });
+}
+function fillOverall(el, add) {
+  loadDailyMeta();
+  add('div', 'dlText', 'Every finished daily challenge pays merit points: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 for places 1 to 10, and 1 point for finishing. Players level on the score share the place. A day counts once it is over.');
+  if (DL.overall === undefined) { add('div', 'empty', 'Loading the standings'); return; }
+  if (!DL.overall || !DL.overall.length) { add('div', 'empty', DL.overall === null ? 'The standings could not be reached.' : 'The standings start with the first finished day.'); return; }
+  const list = add('div', 'lb'), me = dlMe();
+  DL.overall.slice(0, 100).forEach((x, i) => {
+    const row = document.createElement('div'); row.className = 'row' + (x.by === me ? ' me' : '') + (i === 0 ? ' top1' : '');
+    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.n; const sm = document.createElement('small'); sm.textContent = `${x.d} day${x.d === 1 ? '' : 's'} · ${x.w} win${x.w === 1 ? '' : 's'} · ${x.pod} podium${x.pod === 1 ? '' : 's'}`; nm.appendChild(sm);
+    const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = x.p; const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = 'pts';
+    row.append(rk, nm, tp, sc); list.appendChild(row);
+  });
 }
 function openDaily(tab) {
   DL.tab = tab || 'today'; const t = dayId(); loadDailyFile(t); loadDailyFile(dayAdd(t, -1));
