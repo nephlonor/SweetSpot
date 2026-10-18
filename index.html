@@ -7342,6 +7342,35 @@ function burstConfetti() {
   setTimeout(() => box.innerHTML = '', 3600);
 }
 /* ---------- hole map (yardage book) ---------- */
+// The hole map is a photograph of the real 3D course from straight above: the scene is drawn once through a top-down orthographic camera
+// (same extent as the yardage plan, so every overlay lines up), without sky, clouds, ball, aim marks or the flag, and kept per hole and sky.
+let _topRT = null;
+function captureTopDown(C) {
+  const P = C && C.plan; if (!P || !W.ren || !W.scene) return;
+  const key = C.def.seed + '|' + (G.tod || 'day') + '|' + (G.weather ? G.weather.id : '') + '|' + ((G.pins || [])[G.hole] | 0) + '|' + (PERF.lite ? 1 : 0);
+  if (P.top && P.topKey === key) return;
+  try {
+    const ww = P.w * P.mpp, hh = P.h * P.mpp, mpp = Math.max(.5, ww / 640, hh / 1700), pw = Math.round(ww / mpp), ph = Math.round(hh / mpp);
+    if (!_topRT || _topRT.width !== pw || _topRT.height !== ph) { if (_topRT) _topRT.dispose(); _topRT = new THREE.WebGLRenderTarget(pw, ph, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true }); }
+    const cx = P.x0 + ww / 2, cz = P.z0 + hh / 2, cam = new THREE.OrthographicCamera(-ww / 2, ww / 2, hh / 2, -hh / 2, 1, 3000);
+    cam.up.set(0, 0, -1); cam.position.set(cx, 900, cz); cam.lookAt(cx, 0, cz); cam.updateMatrixWorld();
+    const hide = [W.sky, W.clouds, W.ball, W.peg, W.blob, W.tracer, W.aim, W.ring, W.windDot, W.windLine, W.flag, W.pole, W.rainbow && W.rainbow.grp, W.rain && W.rain.mesh, W.slope && W.slope.mesh];
+    for (const o of MP.objs.values()) hide.push(o.ball, o.tr);
+    const was = hide.map(o => o ? o.visible : false); hide.forEach(o => { if (o) o.visible = false; });
+    const fog = W.scene.fog, fn = fog.near, ff = fog.far, bg = W.scene.background.clone(), sp = W.sun.position.clone(), st = W.sun.target.position.clone(), sc = W.sun.shadow.camera, sz = [sc.left, sc.right, sc.top, sc.bottom, sc.far];
+    fog.near = 1e6; fog.far = 2e6; W.scene.background.setHex(0x9fbf8a);
+    const ext = Math.max(ww, hh) * .55; W.sun.target.position.set(cx, 0, cz); { const hx = SUN_OFF[0], hz = SUN_OFF[2], hl = Math.hypot(hx, hz); W.sun.position.set(cx + hx / hl * 300, 430, cz + hz / hl * 300); } // a high sun: short, soft shadows read better from above; W.sun.target.updateMatrixWorld();
+    sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = 1400; sc.updateProjectionMatrix(); W.sun.updateMatrixWorld();
+    const prev = W.ren.getRenderTarget(); W.ren.setRenderTarget(_topRT); W.ren.render(W.scene, cam);
+    const buf = new Uint8Array(pw * ph * 4); W.ren.readRenderTargetPixels(_topRT, 0, 0, pw, ph, buf); W.ren.setRenderTarget(prev);
+    // restore the scene
+    hide.forEach((o, i) => { if (o) o.visible = was[i]; }); fog.near = fn; fog.far = ff; W.scene.background.copy(bg);
+    W.sun.position.copy(sp); W.sun.target.position.copy(st); [sc.left, sc.right, sc.top, sc.bottom, sc.far] = sz; sc.updateProjectionMatrix();
+    const cv = document.createElement('canvas'); cv.width = pw; cv.height = ph; const x = cv.getContext('2d'), img = x.createImageData(pw, ph), row = pw * 4;
+    for (let j = 0; j < ph; j++) img.data.set(buf.subarray((ph - 1 - j) * row, (ph - j) * row), j * row); // (rows come up from the bottom)
+    x.putImageData(img, 0, 0); P.top = cv; P.topKey = key;
+  } catch (e) { P.top = null; }
+}
 function planFit(cv, W2, H2, pad) {
   const P = G.C.plan, s = Math.min((W2 - pad * 2) / P.w, (H2 - pad * 2) / P.h);
   return { s, ox: (W2 - P.w * s) / 2, oy: (H2 - P.h * s) / 2, P };
@@ -7354,7 +7383,14 @@ function drawPlan(cv, opt) {
   cv.width = W2 * dpr; cv.height = H2 * dpr;
   const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
   x.fillStyle = '#cfe3c3'; x.fillRect(0, 0, W2, H2);
-  const f = planFit(cv, W2, H2, opt.pad || 4); x.imageSmoothingEnabled = true; x.drawImage(f.P.cv, f.ox, f.oy, f.P.w * f.s, f.P.h * f.s);
+  if (!opt.small) captureTopDown(G.C);
+  const f = planFit(cv, W2, H2, opt.pad || 4), top = f.P.top; x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  if (top && !opt.small) { // the photograph: rounded, lifted off the panel on a soft shadow, with a hairline edge
+    const rr = Math.max(8, 14 * Math.min(1, f.s)), w = f.P.w * f.s, h = f.P.h * f.s;
+    x.save(); x.shadowColor = 'rgba(20,50,25,.35)'; x.shadowBlur = 18; x.shadowOffsetY = 5; x.fillStyle = '#6f9a5d'; x.beginPath(); x.roundRect ? x.roundRect(f.ox, f.oy, w, h, rr) : x.rect(f.ox, f.oy, w, h); x.fill(); x.restore();
+    x.save(); x.beginPath(); x.roundRect ? x.roundRect(f.ox, f.oy, w, h, rr) : x.rect(f.ox, f.oy, w, h); x.clip(); x.drawImage(top, f.ox, f.oy, w, h); x.restore();
+    x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 1.5; x.beginPath(); x.roundRect ? x.roundRect(f.ox, f.oy, w, h, rr) : x.rect(f.ox, f.oy, w, h); x.stroke();
+  } else x.drawImage(top || f.P.cv, f.ox, f.oy, f.P.w * f.s, f.P.h * f.s);
   const C = G.C, bp = opt.ball || G.ball, b = w2m(f, bp.x, bp.z), p = w2m(f, C.cup.x, C.cup.z);
   if (opt.line) {
     x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 1.5; x.setLineDash([3, 3]); x.beginPath();
@@ -7362,8 +7398,9 @@ function drawPlan(cv, opt) {
   }
   if (opt.aim) {
     const d = aimDir(), dp = distToPin(), tl = isPutt() ? dp : Math.min(G.carry, dp), t = G.target || [G.ball.x + d[0] * tl, G.ball.z + d[1] * tl], tm = w2m(f, t[0], t[1]);
+    x.save(); x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 5; x.shadowOffsetY = 1;
     x.strokeStyle = '#fff'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(b[0], b[1]); x.lineTo(tm[0], tm[1]); x.lineTo(p[0], p[1]); x.stroke();
-    x.fillStyle = 'rgba(255,255,255,.35)'; x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(tm[0], tm[1], 9, 0, TAU); x.fill(); x.stroke();
+    x.fillStyle = 'rgba(255,255,255,.3)'; x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(tm[0], tm[1], 9, 0, TAU); x.fill(); x.stroke(); x.restore();
     const d1 = Math.hypot(t[0] - G.ball.x, t[1] - G.ball.z), d2 = Math.hypot(C.cup.x - t[0], C.cup.z - t[1]);
     const tag = (txt, mx, my) => { x.font = FONT(600, 13); const w = x.measureText(txt).width + 12; x.fillStyle = '#fff'; x.beginPath(); x.roundRect ? x.roundRect(mx - w / 2, my - 10, w, 20, 6) : x.rect(mx - w / 2, my - 10, w, 20); x.fill(); x.fillStyle = '#16211c'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, mx, my + .5); };
     tag(Math.round(d1) + ' M', (b[0] + tm[0]) / 2 - 26, (b[1] + tm[1]) / 2);
