@@ -51,13 +51,19 @@ jobs:
               if (!r || typeof r.name !== 'string' || !/^[\p{L}\p{N} ._'-]{1,14}$/u.test(r.name.trim())) return finish(false, 'Invalid name.');
               const nn = r.name.trim(), who = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
               const rd = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
-              const changed = [];
+              const changed = [], olds = new Set();
               for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
                 const rows = rd('leaderboard/' + f, null); if (!Array.isArray(rows)) continue; let hit = false;
-                for (const x of rows) if (x && x.by === who && x.name !== nn) { x.name = nn; hit = true; }
+                for (const x of rows) if (x && x.by === who && x.name !== nn) { olds.add(x.name); x.name = nn; hit = true; }
                 if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
               }
-              const pf0 = rd('leaderboard/players.json', {}); if (pf0[who] && pf0[who].n !== nn) { pf0[who].n = nn; fs.writeFileSync('leaderboard/players.json', JSON.stringify(pf0) + '\n'); changed.push('leaderboard/players.json'); }
+              // the profile keeps the names used in the past (newest first), so a profile can show them
+              const pf0 = rd('leaderboard/players.json', {}), prof = pf0[who];
+              if (prof && prof.n && prof.n !== nn) olds.add(prof.n);
+              const prev = [...olds, ...((prof && prof.on) || [])].filter((x, i, a) => typeof x === 'string' && x.toLowerCase() !== nn.toLowerCase() && a.findIndex(y => y.toLowerCase() === x.toLowerCase()) === i).slice(0, 10);
+              if (prof ? (prof.n !== nn || JSON.stringify(prof.on || []) !== JSON.stringify(prev)) : prev.length) {
+                pf0[who] = Object.assign({}, prof || { at: Date.now() }, { n: nn }, prev.length ? { on: prev } : {}); fs.writeFileSync('leaderboard/players.json', JSON.stringify(pf0) + '\n'); changed.push('leaderboard/players.json');
+              }
               if (!changed.length) return finish(true, 'No scores from this device to rename.');
               try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); changed.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (e) { core.warning('overall: ' + e.message); }
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
@@ -98,7 +104,8 @@ jobs:
               const key = x => x.cl ? x.cl.slice(7, 9).join(',') + x.cl[1] + x.cl[10] : [x.h, x.n, x.p].join('-'), seen = new Set(), career = [];
               for (const x of [...bs, ...((old && old.bs) || [])].sort((a, b) => (b.p || 0) - (a.p || 0))) { if (seen.has(key(x))) continue; seen.add(key(x)); career.push(x); }
               const rb = (bs.length ? [{ at: r.at, bs }] : []).concat((old && old.rb) || []).slice(0, 2);
-              all[by] = { n: name, pf, bs: career.slice(0, 3), rb, at: r.at };
+              const on = ((old && old.on) || []).filter(x => x.toLowerCase() !== name.toLowerCase()); if (old && old.n && old.n.toLowerCase() !== name.toLowerCase() && !on.some(x => x.toLowerCase() === old.n.toLowerCase())) on.unshift(old.n); // other usernames used in the past
+              all[by] = Object.assign({ n: name, pf, bs: career.slice(0, 3), rb, at: r.at }, on.length ? { on: on.slice(0, 10) } : {});
               const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at).slice(0, 300), out = {}; for (const k of keys) out[k] = all[k];
               fs.writeFileSync(f, JSON.stringify(out) + '\n'); return f;
             };

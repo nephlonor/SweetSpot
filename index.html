@@ -8206,7 +8206,7 @@ async function renameSync() {
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: `[rename] ${was} to ${nm}`, body: 'Name change from Sweet Spot Golf.\n\n```json\n' + JSON.stringify({ v: 1, rename: true, name: nm, dev: deviceId() }) + '\n```\n' }) });
     if (!res.ok) return;
-    settings.nameSent = nm; saveSettings();
+    settings.nameSent = nm; settings.oldNames = [was].concat((settings.oldNames || []).filter(x => x.toLowerCase() !== was.toLowerCase())).filter(x => x.toLowerCase() !== nm.toLowerCase()).slice(0, 10); saveSettings();
     for (const c of Object.values(COURSES)) { try { const a = JSON.parse(localStorage.getItem(c.board) || '[]'); if (Array.isArray(a)) localStorage.setItem(c.board, JSON.stringify(a.map(x => Object.assign(x, { name: nm })))); } catch (e) { } }
     setTimeout(() => { for (const c of Object.values(COURSES)) { Board.ghAt[c.key] = 0; } loadWorld(true); }, 45000); refreshBoards();
   } catch (e) { } finally { _renaming = false; }
@@ -8779,7 +8779,7 @@ function cardHtml(c) {
 function openPlayer(o) {
   PL_LAST = o;
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
-  const render = (pf, bs, rs) => {
+  const render = (pf, bs, rs, on) => {
     const S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
     const lv = levelOf(S.xp != null ? S.xp : (S.h || 0) * 10 + (S.r || 0) * 30);
     const card = (k, e, v, n) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
@@ -8793,16 +8793,17 @@ function openPlayer(o) {
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
       <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h && S.pu != null ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h && S.st != null ? (S.st / S.h).toFixed(2) : '–'}</span></div>
       <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div><div class="stRow"><span>Rainbows seen</span><span>${S.rb || 0}</span></div>` : '')
-      + (pf ? `<div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${(S.tw || []).length}</span></div>${S.tw && S.tw.length ? trophyHtml(S.tw) : ''}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
+      + (pf ? `<div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${(S.tw || []).length}</span></div>${S.tw && S.tw.length ? trophyHtml(S.tw) : ''}` : '')
+      + (on && on.length ? `<div class="sub"><span>Other usernames used in the past</span></div>${on.map(n => `<div class="stRow"><span>${String(n).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span><span></span></div>`).join('')}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
   };
   const clean = a => (Array.isArray(a) ? a : []).map(cleanShot).filter(Boolean);
   // the round's own best shots (carried by the row, or kept for the player's last rounds), and the player's highlights over the career
   const roundOf = q => { const own = clean(o.rbs); if (own.length) return own; const hit = q && Array.isArray(q.rb) && q.rb.find(x => x && o.card && x.at === o.card.at); return hit ? clean(hit.bs) : []; };
-  if (o.me) { const ev = reelList(); render(profileCompact(), ev.slice(0, 3), roundOf(null)); }
+  if (o.me) { const ev = reelList(); render(profileCompact(), ev.slice(0, 3), roundOf(null), settings.oldNames); }
   else {
     render(cleanPf(o.pf), clean(o.bs), roundOf(null));
-    if (o.id) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs), roundOf(q)); });
+    if (o.id) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs), roundOf(q), Array.isArray(q.on) ? q.on.filter(x => typeof x === 'string').slice(0, 10) : null); });
   }
   openSheet('playerSheet');
 }
