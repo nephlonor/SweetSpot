@@ -449,6 +449,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .lb .row .st{text-align:right;color:var(--ink2);font-size:15px}
 .lb .row.me{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff}.lb .row.me .rk,.lb .row.me .st,.lb .row.me small{color:rgba(255,255,255,.8)}
 .lb .row.top1 .rk{color:#c99a06}
+.lb .row.own .nm{color:#ffd24a;text-shadow:0 1px 2px rgba(70,45,0,.6)}
 .sheet:not(.on) .lb .row.lbNew,.sheet:not(.on) .lb .row.lbPb,.sheet:not(.on) .lbSpark{animation-play-state:paused}
 .lb .row.lbPb{position:relative;animation:lbPb 3s ease-in-out var(--lbd,0ms) both}
 @keyframes lbPb{0%{box-shadow:0 0 0 0 rgba(90,160,235,0),inset 0 0 0 0 rgba(90,160,235,0),inset 0 0 0 40px rgba(130,185,245,0)}25%{box-shadow:0 0 14px 2px rgba(90,160,235,.4),inset 0 0 0 1.5px rgba(80,150,230,.6),inset 0 0 0 40px rgba(130,185,245,.16)}100%{box-shadow:0 0 0 0 rgba(90,160,235,0),inset 0 0 0 0 rgba(90,160,235,0),inset 0 0 0 40px rgba(130,185,245,0)}}
@@ -8369,7 +8370,7 @@ function fillBoard(el, limit, key, pick) {
   rows.forEach((r, i) => {
     const row = document.createElement('div'); fresh.push({ el: row, k: r.id || roundKey(r), at: r.at });
     const mine = own && (tab === 'all' ? (r.id && r.id === Board.lastShared) : r.at === Board.lastLocal);
-    row.className = 'row' + (mine ? ' me' : '') + (i === 0 ? ' top1' : '');
+    row.className = 'row' + (mine ? ' me' : '') + (i === 0 ? ' top1' : '') + (tab === 'device' || (r.by && r.by === dlMe()) || (r.uid && r.uid === Board.uid) ? ' own' : '');
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : String(i + 1);
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;
     const dt = document.createElement('small'); dt.textContent = new Date(r.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + (r.pending ? ' · posting…' : ''); nm.appendChild(dt);
@@ -8739,7 +8740,7 @@ function fillDaily(el, inCard) {
   if (!st.length) { add('div', 'empty', past ? (DL.files[day] === null && !(DL.rows[day] && DL.rows[day].size) ? 'This board could not be reached.' : 'No one played this challenge.') : k ? 'No one else on the board yet.' : 'Finish hole 1 and the board shows up.'); }
   const fresh = []; // new on this board: a player turning up, and a player's final score
   st.slice(0, 40).forEach((x, i) => {
-    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me' : '') + (i === 0 ? ' top1' : ''); row.style.cursor = 'pointer'; fresh.push({ el: row, k: (x.e.id || x.e.n) + (x.fin ? ':f' + x.s : '') });
+    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me own' : '') + (i === 0 ? ' top1' : ''); row.style.cursor = 'pointer'; fresh.push({ el: row, k: (x.e.id || x.e.n) + (x.fin ? ':f' + x.s : '') });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.e.n; const sm = document.createElement('small'); sm.textContent = x.fin ? 'Final' : x.thru >= 18 ? 'Playing' : `Thru ${x.thru}` + (x.thru < k || !x.e.done ? '' : ''); nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.tp); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.s || '';
@@ -8771,7 +8772,7 @@ function fillOverall(el, add) {
   if (!DL.overall || !DL.overall.length) { add('div', 'empty', DL.overall === null ? 'The standings could not be reached.' : 'The standings start with the first finished day.'); return; }
   const list = add('div', 'lb'), me = dlMe(), fresh = [];
   DL.overall.slice(0, 100).forEach((x, i) => {
-    const row = document.createElement('div'); row.className = 'row' + (x.by === me ? ' me' : '') + (i === 0 ? ' top1' : ''); fresh.push({ el: row, k: (x.by || x.n) + ':' + x.p });
+    const row = document.createElement('div'); row.className = 'row' + (x.by === me ? ' me own' : '') + (i === 0 ? ' top1' : ''); fresh.push({ el: row, k: (x.by || x.n) + ':' + x.p });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.n; const sm = document.createElement('small'); sm.textContent = `${x.d} day${x.d === 1 ? '' : 's'} · ${x.w} win${x.w === 1 ? '' : 's'} · ${x.pod} podium${x.pod === 1 ? '' : 's'}`; nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = x.p; const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = 'pts';
