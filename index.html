@@ -8597,7 +8597,8 @@ function dlAll(day) {
 function dlStanding(day, k, course) {
   const pars = COURSES[course].defs.map(d => d.par);
   return dlAll(day).filter(e => e.c === course).map(e => { const t = Math.min(k, e.th); let s = 0, p = 0; for (let i = 0; i < t; i++) { s += e.h[i]; p += pars[i]; } return { e, thru: t, tp: s - p, s, fin: e.done && t >= 18 }; })
-    .filter(x => x.thru > 0 || x.e.mine).sort((a, b) => a.tp - b.tp || b.thru - a.thru || (a.e.at || 0) - (b.e.at || 0));
+    .filter(x => x.thru > 0 || x.e.mine).sort((a, b) => a.tp - b.tp || b.thru - a.thru || (a.e.at || 0) - (b.e.at || 0))
+    .filter((x, i, a) => a.findIndex(y => String(y.e.n).toLowerCase() === String(x.e.n).toLowerCase()) === i); // a name is one player, even on two devices: the better result
 }
 const dlHoles = () => (G.daily && G.scores ? G.scores.filter(v => v != null).length : 0);
 let _dlMin = 0;
@@ -8774,7 +8775,7 @@ function fillOverall(el, add) {
   if (!DL.overall || !DL.overall.length) { add('div', 'empty', DL.overall === null ? 'The standings could not be reached.' : 'The standings start with the first finished day.'); return; }
   const list = add('div', 'lb'), me = dlMe(), fresh = [];
   DL.overall.slice(0, 100).forEach((x, i) => {
-    const row = document.createElement('div'); row.className = 'row' + (x.by === me ? ' me own' : '') + (i === 0 ? ' top1' : ''); fresh.push({ el: row, k: (x.by || x.n) + ':' + x.p });
+    const row = document.createElement('div'); const mineO = x.by === me || (Array.isArray(x.bys) && x.bys.includes(me)); row.className = 'row' + (mineO ? ' me own' : '') + (i === 0 ? ' top1' : ''); fresh.push({ el: row, k: (x.by || x.n) + ':' + x.p });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.n; const sm = document.createElement('small'); sm.textContent = `${x.d} day${x.d === 1 ? '' : 's'} · ${x.w} win${x.w === 1 ? '' : 's'} · ${x.pod} podium${x.pod === 1 ? '' : 's'}`; nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = x.p; const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = 'pts';
@@ -8803,6 +8804,21 @@ function cardHtml(c) {
   const dt = c.at ? new Date(c.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
   return `<div class="sub"><span>Scorecard</span><small>${CO.short}${dt ? ' · ' + dt : ''}</small></div><div class="scw"><table class="vcard">${rows}</table></div>`;
 }
+// one name on several devices is one player: counters add up, records take the best, trophies and best shots are pooled
+function mergeProfiles(list) {
+  const SUM = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch'], MAX = ['dr', 'ho', 'pt', 'gs', 'fs', 'bk'], pf = {}, tw = new Set(), bs = [];
+  for (const q of list) {
+    const c = cleanPf(q.pf) || {};
+    for (const k of SUM) if (Number.isFinite(c[k])) pf[k] = (pf[k] || 0) + c[k];
+    for (const k of MAX) if (Number.isFinite(c[k])) pf[k] = Math.max(pf[k] != null ? pf[k] : -1e9, c[k]);
+    if (Number.isFinite(c.br)) pf.br = Math.min(pf.br != null ? pf.br : 1e9, c.br);
+    for (const d of c.tw || []) tw.add(d);
+    for (const x of Array.isArray(q.bs) ? q.bs : []) bs.push(x);
+  }
+  if (tw.size) pf.tw = [...tw].sort((a, b) => a - b).slice(-40);
+  bs.sort((a, b) => (b.p || 0) - (a.p || 0));
+  return { pf: Object.keys(pf).length ? pf : null, bs: bs.slice(0, 3) };
+}
 function openPlayer(o) {
   PL_LAST = o;
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
@@ -8830,7 +8846,12 @@ function openPlayer(o) {
   if (o.me) { const ev = reelList(); render(profileCompact(), ev.slice(0, 3), roundOf(null), settings.oldNames); }
   else {
     render(cleanPf(o.pf), clean(o.bs), roundOf(null));
-    if (o.id) loadPlayers().then(all => { const q = all && all[o.id]; if (q && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs), roundOf(q), Array.isArray(q.on) ? q.on.filter(x => typeof x === 'string').slice(0, 10) : null); });
+    if (o.id) loadPlayers().then(all => {
+      const q = all && all[o.id]; if (!q || !$('playerSheet').classList.contains('on') || $('plName').textContent !== (o.name || 'Player')) return;
+      const grp = Object.values(all).filter(v => v && v !== q && String(v.n).toLowerCase() === String(q.n).toLowerCase()), on = Array.isArray(q.on) ? q.on.filter(x => typeof x === 'string').slice(0, 10) : null;
+      if (grp.length) { const m = mergeProfiles([q].concat(grp)); render(m.pf, clean(m.bs).length ? clean(m.bs) : clean(o.bs), roundOf(q), on); return; } // the same name on two devices: one player, the stats added up
+      render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs), roundOf(q), on);
+    });
   }
   openSheet('playerSheet');
 }
