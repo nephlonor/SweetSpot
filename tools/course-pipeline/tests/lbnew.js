@@ -1,0 +1,21 @@
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const p = await (await b.newContext({ viewport: { width: 405, height: 720 } })).newPage();
+  p.on('pageerror', e => console.log('PAGEERR', e.message));
+  await p.addInitScript(() => localStorage.setItem('ssg-intro-seen', '1'));
+  await p.route('**/three.min.js', r => r.fulfill({ path: __dirname + '/three.min.js', contentType: 'application/javascript' }));
+  await p.route('**/fonts.googleapis.com/**', r => r.abort());
+  await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(2500);
+  const st = () => p.evaluate(() => ({ glow: document.querySelectorAll('#boardBody .row.lbNew').length, sparks: document.querySelectorAll('#boardBody .lbSpark').length, bells: window.__bells }));
+  await p.evaluate(() => { window.__bells = 0; const o = SFX.bell; SFX.bell = () => { window.__bells++; o(); };
+    const n = HOLE_DEFS.length, mk = (nm, d, at) => ({ name: nm, strokes: 72 + d, toPar: d, at, holes: n });
+    localStorage.setItem(BOARD_KEY, JSON.stringify([mk('Anna', 2, 1e12), mk('Ben', 5, 1e12 + 1)])); Board.tab = 'device'; openBoard(); });
+  await p.waitForTimeout(500); console.log('first look', JSON.stringify(await st()));
+  await p.evaluate(() => { closeSheets(); openBoard(); }); await p.waitForTimeout(300); console.log('reopen', JSON.stringify(await st()));
+  await p.evaluate(() => { const a = JSON.parse(localStorage.getItem(BOARD_KEY)); a.push({ name: 'Cleo', strokes: 70, toPar: -2, at: 1e12 + 5, holes: HOLE_DEFS.length }); localStorage.setItem(BOARD_KEY, JSON.stringify(a)); refreshBoards(); });
+  await p.waitForTimeout(300); console.log('new score', JSON.stringify(await st())); await p.evaluate(() => refreshBoards()); console.log('redraw at', JSON.stringify(await st())); await p.evaluate(() => { document.querySelectorAll('.lbNew').forEach(r => { r.style.animationDelay = '-700ms'; r.style.animationPlayState = 'paused'; }); document.querySelectorAll('.lbSpark').forEach((s, i) => { s.style.animationDelay = (-300 - i * 60) + 'ms'; s.style.animationPlayState = 'paused'; }); }); await p.screenshot({ path: '/tmp/stpat/shots/lbnew.png', clip: { x: 0, y: 420, width: 405, height: 210 } });
+  console.log(await p.evaluate(() => JSON.stringify([...LBNEW.at], null, 0) + ' ' + performance.now() + ' ' + $('boardSheet').classList.contains('on') + ' ' + Board.tab)); await p.evaluate(() => refreshBoards()); await p.waitForTimeout(100); console.log('redraw mid', JSON.stringify(await st()));
+  await p.waitForTimeout(1800); await p.evaluate(() => refreshBoards()); console.log('after 2s', JSON.stringify(await st()));
+  await b.close();
+})();

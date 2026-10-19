@@ -442,6 +442,10 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .lb .row .st{text-align:right;color:var(--ink2);font-size:15px}
 .lb .row.me{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff}.lb .row.me .rk,.lb .row.me .st,.lb .row.me small{color:rgba(255,255,255,.8)}
 .lb .row.top1 .rk{color:#c99a06}
+.lb .row.lbNew{position:relative;animation:lbGlow 2s ease-in-out var(--lbd,0ms) both}
+@keyframes lbGlow{0%{box-shadow:0 0 0 0 rgba(240,190,70,0),inset 0 0 0 0 rgba(240,190,70,0),inset 0 0 0 40px rgba(255,226,140,0)}35%{box-shadow:0 0 20px 4px rgba(240,190,70,.6),inset 0 0 0 1.5px rgba(232,180,60,.85),inset 0 0 0 40px rgba(255,226,140,.28)}100%{box-shadow:0 0 0 0 rgba(240,190,70,0),inset 0 0 0 0 rgba(240,190,70,0),inset 0 0 0 40px rgba(255,226,140,0)}}
+.lbSpark{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff3c4;box-shadow:0 0 5px 1px rgba(236,184,60,.85);pointer-events:none;opacity:0;animation:lbSpark 1.1s ease-out both}
+@keyframes lbSpark{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:.75}100%{opacity:0;transform:translateY(-16px) scale(1)}}
 .lb .empty{padding:18px 12px;text-align:center;font:600 14px var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);background:var(--soft);border-radius:14px}
 .lbnote{margin-top:8px;font:500 12.5px/1.35 var(--body);color:var(--ink3);text-align:center}
 .mapwrap{position:relative;height:min(62vh,560px);border-radius:18px;overflow:hidden;background:#cfe3c3;touch-action:none}
@@ -3054,7 +3058,11 @@ function buildRealDecor(C, grp) {
     const q0 = C.loc(b[0], b[1]), q1 = C.loc(b[0] + Math.cos(b[4] * Math.PI / 180), b[1] + Math.sin(b[4] * Math.PI / 180)), cx = q0[0], cz = -q0[1];
     if (b[5] !== undefined || cx < I.minX - 30 || cx > I.maxX + 30 || cz < I.minZ - 30 || cz > I.maxZ + 30) continue;
     const ax = q1[0] - q0[0], az = -(q1[1] - q0[1]), L = b[2], Wd = b[3], px = -az, pz = ax;      // (ax, az): along the creek; (px, pz): across it = the way the fairway runs over
-    const rotA = Math.atan2(-az, ax), rotP = Math.atan2(-pz, px), yc = C.h(cx, cz);
+    const rotA = Math.atan2(-az, ax), rotP = Math.atan2(-pz, px);
+    // the deck rests on the banks (the ground in the middle is the dug brook bed) and clears the water by at least 60 cm
+    let wl = -1e9; for (let t = -1; t <= 1; t += .25) for (let s = -1; s <= 1; s += .5) wl = Math.max(wl, C.wl(cx + px * t * Wd / 2 + ax * s * L / 2, cz + pz * t * Wd / 2 + az * s * L / 2));
+    const bank = sd => { let m = -1e9; for (const s of [-.5, 0, .5]) m = Math.max(m, C.h(cx + px * sd * (Wd / 2 + .4) + ax * s * L, cz + pz * sd * (Wd / 2 + .4) + az * s * L)); return m; };
+    const yc = Math.max(bank(-1), bank(1), wl + .6, C.h(cx, cz));
     if (!plankTex) { const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'); g.fillStyle = '#b99a72'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#8f7452'; for (let k = 0; k < 64; k += 8) g.fillRect(k, 0, 2, 64); plankTex = new THREE.CanvasTexture(cv); plankTex.wrapS = plankTex.wrapT = THREE.RepeatWrapping; }
     const tex = plankTex.clone(); tex.needsUpdate = true; tex.repeat.set(L / 2.4, 1);
     const deck = new THREE.Mesh(new THREE.PlaneGeometry(L, Wd), new THREE.MeshLambertMaterial({ map: tex })); deck.rotation.set(-Math.PI / 2, 0, 0); deck.rotation.order = 'YXZ'; deck.rotation.y = rotA; deck.position.set(cx, yc + .035, cz); deck.receiveShadow = true; grp.add(deck);
@@ -3062,8 +3070,12 @@ function buildRealDecor(C, grp) {
       const ox = cx + ax * sd * (L / 2), oz = cz + az * sd * (L / 2);
       for (const hh of [.5, .95]) mkBox(Wd + .5, .1, .12, ox, yc + hh, oz, rotP);
       for (const t of [-1, -.34, .34, 1]) { const qx = ox + px * t * (Wd / 2 + .2), qz = oz + pz * t * (Wd / 2 + .2); mkBox(.16, 1.05, .16, qx, yc + .5, qz, rotP); }
-      const bx = cx + px * sd * (Wd / 2), bz = cz + pz * sd * (Wd / 2); mkBox(L + .3, .45, .3, bx, C.h(bx, bz) + .2, bz, rotA);
+      // abutment beams on the banks, reaching from the ground up to the deck
+      const bx = cx + px * sd * (Wd / 2), bz = cz + pz * sd * (Wd / 2), gb = Math.min(C.h(bx, bz), yc - .45); mkBox(L + .3, yc - gb + .02, .3, bx, (yc + gb) / 2 - .01, bz, rotA);
     }
+    // a stringer under each edge of the deck, and a pair of piles down into the brook bed
+    for (const sd of [-.42, .42]) mkBox(Wd, .22, .14, cx + ax * sd * L, yc - .12, cz + az * sd * L, rotP);
+    for (const sd of [-.42, .42]) { const qx = cx + ax * sd * L, qz = cz + az * sd * L, gb = C.h(qx, qz) - .2; if (yc - gb > .4) mkBox(.18, yc - gb, .18, qx, (yc + gb) / 2, qz, rotP); }
   }
   // tall reeds and sedge round ponds, creeks and ditches
   {
@@ -6185,7 +6197,9 @@ const SFX = {
   tick() { tone(1800, .02, 'sine', .05); },
   rim() { [0, .05, .1, .16].forEach((d, i) => tone(1300 + i * 90, .03, 'triangle', .05, null, d)); },
   pin() { tone(2600, .05, 'triangle', .1); tone(3400, .035, 'sine', .05, null, .01); noiseBurst(.05, .1, 4200, 2); },
-  blip() { tone(700, .05, 'sine', .07); }
+  blip() { tone(700, .05, 'sine', .07); },
+  // a new score on a leaderboard: one small, calm bell (a soft fundamental, its bell partials and a quiet echo)
+  bell() { tone(1568, 1.8, 'sine', .05); tone(1568 * 2.76, .7, 'sine', .012); tone(1568 * 5.4, .3, 'sine', .005); tone(2093, 1.4, 'sine', .022, null, .16); }
 };
 function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { } }
 
@@ -8296,8 +8310,9 @@ function fillBoard(el, limit, key, pick) {
     e.textContent = tab === 'world' && wr == null ? (Board.gh[key] === null ? 'The world board could not be reached.' : 'Loading…') : tab === 'all' && !Board.ready[CO.coll] ? 'Loading…' : 'No rounds yet. Finish all ' + CO.defs.length + ' holes to post a score.';
     list.appendChild(e);
   }
+  const fresh = [];
   rows.forEach((r, i) => {
-    const row = document.createElement('div');
+    const row = document.createElement('div'); if (!r.pending) fresh.push({ el: row, k: r.id || roundKey(r) });
     const mine = own && (tab === 'all' ? (r.id && r.id === Board.lastShared) : r.at === Board.lastLocal);
     row.className = 'row' + (mine ? ' me' : '') + (i === 0 ? ' top1' : '');
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : String(i + 1);
@@ -8309,12 +8324,30 @@ function fillBoard(el, limit, key, pick) {
     row.style.cursor = 'pointer'; // a name opens that player's stats
     row.onclick = () => openPlayer({ name: r.name, id: r.by, rbs: r.bs, card: { course: key, h: r.h, pt: r.pt, at: r.at }, me: tab === 'device' || (!!r.by && r.by === dlMe()), back: pick ? () => { Board.view = key; fillBoard($('boardBody'), 30, key, true); openSheet('boardSheet'); } : null });
   });
+  if (tab === 'world' ? wr != null : tab !== 'all' || Board.ready[CO.coll]) lbMarkNew('c:' + key + ':' + tab, fresh);
   // post my best round of this course to the world board
   const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r))) : null;
   if (mineBest && tab !== 'all') {
     const bt = document.createElement('button'); bt.className = 'mbtn dark wide'; bt.style.marginTop = '8px'; bt.textContent = 'Post my best round (' + fmtToPar(mineBest.toPar) + ') to the world board'; bt.onclick = async () => { if (ghKey()) { bt.disabled = true; bt.textContent = 'Posting\u2026'; if (!(await postAuto(mineBest))) postWorld(mineBest); } else postWorld(mineBest); }; el.appendChild(bt);
     const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = ghKey() ? 'No account needed. It appears on the board within a minute.' : 'Opens GitHub with the score filled in: press "Submit new issue" (a free GitHub account is needed). A bot adds it to the board within a minute.'; el.appendChild(n);
   } else if (tab === 'device' || (!shared && tab !== 'world')) { const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = 'Rounds are kept on this device.'; el.appendChild(n); }
+}
+// a score this device hasn't shown on that board before glows softly for 2 s, with a few faint sparks and one small bell.
+// The first look at a board only remembers what is there; the glow survives the board being redrawn while it plays.
+const LBNEW = { seen: null, at: new Map(), bell: 0 };
+function lbSeen() { if (!LBNEW.seen) { try { LBNEW.seen = JSON.parse(localStorage.getItem('ssg-lbseen') || '{}') || {}; } catch (e) { LBNEW.seen = {}; } } return LBNEW.seen; }
+function lbMarkNew(bid, rows) { // rows: [{ el, k }]
+  const S = lbSeen(), first = !S[bid], have = new Set(S[bid] || []), now = performance.now(); let fresh = 0, add = false;
+  for (const { el, k } of rows) {
+    const id = bid + '|' + k;
+    if (!have.has(k)) { have.add(k); add = true; if (!first) { LBNEW.at.set(id, now); fresh++; } }
+    const t0 = LBNEW.at.get(id); if (t0 == null) continue;
+    const age = now - t0; if (age >= 2000) { LBNEW.at.delete(id); continue; }
+    el.classList.add('lbNew'); el.style.setProperty('--lbd', -age + 'ms');
+    for (let i = 0; i < 7; i++) { const s = document.createElement('i'); s.className = 'lbSpark'; s.style.left = (6 + Math.random() * 88) + '%'; s.style.top = (25 + Math.random() * 60) + '%'; s.style.animationDelay = (i * 190 + Math.random() * 120 - age) + 'ms'; el.appendChild(s); }
+  }
+  if (add) { S[bid] = [...have].slice(-400); try { localStorage.setItem('ssg-lbseen', JSON.stringify(S)); } catch (e) { } }
+  if (fresh && performance.now() - LBNEW.bell > 2500) { LBNEW.bell = performance.now(); setTimeout(() => SFX.bell(), 300); }
 }
 function refreshBoards() {
   if ($('boardSheet').classList.contains('on')) fillBoard($('boardBody'), 30, Board.view, true);
@@ -8632,13 +8665,15 @@ function fillDaily(el, inCard) {
   if (note) add('div', 'dlText', note);
   const list = add('div', 'lb'), st = dlStanding(day, k, course);
   if (!st.length) { add('div', 'empty', past ? (DL.files[day] === null && !(DL.rows[day] && DL.rows[day].size) ? 'This board could not be reached.' : 'No one played this challenge.') : k ? 'No one else on the board yet.' : 'Finish hole 1 and the board shows up.'); }
+  const fresh = []; // new on this board: a player turning up, and a player's final score
   st.slice(0, 40).forEach((x, i) => {
-    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me' : '') + (i === 0 ? ' top1' : ''); row.style.cursor = 'pointer';
+    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me' : '') + (i === 0 ? ' top1' : ''); row.style.cursor = 'pointer'; fresh.push({ el: row, k: (x.e.id || x.e.n) + (x.fin ? ':f' + x.s : '') });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.e.n; const sm = document.createElement('small'); sm.textContent = x.fin ? 'Final' : x.thru >= 18 ? 'Playing' : `Thru ${x.thru}` + (x.thru < k || !x.e.done ? '' : ''); nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.tp); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.s || '';
     row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, rbs: x.e.bs, card: { course: x.e.c, h: x.e.h, pt: x.e.pt, at: x.e.at }, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
   });
+  if (st.length) lbMarkNew('d:' + day, fresh);
   if (tab === 'today' && playing && !inCard) { const b = add('button', 'mbtn dark wide', G.daily ? 'Back to my round' : 'Resume my round'); b.style.marginTop = '8px'; b.onclick = () => { closeSheets(); if (!G.daily) startDaily(); }; }
 }
 function fillArchive(el, add) {
@@ -8662,14 +8697,15 @@ function fillOverall(el, add) {
   add('div', 'dlText', 'Every finished daily challenge pays merit points: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 for places 1 to 10, and 1 point for finishing. Players level on the score share the place. A day counts once it is over.');
   if (DL.overall === undefined) { add('div', 'empty', 'Loading the standings'); return; }
   if (!DL.overall || !DL.overall.length) { add('div', 'empty', DL.overall === null ? 'The standings could not be reached.' : 'The standings start with the first finished day.'); return; }
-  const list = add('div', 'lb'), me = dlMe();
+  const list = add('div', 'lb'), me = dlMe(), fresh = [];
   DL.overall.slice(0, 100).forEach((x, i) => {
-    const row = document.createElement('div'); row.className = 'row' + (x.by === me ? ' me' : '') + (i === 0 ? ' top1' : '');
+    const row = document.createElement('div'); row.className = 'row' + (x.by === me ? ' me' : '') + (i === 0 ? ' top1' : ''); fresh.push({ el: row, k: (x.by || x.n) + ':' + x.p });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.n; const sm = document.createElement('small'); sm.textContent = `${x.d} day${x.d === 1 ? '' : 's'} · ${x.w} win${x.w === 1 ? '' : 's'} · ${x.pod} podium${x.pod === 1 ? '' : 's'}`; nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = x.p; const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = 'pts';
     row.append(rk, nm, tp, sc); list.appendChild(row);
   });
+  lbMarkNew('o', fresh);
 }
 function openDaily(tab) {
   DL.tab = tab || 'today'; const t = dayId(); loadDailyFile(t); loadDailyFile(dayAdd(t, -1));
