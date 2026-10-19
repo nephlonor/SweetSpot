@@ -87,11 +87,11 @@ for ref in range(1, 19):
     ds = [(ys-y)*.9144 for y in (ysl, ygr, ycl)]
     cs = [(tee[0]+ux*d, tee[1]+uy*d) for d in ds]
     mk = {'w': [round(tee[0], 2), round(tee[1], 2)]}
-    for key, c in zip('ybr', cs): mk[key] = [round(c[0], 2), round(c[1], 2)]
+    # (no markers for the forward tees: they have no boxes)
     lens = [round(L)] + [max(40, round(L - d)) for d in ds]
     for c in [tuple(tee)] + cs:
         # no forward tee box within 12 m of another hole's green (the 8th plays past the 7th green; its pad cut a step into the green)
-        if c != tuple(tee) and any(_dpoly(c, g_) < 12 for k_, g_ in GREEN.items() if k_ != ref): continue
+        if c != tuple(tee): continue   # only the tee in play gets a box: the forward boxes broke the fairways' outlines (the cards' lengths stay in lens)
         hw, hl = 5.0, 6.0
         tee_polys.append([[(c[0]+ux*a-uy*b, c[1]+uy*a+ux*b) for a, b in ((-hl, -hw), (hl, -hw), (hl, hw), (-hl, hw))]])
     dz = gz(*gc) - gz(*tee)

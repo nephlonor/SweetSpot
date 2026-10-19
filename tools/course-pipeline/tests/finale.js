@@ -1,0 +1,25 @@
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const p = await (await b.newContext({ viewport: { width: 405, height: 720 } })).newPage();
+  let ne = 0; p.on('pageerror', e => { if (ne++ < 2) console.log('PAGEERR', e.stack.split('\n').slice(0, 4).join(' | ')); });
+  await p.addInitScript(() => localStorage.setItem('ssg-intro-seen', '1'));
+  await p.route('**/three.min.js', r => r.fulfill({ path: __dirname + '/three.min.js', contentType: 'application/javascript' }));
+  await p.route('**/fonts.googleapis.com/**', r => r.abort());
+  await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(2500);
+  const c = process.argv[2] || 'stpatricks';
+  await p.evaluate(c => loadData(c).then(() => setCourse(c)), c);
+  await p.evaluate(() => { submitRound = () => { }; $('title').classList.remove('on'); G.weather = WEATHERS[1]; startRound(); });
+  await p.waitForTimeout(1500);
+  await p.evaluate(() => { const n = HOLE_DEFS.length; startHole(n - 1); beginHole(); });
+  await p.waitForFunction(() => G.state === 'address', null, { timeout: 400000 });
+  await p.evaluate(() => { G.scores = HOLE_DEFS.map(d => d.par); G.putts = HOLE_DEFS.map(() => 2); G.state = 'holed'; showScorecard(true); });
+  await p.waitForTimeout(2500); await p.screenshot({ path: `/tmp/stpat/shots/fin_card.png` });
+  await p.evaluate(() => $('scClose').click());
+  await p.waitForTimeout(7000); await p.screenshot({ path: `/tmp/stpat/shots/fin_a.png` });
+  await p.waitForTimeout(12000); await p.screenshot({ path: `/tmp/stpat/shots/fin_b.png` });
+  console.log(await p.evaluate(() => JSON.stringify({ orbit: !!G.orbit, cls: document.body.classList.contains('finale'), cam: W.cam.position.toArray().map(v => +v.toFixed(0)), state: G.state })));
+  await p.evaluate(() => $('finaleBtn').click()); await p.waitForTimeout(2500);
+  console.log(await p.evaluate(() => JSON.stringify({ orbit: !!G.orbit, cls: document.body.classList.contains('finale'), hole: G.hole, state: G.state, scores: G.scores.filter(v => v != null).length })));
+  await b.close();
+})();
