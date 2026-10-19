@@ -2,7 +2,7 @@
 // leaderboard/daily-<day>.json. Only days that are over (US Eastern) count. Points: 25 18 15 12 10 8 6 4 2 1 for places 1-10, and 1 for finishing.
 const fs = require('fs');
 const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-const COURSES = ['gccb', 'alsace', 'augusta'], COURSES4 = ['rothley', 'gccb', 'alsace', 'augusta'], D4 = 20745; // Rothley Park joins the turn on 2026-10-19
+const COURSES = ['gccb', 'alsace', 'augusta'], COURSES4 = ['rothley', 'gccb', 'alsace', 'augusta'], D4 = 20745, COURSES5 = ['stpatricks', 'gccb', 'alsace', 'augusta', 'rothley'], D5 = 20746; // Rothley Park joins the turn on 2026-10-19, St Patrick's on 2026-10-20
 module.exports = function build(today) {
   const days = fs.readdirSync('leaderboard').map(f => /^daily-(\d{4}-\d{2}-\d{2})\.json$/.exec(f)).filter(Boolean).map(m => m[1]).filter(d => d < today).sort().reverse();
   const index = [], tot = {};
@@ -11,7 +11,7 @@ module.exports = function build(today) {
     if (!Array.isArray(rows) || !rows.length) continue;
     rows = rows.slice().sort((a, b) => a.toPar - b.toPar || a.at - b.at);
     const dn = Math.floor(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 864e5);
-    index.push({ d, c: dn >= D4 ? COURSES4[(dn - D4) % 4] : COURSES[dn % 3], n: rows.length, w: rows[0].name, t: rows[0].toPar });
+    index.push({ d, c: dn >= D5 ? COURSES5[(dn - D5) % 5] : dn >= D4 ? COURSES4[(dn - D4) % 4] : COURSES[dn % 3], n: rows.length, w: rows[0].name, t: rows[0].toPar });
     let rank = 0;
     rows.forEach((x, i) => {
       if (i === 0 || x.toPar !== rows[i - 1].toPar) rank = i + 1; // players level on the score share the place

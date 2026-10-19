@@ -2,9 +2,9 @@
 
 How to add a real golf course to Sweet Spot Golf. Follow it step by step. Every step ends with a check you **look at**, either an image or a number. Nothing goes in on trust.
 
-The Rothley Park pipeline (`tools/course-pipeline/rothley/`) is the reference implementation. Copy it into a new folder and change the origin, the data sources and the hand-made lists. The Augusta build (`tools/course-pipeline/augusta-build.py`, `ept.py`, `chm.py`, `dem.py`) shows the US LiDAR route (USGS 3DEP point cloud).
+The Rothley Park pipeline (`tools/course-pipeline/rothley/`) is the reference implementation. St Patrick's Links (`tools/course-pipeline/stpatricks/`) shows the route for a course with **no LiDAR and nothing in OSM**: the ground from Esri's global elevation tiles and everything else traced from the photographs and the club's course plan. Copy it into a new folder and change the origin, the data sources and the hand-made lists. The Augusta build (`tools/course-pipeline/augusta-build.py`, `ept.py`, `chm.py`, `dem.py`) shows the US LiDAR route (USGS 3DEP point cloud).
 
-Lessons from Rothley Park are marked **Pitfall**. Each one cost a round of feedback.
+Lessons from Rothley Park and St Patrick's are marked **Pitfall**. Each one cost a round of feedback.
 
 ---
 
@@ -19,12 +19,18 @@ Lessons from Rothley Park are marked **Pitfall**. Each one cost a round of feedb
 
 | What | UK (England) | France | USA | Elsewhere |
 |---|---|---|---|---|
-| Ground (DTM) | Environment Agency LiDAR composite DTM 1 m (WCS, `environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs`, EPSG:27700) | IGN RGE ALTI / LiDAR HD MNT (geopf WMS) | USGS 3DEP ImageServer, or the EPT point cloud on S3 | national LiDAR portal, or SRTM/Copernicus 30 m as a last resort |
+| Ground (DTM) | Environment Agency LiDAR composite DTM 1 m (WCS, `environment.data.gov.uk/spatialdata/lidar-composite-digital-terrain-model-dtm-1m/wcs`, EPSG:27700) | IGN RGE ALTI / LiDAR HD MNT (geopf WMS) | USGS 3DEP ImageServer, or the EPT point cloud on S3 | national LiDAR portal (Ireland: GSI `gsi.geodata.gov.ie/imagehost/rest/services/Lidar`, check its coverage layers first); with no LiDAR, Esri World Elevation Terrain 3D LERC tiles at z16, about 1.4 m (`elevation3d.arcgis.com/.../Terrain3D/ImageServer/tile/z/y/x`, decode with `pip install lerc`; `stpatricks/dem.py`); SRTM/Copernicus 30 m only as a last resort |
 | Canopy (trees) | EA first-return DSM 1 m minus the DTM | IGN LiDAR HD MNH | 3DEP EPT points (DSM − ground) | national DSM; else trees from imagery only |
 | Holes, paths, water, buildings | OpenStreetMap (`api.openstreetmap.org/api/0.6/map?bbox=`; Overpass may be blocked) | same | same | same |
-| Aerial photo | Google satellite tiles (`mt1.google.com/vt/lyrs=s`) **and** Esri World Imagery (a second date) | same | same | same |
+| Aerial photo | Google satellite tiles (`mt1.google.com/vt/lyrs=s`) **and** Esri World Imagery (a second date); Esri **Wayback** gives every past date (`s3-us-west-2.amazonaws.com/config.maptiles.arcgis.com/waybackconfig.json`, `stpatricks/gmw.py`); Bing (`ecn.t0.tiles.virtualearth.net/tiles/a<quadkey>.jpeg?g=14000`, `gmb.py`) | same | same | same |
+
+**Check the LiDAR coverage before anything else.** The GSI service answers for all of Ireland, but its coverage layers have gaps: St Patrick's had none. Query the coverage feature layer at a point on the course, or export a small hillshade: an image of one flat value means no data.
 
 **Pitfall: one photo isn't enough.** Always fetch **two** imagery sources. At Rothley the Google mosaic has a dark seam over holes 1, 2, 17 and 18, which hid bunkers and greens. Esri, a different date and season, showed them.
+
+**No hole lines in OSM?** Find the club's course plan or routing map (the player may send a photo of a board). Rectify the photo to its corners (a homography), then fit it to the aerial photo by brute force over rotation, scale and offset (`stpatricks/reg.py`, `geo.py`) and overlay it. Use it **only to say which hole is which**: a photographed board is locally out by 100 m or more. Every green, tee and line comes from the aerial photographs.
+- **Pitfall: remnants of an older course.** St Patrick's was built where an older course had been; faded fairway strips of the old one still show on the photos. Use the image of the construction period (Wayback) to tell the new holes (freshly seeded, dark) from the old ones (light green), keep only mown ground near the new hole lines, and check every hole's line against the newest photo.
+- **Check each line against the others:** no hole's line may cross another hole's green (`stpatricks/build.py` prints any that pass within 25 m). At St Patrick's the first try of the 18th ran across the 17th green.
 
 ## 1. Fetch the data
 
@@ -91,6 +97,7 @@ The player's rule, which went through three rounds: **the course must play as cl
    Trees don't stop a tee. `build.py` clears a 10 m wide **tee chute**, from 12 m behind the tee (where the camera stands, about 9 m back) to 15 m in front of the old box, the way a club cuts a chute.
 3. **Report** each hole's played length against the card, and name any hole that can't reach it and why. At Rothley the 2nd stops at 307 m of 312 because of the 1st green's bunker.
 4. **Check** every tee shot (`tests/rot.js`) for a clear view and a tee that reports `surf 0`.
+   - **Tee view:** on dunes, a tee at the card's length can land on the face of a hill with the camera looking into it. `stpatricks/teeview.py` measures the steepest rise to a crest in the first 90 m; above about 0.1, look at the photo and move the tee onto the real tee's plateau (St Patrick's 3rd went 10 m forward and plays 153 m of 163).
    - **Pitfalls:**
      - a tee in a tree chute without clearing puts the camera inside a crown;
      - clearing the chute shifts tree indices (see step 7).
@@ -166,7 +173,8 @@ Work from the club photos and Google Images. Write down what is **specific** to 
   - bins and ball washers;
   - shelters, fences, bridges, stone or brick edging on ditches.
 - **Landmarks** visible from play: a railway, a clubhouse, church bells, and so on.
-- **Trees:** the species mix (birches, pines, oaks) and the season.
+- **Trees:** the species mix (birches, pines, oaks) and the season. A links may have none: St Patrick's has marram instead (tall straw clumps in the deep rough, `RDC.marram`), fescue in the rough and blowouts of bare sand.
+- **Coast:** a sea and beach are features like any other: the sea as a water polygon past the waterline, the beach as sand, both outside the boundary (out of bounds).
 - **Soundscape:** a piece of its own in `AMB` and `ambStep`, plus local sounds (Rothley: robin, wind in oaks, church-bell rounds, a steam train).
   - **Check:** render it offline (`tests/snd.js`) and compare the peak level with the other pieces.
 
@@ -174,8 +182,9 @@ Work from the club photos and Google Images. Write down what is **specific** to 
 
 Run headless Chromium with `--use-gl=swiftshader`, three.js served from the scratchpad copy, and the page loaded from `file://`.
 
-1. **Syntax and lint.** Extract the inline scripts, then run `node --check` and `eslint --no-eslintrc --env browser,es2022 --rule no-undef:error`.
+1. **Syntax and lint.** Run `tools/course-pipeline/check.sh`: it extracts the inline scripts, runs `node --check` on them and on every `data-*.js`, runs eslint `no-undef`, and flags code after a `//` comment on the same line.
    - **Pitfall:** a `//` comment inside a one-line object literal comments out the rest of the line and breaks the whole page.
+   - **Pitfall:** the same mistake in the middle of a one-line statement breaks nothing loudly. A comment put before `M.setPosition(...); M.toArray(...)` left every grass blade with a zero matrix on **every** course, and one before `fx.fillText(...)` took the hole numbers off the flags. Syntax and lint pass; only `check.sh`'s scan or a look at the game finds it.
 2. **All 18 holes** (`tests/rot.js 0 17`), as a contact sheet:
    - every tee reports `surf 0` (on the tee) and `cupSurf 6` (cup on the green);
    - no page errors;
