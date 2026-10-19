@@ -8190,7 +8190,7 @@ async function postAuto(r) {
   const CO = COURSES[r.course] || COURSE; // the round's own course (a retry may run while another course is in play)
   const markPosted = () => { const loc = localRounds(CO.key), q = loc.find(x => x.at === r.at && x.name === r.name); if (q) { q.posted = true; try { localStorage.setItem(CO.board, JSON.stringify(sortRounds(loc).slice(0, 60))); } catch (e) { } } };
   // one player, one entry per course (the best): a round that doesn't beat the player's score on the world board is not posted
-  const wb = Board.gh[CO.key]; if (wb && wb.some(x => x.name.toLowerCase() === String(r.name).toLowerCase() && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes)))) { markPosted(); refreshBoards(); return true; }
+  const wb = Board.gh[CO.key]; if (wb && wb.some(x => (x.by === dlMe() || x.name.toLowerCase() === String(r.name).toLowerCase()) && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes)))) { markPosted(); refreshBoards(); return true; }
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: `[score] ${r.name} ${fmtToPar(r.toPar)} (${r.strokes}) ${CO.short}`, body: 'Posted from Sweet Spot Golf.\n\n```json\n' + JSON.stringify(roundPayload(r)) + '\n```\n' }) });
@@ -8227,11 +8227,14 @@ async function loadWorld(force, key) {
 const roundKey = r => r.name + '|' + r.at;
 // the world rows: the file's, plus my own rounds I have just posted that the workflow has not added yet
 function worldRows(key) {
-  key = key || COURSE.key; const g = Board.gh[key]; if (!g) return null; const have = new Set(g.map(roundKey));
+  key = key || COURSE.key; const raw = Board.gh[key]; if (!raw) return null; const me = dlMe(), nm = cleanName(settings.name);
+  // my own rows carry my current name at once, before the bot has renamed them in the file
+  const g = nm ? raw.map(x => x.by === me && x.name !== nm ? Object.assign({}, x, { name: nm }) : x) : raw;
+  const have = new Set(g.map(roundKey)), mineAt = new Set(g.filter(x => x.by === me).map(x => x.at));
   // only a player's best is listed: a round that doesn't beat their entry is not waiting to appear
-  const same = r => g.some(x => String(x.name).toLowerCase() === String(r.name).toLowerCase() && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes)));
+  const same = r => g.some(x => (x.by === me || String(x.name).toLowerCase() === String(r.name).toLowerCase()) && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes)));
   const mine = new Set(), out = [];
-  for (const r of localRounds(key).filter(r => r.posted && !have.has(roundKey(r)) && !same(r))) { const k = String(r.name).toLowerCase() + '|' + r.strokes; if (mine.has(k)) continue; mine.add(k); out.push(Object.assign({}, r, { pending: true })); }
+  for (const r of localRounds(key).filter(r => r.posted && !have.has(roundKey(r)) && !mineAt.has(r.at) && !same(r))) { const k = String(r.name).toLowerCase() + '|' + r.strokes; if (mine.has(k)) continue; mine.add(k); out.push(Object.assign({}, r, { pending: true, by: me })); }
   return g.concat(out);
 }
 function postUrl(r) {
@@ -8378,7 +8381,7 @@ function fillBoard(el, limit, key, pick) {
   });
   if (tab !== 'device' && (tab === 'world' ? wr != null : Board.ready[CO.coll])) { lbMarkNew('c:' + key + ':' + tab, fresh); lbMarkPb(key, rows, fresh); }
   // post my best round of this course to the world board
-  const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), beaten = r => wlist.some(x => String(x.name).toLowerCase() === String(r.name).toLowerCase() && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes))), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r)) && !beaten(r)) : null;
+  const wlist = Board.gh[COURSE.key] || [], haveW = new Set(wlist.map(roundKey)), beaten = r => wlist.some(x => (x.by === dlMe() || String(x.name).toLowerCase() === String(r.name).toLowerCase()) && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes))), mineBest = own ? sortRounds(localRounds()).find(r => !r.posted && !haveW.has(roundKey(r)) && !beaten(r)) : null;
   if (mineBest && tab !== 'all') {
     const bt = document.createElement('button'); bt.className = 'mbtn dark wide'; bt.style.marginTop = '8px'; bt.textContent = 'Post my best round (' + fmtToPar(mineBest.toPar) + ') to the world board'; bt.onclick = async () => { if (ghKey()) { bt.disabled = true; bt.textContent = 'Posting\u2026'; if (!(await postAuto(mineBest))) postWorld(mineBest); } else postWorld(mineBest); }; el.appendChild(bt);
     const n = document.createElement('div'); n.className = 'lbnote'; n.textContent = ghKey() ? 'No account needed. It appears on the board within a minute.' : 'Opens GitHub with the score filled in: press "Submit new issue" (a free GitHub account is needed). A bot adds it to the board within a minute.'; el.appendChild(n);
