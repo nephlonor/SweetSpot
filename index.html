@@ -8191,8 +8191,25 @@ async function postAuto(r) {
       body: JSON.stringify({ title: `[score] ${r.name} ${fmtToPar(r.toPar)} (${r.strokes}) ${CO.short}`, body: 'Posted from Sweet Spot Golf.\n\n```json\n' + JSON.stringify(roundPayload(r)) + '\n```\n' }) });
     if (!res.ok) return false;
     const loc = localRounds(CO.key), q = loc.find(x => x.at === r.at && x.name === r.name); if (q) { q.posted = true; try { localStorage.setItem(CO.board, JSON.stringify(sortRounds(loc).slice(0, 60))); } catch (e) { } }
+    settings.nameSent = cleanName(r.name) || settings.nameSent; saveSettings();
     setTimeout(() => { Board.ghAt[CO.key] = 0; loadWorld(true, CO.key); }, 40000); refreshBoards(); return true;
   } catch (e) { return false; }
+}
+// the name always follows the device: when the player changes it, every score ever posted from this device is renamed on the boards
+let _renaming = false;
+function lastPostedName() { let best = null; for (const c of Object.values(COURSES)) for (const r of localRounds(c.key)) if (r.posted && (!best || r.at > best.at)) best = r; for (const r of Object.values(dlRecs())) if (r.posted && (!best || r.at > best.at)) best = { at: r.at, name: r.name || null }; return best && best.name ? best.name : null; }
+async function renameSync() {
+  const k = ghKey(), nm = cleanName(settings.name); if (!k || !nm || _renaming) return;
+  const was = settings.nameSent || lastPostedName(); if (!was || was === nm) return;
+  _renaming = true;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: `[rename] ${was} to ${nm}`, body: 'Name change from Sweet Spot Golf.\n\n```json\n' + JSON.stringify({ v: 1, rename: true, name: nm, dev: deviceId() }) + '\n```\n' }) });
+    if (!res.ok) return;
+    settings.nameSent = nm; saveSettings();
+    for (const c of Object.values(COURSES)) { try { const a = JSON.parse(localStorage.getItem(c.board) || '[]'); if (Array.isArray(a)) localStorage.setItem(c.board, JSON.stringify(a.map(x => Object.assign(x, { name: nm })))); } catch (e) { } }
+    setTimeout(() => { for (const c of Object.values(COURSES)) { Board.ghAt[c.key] = 0; } loadWorld(true); }, 45000); refreshBoards();
+  } catch (e) { } finally { _renaming = false; }
 }
 async function loadWorld(force, key) {
   key = key || COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
@@ -8582,7 +8599,7 @@ async function dlPost(rec) {
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: `[daily] ${playerName()} ${fmtToPar(rec.tp)} (${rec.strokes}) ${CO.short} ${rec.day}`, body: 'Daily challenge result from Sweet Spot Golf.\n\n```json\n' + JSON.stringify({ v: 1, daily: rec.day, course: rec.course, name: playerName(), h: rec.h, strokes: rec.strokes, toPar: rec.tp, holes: 18, at: rec.at, dev: deviceId(), pf: rec.pf || null, bs: rec.bs || [], pt: rec.pt || null }) + '\n```\n' }) });
-    if (!res.ok) return false; rec.posted = true; dlSet(rec); setTimeout(() => loadDailyFile(rec.day, true), 40000); return true;
+    if (!res.ok) return false; rec.posted = true; dlSet(rec); settings.nameSent = playerName(); saveSettings(); setTimeout(() => loadDailyFile(rec.day, true), 40000); return true;
   } catch (e) { return false; }
 }
 // the winner of a closed day gets a trophy: checked once the day's file is in (a few minutes after it closed), then kept in the stats
@@ -8910,9 +8927,9 @@ function initInput() {
   $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) { startHole(G.hole); beginHole(); G.snapCam = true; } /* practice replay: straight to the tee shot, no overview */ else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
   // the player's name: asked for on the title screen, editable in the menu
   const ni = $('nameIn'), nr = $('nameRow'), mn = $('mName');
-  const setName = v => { const c = cleanName(v); if (c) { settings.name = c; saveSettings(); } updateHUD(); titleMenuSync(); };
+  const setName = v => { const c = cleanName(v); if (c) { settings.name = c; saveSettings(); } updateHUD(); titleMenuSync(); renameSync(); };
   ni.addEventListener('input', () => { nr.classList.remove('need'); settings.name = cleanName(ni.value); saveSettings(); titleMenuSync(); });
-  ni.addEventListener('blur', () => { ni.value = cleanName(ni.value); });
+  ni.addEventListener('blur', () => { ni.value = cleanName(ni.value); renameSync(); });
   ni.addEventListener('keydown', e => { if (e.key === 'Enter') { ni.blur(); $('btnPlay').click(); } });
   mn.addEventListener('change', () => { setName(mn.value); mn.value = settings.name || ''; });
   mn.addEventListener('keydown', e => { if (e.key === 'Enter') mn.blur(); });
@@ -9044,7 +9061,7 @@ function boot(data) {
   initIntroVideo();
   initThree(); initInput(); syncMenu();
   // a round restored after an update stays on its course (rounds from before the course switch were on the Legacy Course)
-  setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard(); initIcons(); maybeInstallHint(); refreshResume(); dlCards(); loadDailyFile(dayId()); loadDailyFile(dayAdd(dayId(), -1)); setTimeout(retryUnposted, 4000); setTimeout(dlRetry, 6000);
+  setCourse(data && data.scores ? data.course || 'gccb' : settings.course || 'gccb'); initBoard(); initIcons(); maybeInstallHint(); refreshResume(); dlCards(); loadDailyFile(dayId()); loadDailyFile(dayAdd(dayId(), -1)); setTimeout(retryUnposted, 4000); setTimeout(dlRetry, 6000); setTimeout(renameSync, 8000);
   showTitleHole();
   sizeCanvases();
   if (data && data.scores) { G.practice = !!data.practice; G.scores = data.scores; G.putts = data.putts || G.putts; if (data.pins) G.pins = data.pins; $('title').classList.remove('on'); startHole(data.hole || 0); }

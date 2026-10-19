@@ -29,7 +29,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]')
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +46,25 @@ jobs:
             };
             const m = /```json\s*([\s\S]*?)```/.exec(issue.body || '');
             let r; try { r = JSON.parse(m[1]); } catch (e) { return finish(false, 'No valid score JSON found in this issue.'); }
+            if (issue.title.startsWith('[rename]')) {
+              // a name change: every score ever posted from this device (the device id, not the name, is the player) takes the new name
+              if (!r || typeof r.name !== 'string' || !/^[\p{L}\p{N} ._'-]{1,14}$/u.test(r.name.trim())) return finish(false, 'Invalid name.');
+              const nn = r.name.trim(), who = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
+              const rd = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
+              const changed = [];
+              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
+                const rows = rd('leaderboard/' + f, null); if (!Array.isArray(rows)) continue; let hit = false;
+                for (const x of rows) if (x && x.by === who && x.name !== nn) { x.name = nn; hit = true; }
+                if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
+              }
+              const pf0 = rd('leaderboard/players.json', {}); if (pf0[who] && pf0[who].n !== nn) { pf0[who].n = nn; fs.writeFileSync('leaderboard/players.json', JSON.stringify(pf0) + '\n'); changed.push('leaderboard/players.json'); }
+              if (!changed.length) return finish(true, 'No scores from this device to rename.');
+              try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); changed.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (e) { core.warning('overall: ' + e.message); }
+              await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
+              await exec.exec('git', ['add', ...changed]); await exec.exec('git', ['commit', '-m', `Leaderboard: a player is now ${nn}`]);
+              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              return finish(true, `Renamed: your scores are now listed as ${nn}.`);
+            }
             const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71 };
             const int = v => Number.isInteger(v);
             const isDaily = issue.title.startsWith('[daily]');
