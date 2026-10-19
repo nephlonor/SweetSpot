@@ -70,6 +70,10 @@ body.finale #tempo,body.finale #strike,body.finale #coach,body.finale #aimHint,b
 #windArrow{width:15px;height:15px;align-self:center;transition:transform .5s var(--ease);flex:none;filter:drop-shadow(0 1px 1px rgba(0,30,12,.35))}
 .tb-player{flex:none;flex-direction:row;align-items:center;gap:6px;padding:0 7px 0 8px;text-align:right;color:#fff}
 .tb-player svg{width:15px;height:15px;flex:none;opacity:.9}
+.titleMenu{position:absolute;top:calc(var(--st) + 8px);right:calc(var(--sr) + 12px);width:46px;height:46px;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:0;color:#fff;cursor:pointer;z-index:3}
+.titleMenu[hidden]{display:none}
+#title.hasMenu{padding-top:calc(var(--st) + 66px)}
+.titleMenu svg{width:20px;height:20px}
 .pb-t{display:flex;flex-direction:column;align-items:flex-end;min-width:0}
 .pb-n{font:600 9.5px/1.1 var(--cond);letter-spacing:.11em;text-transform:uppercase;color:var(--w2);max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pb-s{font:700 18px/1.05 var(--cond);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -515,6 +519,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div id="specBar" class="glass"><span id="specInfo">Following</span><button class="btn alt" id="specAgain">Again</button><button class="btn alt" id="specNext">Next</button><button class="btn" id="specResume">Resume play</button></div>
 <div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small>M</small></div><div class="bt2" id="btC"></div></div>
 <div class="layer on" id="title">
+  <button class="glass titleMenu" id="titleMenu" aria-label="Menu" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <div class="card logoCard"><h1>Sweet <span>Spot</span><br>Golf</h1><p id="courseLine">Golf &amp; Country Club Basel
 18 holes · Par 72</p></div>
   <div class="tb">
@@ -7705,7 +7710,7 @@ function showScorecard(final) {
   openSheet('cardSheet');
   if (final) { $('scAgain').onclick = () => { closeSheets(); endFinale(); startRound(); }; $('scClose').onclick = () => { closeSheets(); if (!G.orbit) { G.state = 'title'; $('title').classList.add('on'); showBest(); } }; } // (Close leaves the camera circling, with Play again at the bottom)
 }
-function showBest() { const ni = $('nameIn'); if (ni && document.activeElement !== ni) ni.value = settings.name || ''; let b = null; try { b = +localStorage.getItem(BEST_KEY) || null; } catch (e) { } $('best').textContent = b ? `Best round ${b} (${fmtToPar(b - PAR_TOTAL)})` : ''; }
+function showBest() { const ni = $('nameIn'); if (ni && document.activeElement !== ni) ni.value = settings.name || ''; titleMenuSync(); let b = null; try { b = +localStorage.getItem(BEST_KEY) || null; } catch (e) { } $('best').textContent = b ? `Best round ${b} (${fmtToPar(b - PAR_TOTAL)})` : ''; }
 /* ---------- intro & hole done ---------- */
 function showIntro() {
   const C = G.C, d = C.def;
@@ -8420,6 +8425,8 @@ function menuPage(n) {
   $('menuSheet').scrollTop = 0; if (n === 'live') { MP.listSig = ''; mpList(); } syncMenu();
 }
 // the menu button: in practice it opens the hole picker first; a second tap while the picker is showing goes to the main menu
+// the menu button on the start screen: only once a name has been entered
+function titleMenuSync() { const b = $('titleMenu'); if (b) { b.hidden = !cleanName(settings.name); $('title').classList.toggle('hasMenu', !b.hidden); } }
 function menuTap() {
   syncMenu(); const ms = $('menuSheet'), onPrac = ms.classList.contains('on') && !!ms.querySelector('.mpg.on[data-pg="practice"]');
   openSheet('menuSheet'); if (G.practice && !onPrac) menuPage('practice');
@@ -8861,6 +8868,7 @@ function initInput() {
   }
   $('mapBtn').onclick = openMap;
   $('btnMenu').onclick = menuTap;
+  $('titleMenu').onclick = () => { menuTap(); };
   // the menu button stays reachable above the hole card, the scrim and every bottom sheet: a tap that lands on it is routed to it
   document.addEventListener('click', e => {
     const bt = $('btnMenu'); if (!bt || e.target === bt || bt.contains(e.target) || $('hud').classList.contains('off') || document.body.classList.contains('replay') || ($('menuSheet').classList.contains('on') && !G.practice)) return;
@@ -8878,8 +8886,8 @@ function initInput() {
   $('dNext').onclick = () => { SFX.blip(); $('done').classList.remove('on'); if (G.practice) { startHole(G.hole); beginHole(); G.snapCam = true; } /* practice replay: straight to the tee shot, no overview */ else if (G.hole >= HOLE_DEFS.length - 1) showScorecard(true); else startHole(G.hole + 1); };
   // the player's name: asked for on the title screen, editable in the menu
   const ni = $('nameIn'), nr = $('nameRow'), mn = $('mName');
-  const setName = v => { const c = cleanName(v); if (c) { settings.name = c; saveSettings(); } updateHUD(); };
-  ni.addEventListener('input', () => { nr.classList.remove('need'); settings.name = cleanName(ni.value); saveSettings(); });
+  const setName = v => { const c = cleanName(v); if (c) { settings.name = c; saveSettings(); } updateHUD(); titleMenuSync(); };
+  ni.addEventListener('input', () => { nr.classList.remove('need'); settings.name = cleanName(ni.value); saveSettings(); titleMenuSync(); });
   ni.addEventListener('blur', () => { ni.value = cleanName(ni.value); });
   ni.addEventListener('keydown', e => { if (e.key === 'Enter') { ni.blur(); $('btnPlay').click(); } });
   mn.addEventListener('change', () => { setName(mn.value); mn.value = settings.name || ''; });
