@@ -56,7 +56,11 @@ def gz(e, n):
     return (GND[j, i]*(1-tx)+GND[j, i+1]*tx)*(1-ty) + (GND[j+1, i]*(1-tx)+GND[j+1, i+1]*tx)*ty
 CARD = {int(k): v for k, v in HJ['card'].items()}   # par, stroke index, Sandstone, Slate, Granite, Claret (yards)
 GREEN = {int(k): chaikin(v, 2) for k, v in FT['greens'].items()}
-FAIR = [chaikin(p, 1) for p in FT['fair']]; SAND = [chaikin(p, 1) for p in FT['sand']]
+FAIR = [chaikin(p, 1) for p in FT['fair']]
+# sandy tracks the bunker pass took for bunkers (checked on the photos): dropped by their centre
+NOT_SAND = [(-156, -218), (-84, -320), (-94, -327)]
+def _c(p): return (sum(x for x, _ in p)/len(p), sum(y for _, y in p)/len(p))
+SAND = [chaikin(p, 1) for p in FT['sand'] if min(math.dist(_c(p), q) for q in NOT_SAND) > 6]
 BEACH = FT['beach']; SEA = FT['sea']; PATHS = FT['path']; bnd = FT['boundary']
 # the clubhouse (traced on the aerial photograph)
 BUILD = [[(181.6, 104), (216.8, 137.6), (224.8, 124.8), (191.2, 92.8)]]
