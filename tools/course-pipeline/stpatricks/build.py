@@ -65,6 +65,44 @@ BEACH = FT['beach']; SEA = FT['sea']; PATHS = FT['path']; bnd = FT['boundary']
 # the clubhouse (traced on the aerial photograph)
 BUILD = [[(181.6, 104), (216.8, 137.6), (224.8, 124.8), (191.2, 92.8)]]
 
+
+# ---------------- holes: tees set back along the opening line so each hole plays the Sandstone card (holes.py)
+# tees where the club's plan puts them rather than at the card's length: the 14th starts from the tee beside the 13th green (the mown patch
+# on the photos, where the plan's arrow starts) and plays round the dogleg along the west fairway, 318 m against 365 on the card
+TEE_FWD = {}; TEE_PLAN = {14}
+def _dpoly(p, poly):
+    best = 1e9
+    for i in range(len(poly)):
+        a = poly[i]; c = poly[(i+1) % len(poly)]; dx, dy = c[0]-a[0], c[1]-a[1]; t = max(0, min(1, ((p[0]-a[0])*dx + (p[1]-a[1])*dy)/(dx*dx + dy*dy))); best = min(best, math.dist(p, (a[0]+t*dx, a[1]+t*dy)))
+    return best
+holes = []; alti = {}; tee_polys = []
+for ref in range(1, 19):
+    par, hcp, ys, ysl, ygr, ycl = CARD[ref]
+    H = HJ['holes'][str(ref)]; g = GREEN[ref]; gc = centroid(g)
+    line = [list(p) for p in H['line']] + [list(gc)]
+    tee = line[0]; L = sum(math.dist(line[i], line[i+1]) for i in range(len(line)-1))
+    ux, uy = line[1][0]-tee[0], line[1][1]-tee[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul
+    d0 = 0 if ref in TEE_PLAN else L - ys*.9144 + TEE_FWD.get(ref, 0); line[0] = tee = [tee[0]+ux*d0, tee[1]+uy*d0]   # to the card's length, along the opening line
+    L = sum(math.dist(line[i], line[i+1]) for i in range(len(line)-1))
+    ds = [(ys-y)*.9144 for y in (ysl, ygr, ycl)]
+    cs = [(tee[0]+ux*d, tee[1]+uy*d) for d in ds]
+    mk = {'w': [round(tee[0], 2), round(tee[1], 2)]}
+    for key, c in zip('ybr', cs): mk[key] = [round(c[0], 2), round(c[1], 2)]
+    lens = [round(L)] + [max(40, round(L - d)) for d in ds]
+    for c in [tuple(tee)] + cs:
+        # no forward tee box within 12 m of another hole's green (the 8th plays past the 7th green; its pad cut a step into the green)
+        if c != tuple(tee) and any(_dpoly(c, g_) < 12 for k_, g_ in GREEN.items() if k_ != ref): continue
+        hw, hl = 5.0, 6.0
+        tee_polys.append([[(c[0]+ux*a-uy*b, c[1]+uy*a+ux*b) for a, b in ((-hl, -hw), (hl, -hw), (hl, hw), (-hl, hw))]])
+    dz = gz(*gc) - gz(*tee)
+    bits = []
+    if abs(dz) >= 3: bits.append(f"plays {abs(round(dz))} m {'uphill' if dz > 0 else 'downhill'}")
+    holes.append({'par': par, 'hcp': hcp, 'len': round(L), 'lens': lens, 'tee': [round(tee[0], 2), round(tee[1], 2)], 'green': [round(gc[0], 2), round(gc[1], 2)],
+                  'line': [[round(p[0], 2), round(p[1], 2)] for p in line], 'mk': mk, 'desc': ' · '.join(bits)})
+    xs = [p[0] for p in g]; ys_ = [p[1] for p in g]; a0 = min(xs)-7; b0_ = min(ys_)-7; s = 1.5
+    gnx = int((max(xs)+7-a0)/s)+1; gny = int((max(ys_)+7-b0_)/s)+1
+    alti[ref-1] = {'e0': round(a0, 2), 'n0': round(b0_, 2), 's': s, 'nx': gnx, 'ny': gny, 'z': [round(gz(a0+i*s, b0_+j*s)*100) for j in range(gny) for i in range(gnx)]}
+    print(ref, par, 'len', round(L), 'card', round(ys*.9144), lens, holes[-1]['desc'])
 # ---------------- terrain lattice (15 m) and relief (2 m): the dunes
 de = 15.0; e0, n0 = ME0 + 30, MN0 + 30; nx = int((MW_-60)/de)+1; ny = int((MH_-60)/de)+1
 Gs = ndi.gaussian_filter(GND, 6)
@@ -88,8 +126,11 @@ rel = ndi.gaussian_filter(rel, 0.8)
 #    marram is thick on the photos (image texture: dense tussocks throw speckled shadow), up to about 1.8 m
 # neither on the fairways, greens, bunkers or the beach, eased in over 4-14 m from their edges
 from scipy.ndimage import zoom as _zoom
-_mown = raster(FAIR + list(GREEN.values()) + SAND, 0)
+_mown = raster(FAIR + list(GREEN.values()) + SAND + [t[0] for t in tee_polys], 0)
 _wild = ndi.gaussian_filter(np.clip((ndi.distance_transform_edt(~_mown) - 4) / 10, 0, 1) * ~raster(BEACH + SEA, 3), 2)
+# round the tees only the real ground: the added detail fades in from 15 to 40 m off each tee box, so no made-up hummock rises beside a
+# tee or blocks the view off it (it did on the 4th and the 7th)
+_wild *= np.clip((ndi.distance_transform_edt(~raster([t[0] for t in tee_polys], 0)) - 15) / 25, 0, 1)
 _tex = np.load('tex.npy')[::-1][::2, ::2][:MH_, :MW_].astype(float)
 _tex = np.clip((ndi.gaussian_filter(_tex, 3) - 5) / 10, 0, 1)
 _rng = np.random.default_rng(11)
@@ -99,8 +140,11 @@ def _vnoise(wl):
 def _ridged(wl): n = _vnoise(wl); return 1 - np.abs(np.tanh(n))      # sharp crests, rounded hollows
 hum = (.62 * (_ridged(13) - .45) + .38 * (_ridged(6) - .45)) * (.35 + .9 * _tex)
 rel = rel + (1.4 * (GND - ndi.gaussian_filter(GND, 6)) + 2.2 * hum) * _wild
-play = raster(list(GREEN.values()), 2) | raster(SEA, 3)
+play = raster(list(GREEN.values()), 2) | raster([t[0] for t in tee_polys], 3) | raster(SEA, 3)   # no relief on the greens, tees or sea
 wt = 1 - np.clip(ndi.gaussian_filter(play.astype(float), 1.5)*1.6, 0, 1)
+# round the greens the relief fades in from 2 to 10 m off the edge: the green is shaped (and flattened) in the game, its 9 m apron blends it
+# into the ground, and relief right at the edge would leave it sunk below a bank
+wt *= np.clip((ndi.distance_transform_edt(~raster(list(GREEN.values()), 0)) - 2) / 8, 0, 1)
 edge = np.ones(rel.shape); edge[:40] = edge[-40:] = 0; edge[:, :40] = edge[:, -40:] = 0; edge = ndi.gaussian_filter(edge, 10)
 near = ndi.distance_transform_edt(~raster([bnd])) < 160   # the dunes within 160 m of the boundary; none under the sea
 rel = np.clip(rel*wt*edge*ndi.gaussian_filter((near & ~raster(SEA, 2)).astype(float), 6), -6.3, 6.3)
@@ -115,37 +159,6 @@ for v in qq.ravel():
 while zr: n_ = min(zr, 255); out += [0, n_]; zr -= n_
 D_RELIEF = {'e0': ME0, 'n0': MN0, 'res': 2, 'w': int(qq.shape[1]), 'h': int(qq.shape[0]), 'b8': 1, 'd': base64.b64encode(bytes(out)).decode()}
 print('relief', c2.min(), c2.max())
-
-# ---------------- holes: tees set back along the opening line so each hole plays the Sandstone card (holes.py)
-# tees where the club's plan puts them rather than at the card's length: the 14th starts from the tee beside the 13th green (the mown patch
-# on the photos, where the plan's arrow starts) and plays round the dogleg along the west fairway, 318 m against 365 on the card
-TEE_FWD = {}; TEE_PLAN = {14}
-holes = []; alti = {}; tee_polys = []
-for ref in range(1, 19):
-    par, hcp, ys, ysl, ygr, ycl = CARD[ref]
-    H = HJ['holes'][str(ref)]; g = GREEN[ref]; gc = centroid(g)
-    line = [list(p) for p in H['line']] + [list(gc)]
-    tee = line[0]; L = sum(math.dist(line[i], line[i+1]) for i in range(len(line)-1))
-    ux, uy = line[1][0]-tee[0], line[1][1]-tee[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul
-    d0 = 0 if ref in TEE_PLAN else L - ys*.9144 + TEE_FWD.get(ref, 0); line[0] = tee = [tee[0]+ux*d0, tee[1]+uy*d0]   # to the card's length, along the opening line
-    L = sum(math.dist(line[i], line[i+1]) for i in range(len(line)-1))
-    ds = [(ys-y)*.9144 for y in (ysl, ygr, ycl)]
-    cs = [(tee[0]+ux*d, tee[1]+uy*d) for d in ds]
-    mk = {'w': [round(tee[0], 2), round(tee[1], 2)]}
-    for key, c in zip('ybr', cs): mk[key] = [round(c[0], 2), round(c[1], 2)]
-    lens = [round(L)] + [max(40, round(L - d)) for d in ds]
-    for c in [tuple(tee)] + cs:
-        hw, hl = 5.0, 6.0
-        tee_polys.append([[(c[0]+ux*a-uy*b, c[1]+uy*a+ux*b) for a, b in ((-hl, -hw), (hl, -hw), (hl, hw), (-hl, hw))]])
-    dz = gz(*gc) - gz(*tee)
-    bits = []
-    if abs(dz) >= 3: bits.append(f"plays {abs(round(dz))} m {'uphill' if dz > 0 else 'downhill'}")
-    holes.append({'par': par, 'hcp': hcp, 'len': round(L), 'lens': lens, 'tee': [round(tee[0], 2), round(tee[1], 2)], 'green': [round(gc[0], 2), round(gc[1], 2)],
-                  'line': [[round(p[0], 2), round(p[1], 2)] for p in line], 'mk': mk, 'desc': ' · '.join(bits)})
-    xs = [p[0] for p in g]; ys_ = [p[1] for p in g]; a0 = min(xs)-7; b0_ = min(ys_)-7; s = 1.5
-    gnx = int((max(xs)+7-a0)/s)+1; gny = int((max(ys_)+7-b0_)/s)+1
-    alti[ref-1] = {'e0': round(a0, 2), 'n0': round(b0_, 2), 's': s, 'nx': gnx, 'ny': gny, 'z': [round(gz(a0+i*s, b0_+j*s)*100) for j in range(gny) for i in range(gnx)]}
-    print(ref, par, 'len', round(L), 'card', round(ys*.9144), lens, holes[-1]['desc'])
 # check: no hole's line passes within 25 m of another hole's green or tee (a line across a green means the routing is wrong)
 def dseg(p, a, b):
     dx, dy = b[0]-a[0], b[1]-a[1]; t = max(0, min(1, ((p[0]-a[0])*dx + (p[1]-a[1])*dy)/(dx*dx + dy*dy))); return math.dist(p, (a[0]+t*dx, a[1]+t*dy))
