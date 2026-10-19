@@ -446,6 +446,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .lb .row .st{text-align:right;color:var(--ink2);font-size:15px}
 .lb .row.me{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff}.lb .row.me .rk,.lb .row.me .st,.lb .row.me small{color:rgba(255,255,255,.8)}
 .lb .row.top1 .rk{color:#c99a06}
+.sheet:not(.on) .lb .row.lbNew,.sheet:not(.on) .lbSpark{animation-play-state:paused}
 .lb .row.lbNew{position:relative;animation:lbGlow 8s ease-in-out var(--lbd,0ms) both}
 @keyframes lbGlow{0%{box-shadow:0 0 0 0 rgba(240,190,70,0),inset 0 0 0 0 rgba(240,190,70,0),inset 0 0 0 40px rgba(255,226,140,0)}8%,62.5%{box-shadow:0 0 20px 4px rgba(240,190,70,.6),inset 0 0 0 1.5px rgba(232,180,60,.85),inset 0 0 0 40px rgba(255,226,140,.28)}100%{box-shadow:0 0 0 0 rgba(240,190,70,0),inset 0 0 0 0 rgba(240,190,70,0),inset 0 0 0 40px rgba(255,226,140,0)}}
 .lbSpark{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff3c4;box-shadow:0 0 5px 1px rgba(236,184,60,.85);pointer-events:none;opacity:0;animation:lbSpark 1.1s ease-out both}
@@ -7571,10 +7572,10 @@ function readoutNote(text, cls) {
 }
 /* ---------- sheets ---------- */
 function sheetOpen() { return !!document.querySelector('.sheet.on'); }
-function openSheet(id) { closeSheets(true); if (id === 'menuSheet') menuPage('home'); addStatsChip(id); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); }
+function openSheet(id) { closeSheets(true); if (id === 'menuSheet') menuPage('home'); addStatsChip(id); $(id).classList.add('on'); $('scrim').classList.add('on'); SFX.blip(); lbResume(); }
 // every menu screen except the main menu (where Stats is a button) and Stats itself carries a small Stats shortcut with the player's level in its header
 function addStatsChip(id) { /* the level is only shown in the menu and on the stats page: no chips on the other sheets */ document.querySelectorAll('.stChip').forEach(c => c.remove()); }
-function closeSheets(keepScrim) { if (G.relief && !keepScrim) reliefClosed(); const hv = $('howVid'); if (hv && !hv.paused) hv.pause(); document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
+function closeSheets(keepScrim) { lbPause(); if (G.relief && !keepScrim) reliefClosed(); const hv = $('howVid'); if (hv && !hv.paused) hv.pause(); document.querySelectorAll('.sheet.on').forEach(s => s.classList.remove('on')); if (!keepScrim) $('scrim').classList.remove('on'); }
 function openBag() {
   if (G.state !== 'address' && G.state !== 'settle') return;
   const b = $('bag'); b.innerHTML = '';
@@ -8339,20 +8340,24 @@ function fillBoard(el, limit, key, pick) {
 }
 // a score this device hasn't shown on that board before glows softly for 5 s and fades over 3 s more, with a few faint sparks and one small bell.
 // The first look at a board only remembers what is there; the glow survives the board being redrawn while it plays.
-const LBNEW = { seen: null, at: new Map(), bell: 0 };
+const LBNEW = { seen: null, at: new Map(), bell: 0, bellDue: false };
 function lbSeen() { if (!LBNEW.seen) { try { LBNEW.seen = JSON.parse(localStorage.getItem('ssg-lbseen') || '{}') || {}; } catch (e) { LBNEW.seen = {}; } } return LBNEW.seen; }
+// the 8 s sequence (5 s of glow, 3 s fading) only runs while a sheet is open: closing the board pauses it where it is, opening it again carries on
+function lbPause() { const now = performance.now(); for (const e of LBNEW.at.values()) if (e.t0 != null) { e.held += now - e.t0; e.t0 = null; } }
+function lbResume() { const now = performance.now(); for (const e of LBNEW.at.values()) if (e.t0 == null) e.t0 = now; if (LBNEW.bellDue) { LBNEW.bellDue = false; lbBell(300); } }
+function lbBell(ms) { if (performance.now() - LBNEW.bell > 2500) { LBNEW.bell = performance.now(); setTimeout(() => SFX.bell(), ms); } }
 function lbMarkNew(bid, rows) { // rows: [{ el, k }]
-  const S = lbSeen(), first = !S[bid], have = new Set(S[bid] || []), now = performance.now(); let fresh = 0, add = false;
+  const S = lbSeen(), first = !S[bid], have = new Set(S[bid] || []), now = performance.now(), live = sheetOpen(); let fresh = 0, add = false;
   for (const { el, k } of rows) {
     const id = bid + '|' + k;
-    if (!have.has(k)) { have.add(k); add = true; if (!first) { LBNEW.at.set(id, now); fresh++; } }
-    const t0 = LBNEW.at.get(id); if (t0 == null) continue;
-    const age = now - t0; if (age >= 8000) { LBNEW.at.delete(id); continue; }
+    if (!have.has(k)) { have.add(k); add = true; if (!first) { LBNEW.at.set(id, { held: 0, t0: live ? now : null }); fresh++; } }
+    const e = LBNEW.at.get(id); if (!e) continue;
+    const age = e.held + (e.t0 != null ? now - e.t0 : 0); if (age >= 8000) { LBNEW.at.delete(id); continue; }
     el.classList.add('lbNew'); el.style.setProperty('--lbd', -age + 'ms');
     for (let i = 0; i < 12; i++) { const s = document.createElement('i'); s.className = 'lbSpark'; s.style.left = (6 + Math.random() * 88) + '%'; s.style.top = (25 + Math.random() * 60) + '%'; s.style.animationDelay = (i * 380 + Math.random() * 200 - age) + 'ms'; el.appendChild(s); }
   }
   if (add) { S[bid] = [...have].slice(-400); try { localStorage.setItem('ssg-lbseen', JSON.stringify(S)); } catch (e) { } }
-  if (fresh && performance.now() - LBNEW.bell > 2500) { LBNEW.bell = performance.now(); setTimeout(() => SFX.bell(), 300); }
+  if (fresh) { if (live) lbBell(300); else LBNEW.bellDue = true; } // drawn before the sheet slides in: the bell waits for it
 }
 function refreshBoards() {
   if ($('boardSheet').classList.contains('on')) fillBoard($('boardBody'), 30, Board.view, true);
