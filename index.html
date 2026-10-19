@@ -747,7 +747,11 @@ const WIND_EFFECT = .7; // all wind pushes 30% less than its displayed speed wou
 // A real hole: a bucket CUP_RIM wide and CUP_DEPTH deep cut into the green with a sharp top edge, the flagstick standing
 // in the middle. Near the hole the ball is integrated as a rolling sphere against the green, the rim edge, the cup wall,
 // its floor and the stick, so drops, lip-outs, hops and stick hits all come out of the same physics.
-const CUP_DEPTH = .52, PIN_R = .035, CUP_G = GRAV * .35, CUP_IN = CUP_RIM + .03, CUP_OUT = CUP_RIM + VIS_R + .08, CUP_IMP = .35;
+// the top edge of the hole is rounded off (a fillet of radius CUP_LIP where the green meets the cup wall), as a cut hole wears: a ball
+// rolling over the edge is drawn down into the hole rather than bouncing off a sharp corner, so borderline putts drop a little more often
+let CUP_LIP = .022; // (tuned: 10 % more putts catch the lip than with a sharp edge, and 10 % more lip in; tests/lip.js)
+const CUP_DEPTH = .52, PIN_R = .035, CUP_G = GRAV * .35, CUP_IMP = .35;
+let CUP_IN = CUP_RIM + CUP_LIP + .03, CUP_OUT = CUP_RIM + CUP_LIP + VIS_R + .08;
 function cupZone(C, o, x, yb, z, vx, vy, vz, t, fr, ev, mu, air, w) {
   const cup = C.cup, R = CUP_RIM, rb = VIS_R, h = 1 / 2000, bot = cup.y - CUP_DEPTH, flag = !!o.flag;
   const s0 = Math.hypot(vx, vz), hx0 = vx, hz0 = vz;
@@ -792,14 +796,16 @@ function cupZone(C, o, x, yb, z, vx, vy, vz, t, fr, ev, mu, air, w) {
     // contacts
     bestNy = -2; onPlane = false; edgeC = false; let any = false;
     let rx = x - cup.x, rz = z - cup.z, rho = Math.hypot(rx, rz), ux = rho > 1e-6 ? rx / rho : 1, uz = rho > 1e-6 ? rz / rho : 0;
-    if (rho >= R) {
+    const LP = CUP_LIP, RL = R + LP;
+    if (rho >= RL) {
       const d = C.h(x, z) + rb - Y;
       if (d > 0) { C.grad(x, z, _g2); const l = Math.hypot(_g2[0], 1, _g2[1]); hit(-_g2[0] / l, 1 / l, -_g2[1] / l, d, SURF[S.GREEN].e, 'plane'); onPlane = any = true; }
     } else {
-      const px = cup.x + ux * R, pz = cup.z + uz * R, hr = C.h(px, pz);
+      // the rounded edge: a ring (tube of radius LP) whose centre runs LP outside the wall and LP below the green; with LP = 0 it is the sharp corner
+      const px = cup.x + ux * RL, pz = cup.z + uz * RL, hr = C.h(px, pz) - LP;
       if (Y >= hr) {
         const dx = x - px, dy = Y - hr, dz = z - pz, dl = Math.hypot(dx, dy, dz);
-        if (dl < rb && dl > 1e-6) { hit(dx / dl, dy / dl, dz / dl, rb - dl, .35, 'edge'); edgeC = any = true; }
+        if (dl < rb + LP && dl > 1e-6) { hit(dx / dl, dy / dl, dz / dl, rb + LP - dl, .35, 'edge'); edgeC = any = true; }
       } else if (rho > R - rb) { hit(-ux, 0, -uz, rho - (R - rb), .3, 'wall'); any = true; }
       if (Y < bot + rb) { hit(0, 1, 0, bot + rb - Y, .12, 'floor'); any = true; }
     }
@@ -4204,6 +4210,7 @@ function buildTrees(C, grp) {
 // green; the flagstick stands on the floor of the cup
 const CUP_U = { value: new THREE.Vector4(0, 0, 0, 0) };
 function buildCup(C, grp) {
+  // (the rounded top edge of the hole, CUP_LIP, is in the physics only: the hole is drawn with a straight, sharp edge)
   const cup = C.cup, R = CUP_RIM, n = 48, D = CUP_DEPTH, rows = [0, -.075, -.08, -.2, -D];
   CUP_U.value.set(cup.x, cup.z, R, 1);
   const pos = [], col = [], idx = [], cols = [[1, 1, 1], [.93, .94, .92], [.25, .3, .27], [.17, .2, .18], [.1, .12, .11]];
