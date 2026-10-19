@@ -82,6 +82,23 @@ def catrom(Z, FX, FY):
     return out
 rel = GND - catrom(Z, FX, FY)
 rel = ndi.gaussian_filter(rel, 0.8)
+# the dunes in more detail than the elevation model holds (Terrain 3D is smooth at the scale of a hummock):
+# 1. the model's own small forms (under ~12 m) steepened: its high-pass added back, 1.4 times over
+# 2. marram hummocks, the 3-12 m humps and hollows a marram dune is made of: ridged value noise at 13 m and 6 m, as high as the
+#    marram is thick on the photos (image texture: dense tussocks throw speckled shadow), up to about 1.8 m
+# neither on the fairways, greens, bunkers or the beach, eased in over 4-14 m from their edges
+from scipy.ndimage import zoom as _zoom
+_mown = raster(FAIR + list(GREEN.values()) + SAND, 0)
+_wild = ndi.gaussian_filter(np.clip((ndi.distance_transform_edt(~_mown) - 4) / 10, 0, 1) * ~raster(BEACH + SEA, 3), 2)
+_tex = np.load('tex.npy')[::-1][::2, ::2][:MH_, :MW_].astype(float)
+_tex = np.clip((ndi.gaussian_filter(_tex, 3) - 5) / 10, 0, 1)
+_rng = np.random.default_rng(11)
+def _vnoise(wl):
+    g = _rng.standard_normal((int(MH_/wl)+3, int(MW_/wl)+3))
+    return _zoom(g, (MH_/(g.shape[0]-3), MW_/(g.shape[1]-3)), order=3)[:MH_, :MW_]
+def _ridged(wl): n = _vnoise(wl); return 1 - np.abs(np.tanh(n))      # sharp crests, rounded hollows
+hum = (.62 * (_ridged(13) - .45) + .38 * (_ridged(6) - .45)) * (.35 + .9 * _tex)
+rel = rel + (1.4 * (GND - ndi.gaussian_filter(GND, 6)) + 2.2 * hum) * _wild
 play = raster(list(GREEN.values()), 2) | raster(SEA, 3)
 wt = 1 - np.clip(ndi.gaussian_filter(play.astype(float), 1.5)*1.6, 0, 1)
 edge = np.ones(rel.shape); edge[:40] = edge[-40:] = 0; edge[:, :40] = edge[:, -40:] = 0; edge = ndi.gaussian_filter(edge, 10)
@@ -100,8 +117,9 @@ D_RELIEF = {'e0': ME0, 'n0': MN0, 'res': 2, 'w': int(qq.shape[1]), 'h': int(qq.s
 print('relief', c2.min(), c2.max())
 
 # ---------------- holes: tees set back along the opening line so each hole plays the Sandstone card (holes.py)
-# the 3rd: at the card's length the tee would sit on the face of the dune below the real tee's plateau; it goes up onto the plateau, 10 m forward
-TEE_FWD = {3: 10}
+# tees where the club's plan puts them rather than at the card's length: the 14th starts from the tee beside the 13th green (the mown patch
+# on the photos, where the plan's arrow starts) and plays round the dogleg along the west fairway, 318 m against 365 on the card
+TEE_FWD = {}; TEE_PLAN = {14}
 holes = []; alti = {}; tee_polys = []
 for ref in range(1, 19):
     par, hcp, ys, ysl, ygr, ycl = CARD[ref]
@@ -109,7 +127,7 @@ for ref in range(1, 19):
     line = [list(p) for p in H['line']] + [list(gc)]
     tee = line[0]; L = sum(math.dist(line[i], line[i+1]) for i in range(len(line)-1))
     ux, uy = line[1][0]-tee[0], line[1][1]-tee[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul
-    d0 = L - ys*.9144 + TEE_FWD.get(ref, 0); line[0] = tee = [tee[0]+ux*d0, tee[1]+uy*d0]   # to the card's length, along the opening line
+    d0 = 0 if ref in TEE_PLAN else L - ys*.9144 + TEE_FWD.get(ref, 0); line[0] = tee = [tee[0]+ux*d0, tee[1]+uy*d0]   # to the card's length, along the opening line
     L = sum(math.dist(line[i], line[i+1]) for i in range(len(line)-1))
     ds = [(ys-y)*.9144 for y in (ysl, ygr, ycl)]
     cs = [(tee[0]+ux*d, tee[1]+uy*d) for d in ds]
