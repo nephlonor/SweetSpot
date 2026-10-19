@@ -2189,14 +2189,16 @@ function altiH(RA) {
   };
 }
 // an ordinary green: the real lattice, lightly smoothed and shrunk toward its own best-fit plane so lattice noise does not roughen it
-function realGreen(RA, sd, ww, hh, i0, j0, cx, cz) {
+function realGreen(RA, sd, ww, hh, i0, j0, cx, cz, flat) {
   const f = tierGreen.f, raH = altiH(RA), sm = (X, Z) => (raH(X, Z) * 2 + raH(X + 1.5, Z) + raH(X - 1.5, Z) + raH(X, Z + 1.5) + raH(X, Z - 1.5)) / 6;
   let n = 0, mh = 0, pts = [];
   for (let j = 0; j < hh; j++) for (let i = 0; i < ww; i++) if (sd[j * ww + i] < 0) { const X = f.x0 + (i + i0) * f.res, Z = f.z0 + (j + j0) * f.res, h = sm(X, Z); pts.push([X - cx, Z - cz, h]); n++; mh += h; }
   mh /= n || 1; let Sxx = 0, Szz = 0, Sxz = 0, Sxh = 0, Szh = 0;
   for (const p of pts) { Sxx += p[0] * p[0]; Szz += p[1] * p[1]; Sxz += p[0] * p[1]; Sxh += p[0] * (p[2] - mh); Szh += p[1] * (p[2] - mh); }
-  const det = Sxx * Szz - Sxz * Sxz, gx = det > 1e-6 ? (Sxh * Szz - Szh * Sxz) / det : 0, gz = det > 1e-6 ? (Szh * Sxx - Sxh * Sxz) / det : 0;
-  const k = RDC.greenK || .5; return { h: (X, Z) => { const pl = mh + gx * (X - cx) + gz * (Z - cz); return pl + k * (sm(X, Z) - pl); } };
+  const det = Sxx * Szz - Sxz * Sxz; let gx = det > 1e-6 ? (Sxh * Szz - Szh * Sxz) / det : 0, gz = det > 1e-6 ? (Szh * Sxx - Sxh * Sxz) / det : 0;
+  // a green flattened by hand (flat = [share of the real contours kept, steepest overall tilt]): the tilt capped, the crown taken down
+  if (flat) { const gm = Math.hypot(gx, gz); if (gm > flat[1]) { gx *= flat[1] / gm; gz *= flat[1] / gm; } }
+  const k = flat ? flat[0] : RDC.greenK || .5; return { h: (X, Z) => { const pl = mh + gx * (X - cx) + gz * (Z - cz); return pl + k * (sm(X, Z) - pl); } };
 }
 // where the step sits, as the share of the green below it (hole 3: close to the front, a small lower tier in front of the main plateau)
 const TIER_CUT_GCCB = { 2: .3 }; let TIER_CUT = TIER_CUT_GCCB;
@@ -2340,7 +2342,7 @@ function makeRealCourse(idx, pin) {
         return (lat[k] * (1 - fa) + lat[k + 1] * fa) * (1 - fb) + (lat[k + na] * (1 - fa) + lat[k + na + 1] * fa) * fb;
       };
       // the hole's own green follows the real elevation lattice; the double-plateau ones are rebuilt as two levels
-      if (GREEN_ALTI[idx] && Math.hypot(cx - gX0, cz - gZ0) < 30) tier = TIER_HOLES.includes(idx) ? tierGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz, maxS, TIER_CUT[idx]) : realGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz);
+      if (GREEN_ALTI[idx] && Math.hypot(cx - gX0, cz - gZ0) < 30) tier = TIER_HOLES.includes(idx) ? tierGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz, maxS, TIER_CUT[idx]) : realGreen(GREEN_ALTI[idx], sd, ww, hh, i0, j0, cx, cz, RDC.greenFlat && (RDC.greenFlat[idx] || RDC.greenFlat.all));
     }
     const top = (X, Z) => {
       if (tier) return tier.h(X, Z) + (amp ? .4 * amp * Math.sin((X - cx) * .19 + p0) * Math.cos((Z - cz) * .15 + p1) : 0);
@@ -2356,7 +2358,9 @@ function makeRealCourse(idx, pin) {
   };
   const greens = [];
   P.green.forEach((q, gi) => { const g = platform(q, 9, .028, .06, .1, gi + 1); if (g) greens.push(g); });
-  P.tee.forEach((q, ti) => platform(q, 4, .015, .22, 0, 100 + ti));
+  // a tee built up on a raised pad (RDC.teeRaise, by hole: metres), where the ground in front would hide the fairway; only the boxes by the back tee
+  const tRz = RDC.teeRaise && RDC.teeRaise[idx];
+  P.tee.forEach((q, ti) => { let up = 0; if (tRz) { const r = q.px[0]; let cx = 0, cz = 0; for (let k = 0; k < r.length; k += 2) { cx += (r[k] - .5) * res + x0; cz += (r[k + 1] - .5) * res + z0; } cx /= r.length / 2; cz /= r.length / 2; if (Math.hypot(cx, cz) < 9) up = tRz; } platform(q, up ? 9 : 4, .015, .22 + up, 0, 100 + ti); });
   const ponds = [];
   // (Augusta: water levels are read off the ground before any digging, so a long creek cut into touching pieces does not step down piece by piece)
   const Hw = RDC.lush || RDC.creek ? Float32Array.from(Hg) : Hg; // (creeks cut in pieces measure their banks on the ground as it was, so the cuts don't cascade)
@@ -3300,7 +3304,10 @@ const RDS = {
   // an English parkland in October: cool, damp emerald turf, oaks turning copper and gold; Rothley Brook is a penalty area like Rae's Creek
   rothley: { autumn: true, creek: true, data: RD_ROTHLEY, alti: RD_ROTHLEY.alti, z0: RD_ROTHLEY.z0, gr: RD_ROTHLEY.gr, tweak: { 7545: { hide: true } } /* hole 7: the oak just right of the line, 26 m off the tee */, tiers: [], tierCut: {}, benches: [], greenK: .7 },
   // a links in the big dunes by the Atlantic: fescue turf, marram on the dunes, sandy blowouts, Tramore beach and Sheephaven Bay below, both out of bounds
-  stpatricks: { marram: true, data: RD_STPATRICKS, alti: RD_STPATRICKS.alti, z0: RD_STPATRICKS.z0, gr: RD_STPATRICKS.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 }
+  stpatricks: { marram: true, data: RD_STPATRICKS, alti: RD_STPATRICKS.alti, z0: RD_STPATRICKS.z0, gr: RD_STPATRICKS.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8,
+    // the greens: the elevation model is smooth over the dunes, so it reads a green's surroundings into it (up to a 12 % tilt and a 2.8 m crown);
+    // every green keeps 40 % of those contours and at most a 3.5 % tilt, the 13th and 17th (to chip onto) 25 % and 2 %
+    greenFlat: { all: [.4, .035], 12: [.25, .02], 16: [.25, .02] }, teeRaise: { 6: 1.8 } } // and the 7th's tee is built up: a ridge 40 m out hid the fairway // the 13th and 17th: the real ground there is tilted (7 %) or crowned, too much to chip onto, so these greens are flattened
 };
 // Alsace, Augusta, Rothley Park and St Patrick's bring their terrain, features, trees and relief as separate files (data-<course>.js), fetched the first time the course is used and then kept
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
