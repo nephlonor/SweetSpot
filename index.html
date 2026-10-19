@@ -8386,6 +8386,11 @@ function menuPage(n) {
   $('mBack').style.display = n === 'home' ? 'none' : ''; $('mTitle').textContent = n === 'home' ? 'Menu' : MENU_PAGES[n];
   $('menuSheet').scrollTop = 0; if (n === 'live') { MP.listSig = ''; mpList(); } syncMenu();
 }
+// the menu button: in practice it opens the hole picker first; a second tap while the picker is showing goes to the main menu
+function menuTap() {
+  syncMenu(); const ms = $('menuSheet'), onPrac = ms.classList.contains('on') && !!ms.querySelector('.mpg.on[data-pg="practice"]');
+  openSheet('menuSheet'); if (G.practice && !onPrac) menuPage('practice');
+}
 function dailyTap() { openDaily('today'); } // the daily sheet first (Today, Yesterday, Archive, Overall); starting is one more tap there
 function trophyHtml(list) { // the trophies of daily challenges won: [{day, course, tp, s, n}] (a player's profile only knows the days)
   if (!list || !list.length) return '<div class="stFun"><div>Win a daily challenge to put a trophy on your shelf.</div></div>';
@@ -8819,12 +8824,12 @@ function initInput() {
     b.onclick = e => { if (e.detail !== 0) return; changeClub(dir); };      // keyboard activation (detail 0) only; touch and mouse go through the gesture above
   }
   $('mapBtn').onclick = openMap;
-  $('btnMenu').onclick = () => { syncMenu(); openSheet('menuSheet'); };
+  $('btnMenu').onclick = menuTap;
   // the menu button stays reachable above the hole card, the scrim and every bottom sheet: a tap that lands on it is routed to it
   document.addEventListener('click', e => {
-    const bt = $('btnMenu'); if (!bt || e.target === bt || bt.contains(e.target) || $('hud').classList.contains('off') || document.body.classList.contains('replay') || $('menuSheet').classList.contains('on')) return;
+    const bt = $('btnMenu'); if (!bt || e.target === bt || bt.contains(e.target) || $('hud').classList.contains('off') || document.body.classList.contains('replay') || ($('menuSheet').classList.contains('on') && !G.practice)) return;
     const r = bt.getBoundingClientRect(); if (!r.width || e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
-    e.stopPropagation(); e.preventDefault(); syncMenu(); openSheet('menuSheet');
+    e.stopPropagation(); e.preventDefault(); menuTap();
   }, true);
   $('scrim').onclick = () => closeSheets();
   $('mapDone').onclick = () => closeSheets();
