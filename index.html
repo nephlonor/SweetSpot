@@ -449,6 +449,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .lb .row .st{text-align:right;color:var(--ink2);font-size:15px}
 .lb .row.me{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff}.lb .row.me .rk,.lb .row.me .st,.lb .row.me small{color:rgba(255,255,255,.8)}
 .lb .row.top1 .rk{color:#c99a06}
+.lb .row.unfin,.lb .row.me.unfin{background:rgba(214,214,214,.2);color:rgba(255,255,255,.9);opacity:.55}
 .lb .row.own .nm{color:#ffd24a;text-shadow:0 1px 2px rgba(70,45,0,.6)}
 .lb .row .st.ownName{color:#ffd24a;text-shadow:0 1px 2px rgba(70,45,0,.6)}
 .sheet:not(.on) .lb .row.lbNew,.sheet:not(.on) .lb .row.lbPb,.sheet:not(.on) .lbSpark{animation-play-state:paused}
@@ -8591,7 +8592,8 @@ function dlAll(day) {
   const m = DL.rows[day]; if (m) for (const [id, e] of m) { const o = out.get(id); if (!o || e.th > o.th || (e.done && !o.done) || (e.done && o.done && e.pf && !o.pf)) out.set(id, Object.assign({ id }, e, o && !e.pf ? { pf: o.pf } : {}, o && o.pt ? { pt: o.pt } : {})); }
   const rec = dlRec(day);
   if (rec && rec.h) { const th = rec.h.filter(v => v > 0).length, o = out.get(me); if (!o || th >= o.th) out.set(me, { id: me, n: playerName(), c: rec.course, h: rec.h, pt: rec.pt || (o && o.pt) || null, th, done: rec.status === 'done', at: rec.at || 0, pf: rec.pf || (o && o.pf) || null, bs: rec.bs || (o && o.bs) || [], mine: true }); else o.mine = true; }
-  return [...out.values()];
+  // a day that is over keeps only the rounds finished in time: one that was started and not finished is gone from the board
+  return [...out.values()].filter(e => day >= dayId() || e.done);
 }
 // the standing after k holes (everyone's score through the same k, or through all they have played when that is fewer)
 function dlStanding(day, k, course) {
@@ -8742,7 +8744,7 @@ function fillDaily(el, inCard) {
   if (!st.length) { add('div', 'empty', past ? (DL.files[day] === null && !(DL.rows[day] && DL.rows[day].size) ? 'This board could not be reached.' : 'No one played this challenge.') : k ? 'No one else on the board yet.' : 'Finish hole 1 and the board shows up.'); }
   const fresh = []; // new on this board: a player turning up, and a player's final score
   st.slice(0, 40).forEach((x, i) => {
-    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me own' : '') + (i === 0 ? ' top1' : ''); row.style.cursor = 'pointer'; fresh.push({ el: row, k: (x.e.id || x.e.n) + (x.fin ? ':f' + x.s : '') });
+    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me own' : '') + (i === 0 ? ' top1' : '') + (x.e.done ? '' : ' unfin'); row.style.cursor = 'pointer'; fresh.push({ el: row, k: (x.e.id || x.e.n) + (x.fin ? ':f' + x.s : '') });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.e.n; const sm = document.createElement('small'); sm.textContent = x.fin ? 'Final' : x.thru >= 18 ? 'Playing' : `Thru ${x.thru}` + (x.thru < k || !x.e.done ? '' : ''); nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.tp); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.s || '';
