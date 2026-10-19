@@ -1,0 +1,25 @@
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const p = await (await b.newContext({ viewport: { width: 405, height: 720 }, hasTouch: true })).newPage();
+  p.on('pageerror', e => console.log('PAGEERR', e.message));
+  await p.addInitScript(() => localStorage.setItem('ssg-intro-seen', '1'));
+  await p.route('**/three.min.js', r => r.fulfill({ path: __dirname + '/three.min.js', contentType: 'application/javascript' }));
+  await p.route('**/fonts.googleapis.com/**', r => r.abort());
+  await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(2500);
+  await p.evaluate(() => loadData('stpatricks').then(() => setCourse('stpatricks')));
+  await p.evaluate(() => { $('title').classList.remove('on'); startRound(); beginHole(); });
+  await p.waitForFunction(() => G.state === 'address', null, { timeout: 400000 });
+  const tap = async () => { const r = await p.evaluate(() => { const r = $('btnMenu').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }); await p.mouse.click(r[0], r[1]); await p.waitForTimeout(600); };
+  const pg = () => p.evaluate(() => ($('menuSheet').classList.contains('on') ? (document.querySelector('#menuSheet .mpg.on') || {}).dataset.pg : 'closed'));
+  await tap(); console.log('round tap1', await pg()); await p.evaluate(() => closeSheets());
+  await p.evaluate(() => startPractice(4)); await p.waitForTimeout(1000); await p.evaluate(() => { if (G.state !== 'address') beginHole(); }); await p.waitForFunction(() => G.state === 'address', null, { timeout: 400000 });
+  await p.evaluate(() => closeSheets()); await p.waitForTimeout(600);
+  await tap(); await p.waitForTimeout(600); console.log('prac tap1', await pg()); await p.screenshot({ path: '/tmp/stpat/shots/prac1.png' });
+  await tap(); await p.waitForTimeout(600); console.log('prac tap2', await pg());
+  await tap(); await p.waitForTimeout(600); console.log('prac tap3', await pg());
+  await p.evaluate(() => closeSheets()); await p.waitForTimeout(600);
+  await tap(); await p.waitForTimeout(600); console.log('prac reopen', await pg());
+  await p.click('#pracHoles button:nth-child(8)'); await p.waitForTimeout(1500); console.log('picked', await p.evaluate(() => G.hole + 1), await pg());
+  await b.close();
+})();
