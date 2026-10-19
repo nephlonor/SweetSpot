@@ -450,6 +450,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .lb .row.me{background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:#fff}.lb .row.me .rk,.lb .row.me .st,.lb .row.me small{color:rgba(255,255,255,.8)}
 .lb .row.top1 .rk{color:#c99a06}
 .lb .row.own .nm{color:#ffd24a;text-shadow:0 1px 2px rgba(70,45,0,.6)}
+.lb .row .st.ownName{color:#ffd24a;text-shadow:0 1px 2px rgba(70,45,0,.6)}
 .sheet:not(.on) .lb .row.lbNew,.sheet:not(.on) .lb .row.lbPb,.sheet:not(.on) .lbSpark{animation-play-state:paused}
 .lb .row.lbPb{position:relative;animation:lbPb 3s ease-in-out var(--lbd,0ms) both}
 @keyframes lbPb{0%{box-shadow:0 0 0 0 rgba(90,160,235,0),inset 0 0 0 0 rgba(90,160,235,0),inset 0 0 0 40px rgba(130,185,245,0)}25%{box-shadow:0 0 14px 2px rgba(90,160,235,.4),inset 0 0 0 1.5px rgba(80,150,230,.6),inset 0 0 0 40px rgba(130,185,245,.16)}100%{box-shadow:0 0 0 0 rgba(90,160,235,0),inset 0 0 0 0 rgba(90,160,235,0),inset 0 0 0 40px rgba(130,185,245,0)}}
@@ -8762,6 +8763,7 @@ function fillArchive(el, add) {
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = fmt(x.d).split(' ').slice(1).join(' ');
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (COURSES[x.c] ? COURSES[x.c].short : x.c); const sm = document.createElement('small'); sm.textContent = `${fmt(x.d).split(' ')[0]} · ${x.n} player${x.n === 1 ? '' : 's'}${mine[x.d] && mine[x.d].status === 'done' ? ' · played' : ''}`; nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.t); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.w;
+    if (x.wb ? x.wb === dlMe() : String(x.w).toLowerCase() === cleanName(settings.name).toLowerCase()) sc.classList.add('ownName'); // my own win: the winner's name in gold
     row.append(rk, nm, tp, sc); row.onclick = () => { DL.tab = 'day'; DL.arch = x.d; loadDailyFile(x.d); fillDaily(el); }; list.appendChild(row);
   });
 }

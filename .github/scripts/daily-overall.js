@@ -11,7 +11,7 @@ module.exports = function build(today) {
     if (!Array.isArray(rows) || !rows.length) continue;
     rows = rows.slice().sort((a, b) => a.toPar - b.toPar || a.at - b.at);
     const dn = Math.floor(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 864e5);
-    index.push({ d, c: dn >= D5 ? COURSES5[(dn - D5) % 5] : dn >= D4 ? COURSES4[(dn - D4) % 4] : COURSES[dn % 3], n: rows.length, w: rows[0].name, t: rows[0].toPar });
+    index.push({ d, c: dn >= D5 ? COURSES5[(dn - D5) % 5] : dn >= D4 ? COURSES4[(dn - D4) % 4] : COURSES[dn % 3], n: rows.length, w: rows[0].name, wb: rows[0].by, t: rows[0].toPar });
     let rank = 0;
     rows.forEach((x, i) => {
       if (i === 0 || x.toPar !== rows[i - 1].toPar) rank = i + 1; // players level on the score share the place
