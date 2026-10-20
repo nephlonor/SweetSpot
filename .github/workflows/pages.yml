@@ -21,6 +21,7 @@ jobs:
       - uses: actions/configure-pages@v5
       - run: |
           mkdir _site && cp index.html manifest.webmanifest sw.js data-*.js *.png *.jpg *.mp4 _site/
+          cp -r audio _site/audio
           sed -i "s/__BUILD__/${GITHUB_SHA}/" _site/index.html _site/sw.js
           echo "${GITHUB_SHA}" > _site/version.txt
       - uses: actions/upload-pages-artifact@v3
