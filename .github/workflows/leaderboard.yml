@@ -7,7 +7,9 @@ on:
   issues:
     types: [opened]
   schedule:
-    - cron: '20 5 * * *' # just after the daily challenge closes (midnight US Eastern): the day's points are counted
+    - cron: '10 4 * * *' # just after the daily challenge closes (midnight US Eastern is 04:00 UTC in summer time, 05:00 UTC in winter): the day's points are counted
+    - cron: '10 5 * * *'
+    - cron: '40 5 * * *' # a late safety run
   workflow_dispatch:
 permissions:
   contents: write
