@@ -133,7 +133,7 @@ body.swing #topbar{opacity:0}
 body.swap #tempo{left:auto;right:calc(var(--sr) + 10px)}
 body.swap #strike{right:auto;left:calc(var(--sl) + 38px)}
 body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
-body.search #tempo,body.search #strike,body.search #fx,body.search #skipBtn,body.search #pinTag,body.search #ballTag{opacity:0!important;pointer-events:none}
+body.search #tempo,body.search #strike,body.search #fx,body.search #skipBtn,body.search #pinTag,body.search #ballTag,body.search #coach{opacity:0!important;pointer-events:none}
 #skipBtn{position:absolute;z-index:6;transform:translate(-50%,6px) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .3s var(--spring);padding:7px 16px 8px;border-radius:18px;color:#fff;font:600 15px Oswald,"Arial Narrow",sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:5px;cursor:pointer}
 #dataLoad{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;padding:14px 22px;border-radius:20px;color:#fff;font:600 17px var(--cond);letter-spacing:.06em;text-transform:uppercase;opacity:0;pointer-events:none;transition:opacity .2s;text-align:center;max-width:80vw}#dataLoad.on{opacity:1}
 #skipBtn.on{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
@@ -9148,7 +9148,8 @@ function frame(now) {
   updateSkipBtn(); updateUnplayBtn(); updateCoach();
   const hudOff = G.state === 'title' || G.state === 'intro';
   $('hud').classList.toggle('off', hudOff);
-  if (!hudOff) { if (G.state === 'spec') mpDrawRemote(now); else { drawTempo(now); drawStrike(now); drawFx(now); } } else if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height);
+  if (!hudOff && G.state === 'search') { if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height); } // the search for a lost ball: no strike dial, no shot chips, nothing drawn over the view
+  else if (!hudOff) { if (G.state === 'spec') mpDrawRemote(now); else { drawTempo(now); drawStrike(now); drawFx(now); } } else if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height);
   renderTiltShift(dt);
 }
 // the first hole of the course in play behind the title screen
