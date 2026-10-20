@@ -6193,7 +6193,7 @@ function ambStep(a, kind, st, t) {
 }
 // GCC Basel's music is a recording, not synthesised (audio/exit-song.mp3), looped, fading in and out with the music setting.
 // The file is fetched once (the offline cache keeps it) and played through an <audio> element that the first touch has unlocked.
-const FM = { el: null, loading: false, loaded: false, fail: 0, vol: 0, primed: false }, FM_VOL = .05, FM_SRC = 'audio/exit-song.mp3';
+const FM = { el: null, loading: false, loaded: false, fail: 0, vol: 0, primed: false, ac: null, gain: null, url: null }, FM_VOL = .02, FM_SRC = 'audio/exit-song.mp3';
 const FM_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 function fmPrime() { // inside a touch: a silent clip played (not muted: a muted one would not count) lets the element play later
   if (FM.primed || FM.loaded) return; FM.primed = true;
@@ -6209,12 +6209,18 @@ function fileMusic(want) {
   const F = FM;
   if (want && !F.loaded && !F.loading && Date.now() - F.fail > 20000) {
     F.loading = true;
-    fetch(FM_SRC).then(r => r.ok ? r.blob() : Promise.reject()).then(b => { const el = F.el || (F.el = new Audio()); el.pause(); el.loop = true; el.muted = false; el.src = URL.createObjectURL(b); el.volume = 0; F.loaded = true; F.loading = false; }).catch(() => { F.loading = false; F.fail = Date.now(); });
+    fetch(FM_SRC).then(r => r.ok ? r.blob() : Promise.reject()).then(b => { const el = F.el || (F.el = new Audio()); el.pause(); el.loop = true; el.muted = false; F.url = URL.createObjectURL(b); el.src = F.url; F.loaded = true; F.loading = false; }).catch(() => { F.loading = false; F.fail = Date.now(); });
   }
-  const el = F.el; if (!el || !F.loaded) return;
-  F.vol = clamp(F.vol + clamp((want ? FM_VOL : 0) - F.vol, want ? -.05 : -.06, .02), 0, 1); el.volume = F.vol;
-  if (want && el.paused && AC && AC.state === 'running') { const pr = el.play(); if (pr && pr.catch) pr.catch(() => { }); }
-  if (!want && F.vol < .002 && !el.paused) el.pause();
+  if (!F.loaded || !AC || AC.state === 'closed') return;
+  // the element's own volume is ignored by phones: it is routed through the audio context and its gain sets the loudness
+  if (F.ac !== AC) {
+    if (F.ac && F.el) { try { F.el.pause(); } catch (e) { } F.el = new Audio(); F.el.loop = true; F.el.src = F.url; } // (a new context needs a new element: one element feeds one context)
+    try { const n = AC.createMediaElementSource(F.el); F.gain = AC.createGain(); F.gain.gain.value = 0; n.connect(F.gain).connect(AC.destination); F.ac = AC; } catch (e) { F.gain = null; return; }
+  }
+  const el = F.el;
+  F.vol = clamp(F.vol + clamp((want ? FM_VOL : 0) - F.vol, want ? -.0025 : -.003, .001), 0, 1); F.gain.gain.value = F.vol;
+  if (want && el.paused && AC.state === 'running') { const pr = el.play(); if (pr && pr.catch) pr.catch(() => { }); }
+  if (!want && F.vol < .0004 && !el.paused) el.pause();
 }
 function musicTick() {
   if (COURSE && COURSE.key === 'gccb') { musicStop(); fileMusic(musicWanted()); return; } // (GCC Basel: the recording)

@@ -7,7 +7,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   await p.route('**/three.min.js', r => r.fulfill({ path: __dirname + '/three.min.js', contentType: 'application/javascript' }));
   await p.route('**/fonts.googleapis.com/**', r => r.abort());
   await p.goto('http://localhost:8765/index.html'); await p.waitForTimeout(3000);
-  const st = () => p.evaluate(() => JSON.stringify({ course: COURSE.key, sound: settings.sound, music: settings.music, loaded: FM.loaded, paused: FM.el ? FM.el.paused : null, vol: FM.el ? +FM.el.volume.toFixed(2) : null, dur: FM.el ? +FM.el.duration.toFixed(1) : null, t: FM.el ? +FM.el.currentTime.toFixed(1) : null, ac: AC && AC.state, synth: !!MUS.ac }));
+  const st = () => p.evaluate(() => JSON.stringify({ course: COURSE.key, sound: settings.sound, music: settings.music, loaded: FM.loaded, paused: FM.el ? FM.el.paused : null, vol: FM.el ? +FM.el.volume.toFixed(2) : null, gain: FM.gain ? +FM.gain.gain.value.toFixed(4) : null, routed: FM.ac === AC, dur: FM.el ? +FM.el.duration.toFixed(1) : null, t: FM.el ? +FM.el.currentTime.toFixed(1) : null, ac: AC && AC.state, synth: !!MUS.ac }));
   await p.evaluate(() => { settings.sound = true; settings.music = true; loadData('gccb'); setCourse('gccb'); });
   await p.waitForTimeout(5000); console.log('before any touch', await st());
   await p.mouse.click(200, 400); await p.waitForTimeout(3000); console.log('after the first touch', await st());
