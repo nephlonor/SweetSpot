@@ -6868,19 +6868,19 @@ function resetBallFade() { const m = W.ball.material; if (m.transparent || m.opa
 function startSearch(sh, r) {
   const C = G.C, P = r.land || r.final, dx = P.x - G.prev.x, dz = P.z - G.prev.z, dl = Math.hypot(dx, dz) || 1;
   G.state = 'search'; document.body.classList.add('search'); sh.searchDone = null; W.ball.visible = false; W.aim.visible = W.ring.visible = W.peg.visible = false; W.tracer.visible = false; $('readout').classList.remove('on'); UI.readT = 0;
-  // the view is centred a little away from the ball (up to 11 m along the line of play, 4 m across it), so the middle of the screen is no hint
-  const ox = (Math.random() * 2 - 1) * 11, oz = (Math.random() * 2 - 1) * 4, ux = dx / dl, uz = dz / dl;
+  // the view is centred a little away from the ball (up to 14 m along the line of play, 6 m across it), so the middle of the screen is no hint
+  const ox = (Math.random() * 2 - 1) * 14, oz = (Math.random() * 2 - 1) * 6, ux = dx / dl, uz = dz / dl;
   G.search = { sh, r, t0: performance.now(), from: W.cam.position.clone(), fromLook: G.camLook.clone(), P: { x: P.x + ux * ox - uz * oz, z: P.z + uz * ox + ux * oz }, dx: ux, dz: uz, done: false };
   G.search.grass = searchGrass(G.search.P.x, G.search.P.z);
   $('searchHint').classList.add('on'); SFX.blip();
 }
 // the ground where the ball is lost is made denser: extra fescue (and marram tussocks) scattered over the rough round the middle of the view
 function searchGrass(cx, cz) {
-  const C = G.C, mar = !!RDC.marram, N = PERF.lite ? 1400 : 3400, NM = mar ? (PERF.lite ? 300 : 800) : 0, out = [], M = new THREE.Matrix4(), sc = new THREE.Vector3(), col = new THREE.Color();
+  const C = G.C, mar = !!RDC.marram, N = PERF.lite ? 2200 : 5600, NM = mar ? (PERF.lite ? 450 : 1300) : 0, out = [], M = new THREE.Matrix4(), sc = new THREE.Vector3(), col = new THREE.Color();
   const mk = (geo, n, big) => {
     const m = new THREE.InstancedMesh(geo, lifeMat(true, 128, 40), n); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3); m.frustumCulled = false; let k = 0;
     for (let t = 0; t < n * 3 && k < n; t++) {
-      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * 30, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d, sf = C.surf(x, z);
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * 46, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d, sf = C.surf(x, z);
       if (sf !== S.DEEP && sf !== S.ROUGH) continue; if (!C.inBounds(x, z)) continue;
       const s = (big ? .8 + Math.random() * .7 : .9 + Math.random() * .7) * (sf === S.DEEP ? 1.15 : .9);
       M.makeRotationY(Math.random() * TAU); M.scale(sc.set(s, s * (.85 + Math.random() * .5), s)); M.setPosition(x, groundY(x, z) - .03, z); m.setMatrixAt(k, M);
@@ -6899,7 +6899,7 @@ function searchMark(i, x, z, rad, col) {
   m.material.color.setHex(col); m.scale.set(rad, rad, rad); m.position.set(x, G.C.h(x, z) + .3, z); m.visible = true;
 }
 function searchTap(e) {
-  const S2 = G.search; if (!S2 || S2.done || performance.now() - S2.t0 < 2000) return; // the view settles first
+  const S2 = G.search; if (!S2 || S2.done || performance.now() - S2.t0 < 3600) return; // the view settles first
   const C = G.C, r = S2.r, rc = $('gl').getBoundingClientRect(), ray = new THREE.Raycaster();
   ray.setFromCamera({ x: ((e.clientX - rc.left) / rc.width) * 2 - 1, y: -((e.clientY - rc.top) / rc.height) * 2 + 1 }, W.cam);
   let p = null, y0 = C.h(S2.P.x, S2.P.z);
@@ -7143,8 +7143,8 @@ function updateCamera(dt) {
     return;
   }
   if (G.state === 'search' && G.search && C) { // the bird's-eye view of the spot where the ball vanished
-    const S2 = G.search, P = S2.P, e = smooth(0, 2.2, (performance.now() - S2.t0) / 1000), h = C.h(P.x, P.z);
-    camTmp.set(P.x - S2.dx * 7, h + 50, P.z - S2.dz * 7); cam.position.lerpVectors(S2.from, camTmp, e);
+    const S2 = G.search, P = S2.P, e = smoother(clamp((performance.now() - S2.t0) / 4800, 0, 1)), h = C.h(P.x, P.z);
+    camTmp.set(P.x - S2.dx * 9, h + 72, P.z - S2.dz * 9); cam.position.lerpVectors(S2.from, camTmp, e);
     lookTmp.set(P.x, h, P.z); G.camLook.copy(S2.fromLook).lerp(lookTmp, e); cam.lookAt(G.camLook); return;
   }
   if (G.state === 'intro') {
@@ -7179,7 +7179,7 @@ function updateCamera(dt) {
     camFollowTargets(dt);
     const lsh = G.shot; // a lost ball: the follow view slows down and settles on the spot it had, well before the highest point
     if (G.state === 'flight' && lsh && lsh.res.lost && !lsh.replay && lsh.camS > 0) {
-      if (!lsh.fzP) { lsh.fzP = R.bPos.clone(); lsh.fzL = R.bLook.clone(); }
+      if (!lsh.fzP) { lsh.fzP = R.bPos.clone(); lsh.fzL = R.bLook.clone(); lsh.fzD = G.camLook.clone().sub(cam.position).normalize(); } // (the way the camera is looking now)
       R.bPos.lerp(lsh.fzP, lsh.camS); R.bLook.lerp(lsh.fzL, lsh.camS);
     }
   }
@@ -7197,7 +7197,7 @@ function updateCamera(dt) {
   const A = R.arr;
   if (A && G.state === 'settle' && A.finT == null) A.finT = R.t; // the shot is over: the real address view takes over from the prediction
   if (!A) { // address (or flight before the arrival): follow targets, filtered
-    if (flying) { camStep(R.bPos, R.bLook, 1, dt); if (G.shake > 0) { G.shake -= dt; cam.position.x += (Math.random() - .5) * .06; cam.position.y += (Math.random() - .5) * .06; } }
+    if (flying) { camStep(R.bPos, R.bLook, 1, dt); const hs = G.shot; if (G.state === 'flight' && hs && hs.res.lost && !hs.replay && hs.fzD) { G.camLook.copy(cam.position).addScaledVector(hs.fzD, 30); cam.lookAt(G.camLook); } /* a lost ball: the camera slows down without tilting, holding its direction */ if (G.shake > 0) { G.shake -= dt; cam.position.x += (Math.random() - .5) * .06; cam.position.y += (Math.random() - .5) * .06; } }
     else { addressCam(camTmp, lookTmp); let wf = 0; if (G.rbow) { const u = rbowU(dt); if (G.rbow) { rbowCam(camTmp, lookTmp, u); wf = 1; } } camStep(camTmp, lookTmp, wf, dt); }
     return;
   }
