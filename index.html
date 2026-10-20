@@ -6817,7 +6817,7 @@ function finishShot() {
     logShot(sh, r, true, false);
     G.state = 'holed'; G.holedT = 0; G.scores[h] = G.strokes;
     if (G.gir[h] == null) G.gir[h] = G.strokes - 1 <= par - 2;
-    if (first && par >= 4) G.fir[h] = false;
+    if (first && par >= 4) G.fir[h] = true; // holed from the tee
     statsHole(h); saveRound(); mpState(true); SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
     setTimeout(() => { if (G.state === 'holed') showDone(false); }, 1300); updateHUD(); return;
   }
@@ -6829,7 +6829,7 @@ function finishShot() {
   } else {
     placeBall(r.final.x, r.final.z, false);
     big = SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${Math.round(r.total)} m · carry ${Math.round(r.carry)} m`;
-    if (first && par >= 4) G.fir[h] = G.surf === S.FAIR;
+    if (first && par >= 4) G.fir[h] = G.surf === S.FAIR || G.surf === S.GREEN || G.surf === S.FRINGE; // a tee shot that finds the green or its fringe (a driveable par 4) counts as hitting the fairway
   }
   finishTail(sh, r, big, sub, first);
 }
