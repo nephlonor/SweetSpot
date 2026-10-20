@@ -6193,7 +6193,7 @@ function ambStep(a, kind, st, t) {
 }
 // GCC Basel's music is a recording, not synthesised (audio/exit-song.mp3), looped, fading in and out with the music setting.
 // The file is fetched once (the offline cache keeps it) and played through an <audio> element that the first touch has unlocked.
-const FM = { el: null, loading: false, loaded: false, fail: 0, vol: 0, primed: false }, FM_VOL = .15, FM_SRC = 'audio/exit-song.mp3';
+const FM = { el: null, loading: false, loaded: false, fail: 0, vol: 0, primed: false }, FM_VOL = .05, FM_SRC = 'audio/exit-song.mp3';
 const FM_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 function fmPrime() { // inside a touch: a silent clip played (not muted: a muted one would not count) lets the element play later
   if (FM.primed || FM.loaded) return; FM.primed = true;
