@@ -770,7 +770,7 @@ const WIND_EFFECT = .7; // all wind pushes 30% less than its displayed speed wou
 // its floor and the stick, so drops, lip-outs, hops and stick hits all come out of the same physics.
 // the top edge of the hole is rounded off (a fillet of radius CUP_LIP where the green meets the cup wall), as a cut hole wears: a ball
 // rolling over the edge is drawn down into the hole rather than bouncing off a sharp corner, so borderline putts drop a little more often
-let CUP_LIP = .022; // (tuned: 10 % more putts catch the lip than with a sharp edge, and 10 % more lip in; tests/lip.js)
+let CUP_LIP = .044; // (the fillet radius, doubled from .022 (which gave 10 % more lip contacts and lip-ins than a sharp edge); tests/lip.js)
 const CUP_DEPTH = .52, PIN_R = .035, CUP_G = GRAV * .35, CUP_IMP = .35;
 let CUP_IN = CUP_RIM + CUP_LIP + .03, CUP_OUT = CUP_RIM + CUP_LIP + VIS_R + .08;
 function cupZone(C, o, x, yb, z, vx, vy, vz, t, fr, ev, mu, air, w) {
