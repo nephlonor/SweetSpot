@@ -15,7 +15,9 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
     G.club = 0; const now = performance.now(); Object.assign(SW, { phase: 'swing', t0: now - 900, tTop: now - 450, pMax: .85 }); impact(now);
   });
   const st = () => p.evaluate(() => JSON.stringify({ state: G.state, vis: W.ball.visible, op: +W.ball.material.opacity.toFixed(2), pt: +G.playT.toFixed(2), fz: !!(G.shot && G.shot.camFreeze), ta: G.shot && G.shot.tApex && +G.shot.tApex.toFixed(2), tl: G.shot && G.shot.tLand && +G.shot.tLand.toFixed(2), tracer: W.tracer.visible }));
+  await p.evaluate(() => { window.__cs = []; let last = null; const f = () => { if (G.shot && G.state === 'flight') { const c = W.cam.position, t = G.playT; if (last && t > last.t) window.__cs.push([+t.toFixed(2), +(c.distanceTo(last.c) / (t - last.t)).toFixed(1)]); last = { c: c.clone(), t }; } requestAnimationFrame(f); }; f(); });
   for (let i = 0; i < 400; i++) { await p.waitForTimeout(800); const s = JSON.parse(await st()); if (i % 6 === 0) console.log(JSON.stringify(s)); if (s.state === 'search') break; }
+  console.log('cam speed (m/s) by playT:', await p.evaluate(() => JSON.stringify(window.__cs.filter((v, i) => i % 3 === 0).slice(0, 40))));
   await p.waitForTimeout(2800);
   // is the ball always inside the frame whatever the random offset? (re-roll the view centre many times, project the hidden ball)
   console.log(await p.evaluate(() => {

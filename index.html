@@ -6742,7 +6742,7 @@ function updateFlight(dt) {
   const lx = !!r.lost && !sh.replay && !sh.skipped; // a lost ball: the camera stops before the apex, the ball fades out slowly and is gone as it lands
   if (lx && sh.tApex == null) {
     let my = -1e9, ta = 0; for (let k = 0; k < r.n; k++) if (fr[k * 5 + 2] > my) { my = fr[k * 5 + 2]; ta = fr[k * 5]; }
-    sh.tApex = ta; sh.tLand = r.land ? r.land.t : r.duration; sh.tStop = ta * .7; sh.tFade = Math.min(ta, Math.max(0, sh.tLand - 1.2));
+    sh.tApex = ta; sh.tLand = r.land ? r.land.t : r.duration; sh.tSlow = ta * .35; sh.tStop = ta * .8; sh.tFade = Math.min(ta, Math.max(0, sh.tLand - 1.2));
   }
   G.playT += dt * (sh.L.putt ? 1 : 1.1) * (lx && G.playT >= sh.tStop && G.playT < sh.tLand ? .6 : 1);
   const tEnd = r.duration, tt = clamp(G.playT, 0, tEnd);
@@ -6756,7 +6756,8 @@ function updateFlight(dt) {
   let corr = 0; if (md !== 2) { const gH = G.C.h(x, z), above = y - gH; if (above < 1.5) corr = (groundY(x, z) - gH) * (1 - Math.max(0, above) / 1.5); }
   W.ball.position.set(x, y + corr + VIS_R, z);
   if (lx) {
-    if (tt >= sh.tStop && !sh.camFreeze) { sh.camFreeze = true; W.tracer.visible = false; } // the camera stays where it is (updateCamera); the line stops showing
+    sh.camS = smoother(clamp((tt - sh.tSlow) / Math.max(.2, sh.tStop - sh.tSlow), 0, 1)); // the camera eases to a stop (updateCamera)
+    if (tt >= sh.tStop && !sh.camFreeze) { sh.camFreeze = true; W.tracer.visible = false; } // from here the line stops showing and the landing gives nothing away
     if (tt >= sh.tFade) {
       const k = clamp(1 - (tt - sh.tFade) / Math.max(.3, sh.tLand - sh.tFade), 0, 1), m = W.ball.material; if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } m.opacity = k;
     }
@@ -7171,12 +7172,16 @@ function updateCamera(dt) {
     const px = cx + Math.cos(a) * 64, pz = cz + Math.sin(a) * 64; // over real woods the orbit keeps above the treetops
     cam.position.set(px, C.real ? Math.max(C.cup.y + 26, C.h(px, pz) + 30) : C.cup.y + 22, pz); G.camLook.set(cx, C.cup.y + 2, cz); cam.lookAt(G.camLook); camSnap(); return;
   }
-  if (G.state === 'flight' && G.shot && G.shot.camFreeze && !G.shot.replay) { cam.lookAt(G.camLook); return; } // a lost ball: the camera stopped before the apex
   // (light while the ball is moving, heavier as the arrival move progresses and the ball is at rest, so any hop in its drawn position when it comes to rest is smoothed out)
   dampV3(R.bf, W.ball.position, R.bfv, .08 + .3 * smoother((R.arr ? (R.t - R.arr.t0) / R.arr.D : 0) / .5 - .3), dt); const ball = R.bf; // the ball position, filtered: a hop of the drawn ball never reaches the camera
   const sr = G.shot && G.shot.res, flying = G.state === 'flight' || G.state === 'holed';
   if (G.state === 'flight' || G.state === 'holed') {
     camFollowTargets(dt);
+    const lsh = G.shot; // a lost ball: the follow view slows down and settles on the spot it had, well before the highest point
+    if (G.state === 'flight' && lsh && lsh.res.lost && !lsh.replay && lsh.camS > 0) {
+      if (!lsh.fzP) { lsh.fzP = R.bPos.clone(); lsh.fzL = R.bLook.clone(); }
+      R.bPos.lerp(lsh.fzP, lsh.camS); R.bLook.lerp(lsh.fzL, lsh.camS);
+    }
   }
   // the arrival move: begins ~1 s before the ball stops (or when the shot is over without one), ends at the address view
   const canPre = sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && !sr.lost && sr.final && R.hgt < 1.2 && sr.duration - G.playT <= 1;
