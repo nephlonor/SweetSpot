@@ -3355,7 +3355,7 @@ const RDS = {
   // an English parkland in October: cool, damp emerald turf, oaks turning copper and gold; Rothley Brook is a penalty area like Rae's Creek
   rothley: { lostWood: 50, autumn: true, creek: true, data: RD_ROTHLEY, alti: RD_ROTHLEY.alti, z0: RD_ROTHLEY.z0, gr: RD_ROTHLEY.gr, tweak: { 7545: { hide: true } } /* hole 7: the oak just right of the line, 26 m off the tee */, tiers: [], tierCut: {}, benches: [], greenK: .7 },
   // a links in the big dunes by the Atlantic: fescue turf, marram on the dunes, sandy blowouts, Tramore beach and Sheephaven Bay below, both out of bounds
-  stpatricks: { lostRough: 10, marram: true, data: RD_STPATRICKS, alti: RD_STPATRICKS.alti, z0: RD_STPATRICKS.z0, gr: RD_STPATRICKS.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8,
+  stpatricks: { teeAim: { 10: [277.7, 13.8], 11: [266.1, 22.6], 13: [241.7, 33.4] }, lostRough: 10, marram: true, data: RD_STPATRICKS, alti: RD_STPATRICKS.alti, z0: RD_STPATRICKS.z0, gr: RD_STPATRICKS.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8,
     // the greens: the elevation model is smooth over the dunes, so it reads a green's surroundings into it (up to a 12 % tilt and a 2.8 m crown);
     // every green keeps 40 % of those contours and at most a 3.5 % tilt, the 13th and 17th (to chip onto) 25 % and 2 %
     greenFlat: { all: [.4, .035], 9: [.3, .03], 12: [.25, .02], 16: [.25, .02] }, teeRaise: { 6: 1.8 } } // and the 7th's tee is built up: a ridge 40 m out hid the fairway // the 13th and 17th: the real ground there is tilted (7 %) or crowned, too much to chip onto, so these greens are flattened
@@ -6424,7 +6424,10 @@ function autoClubAndAim() {
   const C = G.C, d = distToPin(), lw = CLUBS[PUTTER - 1];
   // a partial shot (closer than the lob wedge's full reach, or from a bunker close in) goes straight for the flag; everything else for the back third
   const partial = d < lw.carry + lw.roll * .6 + 4 || (G.surf === S.SAND && d < 90);
-  const bt = partial ? { x: C.cup.x, z: C.cup.z } : backThird(), dB = Math.hypot(bt.x - G.ball.x, bt.z - G.ball.z);
+  // tee shots with a set target (RDC.teeAim: [metres along the line to the green, metres to the left of it]): the caddie aims there and picks the club for it
+  const ta = G.teed && RDC.teeAim && RDC.teeAim[G.hole]; let tpt = null;
+  if (ta) { const g = C.greenCenter || C.cup, dx = g.x - G.ball.x, dz = g.z - G.ball.z, l = Math.hypot(dx, dz) || 1, ux = dx / l, uz = dz / l; tpt = { x: G.ball.x + ux * ta[0] + uz * ta[1], z: G.ball.z + uz * ta[0] - ux * ta[1] }; }
+  const bt = tpt || (partial ? { x: C.cup.x, z: C.cup.z } : backThird()), dB = Math.hypot(bt.x - G.ball.x, bt.z - G.ball.z);
   G.target = null;
   if (onGreenish()) { G.club = PUTTER; G.suggested = PUTTER; G.yaw = Math.atan2(C.cup.x - G.ball.x, -(C.cup.z - G.ball.z)); pickPuttRange(); G.carryKey = ''; updateAim(true); return; }
   let ci = CLUBS.length - 2;
@@ -6433,7 +6436,7 @@ function autoClubAndAim() {
   // caddie: aim down the centre line at the club's reach; step down a club if a pure shot would finish wet or OB
   const aimFor = k => {
     const reach = CLUBS[k].carry + CLUBS[k].roll; let tx = bt.x, tz = bt.z;
-    if (reach < dB - 15) {
+    if (!tpt && reach < dB - 15) {
       let bestS = 0, bd = 1e9; for (let s2 = 0; s2 <= C.center.L; s2 += 2) { const p = polyAt(C.center, s2), dd = Math.hypot(p[0] - G.ball.x, p[1] - G.ball.z); if (dd < bd) { bd = dd; bestS = s2; } }
       for (let s2 = bestS; s2 <= C.center.L; s2 += 2) { const p = polyAt(C.center, s2); if (Math.hypot(p[0] - G.ball.x, p[1] - G.ball.z) >= reach) { tx = p[0]; tz = p[1]; break; } }
     }
@@ -6472,7 +6475,7 @@ function autoClubAndAim() {
     }
     if (!clear) yaw = bestY;
   }
-  G.club = pick; G.suggested = pick; G.yaw = yaw;
+  G.club = pick; G.suggested = pick; G.yaw = yaw; if (tpt) G.target = [tpt.x, tpt.z];
   G.carryKey = ''; updateAim(true);
 }
 // equivalent flat distance: uphill costs (5/7)·dh/μ metres of roll, downhill gives it back
