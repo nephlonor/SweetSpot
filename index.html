@@ -105,6 +105,10 @@ body.finale #tempo,body.finale #strike,body.finale #coach,body.finale #aimHint,b
 #ballTag.landed .bt2{display:block}
 #aimHint{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);font:600 14px var(--cond);letter-spacing:.11em;text-transform:uppercase;padding:9px 18px;border-radius:999px;opacity:0;transition:opacity .4s;white-space:nowrap;display:flex;gap:9px;align-items:center}
 #aimHint.on{opacity:1}
+#searchHint{position:absolute;left:50%;bottom:calc(var(--sb) + 56px);transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 22px;border-radius:20px;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
+#searchHint b{font:700 17px var(--cond);letter-spacing:.1em;text-transform:uppercase}
+#searchHint span{font:600 12px var(--cond);letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+#searchHint.on{opacity:1}
 #coach{position:absolute;left:50%;top:21%;transform:translate(-50%,-6px);width:min(86vw,330px);padding:11px 16px;border-radius:16px;text-align:center;font:600 13.5px/1.35 var(--body);color:#fff;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s;z-index:5}
 #coach.on{opacity:1;transform:translate(-50%,0)}
 #coach b{display:block;font:600 11px var(--cond);letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin-bottom:3px}
@@ -129,6 +133,7 @@ body.swing #topbar{opacity:0}
 body.swap #tempo{left:auto;right:calc(var(--sr) + 10px)}
 body.swap #strike{right:auto;left:calc(var(--sl) + 38px)}
 body.flight #tempo,body.flight #strike{opacity:.4;transition:opacity .4s}
+body.search #tempo,body.search #strike,body.search #fx,body.search #skipBtn,body.search #pinTag,body.search #ballTag{opacity:0!important;pointer-events:none}
 #skipBtn{position:absolute;z-index:6;transform:translate(-50%,6px) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .3s var(--spring);padding:7px 16px 8px;border-radius:18px;color:#fff;font:600 15px Oswald,"Arial Narrow",sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:5px;cursor:pointer}
 #dataLoad{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;padding:14px 22px;border-radius:20px;color:#fff;font:600 17px var(--cond);letter-spacing:.06em;text-transform:uppercase;opacity:0;pointer-events:none;transition:opacity .2s;text-align:center;max-width:80vw}#dataLoad.on{opacity:1}
 #skipBtn.on{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
@@ -507,6 +512,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
   <div id="coach" class="glass"></div>
   <div id="aimHint" class="glass"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Drag to aim</div>
+  <div class="glass" id="searchHint"><b>Search for your ball</b><span>Tap where it is, within 2 m</span></div>
   <div class="card" id="readout"></div>
   <button class="glass" id="unplayBtn" aria-label="Unplayable lie or retake the shot">Unplayable lie?</button>
   <button class="glass" id="skipBtn" aria-label="Skip to the next shot">Next<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"/></svg></button>
@@ -623,7 +629,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div><b>Tempo · <span class="thTl">left</span> thumb</b>Touch anywhere on the <span class="thTl">left</span> and slide down for the backswing. The scale shows the carry for your club. Slide back up past where you started to strike. The upstroke must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the upstroke straight: the sideways drift of your thumb on the way up (traced in yellow on the tempo scale, fading after the strike) sets the starting line, so drifting right sends the ball right of your aim line and drifting left sends it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · <span class="thSl">right</span> thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
-  <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, within two club lengths of where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. Max score is par + 5.</div>
+  <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, within two club lengths of where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. A ball that vanishes in the deep rough more than 10 m from the fairway and green at St Patrick's, or more than 50 m deep in the woods (not at Augusta), is searched for: tap where it lies, within 2 m, and you play it as it is; a wrong tap is a lost ball, with one stroke and replay. Max score is par + 5.</div>
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
   <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu. Rothley Park in Leicestershire: hole lines, paths, buildings, the brook and the railway from © OpenStreetMap contributors (ODbL); the ground, the trees and the field ditches from the Environment Agency's 1 m LiDAR (Open Government Licence); greens, fairways, bunkers and tees traced from the aerial photograph; the mowing, flags and tee furniture after the club's own course photographs. It is played in October, and it rains on about half the holes. St Patrick's Links at Rosapenna, Co. Donegal (Tom Doak, 2021), is played from the Sandstone tees: no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, Esri and its partners); the routing after the club's course plan, and the greens, fairways, bunkers, sandy blowouts and Tramore beach traced from the aerial photographs (Esri World Imagery). Tramore beach and the sea beyond it are out of bounds; the wind off the Atlantic is stronger than inland, and showers come through on about four holes in ten.</div>
 </div></div>
@@ -1059,7 +1065,7 @@ function simulateShot(C, o) {
   const n = fr.length / 5;
   const fx = fr[(n - 1) * 5 + 1], fz = fr[(n - 1) * 5 + 3];
   if (!res.holed && !res.water && !res.ob && C.isOB(fx, fz)) res.ob = true;
-  if (!res.holed && !res.water && !res.ob && C.lost && C.lost(fx, fz)) { res.ob = true; res.lost = true; }
+  if (!res.holed && !res.water && !res.ob && C.lost && C.lost(fx, fz)) res.lost = true; // not out of bounds: the ball is searched for after the shot
   res.frames = Float32Array.from(fr); res.n = n; res.events = ev; res.apex = apex - o.y; res.land = land;
   res.final = { x: fx, y: fr[(n - 1) * 5 + 2], z: fz };
   res.finalSurf = res.water ? S.WATER : C.surf(fx, fz);
@@ -2552,14 +2558,18 @@ function makeRealCourse(idx, pin) {
       const q = polyQ(C.center, X, Z, 1e5), sg = C.center.segs[q.seg], fx = (sg.bx - sg.ax) / sg.len, fz = (sg.bz - sg.az) / sg.len;
       return (X - (sg.ax + (sg.bx - sg.ax) * q.u)) * -fz + (Z - (sg.az + (sg.bz - sg.az) * q.u)) * fx > 0;
     };
-    // how far into the forest: walk back toward the line of play through unbroken deep rough
-    const depth = (X, Z) => {
-      const q = polyQ(C.center, X, Z, 1e5), sg = C.center.segs[q.seg], px = sg.ax + (sg.bx - sg.ax) * q.u, pz = sg.az + (sg.bz - sg.az) * q.u, d = Math.hypot(px - X, pz - Z) || 1;
-      for (let k = 0; k < d; k += 2) if (C.surf(X + (px - X) * k / d, Z + (pz - Z) * k / d) !== S.DEEP) return k;
-      return d;
-    };
     C.isOB = (X, Z) => obLine(X, Z) && !rightOf(X, Z);
-    C.lost = (X, Z) => rightOf(X, Z) && C.surf(X, Z) === S.DEEP && depth(X, Z) > 80;
+  }
+  // a ball that comes to rest in the deep rough more than RDC.lostRough m from the fairway and green, or more than RDC.lostWood m deep in the forest, is lost: it is searched for (startSearch)
+  if (RDC.lostRough || RDC.lostWood) {
+    const wood = (X, Z) => { // how far into the forest: walk back toward the line of play through unbroken deep rough
+      const q = polyQ(C.center, X, Z, 1e5), sg = C.center.segs[q.seg], px = sg.ax + (sg.bx - sg.ax) * q.u, pz = sg.az + (sg.bz - sg.az) * q.u, d = Math.hypot(px - X, pz - Z) || 1, cap = Math.min(d, RDC.lostWood + 4);
+      for (let k = 0; k < cap; k += 2) if (C.surf(X + (px - X) * k / d, Z + (pz - Z) * k / d) !== S.DEEP) return k;
+      return cap;
+    };
+    const mown = new Set([S.FAIR, S.FIRST, S.GREEN, S.FRINGE, S.TEE]); // (the distance fields only reach a few metres, so the nearest cut grass is looked for in rings)
+    const nearMown = (X, Z, R) => { for (let d = 1.5; d <= R; d += 1.5) for (let a = 0; a < 24; a++) if (mown.has(C.surf(X + Math.cos(a * TAU / 24) * d, Z + Math.sin(a * TAU / 24) * d))) return true; return false; };
+    C.lost = (X, Z) => C.surf(X, Z) === S.DEEP && ((RDC.lostRough && !nearMown(X, Z, RDC.lostRough)) || (RDC.lostWood && wood(X, Z) > RDC.lostWood));
   }
   C.inBounds = (X, Z) => { const e = enuE(X, Z), n = enuN(X, Z); return e > GR.e0 + 20 && e < GR.e0 + GR.W * GR.res - 20 && n > GR.n0 + 20 && n < GR.n0 + GR.H * GR.res - 20; };
   C.teeDist = (X, Z) => fieldAt(fT, X, Z);
@@ -3337,15 +3347,15 @@ const STPATRICKS_DEFS = RD_STPATRICKS.holes.map((h, i) => ({ par: h.par, hcp: h.
 const ALSACE_DEFS = RD_ALSACE.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 8101 + i * 41, windMax: 5.5, rh: h, len: h.len, real: true, teeCam: null }));
 // the real-course data sets: switched in with the course (see setCourse)
 const RDS = {
-  gccb: { data: RD_GCCB, alti: GREEN_ALTI_GCCB, z0: 300, gr: { e0: -1300, n0: -760, res: 2, W: 1300, H: 760 }, tweak: TREE_TWEAK_GCCB, tiers: [2, 6, 14, 16], tierCut: TIER_CUT_GCCB, benches: GCCB_BENCHES_G },
-  alsace: { dry: true, obOther: { 9: 17, 17: 9 }, data: RD_ALSACE, alti: RD_ALSACE.alti, z0: RD_ALSACE.z0, gr: RD_ALSACE.gr, tweak: {}, tiers: [], tierCut: {}, benches: [] },
+  gccb: { lostWood: 50, data: RD_GCCB, alti: GREEN_ALTI_GCCB, z0: 300, gr: { e0: -1300, n0: -760, res: 2, W: 1300, H: 760 }, tweak: TREE_TWEAK_GCCB, tiers: [2, 6, 14, 16], tierCut: TIER_CUT_GCCB, benches: GCCB_BENCHES_G },
+  alsace: { lostWood: 50, dry: true, obOther: { 9: 17, 17: 9 }, data: RD_ALSACE, alti: RD_ALSACE.alti, z0: RD_ALSACE.z0, gr: RD_ALSACE.gr, tweak: {}, tiers: [], tierCut: {}, benches: [] },
   // lush, pine straw under the stands, the greens keep their full LiDAR contours
   augusta: { lush: true, data: RD_AUGUSTA, alti: RD_AUGUSTA.alti, z0: RD_AUGUSTA.z0, gr: RD_AUGUSTA.gr, tweak: { 22889: { hide: true }, 22950: { hide: true }, 22835: { hide: true } }, // hole 17: the three dogwoods in the line of play off the tee
     tiers: [], tierCut: {}, benches: [], greenK: .85 },
   // an English parkland in October: cool, damp emerald turf, oaks turning copper and gold; Rothley Brook is a penalty area like Rae's Creek
-  rothley: { autumn: true, creek: true, data: RD_ROTHLEY, alti: RD_ROTHLEY.alti, z0: RD_ROTHLEY.z0, gr: RD_ROTHLEY.gr, tweak: { 7545: { hide: true } } /* hole 7: the oak just right of the line, 26 m off the tee */, tiers: [], tierCut: {}, benches: [], greenK: .7 },
+  rothley: { lostWood: 50, autumn: true, creek: true, data: RD_ROTHLEY, alti: RD_ROTHLEY.alti, z0: RD_ROTHLEY.z0, gr: RD_ROTHLEY.gr, tweak: { 7545: { hide: true } } /* hole 7: the oak just right of the line, 26 m off the tee */, tiers: [], tierCut: {}, benches: [], greenK: .7 },
   // a links in the big dunes by the Atlantic: fescue turf, marram on the dunes, sandy blowouts, Tramore beach and Sheephaven Bay below, both out of bounds
-  stpatricks: { marram: true, data: RD_STPATRICKS, alti: RD_STPATRICKS.alti, z0: RD_STPATRICKS.z0, gr: RD_STPATRICKS.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8,
+  stpatricks: { lostRough: 10, marram: true, data: RD_STPATRICKS, alti: RD_STPATRICKS.alti, z0: RD_STPATRICKS.z0, gr: RD_STPATRICKS.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8,
     // the greens: the elevation model is smooth over the dunes, so it reads a green's surroundings into it (up to a 12 % tilt and a 2.8 m crown);
     // every green keeps 40 % of those contours and at most a 3.5 % tilt, the 13th and 17th (to chip onto) 25 % and 2 %
     greenFlat: { all: [.4, .035], 9: [.3, .03], 12: [.25, .02], 16: [.25, .02] }, teeRaise: { 6: 1.8 } } // and the 7th's tee is built up: a ridge 40 m out hid the fairway // the 13th and 17th: the real ground there is tilted (7 %) or crowned, too much to chip onto, so these greens are flattened
@@ -6383,7 +6393,7 @@ function startHole(i) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: true };
   autoClubAndAim();
   Object.assign(SW, { phase: 'idle', mark: null, last: null, resultT: 0, trail: [] });
-  W.tracer.geometry.setDrawRange(0, 0); W.ball.visible = true; W.aim.visible = W.ring.visible = false;
+  W.tracer.geometry.setDrawRange(0, 0); resetBallFade(); W.ball.visible = true; W.aim.visible = W.ring.visible = false;
   G.state = 'intro'; G.introT = 0; G.introSnap = true;
   showIntro(); drawMapThumb(); updateHUD();
 }
@@ -6726,7 +6736,8 @@ function skipShot() {
 function updateFlight(dt) {
   const sh = G.shot, r = sh.res, fr = r.frames;
   // one playback rate for the whole shot: switching rate mid-roll made the ball visibly speed up after landing
-  G.playT += dt * (sh.L.putt ? 1 : 1.1);
+  const lx = !!r.lost && !sh.replay && !sh.skipped; // a lost ball: the descent is played slowly and the ball fades out as it lands
+  G.playT += dt * (sh.L.putt ? 1 : 1.1) * (lx && sh.slow && !sh.fadeT ? .5 : 1);
   const tEnd = r.duration, tt = clamp(G.playT, 0, tEnd);
   // the moment the ball comes to rest on the green, clear the shot card so the putt can be read
   if (!sh.calm && G.playT >= tEnd && restsOnGreen(r)) { sh.calm = true; $('readout').classList.remove('on'); UI.readT = 0; }
@@ -6737,6 +6748,13 @@ function updateFlight(dt) {
   // near the ground, follow the drawn facets rather than the smooth physics surface
   let corr = 0; if (md !== 2) { const gH = G.C.h(x, z), above = y - gH; if (above < 1.5) corr = (groundY(x, z) - gH) * (1 - Math.max(0, above) / 1.5); }
   W.ball.position.set(x, y + corr + VIS_R, z);
+  if (lx) {
+    sh.maxY = Math.max(sh.maxY || 0, y); if (!sh.slow && y < sh.maxY - 1.5 && md !== 2) sh.slow = true;
+    if (sh.fadeT) {
+      const k = clamp(1 - (performance.now() - sh.fadeT) / 350, 0, 1), m = W.ball.material; if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } m.opacity = k;
+      if (k <= 0) { W.ball.visible = false; if (!sh.lostSkip && performance.now() - sh.fadeT > 900) { sh.lostSkip = true; sh.ei = r.events.length; G.playT = Math.max(G.playT, tEnd + .7); } }
+    }
+  }
   // axis = up x travel: a positive angle rolls the ball forward on the ground; in the air it spins backwards (backspin)
   const mv = Math.hypot(x - px, z - pz); if (mv > 1e-4 && mv < 5 && md !== 2) W.ball.rotateOnWorldAxis(_ax.set(z - pz, 0, -(x - px)).normalize(), (md === 0 ? -1 : 1) * mv / (VIS_R * W.ball.scale.x));
   // wildlife, birds, the plane and the paraglider can be hit: the ball bounces off and the rest of the flight is played from there
@@ -6747,6 +6765,7 @@ function updateFlight(dt) {
   while (sh.ei < r.events.length && r.events[sh.ei].t <= tt) {
     const e = r.events[sh.ei++];
     if (e.type === 'land' || e.type === 'bounce') {
+      if (lx && !sh.fadeT) sh.fadeT = performance.now();
       SFX.land(e.s * 4);
       if (e.s > 2) { const sand = e.surf === S.SAND; burst(e.x, e.y + .05, e.z, 0, 0, sand ? [0xf2e3bf, 0xfff3dc] : [0x8dce69, 0xacE287, 0x6ab353], sand ? 18 : 8, sand ? 2.5 : 1.6, sand ? 2.5 : 1.6); }
     }
@@ -6812,7 +6831,7 @@ function restsOnGreen(r) {
 }
 function finishShot() {
   const sh = G.shot, r = sh.res, C = G.C, h = G.hole, par = C.def.par, first = G.strokes === 1;
-  document.body.classList.remove('flight'); statsShot(sh, r);
+  if (!sh.searchDone) { if (!r.lost) document.body.classList.remove('flight'); statsShot(sh, r); }
   if (r.holed) {
     logShot(sh, r, true, false);
     G.state = 'holed'; G.holedT = 0; G.scores[h] = G.strokes;
@@ -6821,6 +6840,7 @@ function finishShot() {
     statsHole(h); saveRound(); mpState(true); SFX.chime(); readout(`<div class="r1 good">In the hole!</div><div class="r3"><span>${sh.summary}</span></div>`, 2.2);
     setTimeout(() => { if (G.state === 'holed') showDone(false); }, 1300); updateHUD(); return;
   }
+  if (r.lost && !sh.searchDone) { startSearch(sh, r); return; }
   let big = '', sub = '';
   if (r.water) { G.strokes++; G.pens[h]++; waterRelief(sh, r, first); return; } // one penalty stroke, then the player picks where to drop
   else if (r.ob) {
@@ -6828,10 +6848,46 @@ function finishShot() {
     placeBall(G.prev.x, G.prev.z, G.prev.teed); big = `<span class="bad">${r.lost ? 'Ball not found' : 'Out of bounds'}</span>`; sub = 'Stroke and distance';
   } else {
     placeBall(r.final.x, r.final.z, false);
-    big = SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${Math.round(r.total)} m · carry ${Math.round(r.carry)} m`;
+    big = (sh.searchDone === 'found' ? 'Found it · ' : '') + SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${Math.round(r.total)} m · carry ${Math.round(r.carry)} m`;
     if (first && par >= 4) G.fir[h] = G.surf === S.FAIR || G.surf === S.GREEN || G.surf === S.FRINGE; // a tee shot that finds the green or its fringe (a driveable par 4) counts as hitting the fairway
   }
   finishTail(sh, r, big, sub, first);
+}
+/* ---------- a lost ball: the search ---------- */
+// the ball vanished where it landed; the camera rises to a bird's-eye view of the spot and the player taps where the ball lies: within 2 m of it, the ball is found
+// and played from there; any other tap and the ball is lost (stroke and distance)
+function resetBallFade() { const m = W.ball.material; if (m.transparent || m.opacity !== 1) { m.transparent = false; m.opacity = 1; m.needsUpdate = true; } }
+function startSearch(sh, r) {
+  const C = G.C, P = r.land || r.final, dx = P.x - G.prev.x, dz = P.z - G.prev.z, dl = Math.hypot(dx, dz) || 1;
+  G.state = 'search'; document.body.classList.add('search'); sh.searchDone = null; W.ball.visible = false; W.aim.visible = W.ring.visible = W.peg.visible = false; W.tracer.visible = false; $('readout').classList.remove('on'); UI.readT = 0;
+  G.search = { sh, r, t0: performance.now(), from: W.cam.position.clone(), fromLook: G.camLook.clone(), P: { x: P.x, z: P.z }, dx: dx / dl, dz: dz / dl, done: false };
+  $('searchHint').classList.add('on'); SFX.blip();
+}
+function searchMark(i, x, z, rad, col) {
+  W.sMarks = W.sMarks || []; let m = W.sMarks[i];
+  if (!m) { m = W.sMarks[i] = new THREE.Mesh(new THREE.RingGeometry(.84, 1, 48), new THREE.MeshBasicMaterial({ transparent: true, opacity: .95, depthTest: false, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.renderOrder = 20; W.scene.add(m); }
+  m.material.color.setHex(col); m.scale.set(rad, rad, rad); m.position.set(x, G.C.h(x, z) + .3, z); m.visible = true;
+}
+function searchTap(e) {
+  const S2 = G.search; if (!S2 || S2.done || performance.now() - S2.t0 < 2000) return; // the view settles first
+  const C = G.C, r = S2.r, rc = $('gl').getBoundingClientRect(), ray = new THREE.Raycaster();
+  ray.setFromCamera({ x: ((e.clientX - rc.left) / rc.width) * 2 - 1, y: -((e.clientY - rc.top) / rc.height) * 2 + 1 }, W.cam);
+  let p = null, y0 = C.h(S2.P.x, S2.P.z);
+  for (let k = 0; k < 4; k++) { const t = (y0 - ray.ray.origin.y) / ray.ray.direction.y; if (!(t > 0)) break; p = ray.ray.origin.clone().addScaledVector(ray.ray.direction, t); y0 = C.h(p.x, p.z); }
+  if (!p) return;
+  S2.done = true; $('searchHint').classList.remove('on');
+  const found = Math.hypot(p.x - r.final.x, p.z - r.final.z) <= 2;
+  searchMark(0, p.x, p.z, found ? 2 : .9, found ? 0x7ee08a : 0xff8a7a);
+  if (found) { resetBallFade(); W.ball.visible = true; SFX.chime(); readout('<div class="r1 good">Found your ball</div>', 1.8); }
+  else { searchMark(1, r.final.x, r.final.z, 2, 0x7ee08a); SFX.tree(); readout('<div class="r1 bad">Not there</div><div class="r3"><span>The ball is lost · stroke and distance</span></div>', 2.4); }
+  setTimeout(() => {
+    if (G.state !== 'search' || G.search !== S2) return;
+    for (const m of W.sMarks || []) m.visible = false;
+    G.search = null; document.body.classList.remove('search'); camSnap(); resetBallFade();
+    if (found) { S2.sh.searchDone = 'found'; W.ball.visible = true; }
+    else { S2.sh.searchDone = 'lost'; r.ob = true; ST.lost++; W.ball.visible = true; }
+    G.state = 'flight'; finishShot();
+  }, found ? 1100 : 2300);
 }
 // the rest of a shot once the ball has its new lie
 function finishTail(sh, r, big, sub, first) {
@@ -7056,6 +7112,11 @@ function updateCamera(dt) {
     if (W.aim) W.aim.visible = false; if (W.ring) W.ring.visible = false; if (W.windDot) W.windDot.visible = false; if (W.windLine) W.windLine.visible = false;
     return;
   }
+  if (G.state === 'search' && G.search && C) { // the bird's-eye view of the spot where the ball vanished
+    const S2 = G.search, P = S2.P, e = smooth(0, 2.2, (performance.now() - S2.t0) / 1000), h = C.h(P.x, P.z);
+    camTmp.set(P.x - S2.dx * 7, h + 42, P.z - S2.dz * 7); cam.position.lerpVectors(S2.from, camTmp, e);
+    lookTmp.set(P.x, h, P.z); G.camLook.copy(S2.fromLook).lerp(lookTmp, e); cam.lookAt(G.camLook); return;
+  }
   if (G.state === 'intro') {
     const T = 11, t = (G.introT % (T + 1.5)) / T, e = easeInOut(clamp(t, 0, 1)), L = C.center.L;
     const s = lerp(-30, L - 25, e), p = polyAt(C.center, Math.max(0, s)), q = polyAt(C.center, Math.min(L, s + 80));
@@ -7088,7 +7149,7 @@ function updateCamera(dt) {
     camFollowTargets(dt);
   }
   // the arrival move: begins ~1 s before the ball stops (or when the shot is over without one), ends at the address view
-  const canPre = sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && sr.final && R.hgt < 1.2 && sr.duration - G.playT <= 1;
+  const canPre = sr && G.state === 'flight' && !sr.holed && !sr.water && !sr.ob && !sr.lost && sr.final && R.hgt < 1.2 && sr.duration - G.playT <= 1;
   if (!R.arr && (canPre || G.state === 'settle')) {
     const pre = !!canPre; let pPos = R.pPos, pLook = R.pLook;
     if (pre) { const f = sr.final, yaw = Math.atan2(C.cup.x - f.x, -(C.cup.z - f.z)); addressCamFor(pPos, pLook, f.x, C.h(f.x, f.z), f.z, yaw, restsOnGreen(sr), false); }
@@ -7122,7 +7183,7 @@ function updateCamera(dt) {
 function enterAddress() {
   G.unplay = null; setTimeout(unplayCheck, 400);
   saveRound(); mpState(true); if (G.pendingReel) { G.pendingReel = false; setTimeout(() => { if (G.state === 'address') openReel(); }, 350); }
-  if (G.rig) G.rig.arr = null; G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
+  if (G.rig) G.rig.arr = null; resetBallFade(); G.state = 'address'; if (SW.sid == null && !SW.mouseR) SW.thumb = false; SW.mark = null; SW.looseSide = Math.random() < .5 ? -1 : 1; W.aim.visible = W.ring.visible = true; W.ball.visible = true;
   const pin = !isPutt(); if (W.flag) { W.flag.visible = pin; W.pole.visible = pin; }
   if (W.slope) W.slope.mesh.visible = isPutt() && (G.surf === S.GREEN || G.surf === S.FRINGE);
   if (!settings.aimed) $('aimHint').classList.add('on');
@@ -7934,10 +7995,10 @@ function beat(key, val, info, quiet) {
 function statsShot(sh, r) {
   const C = G.C, par = C.def.par, pv = G.prev || { x: G.ball.x, z: G.ball.z, teed: false }, putt = !!sh.L.putt, club = CLUBS[G.club] ? CLUBS[G.club].name : '';
   ST.shots++; ST.dist += r.holed ? Math.hypot(C.cup.x - pv.x, C.cup.z - pv.z) : (r.total || 0);
-  if (r.water) ST.water++; if (r.lost) ST.lost++; else if (r.ob) ST.ob++;
+  if (r.water) ST.water++; if (r.ob && !r.lost) ST.ob++; // (a lost ball is counted once the search has failed)
   if (r.events && r.events.some(e => e.type === 'tree')) ST.trees++;
   const where = `Hole ${G.hole + 1} · ${COURSE.short}${G.practice ? ' · practice' : ''}`;
-  if (pv.teed && par >= 4 && !r.water && !r.ob && r.total > 0) beat('drive', r.total, where);
+  if (pv.teed && par >= 4 && !r.water && !r.ob && !r.lost && r.total > 0) beat('drive', r.total, where);
   if (r.holed) {
     const d = Math.hypot(C.cup.x - pv.x, C.cup.z - pv.z); ST.holedShots++; if (!putt && G.strokes > 1) ST.chipins++;
     const big = beat('holed', d, where + ' · ' + club);
@@ -8868,6 +8929,7 @@ function initInput() {
   document.addEventListener('pointerdown', e => {
     const tg = e.target;
     if (tg && tg.closest && tg.closest('button, .sheet, .layer.on, #scrim, #mpPanel, #dlPanel, #specBar')) return;
+    if (G.state === 'search') { searchTap(e); e.preventDefault(); return; }
     if (!canSwing()) return;
     audio();
     const x = e.clientX, y = e.clientY;
