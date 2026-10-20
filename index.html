@@ -6193,7 +6193,7 @@ function ambStep(a, kind, st, t) {
 }
 // GCC Basel's music is a recording, not synthesised (audio/exit-song.mp3), looped, fading in and out with the music setting.
 // The file is fetched once (the offline cache keeps it) and played through an <audio> element that the first touch has unlocked.
-const FM = { el: null, loading: false, loaded: false, fail: 0, vol: 0, primed: false, ac: null, gain: null, url: null }, FM_VOL = .3, FM_SRC = 'audio/exit-song.mp3';
+const FM = { el: null, loading: false, loaded: false, fail: 0, vol: 0, primed: false, ac: null, gain: null, url: null, hold: 0 }, FM_VOL = .3, FM_SRC = 'audio/exit-song.mp3';
 const FM_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 function fmPrime() { // inside a touch: a silent clip played (not muted: a muted one would not count) lets the element play later
   if (FM.primed || FM.loaded) return; FM.primed = true;
@@ -6205,6 +6205,17 @@ function fmGesture() {
   const pr = el.play(); if (pr && pr.catch) pr.catch(() => { });
 }
 for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) document.addEventListener(ev, fmGesture, true);
+// leaving the app (home button, another app, a locked screen): a phone suspends the page's timers and the audio context, and can leave the
+// element playing at full volume. So the fade-out is started on the audio clock (it runs without the page), then the element is paused.
+function fmLeave() {
+  const F = FM, el = F.el; if (!el || !F.loaded) return;
+  if (F.gain && AC && AC.state !== 'closed') { try { const t = AC.currentTime, g = F.gain.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + .5); } catch (e) { } }
+  F.vol = 0; F.hold = performance.now() + 700;
+  setTimeout(() => { try { el.pause(); } catch (e) { } }, 560);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) fmLeave(); });
+window.addEventListener('pagehide', () => { try { if (FM.el) FM.el.pause(); } catch (e) { } });
+document.addEventListener('freeze', () => { try { if (FM.el) FM.el.pause(); } catch (e) { } });
 function fileMusic(want) {
   const F = FM;
   if (want && !F.loaded && !F.loading && Date.now() - F.fail > 20000) {
@@ -6217,6 +6228,7 @@ function fileMusic(want) {
     if (F.ac && F.el) { try { F.el.pause(); } catch (e) { } F.el = new Audio(); F.el.loop = true; F.el.src = F.url; } // (a new context needs a new element: one element feeds one context)
     try { const n = AC.createMediaElementSource(F.el); F.gain = AC.createGain(); F.gain.gain.value = 0; n.connect(F.gain).connect(AC.destination); F.ac = AC; } catch (e) { F.gain = null; return; }
   }
+  if (performance.now() < F.hold) return; // (leaving the app: the fade-out on the audio clock is running)
   const el = F.el;
   F.vol = clamp(F.vol + clamp((want ? FM_VOL : 0) - F.vol, want ? -.05 : -.06, .02), 0, 1); F.gain.gain.value = F.vol;
   if (want && el.paused && AC.state === 'running') { const pr = el.play(); if (pr && pr.catch) pr.catch(() => { }); }
