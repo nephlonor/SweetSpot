@@ -6739,8 +6739,12 @@ function skipShot() {
 function updateFlight(dt) {
   const sh = G.shot, r = sh.res, fr = r.frames;
   // one playback rate for the whole shot: switching rate mid-roll made the ball visibly speed up after landing
-  const lx = !!r.lost && !sh.replay && !sh.skipped; // a lost ball: the descent is played slowly and the ball fades out as it lands
-  G.playT += dt * (sh.L.putt ? 1 : 1.1) * (lx && sh.slow && !sh.fadeT ? .5 : 1);
+  const lx = !!r.lost && !sh.replay && !sh.skipped; // a lost ball: the camera stops before the apex, the ball fades out slowly and is gone as it lands
+  if (lx && sh.tApex == null) {
+    let my = -1e9, ta = 0; for (let k = 0; k < r.n; k++) if (fr[k * 5 + 2] > my) { my = fr[k * 5 + 2]; ta = fr[k * 5]; }
+    sh.tApex = ta; sh.tLand = r.land ? r.land.t : r.duration; sh.tStop = ta * .7; sh.tFade = Math.min(ta, Math.max(0, sh.tLand - 1.2));
+  }
+  G.playT += dt * (sh.L.putt ? 1 : 1.1) * (lx && G.playT >= sh.tStop && G.playT < sh.tLand ? .6 : 1);
   const tEnd = r.duration, tt = clamp(G.playT, 0, tEnd);
   // the moment the ball comes to rest on the green, clear the shot card so the putt can be read
   if (!sh.calm && G.playT >= tEnd && restsOnGreen(r)) { sh.calm = true; $('readout').classList.remove('on'); UI.readT = 0; }
@@ -6752,11 +6756,11 @@ function updateFlight(dt) {
   let corr = 0; if (md !== 2) { const gH = G.C.h(x, z), above = y - gH; if (above < 1.5) corr = (groundY(x, z) - gH) * (1 - Math.max(0, above) / 1.5); }
   W.ball.position.set(x, y + corr + VIS_R, z);
   if (lx) {
-    sh.maxY = Math.max(sh.maxY || 0, y); if (!sh.slow && y < sh.maxY - 1.5 && md !== 2) sh.slow = true;
-    if (sh.fadeT) {
-      const k = clamp(1 - (performance.now() - sh.fadeT) / 350, 0, 1), m = W.ball.material; if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } m.opacity = k;
-      if (k <= 0) { W.ball.visible = false; if (!sh.lostSkip && performance.now() - sh.fadeT > 900) { sh.lostSkip = true; sh.ei = r.events.length; G.playT = Math.max(G.playT, tEnd + .7); } }
+    if (tt >= sh.tStop && !sh.camFreeze) { sh.camFreeze = true; W.tracer.visible = false; } // the camera stays where it is (updateCamera); the line stops showing
+    if (tt >= sh.tFade) {
+      const k = clamp(1 - (tt - sh.tFade) / Math.max(.3, sh.tLand - sh.tFade), 0, 1), m = W.ball.material; if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } m.opacity = k;
     }
+    if (tt >= sh.tLand) { W.ball.visible = false; if (!sh.lostSkip && tt >= sh.tLand + .4) { sh.lostSkip = true; sh.ei = r.events.length; G.playT = Math.max(G.playT, tEnd + .7); } }
   }
   // axis = up x travel: a positive angle rolls the ball forward on the ground; in the air it spins backwards (backspin)
   const mv = Math.hypot(x - px, z - pz); if (mv > 1e-4 && mv < 5 && md !== 2) W.ball.rotateOnWorldAxis(_ax.set(z - pz, 0, -(x - px)).normalize(), (md === 0 ? -1 : 1) * mv / (VIS_R * W.ball.scale.x));
@@ -6767,8 +6771,8 @@ function updateFlight(dt) {
   }
   while (sh.ei < r.events.length && r.events[sh.ei].t <= tt) {
     const e = r.events[sh.ei++];
+    if (lx && sh.camFreeze && e.type !== 'splash') continue; // nothing gives away where the ball came down
     if (e.type === 'land' || e.type === 'bounce') {
-      if (lx && !sh.fadeT) sh.fadeT = performance.now();
       SFX.land(e.s * 4);
       if (e.s > 2) { const sand = e.surf === S.SAND; burst(e.x, e.y + .05, e.z, 0, 0, sand ? [0xf2e3bf, 0xfff3dc] : [0x8dce69, 0xacE287, 0x6ab353], sand ? 18 : 8, sand ? 2.5 : 1.6, sand ? 2.5 : 1.6); }
     }
@@ -6863,9 +6867,31 @@ function resetBallFade() { const m = W.ball.material; if (m.transparent || m.opa
 function startSearch(sh, r) {
   const C = G.C, P = r.land || r.final, dx = P.x - G.prev.x, dz = P.z - G.prev.z, dl = Math.hypot(dx, dz) || 1;
   G.state = 'search'; document.body.classList.add('search'); sh.searchDone = null; W.ball.visible = false; W.aim.visible = W.ring.visible = W.peg.visible = false; W.tracer.visible = false; $('readout').classList.remove('on'); UI.readT = 0;
-  G.search = { sh, r, t0: performance.now(), from: W.cam.position.clone(), fromLook: G.camLook.clone(), P: { x: P.x, z: P.z }, dx: dx / dl, dz: dz / dl, done: false };
+  // the view is centred a little away from the ball (up to 11 m along the line of play, 4 m across it), so the middle of the screen is no hint
+  const ox = (Math.random() * 2 - 1) * 11, oz = (Math.random() * 2 - 1) * 4, ux = dx / dl, uz = dz / dl;
+  G.search = { sh, r, t0: performance.now(), from: W.cam.position.clone(), fromLook: G.camLook.clone(), P: { x: P.x + ux * ox - uz * oz, z: P.z + uz * ox + ux * oz }, dx: ux, dz: uz, done: false };
+  G.search.grass = searchGrass(G.search.P.x, G.search.P.z);
   $('searchHint').classList.add('on'); SFX.blip();
 }
+// the ground where the ball is lost is made denser: extra fescue (and marram tussocks) scattered over the rough round the middle of the view
+function searchGrass(cx, cz) {
+  const C = G.C, mar = !!RDC.marram, N = PERF.lite ? 1400 : 3400, NM = mar ? (PERF.lite ? 300 : 800) : 0, out = [], M = new THREE.Matrix4(), sc = new THREE.Vector3(), col = new THREE.Color();
+  const mk = (geo, n, big) => {
+    const m = new THREE.InstancedMesh(geo, lifeMat(true, 128, 40), n); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3); m.frustumCulled = false; let k = 0;
+    for (let t = 0; t < n * 3 && k < n; t++) {
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * 30, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d, sf = C.surf(x, z);
+      if (sf !== S.DEEP && sf !== S.ROUGH) continue; if (!C.inBounds(x, z)) continue;
+      const s = (big ? .8 + Math.random() * .7 : .9 + Math.random() * .7) * (sf === S.DEEP ? 1.15 : .9);
+      M.makeRotationY(Math.random() * TAU); M.scale(sc.set(s, s * (.85 + Math.random() * .5), s)); M.setPosition(x, groundY(x, z) - .03, z); m.setMatrixAt(k, M);
+      const w = .88 + Math.random() * .24; if (mar) col.setRGB(w, w, w * (1 - .05 * Math.random())); else { col.setHex(GRASS_COLS[(Math.random() * GRASS_COLS.length) | 0]).offsetHSL(0, -.05, 0).multiplyScalar(.85 + Math.random() * .3); }
+      m.setColorAt(k, col); k++;
+    }
+    m.count = k; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; W.scene.add(m); out.push(m);
+  };
+  mk(mar ? fescueGeo() : grassGeo(), N, false); if (NM) mk(marramGeo(), NM, true);
+  return out;
+}
+function searchGrassOff() { const S2 = G.search; if (S2 && S2.grass) for (const m of S2.grass) { W.scene.remove(m); m.geometry.dispose(); } }
 function searchMark(i, x, z, rad, col) {
   W.sMarks = W.sMarks || []; let m = W.sMarks[i];
   if (!m) { m = W.sMarks[i] = new THREE.Mesh(new THREE.RingGeometry(.84, 1, 48), new THREE.MeshBasicMaterial({ transparent: true, opacity: .95, depthTest: false, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.renderOrder = 20; W.scene.add(m); }
@@ -6882,11 +6908,11 @@ function searchTap(e) {
   const found = Math.hypot(p.x - r.final.x, p.z - r.final.z) <= 2;
   searchMark(0, p.x, p.z, found ? 2 : .9, found ? 0x7ee08a : 0xff8a7a);
   if (found) { resetBallFade(); W.ball.visible = true; SFX.chime(); readout('<div class="r1 good">Found your ball</div>', 1.8); }
-  else { searchMark(1, r.final.x, r.final.z, 2, 0x7ee08a); SFX.tree(); readout('<div class="r1 bad">Not there</div><div class="r3"><span>The ball is lost · stroke and distance</span></div>', 2.4); }
+  else { SFX.tree(); readout('<div class="r1 bad">Not there</div><div class="r3"><span>The ball is lost · stroke and distance</span></div>', 2.4); }
   setTimeout(() => {
     if (G.state !== 'search' || G.search !== S2) return;
     for (const m of W.sMarks || []) m.visible = false;
-    G.search = null; document.body.classList.remove('search'); camSnap(); resetBallFade();
+    searchGrassOff(); G.search = null; document.body.classList.remove('search'); camSnap(); resetBallFade();
     if (found) { S2.sh.searchDone = 'found'; W.ball.visible = true; }
     else { S2.sh.searchDone = 'lost'; r.ob = true; ST.lost++; W.ball.visible = true; }
     G.state = 'flight'; finishShot();
@@ -7117,7 +7143,7 @@ function updateCamera(dt) {
   }
   if (G.state === 'search' && G.search && C) { // the bird's-eye view of the spot where the ball vanished
     const S2 = G.search, P = S2.P, e = smooth(0, 2.2, (performance.now() - S2.t0) / 1000), h = C.h(P.x, P.z);
-    camTmp.set(P.x - S2.dx * 7, h + 42, P.z - S2.dz * 7); cam.position.lerpVectors(S2.from, camTmp, e);
+    camTmp.set(P.x - S2.dx * 7, h + 50, P.z - S2.dz * 7); cam.position.lerpVectors(S2.from, camTmp, e);
     lookTmp.set(P.x, h, P.z); G.camLook.copy(S2.fromLook).lerp(lookTmp, e); cam.lookAt(G.camLook); return;
   }
   if (G.state === 'intro') {
@@ -7145,6 +7171,7 @@ function updateCamera(dt) {
     const px = cx + Math.cos(a) * 64, pz = cz + Math.sin(a) * 64; // over real woods the orbit keeps above the treetops
     cam.position.set(px, C.real ? Math.max(C.cup.y + 26, C.h(px, pz) + 30) : C.cup.y + 22, pz); G.camLook.set(cx, C.cup.y + 2, cz); cam.lookAt(G.camLook); camSnap(); return;
   }
+  if (G.state === 'flight' && G.shot && G.shot.camFreeze && !G.shot.replay) { cam.lookAt(G.camLook); return; } // a lost ball: the camera stopped before the apex
   // (light while the ball is moving, heavier as the arrival move progresses and the ball is at rest, so any hop in its drawn position when it comes to rest is smoothed out)
   dampV3(R.bf, W.ball.position, R.bfv, .08 + .3 * smoother((R.arr ? (R.t - R.arr.t0) / R.arr.D : 0) / .5 - .3), dt); const ball = R.bf; // the ball position, filtered: a hop of the drawn ball never reaches the camera
   const sr = G.shot && G.shot.res, flying = G.state === 'flight' || G.state === 'holed';
