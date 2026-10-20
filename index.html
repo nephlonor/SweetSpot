@@ -6922,7 +6922,7 @@ function searchTap(e) {
     if (G.state !== 'search' || G.search !== S2) return;
     for (const m of W.sMarks || []) m.visible = false;
     searchGrassOff(); G.search = null; document.body.classList.remove('search'); camSnap(); resetBallFade();
-    if (found) { S2.sh.searchDone = 'found'; W.ball.visible = true; }
+    if (found) { S2.sh.searchDone = 'found'; ST.found = (ST.found | 0) + 1; W.ball.visible = true; }
     else { S2.sh.searchDone = 'lost'; r.ob = true; ST.lost++; W.ball.visible = true; }
     G.state = 'flight'; finishShot();
   }, found ? 1100 : 2300);
@@ -8000,7 +8000,7 @@ function drawFx(now) {
 const STATS_KEY = 'ssg-stats';
 function defStats() {
   return { v: 1, rounds: 0, holes: 0, shots: 0, strokes: 0, putts: 0, dist: 0, aces: 0, eagles: 0, birdies: 0, pars: 0, bogeys: 0, doubles: 0, fwHit: 0, fwTry: 0, gir: 0, girTry: 0,
-    water: 0, ob: 0, lost: 0, trees: 0, chipins: 0, holedShots: 0, rainHoles: 0, xp: 0, trophies: [], rainbows: 0, cur: { gir: 0, fw: 0, bird: 0 },
+    water: 0, ob: 0, lost: 0, found: 0, trees: 0, chipins: 0, holedShots: 0, rainHoles: 0, xp: 0, trophies: [], rainbows: 0, cur: { gir: 0, fw: 0, bird: 0 },
     rec: { holed: { v: 10 }, putt: { v: 3 }, drive: { v: 200 }, girStreak: { v: 2 }, fwStreak: { v: 3 }, birdStreak: { v: 1 }, round: { v: 10 }, roundPutts: { v: 40 } } };
 }
 let ST = (() => { try { const s = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); if (s && s.v === 1) { if (s.xp === undefined) s.xp = (s.holes || 0) * 10 + (s.rounds || 0) * 30; const d = defStats(); for (const k in d) if (s[k] === undefined) s[k] = d[k]; for (const k in d.rec) if (!s.rec[k]) s.rec[k] = d.rec[k]; return s; } } catch (e) { } return defStats(); })();
@@ -8098,6 +8098,7 @@ function openStats() {
   if (S.water) fun.push(`<b>${S.water}</b> ball${S.water > 1 ? 's' : ''} fed the fish`);
   if (S.trees) fun.push(`You clipped the timber <b>${S.trees}</b> time${S.trees > 1 ? 's' : ''}`);
   if (S.ob + S.lost) fun.push(`<b>${S.ob}</b> out of bounds, <b>${S.lost}</b> lost in the woods`);
+  if (S.found + S.lost) fun.push(`<b>${S.found | 0}</b> ball${S.found === 1 ? '' : 's'} found after a search, <b>${S.lost}</b> lost`);
   if (S.rainHoles) fun.push(`<b>${S.rainHoles}</b> hole${S.rainHoles > 1 ? 's' : ''} played in the rain`);
   if (S.chipins) fun.push(`<b>${S.chipins}</b> holed-out shot${S.chipins > 1 ? 's' : ''} from off the green`);
   if (S.aces) fun.push(`<b>${S.aces}</b> hole${S.aces > 1 ? 's' : ''} in one. Legend.`);
@@ -8108,7 +8109,7 @@ function openStats() {
     <div class="sub"><span>Streaks running now</span></div><div class="stGrid">${card('Greens in a row', 'dot', S.cur.gir, 'best ' + S.rec.girStreak.v)}${card('Fairways in a row', 'road', S.cur.fw, 'best ' + S.rec.fwStreak.v)}${card('Birdie streak', 'feather', S.cur.bird, 'best ' + S.rec.birdStreak.v)}${card('Holes in one', 'crown', S.aces)}</div>
     <div class="sub"><span>Scoring</span></div>
     <div class="stRow"><span>Eagles or better</span><span>${S.eagles}</span></div><div class="stRow"><span>Birdies</span><span>${S.birdies}</span></div><div class="stRow"><span>Pars</span><span>${S.pars}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bogeys}</span></div><div class="stRow"><span>Double or worse</span><span>${S.doubles}</span></div>
-    <div class="stRow"><span>Fairways hit</span><span>${pct(S.fwHit, S.fwTry)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gir, S.girTry)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.holes ? (S.putts / S.holes).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${pace}</span></div><div class="stRow"><span>Rainbows seen</span><span>${S.rainbows || 0}</span></div>
+    <div class="stRow"><span>Fairways hit</span><span>${pct(S.fwHit, S.fwTry)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gir, S.girTry)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.holes ? (S.putts / S.holes).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${pace}</span></div><div class="stRow"><span>Balls found · lost</span><span>${S.found | 0} · ${S.lost | 0}</span></div><div class="stRow"><span>Rainbows seen</span><span>${S.rainbows || 0}</span></div>
     <div class="sub"><span>Fun facts</span></div><div class="stFun">${fun.map(f => `<div>${f}</div>`).join('')}</div>
     <div class="mbtns"><button class="mbtn" id="stReset">Reset stats</button><button class="mbtn dark" id="stClose">Close</button></div>`;
   $('stSub').textContent = playerName(); $('stClose').onclick = () => closeSheets();
@@ -8643,12 +8644,12 @@ function dlRec(day) { return dlRecs()[day || dayId()] || null; }
 function dlSet(rec) { const a = dlRecs(); a[rec.day] = rec; for (const k of Object.keys(a).sort().slice(0, -5)) delete a[k]; try { localStorage.setItem('ssg-daily', JSON.stringify(a)); } catch (e) { } }
 // compact stats profile and best shots, as filed with a round (numbers only)
 function profileCompact() {
-  const S = ST, R = S.rec, o = { xp: S.xp, r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, tr: S.trees, rb: S.rainbows || 0, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
+  const S = ST, R = S.rec, o = { xp: S.xp, r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, fd: S.found | 0, lo: S.lost | 0, tr: S.trees, rb: S.rainbows || 0, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
   if (R.round.at != null) o.br = R.round.v; if (S.trophies.length) o.tw = S.trophies.map(t => dayNum(t.day)).slice(-40); return o;
 }
 function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, lp: x.lp, p: x.p, cl: x.cl })); }
 const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, lp: x.lp ? 1 : 0, p: x.p | 0, cl: Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite) ? x.cl : undefined } : null;
-const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; if (Array.isArray(o.tw)) r.tw = o.tw.filter(Number.isFinite).slice(-40); return Object.keys(r).length ? r : null; };
+const cleanPf = o => { if (!o || typeof o !== 'object') return null; const r = {}; for (const k of ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'fd', 'lo', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk']) if (Number.isFinite(o[k])) r[k] = o[k]; if (Array.isArray(o.tw)) r.tw = o.tw.filter(Number.isFinite).slice(-40); return Object.keys(r).length ? r : null; };
 // ---- going out and coming in
 function dlSubscribe(c) {
   const t = dayId(), topics = [t, dayAdd(t, -1)].map(d => `ssgolf/v1/DAY${d}/d/+`); DL.subs = t;
@@ -8913,7 +8914,7 @@ function cardHtml(c) {
 }
 // one name on several devices is one player: counters add up, records take the best, trophies and best shots are pooled
 function mergeProfiles(list) {
-  const SUM = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch'], MAX = ['dr', 'ho', 'pt', 'gs', 'fs', 'bk'], pf = {}, tw = new Set(), bs = [];
+  const SUM = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'fd', 'lo'], MAX = ['dr', 'ho', 'pt', 'gs', 'fs', 'bk'], pf = {}, tw = new Set(), bs = [];
   for (const q of list) {
     const c = cleanPf(q.pf) || {};
     for (const k of SUM) if (Number.isFinite(c[k])) pf[k] = (pf[k] || 0) + c[k];
@@ -8942,7 +8943,7 @@ function openPlayer(o) {
       <div class="sub"><span>Scoring</span></div>
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
       <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h && S.pu != null ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h && S.st != null ? (S.st / S.h).toFixed(2) : '–'}</span></div>
-      <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div><div class="stRow"><span>Rainbows seen</span><span>${S.rb || 0}</span></div>` : '')
+      <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div><div class="stRow"><span>Balls found · lost</span><span>${S.fd || 0} · ${S.lo || 0}</span></div><div class="stRow"><span>Rainbows seen</span><span>${S.rb || 0}</span></div>` : '')
       + (pf ? `<div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${(S.tw || []).length}</span></div>${S.tw && S.tw.length ? trophyHtml(S.tw) : ''}` : '')
       + (on && on.length ? `<div class="sub"><span>Other usernames used in the past</span></div>${on.map(n => `<div class="stRow"><span>${String(n).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span><span></span></div>`).join('')}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
