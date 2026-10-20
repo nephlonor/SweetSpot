@@ -6195,10 +6195,16 @@ function ambStep(a, kind, st, t) {
 // The file is fetched once (the offline cache keeps it) and played through an <audio> element that the first touch has unlocked.
 const FM = { el: null, loading: false, loaded: false, fail: 0, vol: 0, primed: false }, FM_VOL = .5, FM_SRC = 'audio/exit-song.mp3';
 const FM_SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-function fmPrime() { // inside a touch: lets the element play later without one
-  if (FM.primed) return; FM.primed = true;
-  try { const el = FM.el = new Audio(); el.loop = true; el.src = FM_SILENT; el.muted = true; const pr = el.play(); if (pr && pr.then) pr.then(() => { el.pause(); el.muted = false; }).catch(() => { FM.primed = false; }); } catch (e) { FM.primed = false; }
+function fmPrime() { // inside a touch: a silent clip played (not muted: a muted one would not count) lets the element play later
+  if (FM.primed || FM.loaded) return; FM.primed = true;
+  try { const el = FM.el || (FM.el = new Audio()); el.loop = true; el.muted = false; el.src = FM_SILENT; const pr = el.play(); if (pr && pr.then) pr.then(() => { if (!FM.loaded) el.pause(); }).catch(() => { FM.primed = false; }); } catch (e) { FM.primed = false; }
 }
+// every touch also starts the music if it should be playing and is not (iOS only lets a touch start it after a return to the app, a call, or a reload)
+function fmGesture() {
+  const el = FM.el; if (!el || !FM.loaded || !el.paused || !(COURSE && COURSE.key === 'gccb' && musicWanted())) return;
+  const pr = el.play(); if (pr && pr.catch) pr.catch(() => { });
+}
+for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) document.addEventListener(ev, fmGesture, true);
 function fileMusic(want) {
   const F = FM;
   if (want && !F.loaded && !F.loading && Date.now() - F.fail > 20000) {
