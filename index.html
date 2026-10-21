@@ -3446,7 +3446,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 10 };
+const APP_ITER = { courses: 7, n: 11 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -6202,10 +6202,10 @@ function ambBell(a, m, t, v, len) { // glass: a pure tone and two inharmonic par
   }
 }
 function ambXylo(a, m, t, v, len) { // a soft xylophone / marimba bar: a round tone with one quick overtone (about 4x), a soft strike, a short ring-out
-  const f = mHz(m), L = .8 + (len || 2) * .12;
-  for (const [mul, amp, dec] of [[1, 1, L], [3.98, .2, L * .28], [9.9, .04, L * .1]]) {
+  const f = mHz(m), L = .9 + (len || 2) * .2;
+  for (const [mul, amp, dec] of [[1, 1, L], [3.98, .16, L * .3], [9.9, .03, L * .1]]) {
     const o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.value = f * mul; o.detune.value = (Math.random() - .5) * 4;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * amp, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dec); o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dec + .05);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * amp, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + dec); o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dec + .05);
   }
 }
 function ambBox(a, m, t, v) { // a music box tine: a bright, short ring
@@ -6341,8 +6341,8 @@ const AMB = {
       [[0, 74, 2], [2, 78, 2], [4, 83, 4]], [[0, 81, 3], [3, 78, 1], [4, 74, 4]], [[0, 74, 2], [2, 79, 2], [4, 83, 4]], [[0, 81, 2], [2, 79, 2], [4, 78, 4]],
       [[0, 81, 4], [4, 78, 2], [6, 81, 2]], [[0, 86, 3], [3, 83, 1], [4, 81, 4]], [[0, 78, 2], [2, 81, 2], [4, 85, 4]], [[0, 83, 2], [2, 81, 2], [4, 78, 4]],
       [[0, 76, 2], [2, 79, 2], [4, 83, 4]], [[0, 81, 3], [3, 79, 1], [4, 76, 4]], [[0, 81, 2], [2, 79, 2], [4, 76, 2], [6, 74, 2]], [[0, 73, 4], [4, 74, 4]]],
-    pat: [[0, 2, 4, 3, 5, 3, 4, 2], [0, 3, 5, 4, 2, 4, 5, 3], [0, 2, 3, 5, 4, 3, 2, 1], [0, 1, 2, 3, 4, 3, 2, 1]],
-    vars: ['plain', 'surf', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] },
+    pat: [[0, 1, 2, 3, 4, 3, 2, 1], [0, 2, 3, 4, 3, 2, 1, 2], [0, 1, 3, 2, 4, 3, 2, 1], [0, 1, 2, 3, 2, 1, 2, 3]],
+    vars: ['plain', 'surf', 'plain', 'low', 'echo', 'plain', 'plain', 'up'] },
   mountainvalley: { per: .4, echo: .9, level: .3,
     // a slow 4/4 in G, a dulcimer and a banjo-like harp over open fifths: G C G D Em C D G, two bars each; chord = [bass, pad, harp notes]
     ch: [[43, [55, 59, 62, 67], [43, 50, 55, 59, 62, 67]], [48, [52, 55, 60, 64], [48, 55, 60, 64, 67, 72]], [43, [55, 59, 62, 67], [43, 50, 55, 59, 62, 67]], [38, [50, 54, 57, 62], [50, 57, 62, 66, 69, 74]],
@@ -6423,12 +6423,12 @@ function ambStep(a, kind, st, t) {
     // 4/4 in eighths, sixteen bars to a cycle; on 'surf' cycles the xylophone rests and the shore has the piece: gulls, sea lions, the bell buoy
     const cyc = Math.floor(st / 128), bar = Math.floor(st / 8) % 16, e = st % 8, ch = K.ch[Math.floor(bar / 2)], v = K.vars[cyc % 8], intro = cyc === 0 ? Math.min(1, bar / 6) : 1;
     if (st % 128 === 0) { ambTone(a, 38, t, 54, .05, 'triangle'); ambTone(a, 50, t, 54, .02, 'triangle'); } // a low drone, the swell under the cliffs
-    if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, 6.2, .085, 1000); ambTone(a, ch[0], t, 5.6, .1); }
+    if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, 9.4, .085, 1000); ambTone(a, ch[0], t, 8.8, .1); } // (each chord lasts longer than its two bars, so the next one fades in under it: no gap)
     const pat = K.pat[(cyc + Math.floor(bar / 4)) % 4], hn = ch[2][pat[e]];
-    if (v !== 'sparse' || e % 2 === 0) ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .15 : .09) * intro);
+    ambHarp(a, hn - (v === 'low' ? 12 : 0), t, (e === 0 ? .1 : .06) * intro); // (an even, unhurried arpeggio: no jitter in the timing)
     if (v !== 'surf' && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of K.mel[bar]) {
-      if (pos !== e || (v === 'sparse' && bar % 2 === 1)) continue; const mm = m + (v === 'up' && bar >= 8 ? 12 : 0) - (v === 'low' ? 12 : 0);
-      ambXylo(a, mm - 12, t + hum(), .13 * intro, len);
+      if (pos !== e) continue; const mm = m + (v === 'up' && bar >= 8 ? 12 : 0) - (v === 'low' ? 12 : 0);
+      ambXylo(a, mm - 12, t, .11 * intro, len);
       if (v === 'echo' && len >= 3) ambXylo(a, mm - 12, t + 3 * K.per, .045, len);
     }
     if (e === 0 && Math.random() < (v === 'surf' ? .24 : .05)) ambGull(a, t + Math.random() * 1.5);
