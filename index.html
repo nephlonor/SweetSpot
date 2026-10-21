@@ -3013,7 +3013,7 @@ function realBuildingColliders(C, colliders) {
   for (const b of realBuildings(C)) {
     const id = 100001 + b.i, a = b.rot * DEG;
     colliders.push({ box: true, x: b.x, z: b.z, r: Math.hypot(b.w, b.d) / 2, c: Math.cos(a), s: -Math.sin(a), hw: b.w / 2 + .2, hd: b.d / 2 + .2, y1: b.hi + b.h + Math.min(b.w, b.d) * .3, t: id }); // (the box is the mesh's footprint: its width runs along (cos a, sin a), the collider's test takes the mirror of that angle)
-    C.colNames[id] = b.big ? 'Off the clubhouse!' : 'Off the building!';
+    C.colNames[id] = RDC.coast ? 'Off the house!' : b.big ? 'Off the clubhouse!' : 'Off the building!'; // (Pebble Beach: the large buildings round the course are houses; the clubhouse is the Lodge)
   }
 }
 function buildRealDecor(C, grp) {
@@ -5267,7 +5267,7 @@ function birdUpdate(L, b, dt) {
   if (b.st === 'circle') { const a = b.ph + L.t * b.sp; b.x = L.cx + Math.cos(a) * b.rad + b.off[0]; b.z = L.cz + Math.sin(a) * b.rad + b.off[1]; b.y = L.cbase + b.h + Math.sin(L.t * .7 + b.ph) * 2; b.yaw = Math.atan2(-Math.sin(a), Math.cos(a)); b.roll = .25; b.flap += dt * (Math.sin(L.t * .6 + b.ph) > .3 ? 4 : 11); b.glide = Math.sin(L.t * .6 + b.ph) > .3; return; }
   if (b.st === 'run' || b.st === 'look') { // the visiting gull: runs up to the ball and stands over it, head cocked, until the camera comes in for the next shot
     const bx = W.ball.position.x, bz = W.ball.position.z, cp = W.cam.position, dc = Math.hypot(cp.x - b.x, cp.z - b.z), db = Math.hypot(bx - b.x, bz - b.z);
-    if (dc < 13 || G.state === 'flight' || G.state === 'swing' || Math.hypot(bx - b.bx, bz - b.bz) > 1.5) { birdFlush(L, b, cp.x, cp.z); return; } // the camera comes close (or the ball moves): off it goes
+    if (dc < 13 || G.state === 'flight' || G.state === 'swing' || Math.hypot(bx - b.bx, bz - b.bz) > 1.5) { birdFlush(L, b, cp.x, cp.z); if (dc < 16) gullCall(); return; } // the camera comes close (or the ball moves): off it goes, calling
     let want = Math.atan2(bx - b.x, bz - b.z), da = want - b.yaw; da = Math.atan2(Math.sin(da), Math.cos(da)); b.yaw += da * Math.min(1, dt * 7);
     b.folded = true; b.glide = false; b.roll = 0;
     if (b.st === 'run' && db > 1.1) { const v = Math.min(3.2, 1 + db * .5) * dt; b.x += Math.sin(b.yaw) * v; b.z += Math.cos(b.yaw) * v; b.walk += dt * 14; b.pitch = .12; }
@@ -5624,6 +5624,19 @@ function tone(f, d, type, vol, f2, delay) {
   if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol || .2, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + d);
   o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .02);
+}
+// a gull startled off the ground: three or four sharp, falling 'kyow' calls and a flap of wings
+function gullCall() {
+  if (!settings.sound) return; const a = audio(); if (!a) return; let t = a.currentTime + .05; const n = 3 + ((Math.random() * 2) | 0), f0 = 1250 + Math.random() * 300;
+  for (let k = 0; k < n; k++) {
+    const d = .2 + Math.random() * .1, f = f0 * (1 - k * .04), o = a.createOscillator(), o2 = a.createOscillator(), bp = a.createBiquadFilter(), g = a.createGain();
+    o.type = 'sawtooth'; o2.type = 'square'; for (const q of [o, o2]) { q.frequency.setValueAtTime(f * 1.3 * (q === o2 ? 2 : 1), t); q.frequency.linearRampToValueAtTime(f * (q === o2 ? 2 : 1), t + d * .3); q.frequency.exponentialRampToValueAtTime(f * .6 * (q === o2 ? 2 : 1), t + d); }
+    bp.type = 'bandpass'; bp.frequency.value = 1700; bp.Q.value = 1.3;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.075, t + .025); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(bp); o2.connect(bp); bp.connect(g).connect(a.destination); o.start(t); o2.start(t); o.stop(t + d + .02); o2.stop(t + d + .02);
+    t += d + .07 + Math.random() * .08;
+  }
+  noiseBurst(.35, .09, 900, .5, 0);
 }
 function noiseBurst(d, vol, freq, q, delay) {
   if (!settings.sound) return; const a = audio(); if (!a) return; const t = a.currentTime + (delay || 0);
