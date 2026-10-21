@@ -3446,7 +3446,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 6 };
+const APP_ITER = { courses: 7, n: 7 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8769,8 +8769,8 @@ function courseWheel(key) {
       // the names sit on a drum (radius 205 px, 27 degrees between names: five names show, two each side), seen from the front under a strong perspective: the sides foreshorten, and the far edge of a name shrinks
       const o = i - pos, a = Math.abs(o), sg = Math.sign(o), th = sg * Math.min(a <= 1 ? 28 * a : 28 + 16 * (a - 1) + 20 * Math.max(0, a - 2), 88) * Math.PI / 180, R = 200;
       const zz = R * (Math.cos(th) - 1), x = sg * (98 * Math.min(a, 1) + 58 * clamp(a - 1, 0, 1) + 30 * Math.max(0, a - 2)) * (300 - zz) / 300; // (where the name should appear on screen, divided by the perspective's shrinking of it; the names bunch up toward the edges, as on a drum)
-      d.style.transform = `translate3d(${x - IW / 2}px, 0, ${zz}px) rotateY(${th * 180 / Math.PI}deg) scaleY(${1 + .3 * Math.min(a, 2)})`; // (the farther names are stretched tall, as the staves of a drum read from the front)
-      d.style.opacity = String(a <= 1 ? 1 - .3 * a : a <= 2 ? .7 - .4 * (a - 1) : Math.max(0, .3 - .3 * (a - 2))); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false');
+      d.style.transform = `translate3d(${x - IW / 2}px, 0, ${zz}px) rotateY(${th * 180 / Math.PI}deg) scale(${1 - .15 * Math.min(a, 2)})`; // (the farther names are smaller, as on a drum seen in perspective)
+      d.style.opacity = String(a <= 1 ? 1 - .3 * a : a <= 2 ? .7 - .34 * (a - 1) : Math.max(0, .36 - .36 * (a - 2))); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false');
     });
     const t = Math.round(pos); if (t !== lastTick && t >= 0 && t < N) { lastTick = t; try { tone(2300, .012, 'sine', .035); } catch (e) { } } // a tick as each name passes the middle
   };
