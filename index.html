@@ -1073,7 +1073,13 @@ function simulateShot(C, o) {
   }
   const n = fr.length / 5;
   const fx = fr[(n - 1) * 5 + 1], fz = fr[(n - 1) * 5 + 3];
-  if (!res.holed && !res.water && !res.ob && C.isOB(fx, fz)) res.ob = true;
+  if (!res.holed && !res.water && !res.ob && C.isOB(fx, fz)) {
+    // Pebble Beach: the beach and the cliffs between the course's edge and the Pacific are a penalty area (red stakes), not out of bounds; only the fences and roads inland are
+    if (RDC.coast && nearSea(C, fx, fz)) {
+      res.water = true; res.shore = true;
+      for (let k = n - 1; k >= 0; k--) { const px = fr[k * 5 + 1], pz = fr[k * 5 + 3]; if (!C.isOB(px, pz)) { lastDry[0] = px; lastDry[1] = pz; break; } } // the relief is taken from where it crossed the course's edge
+    } else res.ob = true;
+  }
   if (!res.holed && !res.water && !res.ob && C.lost && C.lost(fx, fz, Math.hypot(C.cup.x - sx, C.cup.z - sz))) res.lost = true; // not out of bounds: the ball is searched for after the shot
   res.frames = Float32Array.from(fr); res.n = n; res.events = ev; res.apex = apex - o.y; res.land = land;
   res.final = { x: fx, y: fr[(n - 1) * 5 + 2], z: fz };
@@ -7125,6 +7131,11 @@ function treesNear(x, z, R) { const o = []; for (const t of W.trees || []) { if 
 function clearOfTrees(list, x, z, m) { for (const t of list) { const dx = t.x - x, dz = t.z - z, rr = treeRad(t) + m; if (dx * dx + dz * dz < rr * rr) return false; } return true; }
 function dryGround(x, z) { const C = G.C; return C.surf(x, z) !== S.WATER && C.wl(x, z) < C.h(x, z) - .05 && !C.isOB(x, z); }
 function waterDist(x, z) { for (const rr of [1.5, 3, 5, 8]) for (let a = 0; a < 12; a++) if (G.C.surf(x + Math.cos(a * TAU / 12) * rr, z + Math.sin(a * TAU / 12) * rr) === S.WATER) return rr; return 10; }
+// is the sea within 80 m of here (a probe round the compass)? Used for the shore of Pebble Beach
+function nearSea(C, x, z) {
+  for (let a = 0; a < 16; a++) { const ca = Math.cos(a * TAU / 16), sa = Math.sin(a * TAU / 16); for (let d = 0; d <= 80; d += 8) if (C.surf(x + ca * d, z + sa * d) === S.WATER) return true; }
+  return false;
+}
 function waterOptions(r) {
   const C = G.C, E = r.lastDry, cup = C.cup, prev = G.prev, opts = [], dEnt = Math.hypot(cup.x - E[0], cup.z - E[1]) || 1;
   const wi = C.surfInfo(r.final.x, r.final.z).water, dzn = wi >= 0 && wi < 100 && C.waters[wi] ? C.waters[wi].o.dropZone : wi === 200 && C.def.coast ? C.def.coast.dropZone || null : null;
@@ -7149,7 +7160,7 @@ function waterOptions(r) {
 }
 function waterRelief(sh, r, first) {
   const opts = waterOptions(r); G.relief = { kind: 'water', opts, forced: true, sh, r, first };
-  openRelief('Ball in the water', 'One penalty stroke. Where do you drop?', opts, 0);
+  openRelief(r.shore ? 'Ball in the penalty area' : 'Ball in the water', 'One penalty stroke. Where do you drop?', opts, 0);
 }
 function openRelief(title, text, opts, rec) {
   $('reliefTitle').textContent = title; $('reliefText').textContent = text; const body = $('reliefBody'); body.textContent = '';
@@ -7163,7 +7174,7 @@ function chooseRelief(i) {
   const R = G.relief; if (!R) return; const o = R.opts[i]; if (!o) return; G.relief = null; closeSheets();
   if (R.kind === 'water') {
     placeBall(o.x, o.z, !!o.teed && o.k === 'replay'); const sub = 'Penalty stroke · ' + ({ zone: 'drop zone', lateral: 'lateral relief', back: 'back on the line', replay: 'stroke and distance' })[o.k];
-    finishTail(R.sh, R.r, '<span class="bad">Water hazard</span>', sub, R.first); return;
+    finishTail(R.sh, R.r, '<span class="bad">' + (R.r.shore ? 'Penalty area' : 'Water hazard') + '</span>', sub, R.first); return;
   }
   // an unplayable lie: one penalty stroke, then the same ball dropped at the edge of the rough, or played again from where it was hit
   const h = G.hole; G.strokes++; G.pens[h]++; const par = G.C.def.par;
