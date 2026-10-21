@@ -4,10 +4,10 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright'); const f
   const p = await (await b.newContext({ viewport: { width: 405, height: 720 } })).newPage();
   p.on('pageerror', e => console.log('PAGEERR', e.message));
   await p.addInitScript(() => localStorage.setItem('ssg-intro-seen', '1'));
-  await p.route('**/three.min.js', r => r.fulfill({ path: __dirname + '/three.min.js', contentType: 'application/javascript' }));
+  await p.route('**/three.min.js', r => r.fulfill({ path: process.env.THREE || (__dirname + '/three.min.js'), contentType: 'application/javascript' }));
   await p.route('**/fonts.googleapis.com/**', r => r.abort());
   await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(2500);
-  await p.evaluate(() => loadData('rothley').then(() => setCourse('rothley')));
+  await p.evaluate(c => loadData(c).then(() => setCourse(c)), process.env.COURSE || 'rothley');
   const h = +(process.argv[2] || 14), name = process.argv[3] || 'drone';
   await p.evaluate(h => { $('title').classList.remove('on'); G.weather = WEATHERS[1]; G.wxNext = WEATHERS[1]; G.wxLeft = 9; startHole(h); beginHole(); }, h);
   await p.waitForFunction(() => G.state === 'address', null, { timeout: 400000 }); await p.waitForTimeout(1500);
@@ -21,5 +21,5 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright'); const f
     const cv = document.createElement('canvas'); cv.width = w; cv.height = hh; const x = cv.getContext('2d'), img = x.createImageData(w, hh);
     for (let j = 0; j < hh; j++) img.data.set(buf.subarray((hh - 1 - j) * w * 4, (hh - j) * w * 4), j * w * 4); x.putImageData(img, 0, 0); return cv.toDataURL('image/png');
   });
-  fs.writeFileSync(`/tmp/rothley/shots/${name}.png`, Buffer.from(url.split(',')[1], 'base64')); await b.close();
+  fs.writeFileSync(`${process.env.SHOTS || '/tmp/rothley/shots'}/${name}.png`, Buffer.from(url.split(',')[1], 'base64')); await b.close();
 })();

@@ -65,7 +65,7 @@ jobs:
               const nn = r.name.trim(), who = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
               const rd = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
               const changed = [], olds = new Set();
-              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
+              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
                 const rows = rd('leaderboard/' + f, null); if (!Array.isArray(rows)) continue; let hit = false;
                 for (const x of rows) if (x && x.by === who && x.name !== nn) { olds.add(x.name); x.name = nn; hit = true; }
                 if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
@@ -84,7 +84,7 @@ jobs:
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, `Renamed: your scores are now listed as ${nn}.`);
             }
-            const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71 };
+            const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71, pebblebeach: 72 };
             const int = v => Number.isInteger(v);
             const isDaily = issue.title.startsWith('[daily]');
             if (!r || typeof r !== 'object' || !(r.course in COURSES)) return finish(false, 'Unknown course.');
