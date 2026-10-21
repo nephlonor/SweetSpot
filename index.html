@@ -3446,7 +3446,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 2 };
+const APP_ITER = { courses: 7, n: 3 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8760,16 +8760,15 @@ async function retryUnposted() {
 // the course picker: a horizontal wheel like the iOS pickers. The name in the middle is the course shown. A finger drags it; let go and it spins on with the speed it had,
 // slows down by friction, and comes to rest on a name (a soft ease onto it), which is then selected. A tap on a name rolls to that name.
 function courseWheel(key) {
-  const IW = 112, list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), N = list.length, wrap = document.createElement('div');
+  const IW = 112, PX = 82, list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), N = list.length, wrap = document.createElement('div');
   wrap.className = 'cwrap'; wrap.setAttribute('role', 'listbox'); wrap.setAttribute('aria-label', 'Course');
   const items = list.map(c => { const d = document.createElement('div'); d.className = 'cwi'; d.textContent = c.short; d.setAttribute('role', 'option'); wrap.appendChild(d); return d; });
   let cur = Math.max(0, list.findIndex(c => c.key === key)), pos = cur, vel = 0, raf = 0, drag = null, lastTick = cur;
-  const paint = () => {
-    const w = wrap.clientWidth || 360;
+  const paint = () => { // the middle name large; two names each side, the nearer one fading, the outer one faint; a drum seen from the front
     items.forEach((d, i) => {
-      const o = i - pos, a = Math.abs(o), q = Math.min(a, 2.6);
-      d.style.transform = `translateX(${o * IW * (1 - .1 * Math.min(a, 1.5)) - IW / 2}px) translateZ(${-q * 34}px) rotateY(${-clamp(o * 46, -72, 72)}deg) scale(${1 - .07 * q})`; // (a drum seen from the front: the names turn away and sink as they leave the middle)
-      d.style.opacity = a * IW > w / 2 + IW ? '0' : String(Math.max(.1, 1 - .46 * q)); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false');
+      const o = i - pos, a = Math.abs(o), q = Math.min(a, 2.6), x = Math.sign(o) * (96 * Math.min(a, 1) + 66 * clamp(a - 1, 0, 1) + 36 * Math.max(0, a - 2));
+      d.style.transform = `translateX(${x - IW / 2}px) translateZ(${-q * 30}px) rotateY(${-clamp(o * 44, -70, 70)}deg) scale(${1 - .06 * q})`;
+      d.style.opacity = String(a <= 1 ? 1 - .36 * a : a <= 2 ? .64 - .42 * (a - 1) : Math.max(0, .22 - .22 * (a - 2))); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false');
     });
     const t = Math.round(pos); if (t !== lastTick && t >= 0 && t < N) { lastTick = t; try { tone(2300, .012, 'sine', .035); } catch (e) { } } // a tick as each name passes the middle
   };
@@ -8794,17 +8793,17 @@ function courseWheel(key) {
   wrap.addEventListener('pointerdown', e => { if (e.button) return; try { wrap.setPointerCapture(e.pointerId); } catch (x) { } cancelAnimationFrame(raf); raf = 0; vel = 0; settling = false; drag = { x0: e.clientX, x: e.clientX, t: performance.now(), v: 0, moved: 0, id: e.pointerId }; });
   wrap.addEventListener('pointermove', e => {
     if (!drag || e.pointerId !== drag.id) return; const now = performance.now(), dx = e.clientX - drag.x, dtm = Math.max(1, now - drag.t) / 1000;
-    drag.moved += Math.abs(dx); let d = -dx / IW; if (pos < 0 || pos > N - 1) d *= .4; // beyond an end the wheel gives reluctantly
+    drag.moved += Math.abs(dx); let d = -dx / PX; if (pos < 0 || pos > N - 1) d *= .4; // beyond an end the wheel gives reluctantly
     pos += d; drag.v = drag.v * .6 + (d / dtm) * .4; drag.x = e.clientX; drag.t = now; paint();
   });
   const up = e => {
     if (!drag || e.pointerId !== drag.id) return; const d = drag; drag = null;
-    if (d.moved < 6) { const i = clamp(Math.round(pos + (e.clientX - (wrap.getBoundingClientRect().left + wrap.clientWidth / 2)) / IW), 0, N - 1); vel = 0; pos = pos; const from = pos; // a tap: the wheel rolls to that name
+    if (d.moved < 6) { const i = clamp(Math.round(pos + (e.clientX - (wrap.getBoundingClientRect().left + wrap.clientWidth / 2)) / PX), 0, N - 1); vel = 0; pos = pos; const from = pos; // a tap: the wheel rolls to that name
       const t0 = performance.now(); cancelAnimationFrame(raf); const roll = now => { const u = Math.min(1, (now - t0) / 260), ee = 1 - Math.pow(1 - u, 3); pos = from + (i - from) * ee; paint(); if (u < 1) raf = requestAnimationFrame(roll); else { raf = 0; choose(i); } }; raf = requestAnimationFrame(roll); return; }
     vel = performance.now() - d.t > 120 ? 0 : clamp(d.v, -22, 22); settling = false; run(); // let go: the speed it had (none if the finger rested before lifting)
   };
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
-  wrap.addEventListener('wheel', e => { const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; if (!d) return; e.preventDefault(); vel = clamp(vel + d / IW * 3, -16, 16); settling = false; run(); }, { passive: false });
+  wrap.addEventListener('wheel', e => { const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; if (!d) return; e.preventDefault(); vel = clamp(vel + d / PX * 3, -16, 16); settling = false; run(); }, { passive: false });
   wrap._paint = paint;
   return wrap;
 }
