@@ -8761,9 +8761,20 @@ function courseWheel(key) {
   wh.appendChild(sp()); wrap.appendChild(wh);
   const paint = () => { const pos = wh.scrollTop / IH; items.forEach((d, i) => { const o = i - pos, a = Math.abs(o), q = Math.min(a, 2.4); d.style.transform = `rotateX(${-Math.sign(o) * q * 26}deg) scale(${1 - .05 * q})`; d.style.opacity = String(Math.max(.16, 1 - .42 * q)); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false'); }); };
   let tm = 0, cur = Math.max(0, list.findIndex(c => c.key === key));
-  wh.addEventListener('scroll', () => { paint(); clearTimeout(tm); tm = setTimeout(() => { const i = clamp(Math.round(wh.scrollTop / IH), 0, list.length - 1); if (i !== cur && Math.abs(wh.scrollTop - i * IH) < 3) { cur = i; Board.view = list[i].key; loadWorld(false, list[i].key); refreshBoards(); } }, 140); }, { passive: true });
+  // when the wheel comes to rest it eases the last bit onto the nearest name (a soft snap, whatever the browser's own snapping did) and that course is selected
+  let easing = 0;
+  const settle = () => {
+    if (!wh.isConnected) return; // (a wheel the board has rebuilt: its late timers do nothing)
+    if (placing) { clearTimeout(tm); tm = setTimeout(settle, 120); return; } // (just put in place: nothing to select yet)
+    const i = clamp(Math.round(wh.scrollTop / IH), 0, list.length - 1), off = i * IH - wh.scrollTop;
+    if (Math.abs(off) > 1.5 && !easing) { easing = 1; const y0 = wh.scrollTop, t0 = performance.now(); wh.style.scrollSnapType = 'none'; const step = now => { const u = Math.min(1, (now - t0) / 220), e = 1 - Math.pow(1 - u, 3); wh.scrollTop = y0 + off * e; if (u < 1) requestAnimationFrame(step); else { easing = 0; wh.style.scrollSnapType = ''; settle(); } }; requestAnimationFrame(step); return; }
+    if (easing) return;
+    if (i !== cur) { cur = i; Board.view = list[i].key; loadWorld(false, list[i].key); refreshBoards(); }
+  };
+  wh.addEventListener('scroll', () => { paint(); clearTimeout(tm); tm = setTimeout(settle, 120); }, { passive: true });
   // placed once it is in the page (the board is rebuilt after every turn of the wheel, at the same place)
-  wh._place = () => { wh.style.scrollSnapType = 'none'; wh.scrollTop = cur * IH; paint(); requestAnimationFrame(() => { wh.style.scrollSnapType = ''; }); };
+  let placing = 0;
+  wh._place = () => { placing = 1; wh.style.scrollSnapType = 'none'; wh.scrollTop = cur * IH; paint(); requestAnimationFrame(() => { wh.scrollTop = cur * IH; paint(); requestAnimationFrame(() => { wh.style.scrollSnapType = ''; placing = 0; }); }); };
   return wrap;
 }
 function fillBoard(el, limit, key, pick) {
