@@ -8725,10 +8725,40 @@ async function loadDailyFile(day, force) {
   } catch (e) { if (!DL.files[day]) DL.files[day] = null; }
   dlRefresh(); dlTrophyCheck();
 }
-// the archive (one line per finished daily) and the overall standings, both kept up to date by the leaderboard workflow
+// the archive (one line per finished daily) and the overall standings, both kept up to date by the leaderboard workflow. GitHub can start the scheduled
+// rebuild hours late, so a day that is over (its file is in) but not yet in them is added here, with the same points and the same rules as the workflow.
+function dlMetaLive() {
+  const today = dayId(); let idx = DL.index, ov = DL.overall;
+  if (!Array.isArray(idx) || !Array.isArray(ov)) return { idx, ov };
+  const have = new Set(idx.map(x => x.d)), add = [];
+  for (const d of [dayAdd(today, -3), dayAdd(today, -2), dayAdd(today, -1)]) {
+    const rows = DL.files[d]; if (!Array.isArray(rows) || !rows.length || have.has(d)) continue;
+    const c = dailyCourse(d), pars = COURSES[c].defs.map(q => q.par);
+    let res = rows.filter(r => r.c === c && r.h.length === 18).map(r => ({ id: r.id, n: r.n, at: r.at, tp: r.h.reduce((a, b, i) => a + b - pars[i], 0) })).sort((a, b) => a.tp - b.tp || a.at - b.at);
+    const seen = new Set(); res = res.filter(r => { const k = r.n.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    if (res.length) add.push({ d, c, res });
+  }
+  if (!add.length) return { idx, ov };
+  idx = idx.concat(add.map(a => ({ d: a.d, c: a.c, n: a.res.length, w: a.res[0].n, wb: a.res[0].id, t: a.res[0].tp }))).sort((a, b) => a.d < b.d ? 1 : -1);
+  ov = ov.map(o => Object.assign({}, o, o.bys ? { bys: o.bys.slice() } : {}));
+  const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+  for (const a of add.sort((x, y) => x.d < y.d ? -1 : 1)) {
+    let rank = 0;
+    a.res.forEach((x, i) => {
+      if (i === 0 || x.tp !== a.res[i - 1].tp) rank = i + 1;
+      const nk = x.n.toLowerCase(); let o = ov.find(q => String(q.n).toLowerCase() === nk);
+      if (!o) { o = { by: x.id, n: x.n, p: 0, d: 0, w: 0, pod: 0, best: 99 }; ov.push(o); }
+      o.p += rank <= 10 ? POINTS[rank - 1] : 1; o.d++; if (rank === 1) o.w++; if (rank <= 3) o.pod++; if (x.tp < o.best) o.best = x.tp;
+      if (x.id !== o.by) { o.bys = o.bys || [o.by]; if (!o.bys.includes(x.id)) o.bys.push(x.id); }
+    });
+  }
+  ov.sort((a, b) => b.p - a.p || b.w - a.w || a.d - b.d || a.best - b.best); // (level on everything: the better best round first; the workflow breaks it by who finished earlier)
+  return { idx, ov };
+}
 async function loadDailyMeta(force) {
   if (!force && DL.metaAt && Date.now() - DL.metaAt < 120000) return; DL.metaAt = Date.now();
   const get = async f => { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${f}?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' }); return r.status === 404 ? [] : r.ok ? r.json() : null; };
+  for (const k of [1, 2, 3]) loadDailyFile(dayAdd(dayId(), -k)); // (the last days' own files: see dlMetaLive)
   try { const [a, o] = await Promise.all([get('daily-index.json'), get('daily-overall.json')]); if (Array.isArray(a)) DL.index = a; if (Array.isArray(o)) DL.overall = o; if (!a && !o) throw 0; } catch (e) { if (!DL.index) DL.index = null; DL.metaAt = 0; }
   if ($('dailySheet').classList.contains('on') && (DL.tab === 'archive' || DL.tab === 'overall')) fillDaily($('dailyBody'));
 }
@@ -8911,9 +8941,10 @@ function fillArchive(el, add) {
   const mine = dlRecs(), list = add('div', 'lb');
   if (DL.index === undefined) { add('div', 'empty', 'Loading the archive'); return; }
   if (DL.index === null) { add('div', 'empty', 'The archive could not be reached.'); return; }
-  if (!DL.index.filter(x => x.d < dayId()).length) { add('div', 'empty', 'Finished daily challenges are kept here.'); return; }
+  const M = dlMetaLive(), IDX = M.idx;
+  if (!IDX.filter(x => x.d < dayId()).length) { add('div', 'empty', 'Finished daily challenges are kept here.'); return; }
   el.appendChild(list);
-  DL.index.filter(x => x.d < dayId()).slice(0, 120).forEach(x => {
+  IDX.filter(x => x.d < dayId()).slice(0, 120).forEach(x => {
     const row = document.createElement('div'); row.className = 'row'; row.style.cursor = 'pointer';
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = fmt(x.d).split(' ').slice(1).join(' ');
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (COURSES[x.c] ? COURSES[x.c].short : x.c); const sm = document.createElement('small'); sm.textContent = `${fmt(x.d).split(' ')[0]} · ${x.n} player${x.n === 1 ? '' : 's'}${mine[x.d] && mine[x.d].status === 'done' ? ' · played' : ''}`; nm.appendChild(sm);
@@ -8928,7 +8959,7 @@ function fillOverall(el, add) {
   if (DL.overall === undefined) { add('div', 'empty', 'Loading the standings'); return; }
   if (!DL.overall || !DL.overall.length) { add('div', 'empty', DL.overall === null ? 'The standings could not be reached.' : 'The standings start with the first finished day.'); return; }
   const list = add('div', 'lb'), me = dlMe(), fresh = [];
-  DL.overall.slice(0, 100).forEach((x, i) => {
+  dlMetaLive().ov.slice(0, 100).forEach((x, i) => {
     const row = document.createElement('div'); const mineO = x.by === me || (Array.isArray(x.bys) && x.bys.includes(me)); row.className = 'row' + (mineO ? ' me own' : '') + (i === 0 ? ' top1' : ''); fresh.push({ el: row, k: (x.by || x.n) + ':' + x.p });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.n; const sm = document.createElement('small'); sm.textContent = `${x.d} day${x.d === 1 ? '' : 's'} · ${x.w} win${x.w === 1 ? '' : 's'} · ${x.pod} podium${x.pod === 1 ? '' : 's'}`; nm.appendChild(sm);
