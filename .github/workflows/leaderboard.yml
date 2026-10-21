@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[standings]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +48,17 @@ jobs:
             };
             const m = /```json\s*([\s\S]*?)```/.exec(issue.body || '');
             let r; try { r = JSON.parse(m[1]); } catch (e) { return finish(false, 'No valid score JSON found in this issue.'); }
+            if (issue.title.startsWith('[standings]')) {
+              // a game that sees a closed day missing from the archive and the standings asks for them to be rebuilt (the scheduled run can be hours late, or skipped)
+              const zs = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+              let sf = []; try { sf = require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(zs); } catch (e) { return finish(false, 'The standings could not be rebuilt: ' + e.message); }
+              const dirty = (await exec.getExecOutput('git', ['status', '--porcelain', ...sf])).stdout.trim();
+              if (!dirty) return finish(true, 'The archive and the standings are up to date.');
+              await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
+              await exec.exec('git', ['add', ...sf]); await exec.exec('git', ['commit', '-m', 'Daily archive and standings rebuilt']);
+              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              return finish(true, 'The archive and the standings were rebuilt.');
+            }
             if (issue.title.startsWith('[rename]')) {
               // a name change: every score ever posted from this device (the device id, not the name, is the player) takes the new name
               if (!r || typeof r.name !== 'string' || !/^[\p{L}\p{N} ._'-]{1,14}$/u.test(r.name.trim())) return finish(false, 'Invalid name.');
