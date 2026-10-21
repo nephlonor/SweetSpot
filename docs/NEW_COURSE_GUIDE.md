@@ -4,7 +4,9 @@ How to add a real golf course to Sweet Spot Golf. Follow it step by step. Every 
 
 The Rothley Park pipeline (`tools/course-pipeline/rothley/`) is the reference implementation. St Patrick's Links (`tools/course-pipeline/stpatricks/`) shows the route for a course with **no LiDAR and nothing in OSM**: the ground from Esri's global elevation tiles and everything else traced from the photographs and the club's course plan. Copy it into a new folder and change the origin, the data sources and the hand-made lists. The Augusta build (`tools/course-pipeline/augusta-build.py`, `ept.py`, `chm.py`, `dem.py`) shows the US LiDAR route (USGS 3DEP point cloud).
 
-Lessons from Rothley Park and St Patrick's are marked **Pitfall**. Each one cost a round of feedback.
+Pebble Beach (`tools/course-pipeline/pebblebeach/`) shows the route for a US course whose **OSM data is complete** (every green, fairway, bunker and tee drawn, routing lines from the championship tees): `prep.py` only selects and cleans the OSM shapes, makes the sea from the OSM coastline and the beach from the aerial photograph, and `build.py` places the tees to the scorecard.
+
+Lessons from Rothley Park, St Patrick's and Pebble Beach are marked **Pitfall**. Each one cost a round of feedback.
 
 ---
 
@@ -45,6 +47,9 @@ Scripts: `parse.py`, `lidar.py`, `gm.py` / `gme.py`.
    - **Check:** min and max height, no NaNs. Render a hillshade, or the "trough map" `G − median_filter(G, 9)`, and look at it.
 3. **Aerial mosaic:** 0.5 m per pixel, north up (`gm.py e0 n0 e1 n1 zoom res out.jpg`). Fetch both sources.
    - **Check:** overlay the OSM hole lines on the mosaic (`ov.py` pattern). The lines must run down the fairways. If they're offset, fix the projection before anything else.
+
+- **Pitfall: the 3DEP ImageServer ground can be out of register with the point cloud** (Pebble Beach: up to 40 m shifts that change across the site, canopy heights of -24 m). Check the grid against the LiDAR before using it: fit shifts of the two over a few windows. When they disagree, build the ground from the point cloud's own ground class (`pebblebeach/gnd.py`, class 2, cell mean, gaps filled from the nearest ground cell and smoothed) so ground and canopy share one registration.
+- **Water the lidar cannot see:** the sea has no ground returns, so the filled ground under it is the cliff height. `build.py` sets it to the waterline and lets it fall away from the shore.
 
 ## 2. Greens: trace every one by hand
 

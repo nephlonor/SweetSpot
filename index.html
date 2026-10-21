@@ -196,6 +196,12 @@ body.taught .how{display:none}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
 .icard{width:100%;max-width:520px;padding:16px;display:flex;gap:14px;transform:translateY(30px);transition:transform .5s var(--spring);border-radius:28px}
 #intro.on .icard,#done.on .dcard{transform:none}
+#pbNote{z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.38);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ncard{width:100%;max-width:420px;padding:22px 20px 18px;background:rgba(250,252,249,.9);text-align:center;transform:translateY(24px);transition:transform .5s var(--spring);border-radius:28px}
+#pbNote.on .ncard{transform:none}
+.ncard .nk{font:700 12px var(--cond);letter-spacing:.2em;text-transform:uppercase;color:var(--w1,#2f6b35);opacity:.85}
+.ncard .nt{font:700 24px var(--disp,var(--cond));margin:6px 0 8px;color:var(--ink,#1c3a22)}
+.ncard .nb{font:500 16px/1.4 var(--body,system-ui);color:var(--ink2,#3c5a42);margin-bottom:16px}
 .icard canvas{width:86px;height:144px;border-radius:14px;flex:none;background:#cfe3c3;box-shadow:0 0 0 1px rgba(255,255,255,.4)}
 .ic-b{display:flex;flex-direction:column;justify-content:space-between;flex:1;min-width:0}
 .ic-k{font:600 13px var(--cond);letter-spacing:.14em;text-transform:uppercase;color:var(--w3)}
@@ -544,7 +550,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b><span class="thS">Right</span> thumb · strike</b><p>Keep the ball on the sweet spot during impact.</p></div>
     </div>
     <button class="card dailyCard dlCard" id="dailyCard"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
-    <div class="card nameRow courseRow"><span>Course</span><label class="csel"><select class="segCourse" id="segCourse" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option></select></label></div>
+    <div class="card nameRow courseRow"><span>Course</span><label class="csel"><select class="segCourse" id="segCourse" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option></select></label></div>
     <label class="card nameRow" id="nameRow"><span>Player</span><input id="nameIn" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="go"></label>
     <div class="nameHint" id="nameHintT" hidden></div>
     <div class="playRow"><button class="btn alt" id="btnResume" style="display:none">Resume<small id="resumeInfo"></small></button><button class="btn" id="btnPlay">Tee off</button></div>
@@ -552,6 +558,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
+<div class="layer" id="pbNote" role="dialog" aria-live="polite"><div class="card ncard"><div class="nk">Pebble Beach</div><div class="nt">Work in progress</div><div class="nb">This course is being built right now &ndash; but you can already play it.</div><button class="btn" id="pbNoteOk" type="button">Let's play</button></div></div>
 <div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">Replay</button></div></div>
 <div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
@@ -565,7 +572,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <button class="dlCard" id="mDaily"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
     <div class="mgrp mround">
       <div class="mrl"><span class="mk">Round in play</span><b id="mRoundInfo">GCC Basel</b><small id="mRoundSub"></small></div>
-      <label class="csel"><select class="segCourse" id="segCourseM" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option></select></label>
+      <label class="csel"><select class="segCourse" id="segCourseM" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option></select></label>
       <div class="mnote">Switching course keeps the round you are playing: come back and it resumes where you left it.</div>
     </div>
     <div class="tiles">
@@ -631,7 +638,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, within two club lengths of where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. A ball that vanishes in the deep rough more than 10 m from the fairway and green at St Patrick's (and any ball in the deep rough from a shot played inside 200 m of the hole there), or more than 50 m deep in the woods (not at Augusta), is searched for: tap where it lies, within 5 m (you have three tries), and you play it as it is; three misses are a lost ball, with one stroke and replay. Max score is par + 5.</div>
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
-  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu. Rothley Park in Leicestershire: hole lines, paths, buildings, the brook and the railway from © OpenStreetMap contributors (ODbL); the ground, the trees and the field ditches from the Environment Agency's 1 m LiDAR (Open Government Licence); greens, fairways, bunkers and tees traced from the aerial photograph; the mowing, flags and tee furniture after the club's own course photographs. It is played in October, and it rains on about half the holes. St Patrick's Links at Rosapenna, Co. Donegal (Tom Doak, 2021), is played from the Sandstone tees: no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, Esri and its partners); the routing after the club's course plan, and the greens, fairways, bunkers, sandy blowouts and Tramore beach traced from the aerial photographs (Esri World Imagery). Tramore beach and the sea beyond it are out of bounds; the wind off the Atlantic is stronger than inland, and showers come through on about four holes in ten.</div>
+  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu. Rothley Park in Leicestershire: hole lines, paths, buildings, the brook and the railway from © OpenStreetMap contributors (ODbL); the ground, the trees and the field ditches from the Environment Agency's 1 m LiDAR (Open Government Licence); greens, fairways, bunkers and tees traced from the aerial photograph; the mowing, flags and tee furniture after the club's own course photographs. It is played in October, and it rains on about half the holes. St Patrick's Links at Rosapenna, Co. Donegal (Tom Doak, 2021), is played from the Sandstone tees: no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, Esri and its partners); the routing after the club's course plan, and the greens, fairways, bunkers, sandy blowouts and Tramore beach traced from the aerial photographs (Esri World Imagery). Tramore beach and the sea beyond it are out of bounds; the wind off the Atlantic is stronger than inland, and showers come through on about four holes in ten. Pebble Beach Golf Links in California is played from the Blue tees and is still being built: hole lines, tees, greens, fairways, bunkers, buildings and the coastline from © OpenStreetMap contributors (ODbL); the ground and the trees (Monterey cypress and pine) from the USGS 3DEP LiDAR point cloud; the beach and the cliff-top ice plant after the aerial photograph (Esri World Imagery). The Pacific is a penalty area; beyond the course's edge it is out of bounds.</div>
 </div></div>
 <div id="recCard"></div>
 <div id="confetti"></div>
@@ -722,6 +729,8 @@ function setWeather(w) {
 const WX_NEXT = { dry: [['dry', .25], ['fine', .6], ['damp', .15]], fine: [['dry', .2], ['fine', .3], ['damp', .5]], damp: [['fine', .3], ['damp', .1], ['rain', .6]], rain: [['damp', .8], ['rain', .2]] };
 // Rothley Park: an English autumn, it rains on about half the holes (the chain's long-run share: rain .51, damp .35, fine .15; never dry)
 const WX_COURSE = {
+  // Pebble Beach: the marine layer. Mornings of fog and drizzle that burn off to a bright, breezy afternoon, rain a rarity (long-run share about fine .62, damp .33, rain .05)
+  pebblebeach: { p: { fine: .62, damp: .33, rain: .05 }, next: { fine: [['fine', .72], ['damp', .28]], damp: [['fine', .5], ['damp', .42], ['rain', .08]], rain: [['damp', .7], ['fine', .3]], dry: [['fine', .7], ['damp', .3]] } },
   // St Patrick's: Donegal in October, showers in off the Atlantic (long-run share about rain .38, damp .37, fine .25; never dry)
   stpatricks: { p: { fine: .25, damp: .37, rain: .38 }, next: { fine: [['fine', .35], ['damp', .45], ['rain', .2]], damp: [['fine', .3], ['damp', .1], ['rain', .6]], rain: [['damp', .6], ['fine', .15], ['rain', .25]], dry: [['fine', .5], ['damp', .5]] } },
   rothley: { p: { fine: .15, damp: .35, rain: .5 }, next: { fine: [['fine', .3], ['damp', .45], ['rain', .25]], damp: [['fine', .3], ['rain', .7]], rain: [['damp', .55], ['rain', .45]], dry: [['damp', .5], ['rain', .5]] } } };
@@ -2019,6 +2028,7 @@ const RD_ALSACE = {"name":"Alsace Golf Club","origin":[47.9741,7.3312],"mounds":
 const RD_AUGUSTA = {"name":"Augusta National Golf Club","origin":[33.4995,-82.0225],"mounds":[],"bridges":[[-257.6,-296.1,7.2,3.3,216.0,""],[-294.4,-239.4,7.9,3.4,239.0,""],[55.6,-508.4,22.4,6.8,104.0,""],[-14.5,-525.4,26.2,3.8,98.0,"Ben Hogan Bridge"],[-115.0,-541.8,19.9,2.9,114.0,"Byron Nelson Bridge"],[-280.0,-104.0,16.9,2.6,145.0,"Gene Sarazen Bridge"],[193.0,-519.8,15.5,3.0,75.3,""]],"holes":[{"par":4,"hcp":1,"len":409,"lens":[409,399,337,379],"tee":[239.63,320.6],"green":[-93.49,551.74],"line":[[239.63,320.6],[4.21,454.05],[-93.49,551.74]],"mk":{"w":[239.63,320.6],"y":[230.56,325.15],"b":[177.29,356.92],"r":[214.98,337.71]},"desc":"Tea Olive \u00b7 plays 4 m uphill","nm":"Tea Olive"},{"par":5,"hcp":2,"len":531,"lens":[531,493,467,430],"tee":[-158.56,589.4],"green":[-92.9,94.95],"line":[[-158.56,589.4],[-206.03,313.05],[-146.37,147.09],[-92.9,94.95]],"mk":{"w":[-158.56,589.4],"y":[-146.51,553.14],"b":[-172.03,526.38],"r":[-102.24,505.47]},"desc":"Pink Dogwood \u00b7 plays 27 m downhill","nm":"Pink Dogwood"},{"par":4,"hcp":3,"len":324,"lens":[324,315,304,294],"tee":[-82.13,31.81],"green":[-324.58,243.9],"line":[[-82.13,31.81],[-266.08,174.52],[-324.58,243.9]],"mk":{"w":[-82.13,31.81],"y":[-89.39,36.91],"b":[-97.18,44.97],"r":[-104.71,51.56]},"desc":"Flowering Peach \u00b7 plays 5 m uphill","nm":"Flowering Peach"},{"par":3,"hcp":4,"len":222,"lens":[222,156,202,192],"tee":[-285.08,279.03],"green":[-506.34,260.38],"line":[[-285.08,279.03],[-433.66,268.45],[-506.34,260.38]],"mk":{"w":[-285.08,279.03],"y":[-349.37,264.81],"b":[-305.01,277.35],"r":[-314.97,276.51]},"desc":"Flowering Crab Apple \u00b7 plays 9 m downhill","nm":"Flowering Crab Apple"},{"par":4,"hcp":5,"len":453,"lens":[453,367,433,423],"tee":[-558.38,300.41],"green":[-457.61,-127.41],"line":[[-558.38,300.41],[-545.42,18.45],[-524.39,-16.76],[-457.61,-127.41]],"mk":{"w":[-558.38,300.41],"y":[-552.93,215.16],"b":[-553.8,280.94],"r":[-551.5,271.21]},"desc":"Magnolia","nm":"Magnolia"},{"par":3,"hcp":6,"len":160,"lens":[160,150,140,130],"tee":[-442.36,-64.06],"green":[-403.18,91.29],"line":[[-442.36,-64.06],[-413.71,51.21],[-403.18,91.29]],"mk":{"w":[-442.36,-64.06],"y":[-439.91,-54.36],"b":[-437.47,-44.67],"r":[-435.02,-34.97]},"desc":"Juniper \u00b7 plays 7 m downhill","nm":"Juniper"},{"par":4,"hcp":7,"len":411,"lens":[411,402,295,381],"tee":[-456.58,157.59],"green":[-77.57,-1.37],"line":[[-456.58,157.59],[-222.19,63.03],[-77.57,-1.37]],"mk":{"w":[-456.58,157.59],"y":[-448.53,154.19],"b":[-347.05,118.33],"r":[-428.91,145.98]},"desc":"Pampas \u00b7 plays 4 m uphill","nm":"Pampas"},{"par":5,"hcp":8,"len":523,"lens":[523,400,425,493],"tee":[13.18,-31.25],"green":[-113.12,468.9],"line":[[13.18,-31.25],[-74.74,243.18],[-82.67,419.7],[-113.12,468.9]],"mk":{"w":[13.18,-31.25],"y":[-89.39,36.91],"b":[-38.15,52.33],"r":[5.84,-2.16]},"desc":"Yellow Jasmine \u00b7 plays 19 m uphill","nm":"Yellow Jasmine"},{"par":4,"hcp":9,"len":424,"lens":[424,359,404,394],"tee":[-146.51,553.14],"green":[172.3,310.18],"line":[[-146.51,553.14],[46.67,327.52],[172.3,310.18]],"mk":{"w":[-146.51,553.14],"y":[-102.24,505.47],"b":[-130.6,541.01],"r":[-122.65,534.95]},"desc":"Carolina Cherry \u00b7 plays 7 m downhill","nm":"Carolina Cherry"},{"par":4,"hcp":10,"len":456,"lens":[456,410,436,426],"tee":[259.86,276.3],"green":[191.84,-160.74],"line":[[259.86,276.3],[169.77,51.64],[191.84,-160.74]],"mk":{"w":[259.86,276.3],"y":[233.2,239.55],"b":[256.79,256.54],"r":[255.25,246.66]},"desc":"Camellia \u00b7 plays 31 m downhill","nm":"Camellia"},{"par":4,"hcp":11,"len":482,"lens":[482,374,462,452],"tee":[324.45,-100.64],"green":[30.72,-479.3],"line":[[324.45,-100.64],[142.27,-374.07],[30.72,-479.3]],"mk":{"w":[324.45,-100.64],"y":[266.2,-191.84],"b":[312.19,-116.44],"r":[306.06,-124.35]},"desc":"White Dogwood \u00b7 plays 19 m downhill","nm":"White Dogwood"},{"par":3,"hcp":12,"len":141,"lens":[141,132,121,111],"tee":[15.57,-434.92],"green":[-61.2,-553.69],"line":[[15.57,-434.92],[-61.2,-553.69]],"mk":{"w":[15.57,-434.92],"y":[5.77,-434.28],"b":[4.72,-451.72],"r":[-0.71,-460.12]},"desc":"Golden Bell","nm":"Golden Bell"},{"par":5,"hcp":13,"len":489,"lens":[489,349,363,410],"tee":[-94.57,-640.48],"green":[-283.24,-268.67],"line":[[-94.57,-640.48],[-95.27,-372.56],[-225.49,-274.02],[-283.24,-268.67]],"mk":{"w":[-94.57,-640.48],"y":[-233.37,-661.41],"b":[-219.52,-620.92],"r":[-93.34,-560.78]},"desc":"Azalea","nm":"Azalea"},{"par":4,"hcp":14,"len":402,"lens":[402,347,382,372],"tee":[-290.41,-218.08],"green":[107.75,-228.88],"line":[[-290.41,-218.08],[-41.01,-252.18],[-11.98,-247.51],[107.75,-228.88]],"mk":{"w":[-290.41,-218.08],"y":[-236.79,-231.32],"b":[-270.42,-218.62],"r":[-260.42,-218.9]},"desc":"Chinese Fir \u00b7 plays 9 m uphill","nm":"Chinese Fir"},{"par":5,"hcp":15,"len":506,"lens":[506,495,426,361],"tee":[197.59,-212.72],"green":[-286.93,-67.3],"line":[[197.59,-212.72],[-83.01,-127.79],[-286.93,-67.3]],"mk":{"w":[197.59,-212.72],"y":[186.97,-209.12],"b":[125.14,-178.89],"r":[77.18,-132.49]},"desc":"Firethorn","nm":"Firethorn"},{"par":3,"hcp":16,"len":161,"lens":[161,145,141,131],"tee":[-303.1,-138.41],"green":[-370.08,8.18],"line":[[-303.1,-138.41],[-361.25,-11.56],[-370.08,8.18]],"mk":{"w":[-303.1,-138.41],"y":[-310.11,-123.63],"b":[-311.41,-120.22],"r":[-315.56,-111.13]},"desc":"Redbud","nm":"Redbud"},{"par":4,"hcp":17,"len":405,"lens":[405,334,385,375],"tee":[-355.01,37.68],"green":[31.43,-80.52],"line":[[-355.01,37.68],[-123.52,-44.39],[31.43,-80.52]],"mk":{"w":[-355.01,37.68],"y":[-291.34,7.58],"b":[-335.88,31.83],"r":[-326.32,28.9]},"desc":"Nandina \u00b7 plays 9 m uphill","nm":"Nandina"},{"par":4,"hcp":18,"len":424,"lens":[424,352,300,394],"tee":[77.18,-132.49],"green":[185.18,263.78],"line":[[77.18,-132.49],[95.08,123.98],[97.27,132.78],[185.18,263.78]],"mk":{"w":[77.18,-132.49],"y":[79.61,-60.78],"b":[11.93,-27.71],"r":[85.07,-103.55]},"desc":"Holly \u00b7 plays 17 m uphill","nm":"Holly"}],"ntrees":23089,"z0":0,"gr":{"e0":-970,"n0":-970,"res":2,"W":978,"H":1098}};  // the rest of this course (terrain, features, trees, relief) is data-augusta.js, loaded when the course is first used
 const RD_ROTHLEY = {"name":"Rothley Park Golf Club","origin":[52.7,-1.15],"mounds":[],"bridges":[[-440.8,98.0,2.2,7.0,33],[-268.1,351.5,2.4,7.0,35],[533.9,443.4,3.0,7.0,52],[581.7,298.0,1.8,4.5,-42],[583.3,231.7,1.8,4.5,-51],[514.0,348.8,2.0,4.5,-39],[534.8,332.7,3.0,4.5,-38],[301.1,47.8,3.0,4.5,-96],[279.8,164.8,3.0,4.5,-84]],"holes":[{"par":4,"hcp":12,"len":359,"lens":[359,338,346,335],"tee":[-331.17,565.31],"green":[-484.77,241.85],"line":[[-331.17,565.31],[-418.76,411.88],[-465.72,297.18],[-484.77,241.85]],"mk":{"w":[-331.17,565.31],"y":[-341.59,547.04],"b":[-337.83,553.63],"r":[-342.95,544.66]},"desc":"plays 5 m downhill"},{"par":4,"hcp":8,"len":307,"lens":[307,283,284,254],"tee":[-486.43,199.09],"green":[-332.59,-62.74],"line":[[-486.43,199.09],[-407.49,24.32],[-332.59,-62.74]],"mk":{"w":[-486.43,199.09],"y":[-476.64,177.43],"b":[-476.94,178.09],"r":[-464.6,150.76]},"desc":"plays 4 m uphill"},{"par":4,"hcp":4,"len":390,"lens":[390,378,370,335],"tee":[-325.14,-35.5],"green":[22.54,139.35],"line":[[-325.14,-35.5],[-76.26,104.45],[22.54,139.35]],"mk":{"w":[-325.14,-35.5],"y":[-313.98,-29.23],"b":[-307.44,-25.55],"r":[-277.32,-8.61]},"desc":""},{"par":3,"hcp":16,"len":149,"lens":[149,128,132,113],"tee":[41.05,78.1],"green":[52.84,-70.49],"line":[[41.05,78.1],[52.84,-70.49]],"mk":{"w":[41.05,78.1],"y":[42.71,57.13],"b":[42.39,61.14],"r":[43.87,42.55]},"desc":"plays 3 m uphill"},{"par":4,"hcp":18,"len":229,"lens":[229,220,221,212],"tee":[72.73,-24.84],"green":[265.13,99.33],"line":[[72.73,-24.84],[265.13,99.33]],"mk":{"w":[72.73,-24.84],"y":[80.41,-19.88],"b":[79.41,-20.52],"r":[87.33,-15.42]},"desc":"plays 6 m downhill"},{"par":4,"hcp":2,"len":409,"lens":[409,393,396,382],"tee":[271.13,122.71],"green":[597.18,351.16],"line":[[271.13,122.71],[535.97,258.38],[597.18,351.16]],"mk":{"w":[271.13,122.71],"y":[284.97,129.8],"b":[282.36,128.46],"r":[294.73,134.8]},"desc":"plays 6 m downhill"},{"par":3,"hcp":14,"len":136,"lens":[136,124,120,94],"tee":[617.81,365.42],"green":[731.52,290.29],"line":[[617.81,365.42],[731.52,290.29]],"mk":{"w":[617.81,365.42],"y":[627.73,358.86],"b":[631.31,356.5],"r":[652.9,342.23]},"desc":"plays 10 m uphill"},{"par":4,"hcp":10,"len":299,"lens":[299,293,283,251],"tee":[744.09,228.06],"green":[703.74,-67.93],"line":[[744.09,228.06],[731.89,67.88],[703.74,-67.93]],"mk":{"w":[744.09,228.06],"y":[743.6,221.67],"b":[742.84,211.64],"r":[740.41,179.73]},"desc":"plays 8 m uphill"},{"par":4,"hcp":6,"len":418,"lens":[418,397,402,385],"tee":[650.66,-159.61],"green":[697.7,254.48],"line":[[650.66,-159.61],[701.08,189.7],[697.7,254.48]],"mk":{"w":[650.66,-159.61],"y":[653.67,-138.79],"b":[652.98,-143.59],"r":[655.37,-127.02]},"desc":"plays 14 m downhill"},{"par":4,"hcp":11,"len":257,"lens":[257,256,245,217],"tee":[655.36,301.44],"green":[497.38,99.97],"line":[[655.36,301.44],[537.42,167.79],[497.38,99.97]],"mk":{"w":[655.36,301.44],"y":[654.76,300.76],"b":[647.19,292.19],"r":[628.74,271.28]},"desc":"plays 7 m uphill"},{"par":4,"hcp":3,"len":359,"lens":[359,345,336,295],"tee":[456.8,130.03],"green":[214.37,-135.08],"line":[[456.8,130.03],[214.37,-135.08]],"mk":{"w":[456.8,130.03],"y":[446.92,119.24],"b":[440.88,112.62],"r":[413.6,82.8]},"desc":"plays 5 m uphill"},{"par":3,"hcp":17,"len":175,"lens":[175,166,160,134],"tee":[176.35,-81.43],"green":[313.44,27.31],"line":[[176.35,-81.43],[313.44,27.31]],"mk":{"w":[176.35,-81.43],"y":[183.52,-75.75],"b":[188.17,-72.06],"r":[208.59,-55.86]},"desc":"plays 4 m downhill"},{"par":4,"hcp":1,"len":387,"lens":[387,369,366,336],"tee":[381.89,141.69],"green":[71.74,-89.35],"line":[[381.89,141.69],[71.74,-89.35]],"mk":{"w":[381.89,141.69],"y":[367.95,131.31],"b":[365.61,129.56],"r":[341.55,111.65]},"desc":"plays 6 m uphill"},{"par":4,"hcp":5,"len":412,"lens":[412,380,380,339],"tee":[26.0,-83.53],"green":[-169.65,-443.32],"line":[[26.0,-83.53],[-69.62,-302.81],[-169.65,-443.32]],"mk":{"w":[26.0,-83.53],"y":[13.21,-112.86],"b":[13.39,-112.44],"r":[-3.24,-150.58]},"desc":"plays 10 m uphill"},{"par":5,"hcp":13,"len":476,"lens":[476,449,446,404],"tee":[-181.9,-487.88],"green":[-381.33,-55.65],"line":[[-181.9,-487.88],[-381.33,-55.65]],"mk":{"w":[-181.9,-487.88],"y":[-193.4,-462.97],"b":[-194.43,-460.73],"r":[-212.17,-422.29]},"desc":"plays 21 m downhill"},{"par":4,"hcp":7,"len":357,"lens":[357,337,332,293],"tee":[-353.9,27.14],"green":[-32.7,183.94],"line":[[-353.9,27.14],[-32.7,183.94]],"mk":{"w":[-353.9,27.14],"y":[-335.82,35.97],"b":[-330.97,38.33],"r":[-295.56,55.62]},"desc":"plays 5 m uphill"},{"par":4,"hcp":15,"len":337,"lens":[337,312,319,303],"tee":[-44.13,208.93],"green":[-336.7,78.09],"line":[[-44.13,208.93],[-260.59,165.62],[-336.7,78.09]],"mk":{"w":[-44.13,208.93],"y":[-68.34,204.09],"b":[-61.35,205.49],"r":[-77.31,202.29]},"desc":"plays 4 m downhill"},{"par":5,"hcp":9,"len":470,"lens":[470,431,438,403],"tee":[-375.27,113.43],"green":[-309.66,549.8],"line":[[-375.27,113.43],[-261.77,319.83],[-309.66,549.8]],"mk":{"w":[-375.27,113.43],"y":[-356.33,147.88],"b":[-359.81,141.55],"r":[-342.67,172.72]},"desc":"plays 5 m uphill"}],"ntrees":9153,"z0":0,"gr":{"e0":-870,"n0":-970,"res":2,"W":978,"H":948}};  // the rest of this course (terrain, features, trees, relief) is data-rothley.js, loaded when the course is first used
 const RD_STPATRICKS = {"name":"St Patrick's Links","origin":[55.164,-7.822],"mounds":[],"bridges":[],"holes":[{"par":4,"hcp":7,"len":348,"lens":[348,337,315,292],"tee":[384.66,-26.33],"green":[356.46,315.1],"line":[[384.66,-26.33],[357,318],[356.46,315.1]],"mk":{"w":[384.66,-26.33]},"desc":"plays 5 m downhill"},{"par":4,"hcp":11,"len":340,"lens":[340,327,310,261],"tee":[327.58,399.13],"green":[57.21,579.26],"line":[[327.58,399.13],[200,480],[50,582],[57.21,579.26]],"mk":{"w":[327.58,399.13]},"desc":"plays 4 m downhill"},{"par":3,"hcp":17,"len":163,"lens":[163,153,149,97],"tee":[22.26,625.06],"green":[-62.66,759.53],"line":[[22.26,625.06],[-66,756],[-62.66,759.53]],"mk":{"w":[22.26,625.06]},"desc":"plays 4 m downhill"},{"par":5,"hcp":3,"len":507,"lens":[507,465,412,360],"tee":[-96.75,856.41],"green":[-296.0,395.0],"line":[[-96.75,856.41],[-195,660],[-235,500],[-293,395],[-296.0,395.0]],"mk":{"w":[-96.75,856.41]},"desc":"plays 10 m downhill"},{"par":3,"hcp":13,"len":196,"lens":[196,140,132,113],"tee":[-295.41,360.88],"green":[-363.0,182.0],"line":[[-295.41,360.88],[-364,180],[-363.0,182.0]],"mk":{"w":[-295.41,360.88]},"desc":"plays 5 m uphill"},{"par":5,"hcp":1,"len":522,"lens":[522,477,463,399],"tee":[-341.68,103.37],"green":[-106.17,546.83],"line":[[-341.68,103.37],[-210,290],[-120,450],[-108,553],[-106.17,546.83]],"mk":{"w":[-341.68,103.37]},"desc":"plays 6 m downhill"},{"par":4,"hcp":9,"len":381,"lens":[381,365,336,302],"tee":[-22.21,526.85],"green":[253.64,264.81],"line":[[-22.21,526.85],[150,380],[250,268],[253.64,264.81]],"mk":{"w":[-22.21,526.85]},"desc":"plays 7 m downhill"},{"par":4,"hcp":15,"len":310,"lens":[310,291,256,227],"tee":[275.91,232.06],"green":[34.31,415.83],"line":[[275.91,232.06],[120,340],[31,416],[34.31,415.83]],"mk":{"w":[275.91,232.06]},"desc":"plays 4 m downhill"},{"par":4,"hcp":5,"len":421,"lens":[421,421,364,312],"tee":[20.95,388.35],"green":[170.0,27.0],"line":[[20.95,388.35],[25,220],[170,21],[170.0,27.0]],"mk":{"w":[20.95,388.35]},"desc":""},{"par":4,"hcp":8,"len":377,"lens":[377,366,326,294],"tee":[147.91,-93.64],"green":[-31.82,-398.39],"line":[[147.91,-93.64],[60,-250],[-38,-408],[-31.82,-398.39]],"mk":{"w":[147.91,-93.64]},"desc":""},{"par":4,"hcp":6,"len":432,"lens":[432,411,365,320],"tee":[-35.65,-435.2],"green":[312.0,-205.0],"line":[[-35.65,-435.2],[180,-235],[313,-205],[312.0,-205.0]],"mk":{"w":[-35.65,-435.2]},"desc":"plays 10 m downhill"},{"par":5,"hcp":4,"len":512,"lens":[512,499,441,380],"tee":[328.55,-242.39],"green":[-42.0,-585.0],"line":[[328.55,-242.39],[130,-420],[-47,-580],[-42.0,-585.0]],"mk":{"w":[328.55,-242.39]},"desc":"plays 4 m uphill"},{"par":4,"hcp":12,"len":344,"lens":[344,314,304,244],"tee":[-88.07,-522.12],"green":[-384.0,-350.0],"line":[[-88.07,-522.12],[-250,-410],[-378,-352],[-384.0,-350.0]],"mk":{"w":[-88.07,-522.12]},"desc":"plays 5 m uphill"},{"par":4,"hcp":10,"len":320,"lens":[320,289,267,246],"tee":[-420.0,-331.0],"green":[-474.0,-36.0],"line":[[-420.0,-331.0],[-462,-255],[-500,-170],[-505,-110],[-475,-37],[-474.0,-36.0]],"mk":{"w":[-420.0,-331.0]},"desc":"plays 8 m downhill"},{"par":3,"hcp":18,"len":119,"lens":[119,114,107,89],"tee":[-420.15,19.69],"green":[-425.0,-95.0],"line":[[-420.15,19.69],[-422,-96],[-425.0,-95.0]],"mk":{"w":[-420.15,19.69]},"desc":"plays 6 m uphill"},{"par":4,"hcp":2,"len":488,"lens":[488,445,431,385],"tee":[-400.28,-110.28],"green":[-89.0,263.0],"line":[[-400.28,-110.28],[-250,80],[-95,263],[-89.0,263.0]],"mk":{"w":[-400.28,-110.28]},"desc":"plays 16 m downhill"},{"par":3,"hcp":14,"len":182,"lens":[182,161,142,110],"tee":[-45.34,260.49],"green":[-51.0,93.0],"line":[[-45.34,260.49],[-60,89],[-51.0,93.0]],"mk":{"w":[-45.34,260.49]},"desc":""},{"par":4,"hcp":16,"len":330,"lens":[330,315,249,222],"tee":[-159.45,54.86],"green":[150.0,-60.0],"line":[[-159.45,54.86],[140,-57],[150.0,-60.0]],"mk":{"w":[-159.45,54.86]},"desc":""}],"ntrees":0,"z0":0,"gr":{"e0":-820,"n0":-1040,"res":2,"W":828,"H":1053}};  // the rest of this course (terrain, features, relief) is data-stpatricks.js, loaded when the course is first used
+const RD_PEBBLEBEACH = {"name":"Pebble Beach Golf Links","origin":[36.5645,-121.941],"mounds":[],"bridges":[],"holes":[{"par":4,"hcp":6,"len":346,"lens":[346,319,308,283],"tee":[-760.12,545.99],"green":[-459.6,677.99],"line":[[-760.12,545.99],[-602.47,673.44],[-459.6,677.99]],"mk":{"w":[-760.12,545.99]},"desc":"plays 6 m uphill"},{"par":5,"hcp":10,"len":464,"lens":[464,448,418,326],"tee":[-540.67,648.67],"green":[-84.88,559.71],"line":[[-540.67,648.67],[-280.36,596.53],[-84.88,559.71]],"mk":{"w":[-540.67,648.67]},"desc":""},{"par":4,"hcp":12,"len":364,"lens":[364,349,312,261],"tee":[-22.82,520.46],"green":[-317.11,329.21],"line":[[-22.82,520.46],[-246.59,428.55],[-317.11,329.21]],"mk":{"w":[-22.82,520.46]},"desc":"plays 13 m downhill"},{"par":4,"hcp":16,"len":304,"lens":[304,282,270,180],"tee":[-262.31,319.17],"green":[11.71,187.18],"line":[[-262.31,319.17],[-234.42,307.96],[-53.54,223.98],[11.71,187.18]],"mk":{"w":[-262.31,319.17]},"desc":"plays 5 m uphill"},{"par":3,"hcp":14,"len":174,"lens":[174,134,124,103],"tee":[37.41,194.45],"green":[148.28,60.22],"line":[[37.41,194.45],[148.28,60.22]],"mk":{"w":[37.41,194.45]},"desc":""},{"par":5,"hcp":2,"len":456,"lens":[456,449,426,385],"tee":[271.16,156.57],"green":[85.31,-260.1],"line":[[271.16,156.57],[181.99,-46.95],[85.31,-260.1]],"mk":{"w":[271.16,156.57]},"desc":"plays 3 m downhill"},{"par":3,"hcp":18,"len":99,"lens":[99,91,87,81],"tee":[44.92,-252.79],"green":[55.64,-351.13],"line":[[44.92,-252.79],[55.64,-351.13]],"mk":{"w":[44.92,-252.79]},"desc":"plays 9 m downhill"},{"par":4,"hcp":4,"len":383,"lens":[383,357,335,321],"tee":[77.09,-353.93],"green":[399.97,-159.62],"line":[[77.09,-353.93],[227.02,-225.14],[269.88,-208.57],[399.97,-159.62]],"mk":{"w":[77.09,-353.93]},"desc":"plays 9 m uphill"},{"par":4,"hcp":8,"len":441,"lens":[441,423,398,320],"tee":[409.43,-125.96],"green":[711.91,-443.39],"line":[[409.43,-125.96],[603.57,-293.58],[705.96,-434.95],[711.91,-443.39]],"mk":{"w":[409.43,-125.96]},"desc":"plays 11 m downhill"},{"par":4,"hcp":3,"len":406,"lens":[406,392,374,310],"tee":[712.95,-348.31],"green":[853.48,-726.58],"line":[[712.95,-348.31],[818.94,-564.93],[853.48,-726.58]],"mk":{"w":[712.95,-348.31]},"desc":"plays 7 m downhill"},{"par":4,"hcp":9,"len":338,"lens":[338,319,309,272],"tee":[907.55,-729.2],"green":[1026.45,-417.05],"line":[[907.55,-729.2],[936.35,-593.56],[968.6,-504.27],[1026.45,-417.05]],"mk":{"w":[907.55,-729.2]},"desc":"plays 20 m uphill"},{"par":3,"hcp":17,"len":185,"lens":[185,172,161,116],"tee":[1062.94,-396.99],"green":[888.76,-333.93],"line":[[1062.94,-396.99],[888.76,-333.93]],"mk":{"w":[1062.94,-396.99]},"desc":"plays 8 m downhill"},{"par":4,"hcp":7,"len":371,"lens":[371,361,342,274],"tee":[857.63,-368.29],"green":[554.99,-154.29],"line":[[857.63,-368.29],[658.14,-227.36],[554.99,-154.29]],"mk":{"w":[857.63,-368.29]},"desc":""},{"par":5,"hcp":1,"len":511,"lens":[511,498,448,408],"tee":[498.28,-148.67],"green":[326.6,291.67],"line":[[498.28,-148.67],[322.16,34.91],[326.6,291.67]],"mk":{"w":[498.28,-148.67]},"desc":"plays 10 m uphill"},{"par":4,"hcp":13,"len":362,"lens":[362,346,312,229],"tee":[360.95,289.97],"green":[79.82,517.99],"line":[[360.95,289.97],[163.92,454.7],[79.82,517.99]],"mk":{"w":[360.95,289.97]},"desc":"plays 13 m downhill"},{"par":4,"hcp":11,"len":364,"lens":[364,344,335,284],"tee":[94.83,571.42],"green":[-203.54,371.32],"line":[[94.83,571.42],[-66.71,427.24],[-179.13,381.89],[-203.54,371.32]],"mk":{"w":[94.83,571.42]},"desc":"plays 19 m downhill"},{"par":3,"hcp":15,"len":166,"lens":[166,161,151,129],"tee":[-270.71,291.19],"green":[-351.68,146.27],"line":[[-270.71,291.19],[-351.68,146.27]],"mk":{"w":[-270.71,291.19]},"desc":""},{"par":5,"hcp":5,"len":493,"lens":[493,484,461,413],"tee":[-374.69,114.83],"green":[-772.23,346.01],"line":[[-374.69,114.83],[-445.04,196.17],[-521.35,284.33],[-688.21,360.62],[-772.23,346.01]],"mk":{"w":[-374.69,114.83]},"desc":"plays 3 m uphill"}],"ntrees":15952,"z0":0,"gr":{"e0":-1070,"n0":-1020,"res":2,"W":1225,"H":978}};
 
 /* ================= REAL COURSE: Golf & Country Club Basel ================= */
 // The real course is data rather than shapes. Fairways, greens, tees, bunkers, ponds, paths and every drawn tree were
@@ -2685,7 +2695,7 @@ function realTerrainMat(C) {
   }
   const f = C.frame, r = GR.res;
   const far = { tex: gccbFarTex(), A: new THREE.Vector4(f.rx / r, -f.ux / r, f.ry / r, -f.uy / r), B: new THREE.Vector4((f.e - GR.e0) / r, (f.n - GR.n0) / r, GR.W, GR.H) };
-  return terrainMatFrom({ A, B, T, w, h, x0: FG.x0, z0: FG.z0, res: FG.res, R, wlo, whi, far, dry: RDC.dry, lush: RDC.lush, autumn: RDC.autumn, marram: RDC.marram, straw: !!SM });
+  return terrainMatFrom({ A, B, T, w, h, x0: FG.x0, z0: FG.z0, res: FG.res, R, wlo, whi, far, dry: RDC.dry, lush: RDC.lush, autumn: RDC.autumn, marram: RDC.marram, coast: RDC.coast, straw: !!SM });
 }
 function buildRealWater(C, grp) {
   W.waterMeshes = []; W.sea = null;
@@ -2702,10 +2712,12 @@ function buildRealWater(C, grp) {
     }
     if (!nv) continue;
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-    const sea = RDC.marram && ww * hh * res * res > 20000; // (St Patrick's: Sheephaven Bay, darker and greener than a pond)
-    const m = new THREE.Mesh(g, sea ? (W.seaMat || (W.seaMat = new THREE.MeshPhongMaterial({ color: 0x4f9fb0, transparent: true, opacity: .9, shininess: 90, specular: 0xdff6ff }))) : wm); m.userData.keep = true; grp.add(m); W.waterMeshes.push(m);
+    const sea = (RDC.marram || RDC.coast) && ww * hh * res * res > 20000; // (St Patrick's: Sheephaven Bay, darker and greener than a pond; Pebble Beach: the Pacific, deeper and bluer)
+    const sk = RDC.coast ? 'seaMatP' : 'seaMat';
+    const m = new THREE.Mesh(g, sea ? (W[sk] || (W[sk] = new THREE.MeshPhongMaterial({ color: RDC.coast ? 0x2a7894 : 0x4f9fb0, transparent: true, opacity: RDC.coast ? .93 : .9, shininess: 90, specular: 0xdff6ff }))) : wm); m.userData.keep = true; grp.add(m); W.waterMeshes.push(m);
   }
 }
+const CYP_BARK = new THREE.Color(0x6e6558), CYP_COLS = [0x2c4a34, 0x34553a, 0x2a4631, 0x3a5c3c, 0x30503a];
 const BIRCH_BARK = new THREE.Color(0xe9e6dc), BIRCH_COLS = [0xd9b947, 0xcfa83c, 0xe2c55a, 0xb9b048, 0xa7b04c];
 const AUTUMN_COLS = [0xa8521c, 0xc0702a, 0xcf8f2e, 0xd8a83c, 0x8f4420, 0xb8862f, 0x9a7a2c, 0xc46a24];
 const REAL_TREE_COLS = [0x2f6d3c, 0x3a7d43, 0x467f3f, 0x2e6a45, 0x4c8a4a, 0x3d7449, 0x55934d, 0x316b52, 0x5a8f46, 0x426f3b];
@@ -2769,10 +2781,10 @@ function buildRealTrees(C, grp) {
   const blobN = new THREE.IcosahedronGeometry(1, 1), blobF = new THREE.IcosahedronGeometry(1, 0), coneG = new THREE.ConeGeometry(1, 1, 10); coneG.translate(0, .5, 0);
   const coneF = new THREE.ConeGeometry(1, 1, 6, 1, true); coneF.translate(0, .5, 0);
   const mk = (geo, cnt, shadow) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
-  const trN = mk(trunkG, nN, true), trF = mk(trunkF, nF, false), blN = mk(blobN, nN * (RDC.autumn ? 8 : 4), true), blF = mk(blobF, nF * (RDC.autumn ? 3 : 2), false), coN = mk(coneG, nN * 3, true), coF = mk(coneF, nF * 2, false);
+  const trN = mk(trunkG, nN, true), trF = mk(trunkF, nF, false), blN = mk(blobN, nN * (RDC.autumn || RDC.coast ? 8 : 4), true), blF = mk(blobF, nF * (RDC.autumn || RDC.coast ? 4 : 2), false), coN = mk(coneG, nN * 3, true), coF = mk(coneF, nF * 2, false);
   // pines: one instance of a whole crown (vertex-coloured; the instance colour only tints it)
   const pv = (t, i) => (hash2(i, 13, 7) * (t.near ? 4 : 2)) | 0, pc = { near: [0, 0, 0, 0], far: [0, 0] };
-  all.forEach((t, i) => { if (t.kind === 4) pc[t.near ? 'near' : 'far'][pv(t, i)]++; });
+  all.forEach((t, i) => { if (t.kind === 4 || t.kind === 8) pc[t.near ? 'near' : 'far'][pv(t, i)]++; });
   const PG = pc.near.some(n => n) || pc.far.some(n => n) ? pineGeos() : null;
   const mkP = (geo, cnt, shadow) => { const c2 = Math.max(1, cnt), m = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true }), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
   const piN = PG ? PG.near.map((g, k) => mkP(g, pc.near[k], true)) : [], piF = PG ? PG.far.map((g, k) => mkP(g, pc.far[k], false)) : [];
@@ -2798,11 +2810,29 @@ function buildRealTrees(C, grp) {
       if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: y + th + .85 * Ht, r: R * .9, refs, hid: false });
       return;
     }
-    if (t.kind === 4) {
-      // loblolly pine (Augusta): a tall, bare, rust-grey trunk; the crown a loose cluster of flattened tufts high up
+    if (t.kind === 7) {
+      // Monterey cypress (Pebble Beach): a thick, twisted, grey-brown trunk and a broad, flat-topped crown of dark foliage, pushed over by the wind off the sea
+      // (the cluster of lobes leans downwind: east and a little south), ragged at the top with a few bare grey limbs showing
+      if (C.fieldAt(C.F.tee, t.X, t.Z) < -.3 || C.fieldAt(C.F.green, t.X, t.Z) < -.3) return;
+      const Ht = clamp(t.H > 0 ? t.H : 10, 5, 22), R = clamp(t.d / 2, 2.2, 8.5), th = Math.max(1.6, Ht * .36), nl = t.near ? 6 : 3, la = .45 + (hv - .5) * .5;
+      put(tr, t.X, y - .2, t.Z, .85 + R * .1, th + .6, .85 + R * .1, CYP_BARK, ry);
+      for (let k = 0; k < nl; k++) {
+        const f = k / (nl - 1 || 1), o = R * (.1 + .62 * f), dx = Math.cos(la) * o + (hash2(i, k, 41) - .5) * R * .5, dz = Math.sin(la) * o * .6 + (hash2(i, k, 43) - .5) * R * .5;
+        const sz = R * (.62 + .22 * hash2(i, k, 45)) * (1 - .18 * f), yy = y + th + (Ht - th) * (.22 + .5 * hash2(i, k, 47)) * .8 + .2 * R;
+        col.setHex(CYP_COLS[(hash2(i, k, 49) * CYP_COLS.length) | 0]).offsetHSL((hv - .5) * .02, 0, (hash2(i, k, 51) - .5) * .05);
+        put(bl, t.X + dx, yy, t.Z + dz, sz, sz * .5, sz, col, ry + k);
+      }
+      const cy = y + th + .5 * R; can(t.X + Math.cos(la) * .3 * R, cy + .2 * R, t.Z + Math.sin(la) * .2 * R, .8 * R, 1.8, i); trunk(t.X, t.Z, cy - .3 * R, i, .12);
+      plan.push({ x: t.X, z: t.Z, r: .8 * R, col: 0x2f4d34, far: !t.near });
+      if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: cy + .7 * R, r: .85 * R, refs, hid: false });
+      return;
+    }
+    if (t.kind === 4 || t.kind === 8) {
+      // loblolly pine (Augusta): a tall, bare, rust-grey trunk; the crown a loose cluster of flattened tufts high up. Kind 8, the Monterey pine (Pebble Beach), is the same
+      // build in a darker, bluer green with a rounder, heavier crown
       if (C.fieldAt(C.F.tee, t.X, t.Z) < -.3 || C.fieldAt(C.F.green, t.X, t.Z) < .5) return;
-      const Ht = clamp(t.H > 0 ? t.H : 24, 12, 40), R = clamp(t.d / 2, 2, 5.2), th = Ht - 1.65 * R, cy = y + th + .75 * R;
-      col.setHSL(.3 + hv * .04, .12 + hv * .1, .78 + hv * .14); // a slight tint per tree over the crown's own colours
+      const Ht = clamp(t.H > 0 ? t.H : 24, 12, 40), R = clamp(t.d / 2, 2, t.kind === 8 ? 6.2 : 5.2), th = Ht - 1.65 * R, cy = y + th + .75 * R;
+      if (t.kind === 8) col.setHSL(.36 + hv * .03, .1 + hv * .08, .56 + hv * .12); else col.setHSL(.3 + hv * .04, .12 + hv * .1, .78 + hv * .14); // a slight tint per tree over the crown's own colours
       put(tr, t.X, y - .2, t.Z, 1.05 + .05 * R, th + 1.1 * R, 1.05 + .05 * R, pcol, ry);
       const sq = .85 + .3 * hash2(i, 4, 9); // some crowns rounder, some flatter
       put((t.near ? piN : piF)[pv(t, i)], t.X, y + th - .15 * R, t.Z, R, R * sq, R, col, ry);
@@ -2840,6 +2870,7 @@ function buildRealTrees(C, grp) {
     const Rh = R * ((TREE_TWEAK[t.id] || {}).slim || 1);
     col.setHex(t.kind === 5 ? [0x55813f, 0x4d7a3c, 0x5e8a46][(hv * 3) | 0] : t.kind === 3 ? [0x7fb35e, 0x88bb62, 0x76aa58][(hv * 3) | 0] : hv < .78 ? REAL_TREE_COLS[(hv / .78 * REAL_TREE_COLS.length) | 0] : LEAF_COLS[((hv - .78) / .22 * LEAF_COLS.length) | 0]);
     if (RDC.dry) col.offsetHSL(-.032, -.07, .03); // links: duller, slightly yellower foliage
+    else if (RDC.coast) col.offsetHSL(-.012, -.1, -.075); // Pebble Beach: coast live oaks, dark, grey-olive leaves
     else if (RDC.lush && t.kind !== 5) col.offsetHSL(.012, -.02, -.07); // Augusta: deep southern greens (oaks, magnolias)
     else if (RDC.autumn) { // October in Leicestershire: about half the oaks, ash and beech have turned (copper, amber, gold, rust); hedges stay dark
       const ha = hash2(i, 17, 29);
@@ -3113,7 +3144,7 @@ function buildRealDecor(C, grp) {
     const NR = 1600, reeds = new THREE.InstancedMesh(merged, lambert(0xffffff), NR); reeds.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NR * 3), 3); reeds.count = 0;
     const Mr = new THREE.Matrix4(), cr = new THREE.Color(), Sr = new THREE.Vector3(), RC = RDC.dry ? [0xb3a85f, 0xa39a52, 0x93a05a, 0xc2b36d] : RDC.autumn ? [0x9c8a48, 0x8a7a3e, 0xa69552, 0x7f8a46] : [0x7f9e4c, 0x8eae5a, 0x6c8c44, 0xa5b96c], FGr = C.fg;
     for (const p of C.ponds) {
-      const { i0, j0, ww, hh, sd } = p.win, pr = RDC.lush ? 0 : p.creek ? .16 : .3; // Augusta: neatly mown banks, no reeds
+      const { i0, j0, ww, hh, sd } = p.win, pr = RDC.lush || RDC.coast ? 0 : p.creek ? .16 : .3; // Augusta: neatly mown banks, no reeds
       for (let j = 0; j < hh && reeds.count < NR; j++) for (let i = 0; i < ww && reeds.count < NR; i++) {
         const v = sd[j * ww + i]; if (v < .5 || v > (p.creek ? 2.6 : 4.2) || r() > pr) continue;
         const x = FGr.x0 + (i + i0) * FGr.res + (r() - .5) * FGr.res, z = FGr.z0 + (j + j0) * FGr.res + (r() - .5) * FGr.res, su = C.surf(x, z);
@@ -3188,6 +3219,8 @@ function strawAt(C, X, Z) {
 }
 // azaleas in bloom along the edges of the pines: mounded clumps of pink, magenta, coral, white and pale pink, a little leaf showing through
 const AZALEA_COLS = [[0xe8679f, 0xf07aad, 0xdc5791], [0xc8287a, 0xb81f6c, 0xd13a86], [0xeb5560, 0xf06a63, 0xe0474f], [0xf8f2f4, 0xf1eaee, 0xfcf8f8], [0xf6b3cd, 0xf9c2d6, 0xf2a6c3]];
+const ICE_FLOWER = [0xe0679a, 0xea84b0, 0xf2a8c4, 0xd9559a, 0xe9d25a];
+const ICE_LEAF = [new THREE.Color(0x6f8a45), new THREE.Color(0x7d9448), new THREE.Color(0x86954a), new THREE.Color(0x8b8248), new THREE.Color(0x6a8442)];
 function buildAzaleas(C, grp) {
   if (!GC.flowers || !GC.flowers.length) return;
   const I = C.inner, list = [];
@@ -3205,6 +3238,16 @@ function buildAzaleas(C, grp) {
   const put = (x, y, z, sx, sy, sz, c) => { Q.setFromAxisAngle(V.set(0, 1, 0), r() * TAU); M.compose(V.set(x, y, z), Q, Sc.set(sx, sy, sz)); im.setMatrixAt(im.count, M); im.setColorAt(im.count, c); im.count++; };
   for (const f of list) {
     const y = C.h(f.X, f.Z), P = AZALEA_COLS[f.c] || AZALEA_COLS[0], R = f.r;
+    if (RDC.coast) { // ice plant (Pebble Beach): a flat carpet of fleshy, red-tinged leaves, daisy-like magenta and pink flowers sitting right on it
+      const RR = R * .62;
+      put(f.X, y + .05 * RR, f.Z, RR * 1.5, .2 * RR, RR * 1.5, ICE_LEAF[(r() * ICE_LEAF.length) | 0]);
+      for (let k = 0; k < 3; k++) {
+        const a = r() * TAU, d = RR * (.15 + .9 * r()), s2 = RR * (.22 + .18 * r());
+        col.setHex(ICE_FLOWER[(r() * ICE_FLOWER.length) | 0]).offsetHSL(0, 0, (r() - .5) * .05);
+        put(f.X + Math.cos(a) * d, y + .16 * RR, f.Z + Math.sin(a) * d, s2, .5 * s2, s2, col);
+      }
+      continue;
+    }
     put(f.X, y + .2 * R, f.Z, R * 1.04, .5 * R, R * 1.04, leaf);                          // the leafy mound under the blossom
     for (let k = 0; k < 3; k++) {
       const a = r() * TAU, d = R * (.25 + .35 * r()), s2 = R * (.55 + .25 * r());
@@ -3344,6 +3387,8 @@ const AUGUSTA_DEFS = RD_AUGUSTA.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, n
 const ROTHLEY_DEFS = RD_ROTHLEY.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 6607 + i * 47, windMax: 6, rh: h, len: h.len, real: true, teeCam: null }));
 // St Patrick's Links, Rosapenna, Co. Donegal (Tom Doak, 2021): no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, about 1.4 m here);
 // the routing after the club's course plan, greens, fairways, bunkers, blowouts and the beach traced from the aerial photographs (Esri World Imagery, three dates)
+// Pebble Beach Golf Links, Pebble Beach, California: hole lines, tees, greens, fairways, bunkers and the coast from OpenStreetMap, the ground and the trees from the USGS 3DEP LiDAR point cloud
+const PEBBLEBEACH_DEFS = RD_PEBBLEBEACH.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 8117 + i * 41, windMax: 7.5, rh: h, len: h.len, real: true, teeCam: null }));
 const STPATRICKS_DEFS = RD_STPATRICKS.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 7703 + i * 53, windMax: 8.5, rh: h, len: h.len, real: true, teeCam: null }));
 const ALSACE_DEFS = RD_ALSACE.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 8101 + i * 41, windMax: 5.5, rh: h, len: h.len, real: true, teeCam: null }));
 // the real-course data sets: switched in with the course (see setCourse)
@@ -3359,11 +3404,13 @@ const RDS = {
   stpatricks: { lostNear: 200, teeAim: { 10: [277.7, 13.8], 11: [266.1, 22.6], 13: [241.7, 33.4] }, lostRough: 10, marram: true, data: RD_STPATRICKS, alti: RD_STPATRICKS.alti, z0: RD_STPATRICKS.z0, gr: RD_STPATRICKS.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8,
     // the greens: the elevation model is smooth over the dunes, so it reads a green's surroundings into it (up to a 12 % tilt and a 2.8 m crown);
     // every green keeps 40 % of those contours and at most a 3.5 % tilt, the 13th and 17th (to chip onto) 25 % and 2 %
-    greenFlat: { all: [.4, .035], 9: [.3, .03], 12: [.25, .02], 16: [.25, .02] }, teeRaise: { 6: 1.8 } } // and the 7th's tee is built up: a ridge 40 m out hid the fairway // the 13th and 17th: the real ground there is tilted (7 %) or crowned, too much to chip onto, so these greens are flattened
+    greenFlat: { all: [.4, .035], 9: [.3, .03], 12: [.25, .02], 16: [.25, .02] }, teeRaise: { 6: 1.8 } }, // and the 7th's tee is built up: a ridge 40 m out hid the fairway // the 13th and 17th: the real ground there is tilted (7 %) or crowned, too much to chip onto, so these greens are flattened
+  // the Monterey peninsula: emerald fairways and small, firm greens on the clifftops, cypress and pines, the Pacific below (water: it is a penalty area, out of bounds beyond the course's edge)
+  pebblebeach: { coast: true, data: RD_PEBBLEBEACH, alti: RD_PEBBLEBEACH.alti, z0: RD_PEBBLEBEACH.z0, gr: RD_PEBBLEBEACH.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 }
 };
 // Alsace, Augusta, Rothley Park and St Patrick's bring their terrain, features, trees and relief as separate files (data-<course>.js), fetched the first time the course is used and then kept
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
-const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js' }, DATA = { ok: {}, p: {}, busy: 0 };
+const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
 function loadData(k) {
   if (dataReady(k)) return Promise.resolve(); if (DATA.p[k]) return DATA.p[k];
@@ -3396,6 +3443,7 @@ const COURSES = {
   augusta: { key: 'augusta', name: 'Augusta National Golf Club', short: 'Augusta', defs: AUGUSTA_DEFS, best: 'ssg-best-augusta', board: 'ssg-board-augusta', coll: 'rounds-augusta' },
   rothley: { key: 'rothley', name: 'Rothley Park Golf Club', short: 'Rothley Park', defs: ROTHLEY_DEFS, best: 'ssg-best-rothley', board: 'ssg-board-rothley', coll: 'rounds-rothley' },
   stpatricks: { key: 'stpatricks', name: "St Patrick's Links, Rosapenna", short: "St Patrick's", defs: STPATRICKS_DEFS, best: 'ssg-best-stpatricks', board: 'ssg-board-stpatricks', coll: 'rounds-stpatricks' },
+  pebblebeach: { key: 'pebblebeach', name: 'Pebble Beach Golf Links', short: 'Pebble Beach', defs: PEBBLEBEACH_DEFS, best: 'ssg-best-pebblebeach', board: 'ssg-board-pebblebeach', coll: 'rounds-pebblebeach' },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
 };
 const LEGACY_ON = false;
@@ -3782,7 +3830,7 @@ function burst(x, y, z, dirx, dirz, col, n, spd, up) {
 }
 // gusts: while the ball is in the air, leaves and grass blades blow through the view with the wind, thicker in each gust
 // what blows past depends on the course: Basel meadow leaves, Alsace vineyard reds and golds, Augusta azalea petals and pine straw, Rothley Park oak leaves in copper and gold, St Patrick's blown sand and marram
-const GUST_COLS = { gccb: [0xc9b458, 0xa7c25a, 0xd89c3a, 0x8fb04e], alsace: [0xb5532e, 0xd9a441, 0xc98a2b, 0x9a3f3a], augusta: [0xf2a1c0, 0xf7d3e2, 0xd98aa8, 0xb98a4c], rothley: [0xb5651d, 0xd9a03a, 0x9c4a1f, 0xc8862a, 0xe0b85a], stpatricks: [0xd8c79a, 0xc2b27c, 0xe6dcc0, 0xa9a274] }; // (St Patrick's: blown sand and marram seed heads)
+const GUST_COLS = { gccb: [0xc9b458, 0xa7c25a, 0xd89c3a, 0x8fb04e], alsace: [0xb5532e, 0xd9a441, 0xc98a2b, 0x9a3f3a], augusta: [0xf2a1c0, 0xf7d3e2, 0xd98aa8, 0xb98a4c], rothley: [0xb5651d, 0xd9a03a, 0x9c4a1f, 0xc8862a, 0xe0b85a], stpatricks: [0xd8c79a, 0xc2b27c, 0xe6dcc0, 0xa9a274], pebblebeach: [0xcfc3a0, 0xb7a77c, 0x8f9a6a, 0xd8d0b8] }; // (St Patrick's: blown sand and marram seed heads)
 function gustTick(dt, tt) {
   if (G.state !== 'flight' || !G.shot || G.shot.L.putt || G.rbow) { G.gustAcc = 0; return; }
   const ws = Math.hypot(G.wind[0], G.wind[1]); if (ws < 2.2) return;
@@ -3858,7 +3906,7 @@ function buildHole(C) {
 }
 /* ---------- terrain shading: smooth light, crisp per-pixel surface edges ---------- */
 const TERRAIN_GLSL = `
-uniform sampler2D tFA, tFB, tFC, tFar; uniform vec2 fO, fN; uniform float fInv, fR, wLo, wHi, seaLv, hasCoast, isLinks, isRocky, hasFar, isStraw, isCheck, isMar;
+uniform sampler2D tFA, tFB, tFC, tFar; uniform vec2 fO, fN; uniform float fInv, fR, wLo, wHi, seaLv, hasCoast, isLinks, isRocky, hasFar, isStraw, isCheck, isMar, isPeb;
 uniform vec4 farA, farB, cupP;
 uniform vec3 cStraw, cRough, cDeep, cFirst, cFairA, cFairB, cGreenA, cGreenB, cFringe, cSand, cWaste, cTee, cPath, cBeach, cPond, cRock, cBed1, cBed2, cDune, cGranite;
 varying vec3 vWPos; varying vec3 vWN;
@@ -3906,7 +3954,7 @@ vec3 surfaceColor() {
   // Rothley Park: the rough cut in broad bands; fairways cross-cut on the diagonal, two sets of mowing lines at 45 degrees to the hole both
   // ways (9 m passes), so the light and dark stripes cross into diamonds; the greens cross-cut finer
   col *= 1. + isCheck * .03 * clamp(sin(vWPos.z * .2244) * 5., -1., 1.);
-  vec3 fair = isCheck > .5 ? lastPass(mix(cFairB, cFairA, crossCut(vWPos.xz, .7854, 9.)), vWPos.xz, .7854, 9.) : mix(cFairB, cFairA, ins(c.r * 2. - 1.));
+  vec3 fair = isCheck > .5 ? lastPass(mix(cFairB, cFairA, crossCut(vWPos.xz, .7854, 9.)), vWPos.xz, .7854, 9.) : isPeb > .5 ? mix(cFairB, cFairA, band(dot(vWPos.xz, vec2(.8693, -.4942)) * 3.14159 / 3.4) * .8 + .2 * band(dot(vWPos.xz, vec2(.4942, .8693)) * 3.14159 / 13.)) : mix(cFairB, cFairA, ins(c.r * 2. - 1.));
   col = mix(col, fair, ins(fw));
   col *= 1. - .07 * lineAt(fw, .13);
   col = mix(col, cPath, ins(path));
@@ -3926,6 +3974,11 @@ vec3 surfaceColor() {
   float ny = normalize(vWN).y;
   if (isLinks > .5) col = mix(col, cDune, smoothstep(.975, .9, ny) * (1. - ins(fw)) * (1. - ins(gr - 1.5)) * (1. - ins(sand)) * (1. - ins(tee)) * (1. - ins(path)));
   if (isRocky > .5) col = mix(col, cGranite * (.86 + .28 * mix(.5, c.a, inF)), smoothstep(.9, .76, ny) * (1. - ins(fw)) * (1. - ins(gr - 1.5)) * (1. - ins(sand)) * (1. - ins(tee)) * (1. - ins(path)));
+  if (isPeb > .5) { // the clifftops: grey granite and sandstone where the ground falls away, a little lichen-orange in it
+    float cl = smoothstep(.86, .7, ny) * (1. - ins(fw)) * (1. - ins(gr - 1.5)) * (1. - ins(sand)) * (1. - ins(tee)) * (1. - ins(path));
+    float lich = vn(vWPos.xz * .6);
+    col = mix(col, mix(cGranite, vec3(.62, .46, .3), smoothstep(.62, .8, lich) * .55) * (.82 + .3 * mix(.5, c.a, inF)), cl);
+  }
   if (hasCoast > .5) {
     col = mix(col, cRock * (vWPos.y < seaLv + 2. ? .84 : 1.), smoothstep(.7, .6, ny));
     col = mix(col, mix(cBed1, cBed2, clamp((seaLv - vWPos.y) / 7., 0., 1.)), ins(vWPos.y - (seaLv - .25)));
@@ -3962,6 +4015,9 @@ const crossCutJS = (x, z, a = .7854, wd = 9) => { const k = Math.PI / wd, s = Ma
 // St Patrick's Links: [dl, ds, dh] likewise. Fine fescue fairways and greens, paler and yellower than parkland turf; the rough tawny and thin; the dunes
 // grey-gold marram; pale Atlantic sand
 const LINKS_OFF = { ROUGH: [.02, -.15, -.085], DEEP: [.07, -.2, -.1], FIRST: [.01, -.1, -.05], FAIR: [-.015, -.1, -.035], GREEN: [-.04, -.07, -.02], FRINGE: [-.02, -.1, -.035], TEE: [-.02, -.1, -.035], SAND: [.03, -.2, .01], PATH: [-.02, -.05, -.01] };
+// Pebble Beach: [dl, ds, dh] likewise. Fairways a deep, cool emerald cut in narrow stripes, small bright greens, the rough a tawny olive (the summer-dry kikuyu and ryegrass of the
+// peninsula), white silica sand, grey asphalt cart paths
+const PEB_OFF = { ROUGH: [-.035, -.1, -.052], DEEP: [-.02, -.16, -.075], FIRST: [-.04, -.04, -.02], FAIR: [-.04, .0, .012], GREEN: [-.03, .02, .006], FRINGE: [-.035, .0, .008], TEE: [-.04, .0, .01], SAND: [.045, -.3, .012], PATH: [-.5, -.1, 0] };
 const AUT_OFF = { ROUGH: [-.035, .03, .03], DEEP: [-.035, .02, .02], FIRST: [-.025, .04, .03], FAIR: [-.005, .06, .035], GREEN: [-.01, .07, .045], FRINGE: [-.02, .06, .04], TEE: [-.02, .06, .04], SAND: [.05, -.16, .005], PATH: [-.04, -.12, 0] };
 function terrainMatFrom(o) {
   const { A, B, T, w, h, x0, z0, res, R, wlo, whi } = o;
@@ -3982,7 +4038,7 @@ function terrainMatFrom(o) {
     cPath: { value: o.dry ? v3(hslToRgb(.125, .30, .84)) : pc(S.PATH) }, // links: sandy paths
     cBeach: { value: v3(hslToRgb(BEACH[0], BEACH[1], BEACH[2])) }, cPond: { value: pc(S.WATER, -.16, -.12) },
     cRock: { value: v3(hslToRgb(.085, .16, .68)) }, cGranite: { value: v3(hslToRgb(.08, .07, .6)) }, cBed1: { value: v3(hslToRgb(.13, .35, .7)) }, cBed2: { value: v3(hslToRgb(.5, .3, .5)) }, cDune: { value: v3(hslToRgb(.115, .36, .74)) },
-    isCheck: { value: o.autumn ? 1 : 0 }, isMar: { value: o.marram ? 1 : 0 }, isStraw: { value: o.straw ? 1 : 0 }, cStraw: { value: v3(hslToRgb(.068, .52, .43)) } // Augusta's pine straw, rust-brown under the pines
+    isCheck: { value: o.autumn ? 1 : 0 }, isPeb: { value: o.coast ? 1 : 0 }, isMar: { value: o.marram ? 1 : 0 }, isStraw: { value: o.straw ? 1 : 0 }, cStraw: { value: v3(hslToRgb(.068, .52, .43)) } // Augusta's pine straw, rust-brown under the pines
   };
   if (o.autumn) {
     const q = (k, dl) => { const f = AUT_OFF[k]; return pc(S[k], (dl || 0) + f[0], f[1], f[2]); };
@@ -3994,6 +4050,12 @@ function terrainMatFrom(o) {
     U.cRough.value = q('ROUGH'); U.cDeep.value = q('DEEP'); U.cFirst.value = q('FIRST'); U.cFairA.value = q('FAIR', .028); U.cFairB.value = q('FAIR', -.016);
     U.cGreenA.value = q('GREEN', .016); U.cGreenB.value = q('GREEN', -.006); U.cFringe.value = q('FRINGE'); U.cTee.value = q('TEE'); U.cSand.value = q('SAND'); U.cWaste.value = q('SAND', -.06); U.cPath.value = q('PATH');
     U.cDune.value = v3(hslToRgb(.13, .2, .66)); U.isLinks.value = 1;
+  }
+  if (o.coast) { // Pebble Beach
+    const q = (k, dl) => { const f = PEB_OFF[k]; return pc(S[k], (dl || 0) + f[0], f[1], f[2]); };
+    U.cRough.value = q('ROUGH'); U.cDeep.value = q('DEEP'); U.cFirst.value = q('FIRST'); U.cFairA.value = q('FAIR', .03); U.cFairB.value = q('FAIR', -.02);
+    U.cGreenA.value = q('GREEN', .016); U.cGreenB.value = q('GREEN', -.008); U.cFringe.value = q('FRINGE'); U.cTee.value = q('TEE'); U.cSand.value = q('SAND'); U.cWaste.value = q('SAND', -.07); U.cPath.value = q('PATH');
+    U.cGranite.value = v3(hslToRgb(.09, .07, .56));
   }
   const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x000000, shininess: 1 });
   mat.extensions = { derivatives: true };
@@ -4505,6 +4567,7 @@ function renderPlan(C) {
     colOf[S.TEE] = RDC.dry ? colOf[S.FRINGE] : RDC.lush ? pcc(S.FRINGE, -.02, .04, .02) : pcc(S.TEE); colOf[S.PATH] = RDC.dry ? hslToRgb(.125, .30, .84) : pcc(S.PATH);
     if (RDC.autumn) for (const k in AUT_OFF) { const f = AUT_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
     if (RDC.marram) for (const k in LINKS_OFF) { const f = LINKS_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
+    if (RDC.coast) for (const k in PEB_OFF) { const f = PEB_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
   }
   // heights first, for a soft hillshade so slopes and hummocks read on the yardage map
   const Hs = new Float32Array(w * h);
@@ -6005,6 +6068,12 @@ function ambSetup(a, bus, out) {
       src.buffer = mkNoise(a, 7); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; g.gain.value = g0; lfo.frequency.value = lf; lg.gain.value = ld;
       lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
     }
+  } else if (COURSE.key === 'pebblebeach') { // the Pacific breaking on the rocks below the 7th and the 18th: a deep roar that builds and draws back, white water hissing on top, the wind in the cypress
+    for (const [f, q, g0, lf, ld] of [[300, .5, .024, .068, .02], [1900, .6, .01, .045, .008], [720, .3, .009, .031, .006]]) {
+      const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+      src.buffer = mkNoise(a, 8); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; g.gain.value = g0; lfo.frequency.value = lf; lg.gain.value = ld;
+      lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
+    }
   } else { // a breath of wind in the vines
     const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
     src.buffer = mkNoise(a, 5); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = .5; g.gain.value = .014; lfo.frequency.value = .05; lg.gain.value = .011;
@@ -6078,6 +6147,20 @@ function ambRobin(a, t) { // a robin in the hedge: a short phrase of thin, quick
     tt += d + .03 + Math.random() * .09;
   }
 }
+function ambSeaLion(a, t) { // California sea lions on the rocks off Point Joe, far below: a few hoarse, barking calls
+  const n = 2 + ((Math.random() * 5) | 0), f0 = 190 + Math.random() * 50; let tt = t;
+  for (let k = 0; k < n; k++) {
+    const o = a.createOscillator(), bp = a.createBiquadFilter(), g = a.createGain(), d = .15 + Math.random() * .1;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(f0 * 1.2, tt); o.frequency.exponentialRampToValueAtTime(f0 * .78, tt + d);
+    bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 2.2;
+    g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(.017, tt + .02); g.gain.exponentialRampToValueAtTime(.0001, tt + d); o.connect(bp).connect(g).connect(MUS.bus); o.start(tt); o.stop(tt + d + .02);
+    tt += d + .16 + Math.random() * .12;
+  }
+}
+function ambBuoy(a, t) { // the bell buoy off the point, rocked by the swell: a few dull, irregular clanks
+  let tt = t; const n = 3 + ((Math.random() * 3) | 0);
+  for (let k = 0; k < n; k++) { ambBell(a, 52 + (Math.random() < .5 ? 0 : 3), tt, .03, 3); tt += .9 + Math.random() * 1.5; }
+}
 function ambGull(a, t) { // a herring gull wheeling over the dunes: a few falling, nasal 'kyow' calls
   const n = 2 + ((Math.random() * 4) | 0), f0 = 1150 + Math.random() * 350; let tt = t;
   for (let k = 0; k < n; k++) {
@@ -6125,7 +6208,18 @@ const AMB = {
       [[0, 78, 3], [3, 81, 1], [4, 83, 2]], [[0, 86, 4], [4, 83, 2]], [[0, 81, 2], [2, 79, 2], [4, 78, 2]], [[0, 79, 3], [3, 78, 1], [4, 76, 2]],
       [[0, 74, 2], [2, 76, 2], [4, 78, 2]], [[0, 81, 3], [3, 76, 1], [4, 73, 2]], [[0, 74, 4], [4, 76, 2]], [[0, 74, 6]]],
     pat: [[0, 2, 4, 3, 4, 2], [0, 3, 5, 4, 3, 2], [0, 2, 3, 4, 5, 3], [0, 1, 2, 3, 2, 1]],
-    vars: ['plain', 'sea', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] }
+    vars: ['plain', 'sea', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] },
+  pebblebeach: { per: .42, echo: 1, level: .3,
+    // a slow 4/4 in D major, the harp turning over the chords like a guitar on the cliff path: Dmaj7 A/C# Bm7 Gmaj7 Dmaj9 F#m7 Em7 A7sus, two bars each; chord = [bass, pad, harp notes]
+    ch: [[38, [50, 54, 57, 61], [50, 57, 61, 62, 66, 69]], [37, [49, 52, 57, 61], [49, 57, 61, 64, 69, 73]], [35, [47, 54, 57, 62], [47, 54, 57, 62, 66, 69]], [43, [55, 59, 62, 66], [55, 62, 66, 67, 71, 74]],
+      [38, [50, 54, 57, 64], [50, 57, 61, 64, 66, 69]], [42, [49, 54, 57, 64], [54, 57, 61, 64, 66, 69]], [40, [52, 55, 59, 62], [52, 59, 62, 64, 67, 71]], [45, [57, 62, 64, 67], [45, 57, 62, 64, 67, 74]]],
+    // the vibraphone's tune, bar by bar: [eighth, note, length in eighths]
+    mel: [[[0, 74, 2], [2, 78, 2], [4, 81, 4]], [[0, 81, 3], [3, 78, 1], [4, 76, 4]], [[0, 73, 2], [2, 76, 2], [4, 81, 4]], [[0, 81, 2], [2, 76, 2], [4, 73, 4]],
+      [[0, 74, 2], [2, 78, 2], [4, 83, 4]], [[0, 81, 3], [3, 78, 1], [4, 74, 4]], [[0, 74, 2], [2, 79, 2], [4, 83, 4]], [[0, 81, 2], [2, 79, 2], [4, 78, 4]],
+      [[0, 81, 4], [4, 78, 2], [6, 81, 2]], [[0, 86, 3], [3, 83, 1], [4, 81, 4]], [[0, 78, 2], [2, 81, 2], [4, 85, 4]], [[0, 83, 2], [2, 81, 2], [4, 78, 4]],
+      [[0, 76, 2], [2, 79, 2], [4, 83, 4]], [[0, 81, 3], [3, 79, 1], [4, 76, 4]], [[0, 81, 2], [2, 79, 2], [4, 76, 2], [6, 74, 2]], [[0, 73, 4], [4, 74, 4]]],
+    pat: [[0, 2, 4, 3, 5, 3, 4, 2], [0, 3, 5, 4, 2, 4, 5, 3], [0, 2, 3, 5, 4, 3, 2, 1], [0, 1, 2, 3, 4, 3, 2, 1]],
+    vars: ['plain', 'surf', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] }
 };
 function ambStep(a, kind, st, t) {
   const K = AMB[kind], hum = () => (Math.random() - .5) * .02;
@@ -6173,6 +6267,23 @@ function ambStep(a, kind, st, t) {
       if (v === 'echo' && len >= 3) ambFlute(a, mm - 12, t + 3 * K.per, len * K.per * .6, .02);
     }
     if (e === 0 && Math.random() < (v === 'sea' ? .22 : .05)) ambGull(a, t + Math.random() * 1.5);
+    return;
+  }
+  if (kind === 'pebblebeach') {
+    // 4/4 in eighths, sixteen bars to a cycle; on 'surf' cycles the vibraphone rests and the shore has the piece: gulls, sea lions, the bell buoy
+    const cyc = Math.floor(st / 128), bar = Math.floor(st / 8) % 16, e = st % 8, ch = K.ch[Math.floor(bar / 2)], v = K.vars[cyc % 8], intro = cyc === 0 ? Math.min(1, bar / 6) : 1;
+    if (st % 128 === 0) { ambTone(a, 38, t, 54, .035, 'triangle'); ambTone(a, 50, t, 54, .014, 'triangle'); } // a low drone, the swell under the cliffs
+    if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, 6.2, .05, 1000); ambTone(a, ch[0], t, 5.6, .06); }
+    const pat = K.pat[(cyc + Math.floor(bar / 4)) % 4], hn = ch[2][pat[e]];
+    if (v !== 'sparse' || e % 2 === 0) ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .085 : .05) * intro);
+    if (v !== 'surf' && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of K.mel[bar]) {
+      if (pos !== e || (v === 'sparse' && bar % 2 === 1)) continue; const mm = m + (v === 'up' && bar >= 8 ? 12 : 0) - (v === 'low' ? 12 : 0);
+      ambBell(a, mm - 12, t + hum(), .05 * intro, 1.8 + len * .35);
+      if (v === 'echo' && len >= 3) ambBell(a, mm - 12, t + 3 * K.per, .018, 2.4);
+    }
+    if (e === 0 && Math.random() < (v === 'surf' ? .24 : .05)) ambGull(a, t + Math.random() * 1.5);
+    if (e === 4 && Math.random() < (v === 'surf' ? .1 : .015)) ambSeaLion(a, t + Math.random() * 1.2);
+    if (st % 128 === 64 && cyc % 3 === 1) ambBuoy(a, t);
     return;
   }
   // Alsace: 6/8, a bar of six eighths; sixteen bars to a cycle
@@ -6398,12 +6509,22 @@ function resumeRound(course) {
   beginHole(); G.snapCam = true; updateHUD(); // straight to the address view, no flyover
   return true;
 }
+// Pebble Beach is still being built: a note says so when a round starts there (and the first time a hole is practised in a session)
+const PBN = { practice: false };
+function pbNotice(practice) {
+  if (!COURSE || COURSE.key !== 'pebblebeach') return;
+  if (practice) { if (PBN.practice) return; PBN.practice = true; }
+  $('pbNote').classList.add('on');
+}
+$('pbNoteOk').addEventListener('click', () => $('pbNote').classList.remove('on'));
+$('pbNote').addEventListener('click', e => { if (e.target === $('pbNote')) $('pbNote').classList.remove('on'); });
 function startRound(daily) {
   if (!daily && G.daily) { saveRound(); G.daily = null; mpRelobby(); } // a new ordinary round: the daily challenge in play waits where it is
   clearRound(G.daily ? 'daily' : undefined);
   G.tod = G.daily ? todFor(G.daily.seed) : todPick(Math.random);
   G.practice = false; G.submitted = false; G.shotLog = []; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
+  pbNotice(false);
   { const pr = G.daily ? mulberry32(G.daily.seed + 99) : Math.random; G.pins = HOLE_DEFS.map(() => Math.floor(pr() * 4)); } // a fresh pin sheet every round (the same one for everyone on the daily challenge)
   startHole(0);
 }
@@ -7792,7 +7913,7 @@ function startPractice(i) {
   G.practice = true; G.submitted = true; clearRound();
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
   if (!G.pins) G.pins = HOLE_DEFS.map(() => Math.floor(Math.random() * 4));
-  $('title').classList.remove('on'); closeSheets(); startHole(i);
+  $('title').classList.remove('on'); closeSheets(); startHole(i); pbNotice(true);
 }
 function totalToPar() { let s = 0, p = 0; G.scores.forEach((v, i) => { if (v != null) { s += v; p += HOLE_DEFS[i].par; } }); return { s, p, d: s - p }; }
 function fmtToPar(d) { return d === 0 ? 'E' : (d > 0 ? '+' + d : '' + d); }
@@ -8221,7 +8342,7 @@ function logShot(sh, r, holed, pen) {
 /* ---------- clips: a shot as a handful of numbers, shown again by simulating it ---------- */
 // A great shot is kept as the course, hole, pin, weather, wind and how it left the club (18 numbers). Playing it builds that hole and flies the shot
 // again exactly as it happened - the same machinery as watching someone live - so a replay costs nothing to store, post and send.
-const CLIP_COURSES = ['gccb', 'alsace', 'augusta', 'rothley', 'stpatricks'];
+const CLIP_COURSES = ['gccb', 'alsace', 'augusta', 'rothley', 'stpatricks', 'pebblebeach'];
 function clipOf(sh) {
   const L = sh.L, pre = sh.pre, pv = G.prev, ci = CLIP_COURSES.indexOf(COURSE.key); if (!L || !pre || !pv || ci < 0 || !L.v || !L.w) return null;
   const r = v => Math.round(v * 1e4) / 1e4;
