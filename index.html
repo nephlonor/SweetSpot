@@ -8727,6 +8727,13 @@ async function loadDailyFile(day, force) {
 }
 // the archive (one line per finished daily) and the overall standings, both kept up to date by the leaderboard workflow. GitHub can start the scheduled
 // rebuild hours late, so a day that is over (its file is in) but not yet in them is added here, with the same points and the same rules as the workflow.
+function dlAskRebuild(d) {
+  const k = ghKey(); if (!k) return;
+  try { if (localStorage.getItem('ssg-std') === d) return; localStorage.setItem('ssg-std', d); } catch (e) { return; }
+  fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: '[standings] rebuild', body: 'Archive and standings rebuild request from Sweet Spot Golf.\n\n```json\n{"v":1,"standings":true}\n```\n' }) })
+    .then(r => { if (!r.ok) try { localStorage.removeItem('ssg-std'); } catch (e) { } }).catch(() => { try { localStorage.removeItem('ssg-std'); } catch (e) { } });
+}
 function dlMetaLive() {
   const today = dayId(); let idx = DL.index, ov = DL.overall;
   if (!Array.isArray(idx) || !Array.isArray(ov)) return { idx, ov };
@@ -8739,6 +8746,7 @@ function dlMetaLive() {
     if (res.length) add.push({ d, c, res });
   }
   if (!add.length) return { idx, ov };
+  dlAskRebuild(add[add.length - 1].d); // (the workflow's own files catch up: once per missing day per device, a request goes out)
   idx = idx.concat(add.map(a => ({ d: a.d, c: a.c, n: a.res.length, w: a.res[0].n, wb: a.res[0].id, t: a.res[0].tp }))).sort((a, b) => a.d < b.d ? 1 : -1);
   ov = ov.map(o => Object.assign({}, o, o.bys ? { bys: o.bys.slice() } : {}));
   const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
