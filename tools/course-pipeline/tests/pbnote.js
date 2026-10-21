@@ -9,7 +9,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   await p.route('**/fonts.googleapis.com/**', r => r.abort());
   await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(2500);
   const on = () => p.evaluate(() => $('pbNote').classList.contains('on'));
-  await p.evaluate(() => loadData('pebblebeach').then(() => setCourse('pebblebeach')));
+  await p.evaluate(() => loadData('mountainvalley').then(() => setCourse('mountainvalley')));
   console.log('before round', await on());
   await p.evaluate(() => { $('title').classList.remove('on'); startRound(); });
   await p.waitForTimeout(1500); console.log('round start', await on());
