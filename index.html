@@ -3061,7 +3061,7 @@ function buildRealDecor(C, grp) {
   const I = C.inner, bnd = GC.boundary, nb = bnd.length >> 1;
   for (let i = 0; i < nb; i++) {
     const a = C.loc(bnd[2 * i], bnd[2 * i + 1]), b = C.loc(bnd[2 * ((i + 1) % nb)], bnd[2 * ((i + 1) % nb) + 1]), L = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    for (let s = 0; s < L; s += 12) { const u = s / L, x = a[0] + (b[0] - a[0]) * u, z = -(a[1] + (b[1] - a[1]) * u); if (x > I.minX - 20 && x < I.maxX + 20 && z > I.minZ - 20 && z < I.maxZ + 20) stake(x, z, 0xffffff); }
+    for (let s = 0; s < L; s += 12) { const u = s / L, x = a[0] + (b[0] - a[0]) * u, z = -(a[1] + (b[1] - a[1]) * u); if (x > I.minX - 20 && x < I.maxX + 20 && z > I.minZ - 20 && z < I.maxZ + 20) stake(x, z, RDC.coast && nearSea(C, x, z) ? 0xff8f8f : 0xffffff); } // (Pebble Beach: where the edge runs along the cliffs and the beach it is a penalty area, red stakes; white only inland)
   }
   // white stakes along the midline where the neighbouring hole's side is out of bounds
   if (C.midOB) for (let s = 12; s < C.center.L; s += 12) {
@@ -7188,12 +7188,23 @@ function waterOptions(r) {
   const toPin = (x, z) => Math.round(Math.hypot(cup.x - x, cup.z - z));
   if (dzn) opts.push({ k: 'zone', t: 'Drop zone', d: `The marked drop area for this hazard · ${toPin(dzn.x, -dzn.f)} m to the pin`, x: dzn.x, z: -dzn.f });
   // lateral relief: the best-lying dry spot within two club lengths of where it crossed the edge, no nearer the hole
-  let lat = null, ld = -1;
-  for (const rr of [.6, 1.2, 1.8, 2 * CLUB_LEN]) for (let a = 0; a < 24; a++) {
+  let lat = null, ld = -1, latFw = false;
+  if (RDC.coast) { // Pebble Beach: the lateral drop is always on the fairway, the nearest fairway to where the ball crossed the edge, no nearer the hole
+    for (const [maxR, slack] of [[110, 0], [260, 1e9]]) { // first no nearer the hole; failing that (the carry is over the bay) the nearest fairway at all
+      let bd = 1e9;
+      for (let rr = 2; rr <= maxR && bd > rr - 2; rr += 2) for (let a = 0; a < 36; a++) {
+        const x = E[0] + Math.cos(a * TAU / 36) * rr, z = E[1] + Math.sin(a * TAU / 36) * rr;
+        if (C.surf(x, z) !== S.FAIR || !dryGround(x, z) || C.isOB(x, z) || Math.hypot(cup.x - x, cup.z - z) < dEnt - .05 - slack) continue;
+        if (rr < bd) { bd = rr; lat = [x, z]; latFw = true; }
+      }
+      if (lat) break;
+    }
+  }
+  if (!lat) for (const rr of [.6, 1.2, 1.8, 2 * CLUB_LEN]) for (let a = 0; a < 24; a++) {
     const x = E[0] + Math.cos(a * TAU / 24) * rr, z = E[1] + Math.sin(a * TAU / 24) * rr; if (!dryGround(x, z) || C.surf(x, z) === S.SAND) continue;
     if (Math.hypot(cup.x - x, cup.z - z) < dEnt - .05) continue; const wd = waterDist(x, z); if (wd > ld) { ld = wd; lat = [x, z]; }
   }
-  if (lat) opts.push({ k: 'lateral', t: 'Lateral relief', d: `Within two club lengths of where it went in, no nearer the hole · ${toPin(lat[0], lat[1])} m to the pin`, x: lat[0], z: lat[1] });
+  if (lat) opts.push({ k: 'lateral', t: 'Lateral relief', d: (latFw ? 'On the nearest fairway, no nearer the hole' : 'Within two club lengths of where it went in, no nearer the hole') + ` · ${toPin(lat[0], lat[1])} m to the pin`, x: lat[0], z: lat[1] });
   // back on the line: from the hole through the entry point and back from there, on dry, level ground with room to swing
   const ux = (E[0] - cup.x) / dEnt, uz = (E[1] - cup.z) / dEnt; let back = null; const g3 = [0, 0];
   for (let t = 4; t <= 150 && !back; t += 2) {
