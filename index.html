@@ -446,6 +446,14 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .tabs button{padding:6px 11px;border-radius:9px;font:600 12px var(--cond);text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}
 .tabs button.sel{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(22,33,28,.14)}
 .lb{display:flex;flex-direction:column;gap:5px}
+#boardSheet{height:88vh}
+.cwrap{position:relative;margin:0 0 10px;border-radius:16px;overflow:hidden;background:var(--soft)}
+.cwrap::before{content:'';position:absolute;left:8px;right:8px;top:50%;height:44px;margin-top:-22px;border-radius:12px;background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);pointer-events:none;z-index:1}
+.cwrap::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(40,70,48,.55),rgba(40,70,48,0) 30%,rgba(40,70,48,0) 70%,rgba(40,70,48,.55));pointer-events:none;z-index:3}
+.cwheel{position:relative;z-index:2;height:132px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;perspective:240px;perspective-origin:50% 50%;scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y}
+.cwheel::-webkit-scrollbar{display:none}
+.cwheel .cwp{height:44px}
+.cwi{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;scroll-snap-stop:always;font:600 22px var(--cond);text-transform:uppercase;letter-spacing:.07em;color:var(--ink);will-change:transform,opacity;cursor:pointer;backface-visibility:hidden;white-space:nowrap}
 .lb .row{display:grid;grid-template-columns:30px 1fr auto 44px;align-items:center;gap:8px;background:var(--soft);border-radius:14px;padding:8px 12px;font:600 17px var(--cond);font-variant-numeric:tabular-nums}
 .lb .row .rk{font:600 13px var(--cond);color:var(--ink3)}
 .lb .row .nm{text-transform:uppercase;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -8744,19 +8752,27 @@ async function retryUnposted() {
   }
 }
 // list for the chosen tab; names are other people's text, so everything goes in with textContent
+// the course picker: a vertical wheel, the name in the middle is the course shown; it turns with a finger (snapping to a name) or a tap on a name
+function courseWheel(key) {
+  const IH = 44, list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), wrap = document.createElement('div'), wh = document.createElement('div');
+  wrap.className = 'cwrap'; wh.className = 'cwheel'; wh.setAttribute('role', 'listbox'); wh.setAttribute('aria-label', 'Course');
+  const sp = () => { const d = document.createElement('div'); d.className = 'cwp'; return d; }; wh.appendChild(sp());
+  const items = list.map((c, i) => { const d = document.createElement('div'); d.className = 'cwi'; d.textContent = c.short; d.setAttribute('role', 'option'); d.onclick = () => wh.scrollTo({ top: i * IH, behavior: 'smooth' }); wh.appendChild(d); return d; });
+  wh.appendChild(sp()); wrap.appendChild(wh);
+  const paint = () => { const pos = wh.scrollTop / IH; items.forEach((d, i) => { const o = i - pos, a = Math.abs(o), q = Math.min(a, 2.4); d.style.transform = `rotateX(${-Math.sign(o) * q * 26}deg) scale(${1 - .05 * q})`; d.style.opacity = String(Math.max(.16, 1 - .42 * q)); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false'); }); };
+  let tm = 0, cur = Math.max(0, list.findIndex(c => c.key === key));
+  wh.addEventListener('scroll', () => { paint(); clearTimeout(tm); tm = setTimeout(() => { const i = clamp(Math.round(wh.scrollTop / IH), 0, list.length - 1); if (i !== cur && Math.abs(wh.scrollTop - i * IH) < 3) { cur = i; Board.view = list[i].key; loadWorld(false, list[i].key); refreshBoards(); } }, 140); }, { passive: true });
+  // placed once it is in the page (the board is rebuilt after every turn of the wheel, at the same place)
+  wh._place = () => { wh.style.scrollSnapType = 'none'; wh.scrollTop = cur * IH; paint(); requestAnimationFrame(() => { wh.style.scrollSnapType = ''; }); };
+  return wrap;
+}
 function fillBoard(el, limit, key, pick) {
   key = key || COURSE.key; const CO = COURSES[key] || COURSE, own = key === COURSE.key;
   el.textContent = '';
   // the leaderboard sheet can show any course's board, without touching the round in play
   if (pick) {
     $('boardName').textContent = CO.name;
-    const cs = document.createElement('div'); cs.className = 'seg boardCourse';
-    for (const c of Object.values(COURSES)) {
-      if (c.key === 'legacy' && !LEGACY_ON) continue;
-      const b = document.createElement('button'); b.textContent = c.short; if (c.key === key) b.className = 'sel';
-      b.onclick = () => { Board.view = c.key; loadWorld(false, c.key); refreshBoards(); }; cs.appendChild(b);
-    }
-    el.appendChild(cs);
+    { const cw = courseWheel(key); el.appendChild(cw); cw.firstChild._place(); }
     const dc = document.createElement('button'); dc.className = 'dlCard dlMini dl-' + dlStatus().k; dc.innerHTML = '<i class="ic"></i><span><b></b><small></small></span><em></em>'; dc.querySelector('.ic').innerHTML = ICONS.flag;
     const st = dlStatus(); dc.querySelector('b').textContent = st.big; dc.querySelector('small').textContent = st.sub; dc.querySelector('em').textContent = st.tag; dc.onclick = dailyTap; el.appendChild(dc);
   }
