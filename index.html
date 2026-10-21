@@ -550,7 +550,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b><span class="thS">Right</span> thumb · strike</b><p>Keep the ball on the sweet spot during impact.</p></div>
     </div>
     <button class="card dailyCard dlCard" id="dailyCard"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
-    <div class="card nameRow courseRow"><span>Course</span><label class="csel"><select class="segCourse" id="segCourse" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option></select></label></div>
+    <div class="card nameRow courseRow"><span>Course</span><label class="csel"><select class="segCourse" id="segCourse" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option><option value="mountainvalley">Mountain Valley</option></select></label></div>
     <label class="card nameRow" id="nameRow"><span>Player</span><input id="nameIn" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="go"></label>
     <div class="nameHint" id="nameHintT" hidden></div>
     <div class="playRow"><button class="btn alt" id="btnResume" style="display:none">Resume<small id="resumeInfo"></small></button><button class="btn" id="btnPlay">Tee off</button></div>
@@ -558,7 +558,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
-<div class="layer" id="pbNote" role="dialog" aria-live="polite"><div class="card ncard"><div class="nk">Pebble Beach</div><div class="nt">Work in progress</div><div class="nb">This course is being built right now &ndash; but you can already play it.</div><button class="btn" id="pbNoteOk" type="button">Let's play</button></div></div>
+<div class="layer" id="pbNote" role="dialog" aria-live="polite"><div class="card ncard"><div class="nk">Mountain Valley</div><div class="nt">Work in progress</div><div class="nb">This course is being built right now &ndash; but you can already play it.</div><button class="btn" id="pbNoteOk" type="button">Let's play</button></div></div>
 <div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">Replay</button></div></div>
 <div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
@@ -572,7 +572,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <button class="dlCard" id="mDaily"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
     <div class="mgrp mround">
       <div class="mrl"><span class="mk">Round in play</span><b id="mRoundInfo">GCC Basel</b><small id="mRoundSub"></small></div>
-      <label class="csel"><select class="segCourse" id="segCourseM" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option></select></label>
+      <label class="csel"><select class="segCourse" id="segCourseM" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option><option value="mountainvalley">Mountain Valley</option></select></label>
       <div class="mnote">Switching course keeps the round you are playing: come back and it resumes where you left it.</div>
     </div>
     <div class="tiles">
@@ -638,7 +638,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
   <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, within two club lengths of where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. A ball that vanishes in the deep rough more than 10 m from the fairway and green at St Patrick's (and any ball in the deep rough from a shot played inside 200 m of the hole there), or more than 50 m deep in the woods (not at Augusta), is searched for: tap where it lies, within 5 m (you have three tries), and you play it as it is; three misses are a lost ball, with one stroke and replay. Max score is par + 5.</div>
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
-  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu. Rothley Park in Leicestershire: hole lines, paths, buildings, the brook and the railway from © OpenStreetMap contributors (ODbL); the ground, the trees and the field ditches from the Environment Agency's 1 m LiDAR (Open Government Licence); greens, fairways, bunkers and tees traced from the aerial photograph; the mowing, flags and tee furniture after the club's own course photographs. It is played in October, and it rains on about half the holes. St Patrick's Links at Rosapenna, Co. Donegal (Tom Doak, 2021), is played from the Sandstone tees: no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, Esri and its partners); the routing after the club's course plan, and the greens, fairways, bunkers, sandy blowouts and Tramore beach traced from the aerial photographs (Esri World Imagery). Tramore beach and the sea beyond it are out of bounds; the wind off the Atlantic is stronger than inland, and showers come through on about four holes in ten. Pebble Beach Golf Links in California is played from the Blue tees and is still being built: hole lines, tees, greens, fairways, bunkers, buildings and the coastline from © OpenStreetMap contributors (ODbL); the ground and the trees (Monterey cypress and pine) from the USGS 3DEP LiDAR point cloud; the beach and the cliff-top ice plant after the aerial photograph (Esri World Imagery). The Pacific is a penalty area; beyond the course's edge it is out of bounds.</div>
+  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu. Rothley Park in Leicestershire: hole lines, paths, buildings, the brook and the railway from © OpenStreetMap contributors (ODbL); the ground, the trees and the field ditches from the Environment Agency's 1 m LiDAR (Open Government Licence); greens, fairways, bunkers and tees traced from the aerial photograph; the mowing, flags and tee furniture after the club's own course photographs. It is played in October, and it rains on about half the holes. St Patrick's Links at Rosapenna, Co. Donegal (Tom Doak, 2021), is played from the Sandstone tees: no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, Esri and its partners); the routing after the club's course plan, and the greens, fairways, bunkers, sandy blowouts and Tramore beach traced from the aerial photographs (Esri World Imagery). Tramore beach and the sea beyond it are out of bounds; the wind off the Atlantic is stronger than inland, and showers come through on about four holes in ten. Pebble Beach Golf Links in California is played from the Blue tees and is still being built: hole lines, tees, greens, fairways, bunkers, buildings and the coastline from © OpenStreetMap contributors (ODbL); the ground and the trees (Monterey cypress and pine) from the USGS 3DEP LiDAR point cloud; the beach and the cliff-top ice plant after the aerial photograph (Esri World Imagery). The Pacific is a penalty area; beyond the course's edge it is out of bounds. Mountain Valley Golf Course in Barnesville, Pennsylvania, is still being built; it is played on The Mountain from the Gold tees: hole lines, tees, greens, fairways, bunkers, ponds and cart paths from © OpenStreetMap contributors (ODbL); the ground and the trees (hemlock, white pine and the hardwoods of Broad Mountain, in late-October colour) from the USGS 3DEP LiDAR point cloud; the yardages from the club's scorecard. Its music is an original piece, and the woods are deep: a ball far in them can be lost.</div>
 </div></div>
 <div id="recCard"></div>
 <div id="confetti"></div>
@@ -729,6 +729,8 @@ function setWeather(w) {
 const WX_NEXT = { dry: [['dry', .25], ['fine', .6], ['damp', .15]], fine: [['dry', .2], ['fine', .3], ['damp', .5]], damp: [['fine', .3], ['damp', .1], ['rain', .6]], rain: [['damp', .8], ['rain', .2]] };
 // Rothley Park: an English autumn, it rains on about half the holes (the chain's long-run share: rain .51, damp .35, fine .15; never dry)
 const WX_COURSE = {
+  // Mountain Valley: late October on Broad Mountain, Pennsylvania: fronts crossing the ridge, about as many damp spells as fine ones (long-run share about fine .46, damp .34, rain .2)
+  mountainvalley: { p: { fine: .46, damp: .34, rain: .2 }, next: { fine: [['fine', .6], ['damp', .33], ['rain', .07]], damp: [['fine', .4], ['damp', .3], ['rain', .3]], rain: [['damp', .6], ['fine', .15], ['rain', .25]], dry: [['fine', .6], ['damp', .4]] } },
   // Pebble Beach: the marine layer. Mornings of fog and drizzle that burn off to a bright, breezy afternoon, rain a rarity (long-run share about fine .62, damp .33, rain .05)
   pebblebeach: { p: { fine: .62, damp: .33, rain: .05 }, next: { fine: [['fine', .72], ['damp', .28]], damp: [['fine', .5], ['damp', .42], ['rain', .08]], rain: [['damp', .7], ['fine', .3]], dry: [['fine', .7], ['damp', .3]] } },
   // St Patrick's: Donegal in October, showers in off the Atlantic (long-run share about rain .38, damp .37, fine .25; never dry)
@@ -2035,6 +2037,7 @@ const RD_AUGUSTA = {"name":"Augusta National Golf Club","origin":[33.4995,-82.02
 const RD_ROTHLEY = {"name":"Rothley Park Golf Club","origin":[52.7,-1.15],"mounds":[],"bridges":[[-440.8,98.0,2.2,7.0,33],[-268.1,351.5,2.4,7.0,35],[533.9,443.4,3.0,7.0,52],[581.7,298.0,1.8,4.5,-42],[583.3,231.7,1.8,4.5,-51],[514.0,348.8,2.0,4.5,-39],[534.8,332.7,3.0,4.5,-38],[301.1,47.8,3.0,4.5,-96],[279.8,164.8,3.0,4.5,-84]],"holes":[{"par":4,"hcp":12,"len":359,"lens":[359,338,346,335],"tee":[-331.17,565.31],"green":[-484.77,241.85],"line":[[-331.17,565.31],[-418.76,411.88],[-465.72,297.18],[-484.77,241.85]],"mk":{"w":[-331.17,565.31],"y":[-341.59,547.04],"b":[-337.83,553.63],"r":[-342.95,544.66]},"desc":"plays 5 m downhill"},{"par":4,"hcp":8,"len":307,"lens":[307,283,284,254],"tee":[-486.43,199.09],"green":[-332.59,-62.74],"line":[[-486.43,199.09],[-407.49,24.32],[-332.59,-62.74]],"mk":{"w":[-486.43,199.09],"y":[-476.64,177.43],"b":[-476.94,178.09],"r":[-464.6,150.76]},"desc":"plays 4 m uphill"},{"par":4,"hcp":4,"len":390,"lens":[390,378,370,335],"tee":[-325.14,-35.5],"green":[22.54,139.35],"line":[[-325.14,-35.5],[-76.26,104.45],[22.54,139.35]],"mk":{"w":[-325.14,-35.5],"y":[-313.98,-29.23],"b":[-307.44,-25.55],"r":[-277.32,-8.61]},"desc":""},{"par":3,"hcp":16,"len":149,"lens":[149,128,132,113],"tee":[41.05,78.1],"green":[52.84,-70.49],"line":[[41.05,78.1],[52.84,-70.49]],"mk":{"w":[41.05,78.1],"y":[42.71,57.13],"b":[42.39,61.14],"r":[43.87,42.55]},"desc":"plays 3 m uphill"},{"par":4,"hcp":18,"len":229,"lens":[229,220,221,212],"tee":[72.73,-24.84],"green":[265.13,99.33],"line":[[72.73,-24.84],[265.13,99.33]],"mk":{"w":[72.73,-24.84],"y":[80.41,-19.88],"b":[79.41,-20.52],"r":[87.33,-15.42]},"desc":"plays 6 m downhill"},{"par":4,"hcp":2,"len":409,"lens":[409,393,396,382],"tee":[271.13,122.71],"green":[597.18,351.16],"line":[[271.13,122.71],[535.97,258.38],[597.18,351.16]],"mk":{"w":[271.13,122.71],"y":[284.97,129.8],"b":[282.36,128.46],"r":[294.73,134.8]},"desc":"plays 6 m downhill"},{"par":3,"hcp":14,"len":136,"lens":[136,124,120,94],"tee":[617.81,365.42],"green":[731.52,290.29],"line":[[617.81,365.42],[731.52,290.29]],"mk":{"w":[617.81,365.42],"y":[627.73,358.86],"b":[631.31,356.5],"r":[652.9,342.23]},"desc":"plays 10 m uphill"},{"par":4,"hcp":10,"len":299,"lens":[299,293,283,251],"tee":[744.09,228.06],"green":[703.74,-67.93],"line":[[744.09,228.06],[731.89,67.88],[703.74,-67.93]],"mk":{"w":[744.09,228.06],"y":[743.6,221.67],"b":[742.84,211.64],"r":[740.41,179.73]},"desc":"plays 8 m uphill"},{"par":4,"hcp":6,"len":418,"lens":[418,397,402,385],"tee":[650.66,-159.61],"green":[697.7,254.48],"line":[[650.66,-159.61],[701.08,189.7],[697.7,254.48]],"mk":{"w":[650.66,-159.61],"y":[653.67,-138.79],"b":[652.98,-143.59],"r":[655.37,-127.02]},"desc":"plays 14 m downhill"},{"par":4,"hcp":11,"len":257,"lens":[257,256,245,217],"tee":[655.36,301.44],"green":[497.38,99.97],"line":[[655.36,301.44],[537.42,167.79],[497.38,99.97]],"mk":{"w":[655.36,301.44],"y":[654.76,300.76],"b":[647.19,292.19],"r":[628.74,271.28]},"desc":"plays 7 m uphill"},{"par":4,"hcp":3,"len":359,"lens":[359,345,336,295],"tee":[456.8,130.03],"green":[214.37,-135.08],"line":[[456.8,130.03],[214.37,-135.08]],"mk":{"w":[456.8,130.03],"y":[446.92,119.24],"b":[440.88,112.62],"r":[413.6,82.8]},"desc":"plays 5 m uphill"},{"par":3,"hcp":17,"len":175,"lens":[175,166,160,134],"tee":[176.35,-81.43],"green":[313.44,27.31],"line":[[176.35,-81.43],[313.44,27.31]],"mk":{"w":[176.35,-81.43],"y":[183.52,-75.75],"b":[188.17,-72.06],"r":[208.59,-55.86]},"desc":"plays 4 m downhill"},{"par":4,"hcp":1,"len":387,"lens":[387,369,366,336],"tee":[381.89,141.69],"green":[71.74,-89.35],"line":[[381.89,141.69],[71.74,-89.35]],"mk":{"w":[381.89,141.69],"y":[367.95,131.31],"b":[365.61,129.56],"r":[341.55,111.65]},"desc":"plays 6 m uphill"},{"par":4,"hcp":5,"len":412,"lens":[412,380,380,339],"tee":[26.0,-83.53],"green":[-169.65,-443.32],"line":[[26.0,-83.53],[-69.62,-302.81],[-169.65,-443.32]],"mk":{"w":[26.0,-83.53],"y":[13.21,-112.86],"b":[13.39,-112.44],"r":[-3.24,-150.58]},"desc":"plays 10 m uphill"},{"par":5,"hcp":13,"len":476,"lens":[476,449,446,404],"tee":[-181.9,-487.88],"green":[-381.33,-55.65],"line":[[-181.9,-487.88],[-381.33,-55.65]],"mk":{"w":[-181.9,-487.88],"y":[-193.4,-462.97],"b":[-194.43,-460.73],"r":[-212.17,-422.29]},"desc":"plays 21 m downhill"},{"par":4,"hcp":7,"len":357,"lens":[357,337,332,293],"tee":[-353.9,27.14],"green":[-32.7,183.94],"line":[[-353.9,27.14],[-32.7,183.94]],"mk":{"w":[-353.9,27.14],"y":[-335.82,35.97],"b":[-330.97,38.33],"r":[-295.56,55.62]},"desc":"plays 5 m uphill"},{"par":4,"hcp":15,"len":337,"lens":[337,312,319,303],"tee":[-44.13,208.93],"green":[-336.7,78.09],"line":[[-44.13,208.93],[-260.59,165.62],[-336.7,78.09]],"mk":{"w":[-44.13,208.93],"y":[-68.34,204.09],"b":[-61.35,205.49],"r":[-77.31,202.29]},"desc":"plays 4 m downhill"},{"par":5,"hcp":9,"len":470,"lens":[470,431,438,403],"tee":[-375.27,113.43],"green":[-309.66,549.8],"line":[[-375.27,113.43],[-261.77,319.83],[-309.66,549.8]],"mk":{"w":[-375.27,113.43],"y":[-356.33,147.88],"b":[-359.81,141.55],"r":[-342.67,172.72]},"desc":"plays 5 m uphill"}],"ntrees":9153,"z0":0,"gr":{"e0":-870,"n0":-970,"res":2,"W":978,"H":948}};  // the rest of this course (terrain, features, trees, relief) is data-rothley.js, loaded when the course is first used
 const RD_STPATRICKS = {"name":"St Patrick's Links","origin":[55.164,-7.822],"mounds":[],"bridges":[],"holes":[{"par":4,"hcp":7,"len":348,"lens":[348,337,315,292],"tee":[384.66,-26.33],"green":[356.46,315.1],"line":[[384.66,-26.33],[357,318],[356.46,315.1]],"mk":{"w":[384.66,-26.33]},"desc":"plays 5 m downhill"},{"par":4,"hcp":11,"len":340,"lens":[340,327,310,261],"tee":[327.58,399.13],"green":[57.21,579.26],"line":[[327.58,399.13],[200,480],[50,582],[57.21,579.26]],"mk":{"w":[327.58,399.13]},"desc":"plays 4 m downhill"},{"par":3,"hcp":17,"len":163,"lens":[163,153,149,97],"tee":[22.26,625.06],"green":[-62.66,759.53],"line":[[22.26,625.06],[-66,756],[-62.66,759.53]],"mk":{"w":[22.26,625.06]},"desc":"plays 4 m downhill"},{"par":5,"hcp":3,"len":507,"lens":[507,465,412,360],"tee":[-96.75,856.41],"green":[-296.0,395.0],"line":[[-96.75,856.41],[-195,660],[-235,500],[-293,395],[-296.0,395.0]],"mk":{"w":[-96.75,856.41]},"desc":"plays 10 m downhill"},{"par":3,"hcp":13,"len":196,"lens":[196,140,132,113],"tee":[-295.41,360.88],"green":[-363.0,182.0],"line":[[-295.41,360.88],[-364,180],[-363.0,182.0]],"mk":{"w":[-295.41,360.88]},"desc":"plays 5 m uphill"},{"par":5,"hcp":1,"len":522,"lens":[522,477,463,399],"tee":[-341.68,103.37],"green":[-106.17,546.83],"line":[[-341.68,103.37],[-210,290],[-120,450],[-108,553],[-106.17,546.83]],"mk":{"w":[-341.68,103.37]},"desc":"plays 6 m downhill"},{"par":4,"hcp":9,"len":381,"lens":[381,365,336,302],"tee":[-22.21,526.85],"green":[253.64,264.81],"line":[[-22.21,526.85],[150,380],[250,268],[253.64,264.81]],"mk":{"w":[-22.21,526.85]},"desc":"plays 7 m downhill"},{"par":4,"hcp":15,"len":310,"lens":[310,291,256,227],"tee":[275.91,232.06],"green":[34.31,415.83],"line":[[275.91,232.06],[120,340],[31,416],[34.31,415.83]],"mk":{"w":[275.91,232.06]},"desc":"plays 4 m downhill"},{"par":4,"hcp":5,"len":421,"lens":[421,421,364,312],"tee":[20.95,388.35],"green":[170.0,27.0],"line":[[20.95,388.35],[25,220],[170,21],[170.0,27.0]],"mk":{"w":[20.95,388.35]},"desc":""},{"par":4,"hcp":8,"len":377,"lens":[377,366,326,294],"tee":[147.91,-93.64],"green":[-31.82,-398.39],"line":[[147.91,-93.64],[60,-250],[-38,-408],[-31.82,-398.39]],"mk":{"w":[147.91,-93.64]},"desc":""},{"par":4,"hcp":6,"len":432,"lens":[432,411,365,320],"tee":[-35.65,-435.2],"green":[312.0,-205.0],"line":[[-35.65,-435.2],[180,-235],[313,-205],[312.0,-205.0]],"mk":{"w":[-35.65,-435.2]},"desc":"plays 10 m downhill"},{"par":5,"hcp":4,"len":512,"lens":[512,499,441,380],"tee":[328.55,-242.39],"green":[-42.0,-585.0],"line":[[328.55,-242.39],[130,-420],[-47,-580],[-42.0,-585.0]],"mk":{"w":[328.55,-242.39]},"desc":"plays 4 m uphill"},{"par":4,"hcp":12,"len":344,"lens":[344,314,304,244],"tee":[-88.07,-522.12],"green":[-384.0,-350.0],"line":[[-88.07,-522.12],[-250,-410],[-378,-352],[-384.0,-350.0]],"mk":{"w":[-88.07,-522.12]},"desc":"plays 5 m uphill"},{"par":4,"hcp":10,"len":320,"lens":[320,289,267,246],"tee":[-420.0,-331.0],"green":[-474.0,-36.0],"line":[[-420.0,-331.0],[-462,-255],[-500,-170],[-505,-110],[-475,-37],[-474.0,-36.0]],"mk":{"w":[-420.0,-331.0]},"desc":"plays 8 m downhill"},{"par":3,"hcp":18,"len":119,"lens":[119,114,107,89],"tee":[-420.15,19.69],"green":[-425.0,-95.0],"line":[[-420.15,19.69],[-422,-96],[-425.0,-95.0]],"mk":{"w":[-420.15,19.69]},"desc":"plays 6 m uphill"},{"par":4,"hcp":2,"len":488,"lens":[488,445,431,385],"tee":[-400.28,-110.28],"green":[-89.0,263.0],"line":[[-400.28,-110.28],[-250,80],[-95,263],[-89.0,263.0]],"mk":{"w":[-400.28,-110.28]},"desc":"plays 16 m downhill"},{"par":3,"hcp":14,"len":182,"lens":[182,161,142,110],"tee":[-45.34,260.49],"green":[-51.0,93.0],"line":[[-45.34,260.49],[-60,89],[-51.0,93.0]],"mk":{"w":[-45.34,260.49]},"desc":""},{"par":4,"hcp":16,"len":330,"lens":[330,315,249,222],"tee":[-159.45,54.86],"green":[150.0,-60.0],"line":[[-159.45,54.86],[140,-57],[150.0,-60.0]],"mk":{"w":[-159.45,54.86]},"desc":""}],"ntrees":0,"z0":0,"gr":{"e0":-820,"n0":-1040,"res":2,"W":828,"H":1053}};  // the rest of this course (terrain, features, relief) is data-stpatricks.js, loaded when the course is first used
 const RD_PEBBLEBEACH = {"name":"Pebble Beach Golf Links","origin":[36.5645,-121.941],"mounds":[],"bridges":[],"holes":[{"par":4,"hcp":6,"len":346,"lens":[346,319,308,283],"tee":[-760.12,545.99],"green":[-459.6,677.99],"line":[[-760.12,545.99],[-602.47,673.44],[-459.6,677.99]],"mk":{"w":[-760.12,545.99]},"desc":"plays 6 m uphill"},{"par":5,"hcp":10,"len":464,"lens":[464,448,418,326],"tee":[-540.67,648.67],"green":[-84.88,559.71],"line":[[-540.67,648.67],[-280.36,596.53],[-84.88,559.71]],"mk":{"w":[-540.67,648.67]},"desc":""},{"par":4,"hcp":12,"len":364,"lens":[364,349,312,261],"tee":[-22.82,520.46],"green":[-317.11,329.21],"line":[[-22.82,520.46],[-246.59,428.55],[-317.11,329.21]],"mk":{"w":[-22.82,520.46]},"desc":"plays 13 m downhill"},{"par":4,"hcp":16,"len":304,"lens":[304,282,270,180],"tee":[-262.31,319.17],"green":[11.71,187.18],"line":[[-262.31,319.17],[-234.42,307.96],[-53.54,223.98],[11.71,187.18]],"mk":{"w":[-262.31,319.17]},"desc":"plays 5 m uphill"},{"par":3,"hcp":14,"len":174,"lens":[174,134,124,103],"tee":[37.41,194.45],"green":[148.28,60.22],"line":[[37.41,194.45],[148.28,60.22]],"mk":{"w":[37.41,194.45]},"desc":""},{"par":5,"hcp":2,"len":456,"lens":[456,449,426,385],"tee":[271.16,156.57],"green":[85.31,-260.1],"line":[[271.16,156.57],[181.99,-46.95],[85.31,-260.1]],"mk":{"w":[271.16,156.57]},"desc":"plays 3 m downhill"},{"par":3,"hcp":18,"len":99,"lens":[99,91,87,81],"tee":[44.92,-252.79],"green":[55.64,-351.13],"line":[[44.92,-252.79],[55.64,-351.13]],"mk":{"w":[44.92,-252.79]},"desc":"plays 9 m downhill"},{"par":4,"hcp":4,"len":383,"lens":[383,357,335,321],"tee":[77.09,-353.93],"green":[399.97,-159.62],"line":[[77.09,-353.93],[227.02,-225.14],[269.88,-208.57],[399.97,-159.62]],"mk":{"w":[77.09,-353.93]},"desc":"plays 9 m uphill"},{"par":4,"hcp":8,"len":441,"lens":[441,423,398,320],"tee":[409.43,-125.96],"green":[711.91,-443.39],"line":[[409.43,-125.96],[603.57,-293.58],[705.96,-434.95],[711.91,-443.39]],"mk":{"w":[409.43,-125.96]},"desc":"plays 11 m downhill"},{"par":4,"hcp":3,"len":406,"lens":[406,392,374,310],"tee":[712.95,-348.31],"green":[853.48,-726.58],"line":[[712.95,-348.31],[818.94,-564.93],[853.48,-726.58]],"mk":{"w":[712.95,-348.31]},"desc":"plays 7 m downhill"},{"par":4,"hcp":9,"len":338,"lens":[338,319,309,272],"tee":[907.55,-729.2],"green":[1026.45,-417.05],"line":[[907.55,-729.2],[936.35,-593.56],[968.6,-504.27],[1026.45,-417.05]],"mk":{"w":[907.55,-729.2]},"desc":"plays 20 m uphill"},{"par":3,"hcp":17,"len":185,"lens":[185,172,161,116],"tee":[1062.94,-396.99],"green":[888.76,-333.93],"line":[[1062.94,-396.99],[888.76,-333.93]],"mk":{"w":[1062.94,-396.99]},"desc":"plays 8 m downhill"},{"par":4,"hcp":7,"len":371,"lens":[371,361,342,274],"tee":[857.63,-368.29],"green":[554.99,-154.29],"line":[[857.63,-368.29],[658.14,-227.36],[554.99,-154.29]],"mk":{"w":[857.63,-368.29]},"desc":""},{"par":5,"hcp":1,"len":511,"lens":[511,498,448,408],"tee":[498.28,-148.67],"green":[326.6,291.67],"line":[[498.28,-148.67],[322.16,34.91],[326.6,291.67]],"mk":{"w":[498.28,-148.67]},"desc":"plays 10 m uphill"},{"par":4,"hcp":13,"len":362,"lens":[362,346,312,229],"tee":[360.95,289.97],"green":[79.82,517.99],"line":[[360.95,289.97],[163.92,454.7],[79.82,517.99]],"mk":{"w":[360.95,289.97]},"desc":"plays 13 m downhill"},{"par":4,"hcp":11,"len":364,"lens":[364,344,335,284],"tee":[94.83,571.42],"green":[-203.54,371.32],"line":[[94.83,571.42],[-66.71,427.24],[-179.13,381.89],[-203.54,371.32]],"mk":{"w":[94.83,571.42]},"desc":"plays 19 m downhill"},{"par":3,"hcp":15,"len":166,"lens":[166,161,151,129],"tee":[-270.71,291.19],"green":[-351.68,146.27],"line":[[-270.71,291.19],[-351.68,146.27]],"mk":{"w":[-270.71,291.19]},"desc":""},{"par":5,"hcp":5,"len":493,"lens":[493,484,461,413],"tee":[-374.69,114.83],"green":[-772.23,346.01],"line":[[-374.69,114.83],[-445.04,196.17],[-521.35,284.33],[-688.21,360.62],[-772.23,346.01]],"mk":{"w":[-374.69,114.83]},"desc":"plays 3 m uphill"}],"ntrees":15950,"z0":0,"gr":{"e0":-1070,"n0":-1020,"res":2,"W":1225,"H":978}};
+const RD_MOUNTAINVALLEY = {"name":"Mountain Valley Golf Course","origin":[40.7918,-76.1252],"mounds":[],"bridges":[],"holes":[{"par":4,"hcp":17,"len":286,"lens":[286,271,256,245],"tee":[71.51,-169.31],"green":[33.36,107.25],"line":[[71.51,-169.31],[16.48,22.97],[33.36,107.25]],"mk":{"w":[71.51,-169.31]},"desc":"plays 21 m downhill"},{"par":3,"hcp":9,"len":166,"lens":[166,139,120,112],"tee":[-13.86,69.36],"green":[-88.52,-78.53],"line":[[-13.86,69.36],[-79.42,-52.27],[-88.52,-78.53]],"mk":{"w":[-13.86,69.36]},"desc":"plays 4 m uphill"},{"par":4,"hcp":5,"len":378,"lens":[378,315,280,250],"tee":[-395.79,-110.29],"green":[-772.02,-111.23],"line":[[-395.79,-110.29],[-647.55,-125.87],[-772.02,-111.23]],"mk":{"w":[-395.79,-110.29]},"desc":""},{"par":4,"hcp":3,"len":362,"lens":[362,337,301,275],"tee":[-751.27,-204.27],"green":[-1105.6,-271.23],"line":[[-751.27,-204.27],[-1015.26,-239.14],[-1105.6,-271.23]],"mk":{"w":[-751.27,-204.27]},"desc":"plays 11 m uphill"},{"par":5,"hcp":15,"len":477,"lens":[477,450,423,360],"tee":[-1130.43,-337.58],"green":[-662.1,-251.57],"line":[[-1130.43,-337.58],[-797.28,-284.99],[-662.1,-251.57]],"mk":{"w":[-1130.43,-337.58]},"desc":"plays 15 m downhill"},{"par":4,"hcp":1,"len":414,"lens":[414,408,358,314],"tee":[-717.16,-378.83],"green":[-362.96,-164.44],"line":[[-717.16,-378.83],[-461.63,-229.34],[-362.96,-164.44]],"mk":{"w":[-717.16,-378.83]},"desc":"plays 15 m downhill"},{"par":5,"hcp":13,"len":464,"lens":[464,447,420,412],"tee":[-131.07,-144.8],"green":[-419.91,-489.96],"line":[[-131.07,-144.8],[-246.41,-370.03],[-419.91,-489.96]],"mk":{"w":[-131.07,-144.8]},"desc":"plays 8 m downhill"},{"par":4,"hcp":7,"len":336,"lens":[336,314,290,280],"tee":[-341.06,-524.9],"green":[-124.27,-270.21],"line":[[-341.06,-524.9],[-186.42,-369.96],[-124.27,-270.21]],"mk":{"w":[-341.06,-524.9]},"desc":"plays 13 m uphill"},{"par":3,"hcp":11,"len":154,"lens":[154,128,104,92],"tee":[-104.1,-225.95],"green":[47.95,-208.04],"line":[[-104.1,-225.95],[18.96,-203.33],[47.95,-208.04]],"mk":{"w":[-104.1,-225.95]},"desc":"plays 4 m uphill"},{"par":4,"hcp":12,"len":328,"lens":[328,306,268,251],"tee":[177.18,-165.1],"green":[500.23,-109.63],"line":[[177.18,-165.1],[399.91,-136.24],[500.23,-109.63]],"mk":{"w":[177.18,-165.1]},"desc":"plays 7 m downhill"},{"par":4,"hcp":10,"len":332,"lens":[332,315,294,279],"tee":[539.28,-78.27],"green":[866.83,-27.45],"line":[[539.28,-78.27],[764.02,-38.31],[866.83,-27.45]],"mk":{"w":[539.28,-78.27]},"desc":""},{"par":5,"hcp":2,"len":549,"lens":[549,507,480,430],"tee":[932.72,-67.41],"green":[1464.43,54.75],"line":[[932.72,-67.41],[1275.71,43.01],[1464.43,54.75]],"mk":{"w":[932.72,-67.41]},"desc":"plays 34 m downhill"},{"par":3,"hcp":14,"len":230,"lens":[230,200,169,136],"tee":[1528.78,54.12],"green":[1757.25,76.38],"line":[[1528.78,54.12],[1727.62,77.61],[1757.25,76.38]],"mk":{"w":[1528.78,54.12]},"desc":"plays 11 m downhill"},{"par":4,"hcp":8,"len":354,"lens":[354,327,296,238],"tee":[1726.85,16.12],"green":[1376.73,-36.14],"line":[[1726.85,16.12],[1493.21,-20.98],[1376.73,-36.14]],"mk":{"w":[1726.85,16.12]},"desc":"plays 16 m uphill"},{"par":4,"hcp":4,"len":370,"lens":[370,333,295,220],"tee":[1356.98,-3.13],"green":[995.66,-47.91],"line":[[1356.98,-3.13],[1095.16,-63.85],[995.66,-47.91]],"mk":{"w":[1356.98,-3.13]},"desc":"plays 25 m uphill"},{"par":3,"hcp":18,"len":160,"lens":[160,144,131,114],"tee":[955.02,-59.78],"green":[825.54,-153.39],"line":[[955.02,-59.78],[845.43,-139.62],[825.54,-153.39]],"mk":{"w":[955.02,-59.78]},"desc":"plays 10 m downhill"},{"par":5,"hcp":6,"len":467,"lens":[467,439,411,372],"tee":[827.76,-100.5],"green":[371.54,-202.35],"line":[[827.76,-100.5],[574.05,-155.87],[371.54,-202.35]],"mk":{"w":[827.76,-100.5]},"desc":"plays 8 m uphill"},{"par":4,"hcp":16,"len":329,"lens":[329,267,227,178],"tee":[511.96,-219.56],"green":[226.58,-374.88],"line":[[511.96,-219.56],[281.91,-319.82],[226.58,-374.88]],"mk":{"w":[511.96,-219.56]},"desc":"plays 4 m uphill"}],"ntrees":52266,"z0":480,"gr":{"e0":-1470,"n0":-870,"res":2,"W":1803,"H":678}};
 
 /* ================= REAL COURSE: Golf & Country Club Basel ================= */
 // The real course is data rather than shapes. Fairways, greens, tees, bunkers, ponds, paths and every drawn tree were
@@ -2701,11 +2704,11 @@ function realTerrainMat(C) {
   }
   const f = C.frame, r = GR.res;
   const far = { tex: gccbFarTex(), A: new THREE.Vector4(f.rx / r, -f.ux / r, f.ry / r, -f.uy / r), B: new THREE.Vector4((f.e - GR.e0) / r, (f.n - GR.n0) / r, GR.W, GR.H) };
-  return terrainMatFrom({ A, B, T, w, h, x0: FG.x0, z0: FG.z0, res: FG.res, R, wlo, whi, far, dry: RDC.dry, lush: RDC.lush, autumn: RDC.autumn, marram: RDC.marram, coast: RDC.coast, straw: !!SM });
+  return terrainMatFrom({ A, B, T, w, h, x0: FG.x0, z0: FG.z0, res: FG.res, R, wlo, whi, far, dry: RDC.dry, lush: RDC.lush, autumn: RDC.autumn, marram: RDC.marram, coast: RDC.coast, ridge: RDC.ridge, straw: !!SM });
 }
 function buildRealWater(C, grp) {
   W.waterMeshes = []; W.sea = null;
-  const wm = new THREE.MeshPhongMaterial({ color: 0x9fe0ea, transparent: true, opacity: .84, shininess: 70, specular: 0xeefcff });
+  const wm = new THREE.MeshPhongMaterial({ color: RDC.ridge ? 0x5f7a6a : 0x9fe0ea, transparent: true, opacity: RDC.ridge ? .9 : .84, shininess: 70, specular: 0xeefcff }); // (Mountain Valley: dark, tea-coloured mountain water)
   const FG = C.fg, res = FG.res;
   for (const p of C.ponds) {
     // a sheet over the pond and a little into its banks; the rising bank hides the overlap
@@ -2723,6 +2726,8 @@ function buildRealWater(C, grp) {
     const m = new THREE.Mesh(g, sea ? (W[sk] || (W[sk] = new THREE.MeshPhongMaterial({ color: RDC.coast ? 0x2a7894 : 0x4f9fb0, transparent: true, opacity: RDC.coast ? .93 : .9, shininess: 90, specular: 0xdff6ff }))) : wm); m.userData.keep = true; grp.add(m); W.waterMeshes.push(m);
   }
 }
+// chestnut and red oaks (bronze, russet-brown, they hold their leaves into November) are most of it, with red maple scarlet, birch, aspen and hickory yellow, the odd olive tree still green
+const RIDGE_COLS = [0x8f5a2c, 0x9c5a2a, 0xa8682f, 0x7e4a24, 0x8f5a2c, 0xa5622b, 0x9a6a30, 0xb5331f, 0xc9481f, 0xd9a03a, 0xe0b43a, 0x8a8a3a];
 const CYP_BARK = new THREE.Color(0x6e6558), CYP_COLS = [0x2c4a34, 0x34553a, 0x2a4631, 0x3a5c3c, 0x30503a];
 const BIRCH_BARK = new THREE.Color(0xe9e6dc), BIRCH_COLS = [0xd9b947, 0xcfa83c, 0xe2c55a, 0xb9b048, 0xa7b04c];
 const AUTUMN_COLS = [0xa8521c, 0xc0702a, 0xcf8f2e, 0xd8a83c, 0x8f4420, 0xb8862f, 0x9a7a2c, 0xc46a24];
@@ -2807,6 +2812,7 @@ function buildRealTrees(C, grp) {
       // conifer: bare lower trunk under stacked cones
       const R = clamp(t.d / 2, 2, 4.8), Ht = t.H > 0 ? clamp(t.H, 10, 30) : 15 + hv * 9, th = .16 * Ht;
       col.setHex([0x2c5a3e, 0x2f6342, 0x34603c][(hv * 3) | 0]);
+      if (RDC.ridge) col.setHex([0x1f4a3a, 0x22503e, 0x264a38][(hv * 3) | 0]); // eastern hemlock: nearly black-green, blue in the shade
       put(tr, t.X, y - .2, t.Z, .9 + R * .12, th + .6, .9 + R * .12, tcol, ry);
       put(co, t.X, y + th, t.Z, R, .5 * Ht, R, col, ry);
       put(co, t.X, y + th + .28 * Ht, t.Z, .74 * R, .42 * Ht, .74 * R, col.clone().offsetHSL(0, .02, .04), ry + .5);
@@ -2833,12 +2839,12 @@ function buildRealTrees(C, grp) {
       if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: cy + .7 * R, r: .85 * R, refs, hid: false });
       return;
     }
-    if (t.kind === 4 || t.kind === 8) {
+    if (t.kind === 4 || t.kind === 8) { // (white and pitch pines on the Mountain course: the same crown, darker)
       // loblolly pine (Augusta): a tall, bare, rust-grey trunk; the crown a loose cluster of flattened tufts high up. Kind 8, the Monterey pine (Pebble Beach), is the same
       // build in a darker, bluer green with a rounder, heavier crown
       if (C.fieldAt(C.F.tee, t.X, t.Z) < -.3 || C.fieldAt(C.F.green, t.X, t.Z) < .5) return;
       const Ht = clamp(t.H > 0 ? t.H : 24, 12, 40), R = clamp(t.d / 2, 2, t.kind === 8 ? 6.2 : 5.2), th = Ht - 1.65 * R, cy = y + th + .75 * R;
-      if (t.kind === 8) col.setHSL(.36 + hv * .03, .1 + hv * .08, .56 + hv * .12); else col.setHSL(.3 + hv * .04, .12 + hv * .1, .78 + hv * .14); // a slight tint per tree over the crown's own colours
+      if (t.kind === 8 || (RDC.ridge && t.kind === 4)) col.setHSL(.36 + hv * .03, .1 + hv * .08, .5 + hv * .12); else col.setHSL(.3 + hv * .04, .12 + hv * .1, .78 + hv * .14); // a slight tint per tree over the crown's own colours
       put(tr, t.X, y - .2, t.Z, 1.05 + .05 * R, th + 1.1 * R, 1.05 + .05 * R, pcol, ry);
       const sq = .85 + .3 * hash2(i, 4, 9); // some crowns rounder, some flatter
       put((t.near ? piN : piF)[pv(t, i)], t.X, y + th - .15 * R, t.Z, R, R * sq, R, col, ry);
@@ -2877,6 +2883,11 @@ function buildRealTrees(C, grp) {
     col.setHex(t.kind === 5 ? [0x55813f, 0x4d7a3c, 0x5e8a46][(hv * 3) | 0] : t.kind === 3 ? [0x7fb35e, 0x88bb62, 0x76aa58][(hv * 3) | 0] : hv < .78 ? REAL_TREE_COLS[(hv / .78 * REAL_TREE_COLS.length) | 0] : LEAF_COLS[((hv - .78) / .22 * LEAF_COLS.length) | 0]);
     if (RDC.dry) col.offsetHSL(-.032, -.07, .03); // links: duller, slightly yellower foliage
     else if (RDC.coast) col.offsetHSL(-.012, -.1, -.075); // Pebble Beach: coast live oaks, dark, grey-olive leaves
+    else if (RDC.ridge) { // Mountain Valley, late October: well over half of the hardwoods have turned (red and orange maples, yellow hickories, russet oaks); the rest are dark green
+      const ha = hash2(i, 19, 31);
+      if (t.kind === 0 && ha < .8) col.setHex(RIDGE_COLS[(hash2(i, 23, 37) * RIDGE_COLS.length) | 0]).offsetHSL((hv - .5) * .02, 0, (hv - .5) * .07);
+      else col.offsetHSL(-.005, -.06, -.08);
+    }
     else if (RDC.lush && t.kind !== 5) col.offsetHSL(.012, -.02, -.07); // Augusta: deep southern greens (oaks, magnolias)
     else if (RDC.autumn) { // October in Leicestershire: about half the oaks, ash and beech have turned (copper, amber, gold, rust); hedges stay dark
       const ha = hash2(i, 17, 29);
@@ -3225,6 +3236,8 @@ function strawAt(C, X, Z) {
 }
 // azaleas in bloom along the edges of the pines: mounded clumps of pink, magenta, coral, white and pale pink, a little leaf showing through
 const AZALEA_COLS = [[0xe8679f, 0xf07aad, 0xdc5791], [0xc8287a, 0xb81f6c, 0xd13a86], [0xeb5560, 0xf06a63, 0xe0474f], [0xf8f2f4, 0xf1eaee, 0xfcf8f8], [0xf6b3cd, 0xf9c2d6, 0xf2a6c3]];
+const ASTER_LEAF = [new THREE.Color(0x8a8a46), new THREE.Color(0x77803f), new THREE.Color(0x9a8d4a)];
+const ASTER_COLS = [[0xd9b52e, 0xe3c23c, 0xc9a22a], [0x8a6fb5, 0x9b82c4, 0x7a5fa6], [0xf2eadb, 0xe8dfc8, 0xf6f0e4], [0xb9a05a, 0xa8904a, 0xc4ad66]];
 const ICE_FLOWER = [0xe0679a, 0xea84b0, 0xf2a8c4, 0xd9559a, 0xe9d25a];
 const ICE_LEAF = [new THREE.Color(0x6f8a45), new THREE.Color(0x7d9448), new THREE.Color(0x86954a), new THREE.Color(0x8b8248), new THREE.Color(0x6a8442)];
 function buildAzaleas(C, grp) {
@@ -3244,6 +3257,16 @@ function buildAzaleas(C, grp) {
   const put = (x, y, z, sx, sy, sz, c) => { Q.setFromAxisAngle(V.set(0, 1, 0), r() * TAU); M.compose(V.set(x, y, z), Q, Sc.set(sx, sy, sz)); im.setMatrixAt(im.count, M); im.setColorAt(im.count, c); im.count++; };
   for (const f of list) {
     const y = C.h(f.X, f.Z), P = AZALEA_COLS[f.c] || AZALEA_COLS[0], R = f.r;
+    if (RDC.ridge) { // goldenrod and asters (Mountain Valley): upright clumps of seed-heads and late flowers over a tussock of dry grass
+      const RR = R * .7;
+      put(f.X, y + .22 * RR, f.Z, RR * 1.1, .45 * RR, RR * 1.1, ASTER_LEAF[(r() * ASTER_LEAF.length) | 0]);
+      for (let k = 0; k < 3; k++) {
+        const a = r() * TAU, d = RR * (.1 + .6 * r()), s2 = RR * (.3 + .2 * r());
+        col.setHex(ASTER_COLS[f.c % ASTER_COLS.length][(r() * 3) | 0]).offsetHSL(0, 0, (r() - .5) * .05);
+        put(f.X + Math.cos(a) * d, y + .55 * RR + .2 * s2, f.Z + Math.sin(a) * d, s2, .7 * s2, s2, col);
+      }
+      continue;
+    }
     if (RDC.coast) { // ice plant (Pebble Beach): a flat carpet of fleshy, red-tinged leaves, daisy-like magenta and pink flowers sitting right on it
       const RR = R * .62;
       put(f.X, y + .05 * RR, f.Z, RR * 1.5, .2 * RR, RR * 1.5, ICE_LEAF[(r() * ICE_LEAF.length) | 0]);
@@ -3395,6 +3418,8 @@ const ROTHLEY_DEFS = RD_ROTHLEY.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, n
 // the routing after the club's course plan, greens, fairways, bunkers, blowouts and the beach traced from the aerial photographs (Esri World Imagery, three dates)
 // Pebble Beach Golf Links, Pebble Beach, California: hole lines, tees, greens, fairways, bunkers and the coast from OpenStreetMap, the ground and the trees from the USGS 3DEP LiDAR point cloud
 const PEBBLEBEACH_DEFS = RD_PEBBLEBEACH.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 8117 + i * 41, windMax: 7.5, rh: h, len: h.len, real: true, teeCam: null }));
+// Mountain Valley Golf Course, The Mountain (Barnesville, Pennsylvania): hole lines, tees, greens, fairways, bunkers, ponds and paths from OpenStreetMap, the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Gold tees
+const MOUNTAINVALLEY_DEFS = RD_MOUNTAINVALLEY.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 9341 + i * 37, windMax: 6, rh: h, len: h.len, real: true, teeCam: null }));
 const STPATRICKS_DEFS = RD_STPATRICKS.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 7703 + i * 53, windMax: 8.5, rh: h, len: h.len, real: true, teeCam: null }));
 const ALSACE_DEFS = RD_ALSACE.holes.map((h, i) => ({ par: h.par, hcp: h.hcp, name: 'Nr. ' + (i + 1), inspo: h.desc, seed: 8101 + i * 41, windMax: 5.5, rh: h, len: h.len, real: true, teeCam: null }));
 // the real-course data sets: switched in with the course (see setCourse)
@@ -3412,11 +3437,13 @@ const RDS = {
     // every green keeps 40 % of those contours and at most a 3.5 % tilt, the 13th and 17th (to chip onto) 25 % and 2 %
     greenFlat: { all: [.4, .035], 9: [.3, .03], 12: [.25, .02], 16: [.25, .02] }, teeRaise: { 6: 1.8 } }, // and the 7th's tee is built up: a ridge 40 m out hid the fairway // the 13th and 17th: the real ground there is tilted (7 %) or crowned, too much to chip onto, so these greens are flattened
   // the Monterey peninsula: emerald fairways and small, firm greens on the clifftops, cypress and pines, the Pacific below (water: it is a penalty area, out of bounds beyond the course's edge)
+  // late October on a Pennsylvania ridge: red and gold maples, russet oaks and dark hemlock round the fairways, goldenrod and asters going to seed; the woods are deep, a ball can be lost in them
+  mountainvalley: { ridge: true, lostWood: 50, data: RD_MOUNTAINVALLEY, alti: RD_MOUNTAINVALLEY.alti, z0: RD_MOUNTAINVALLEY.z0, gr: RD_MOUNTAINVALLEY.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 },
   pebblebeach: { coast: true, data: RD_PEBBLEBEACH, alti: RD_PEBBLEBEACH.alti, z0: RD_PEBBLEBEACH.z0, gr: RD_PEBBLEBEACH.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 }
 };
 // Alsace, Augusta, Rothley Park and St Patrick's bring their terrain, features, trees and relief as separate files (data-<course>.js), fetched the first time the course is used and then kept
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
-const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js' }, DATA = { ok: {}, p: {}, busy: 0 };
+const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
 function loadData(k) {
   if (dataReady(k)) return Promise.resolve(); if (DATA.p[k]) return DATA.p[k];
@@ -3450,6 +3477,7 @@ const COURSES = {
   rothley: { key: 'rothley', name: 'Rothley Park Golf Club', short: 'Rothley Park', defs: ROTHLEY_DEFS, best: 'ssg-best-rothley', board: 'ssg-board-rothley', coll: 'rounds-rothley' },
   stpatricks: { key: 'stpatricks', name: "St Patrick's Links, Rosapenna", short: "St Patrick's", defs: STPATRICKS_DEFS, best: 'ssg-best-stpatricks', board: 'ssg-board-stpatricks', coll: 'rounds-stpatricks' },
   pebblebeach: { key: 'pebblebeach', name: 'Pebble Beach Golf Links', short: 'Pebble Beach', defs: PEBBLEBEACH_DEFS, best: 'ssg-best-pebblebeach', board: 'ssg-board-pebblebeach', coll: 'rounds-pebblebeach' },
+  mountainvalley: { key: 'mountainvalley', name: 'Mountain Valley Golf Course', short: 'Mountain Valley', defs: MOUNTAINVALLEY_DEFS, best: 'ssg-best-mountainvalley', board: 'ssg-board-mountainvalley', coll: 'rounds-mountainvalley' },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
 };
 const LEGACY_ON = false;
@@ -3836,7 +3864,7 @@ function burst(x, y, z, dirx, dirz, col, n, spd, up) {
 }
 // gusts: while the ball is in the air, leaves and grass blades blow through the view with the wind, thicker in each gust
 // what blows past depends on the course: Basel meadow leaves, Alsace vineyard reds and golds, Augusta azalea petals and pine straw, Rothley Park oak leaves in copper and gold, St Patrick's blown sand and marram
-const GUST_COLS = { gccb: [0xc9b458, 0xa7c25a, 0xd89c3a, 0x8fb04e], alsace: [0xb5532e, 0xd9a441, 0xc98a2b, 0x9a3f3a], augusta: [0xf2a1c0, 0xf7d3e2, 0xd98aa8, 0xb98a4c], rothley: [0xb5651d, 0xd9a03a, 0x9c4a1f, 0xc8862a, 0xe0b85a], stpatricks: [0xd8c79a, 0xc2b27c, 0xe6dcc0, 0xa9a274], pebblebeach: [0xcfc3a0, 0xb7a77c, 0x8f9a6a, 0xd8d0b8] }; // (St Patrick's: blown sand and marram seed heads)
+const GUST_COLS = { gccb: [0xc9b458, 0xa7c25a, 0xd89c3a, 0x8fb04e], alsace: [0xb5532e, 0xd9a441, 0xc98a2b, 0x9a3f3a], augusta: [0xf2a1c0, 0xf7d3e2, 0xd98aa8, 0xb98a4c], rothley: [0xb5651d, 0xd9a03a, 0x9c4a1f, 0xc8862a, 0xe0b85a], stpatricks: [0xd8c79a, 0xc2b27c, 0xe6dcc0, 0xa9a274], pebblebeach: [0xcfc3a0, 0xb7a77c, 0x8f9a6a, 0xd8d0b8], mountainvalley: [0xc2452a, 0xd9822b, 0xe0b43a, 0x9c5a2a, 0xb5331f] }; // (St Patrick's: blown sand and marram seed heads)
 function gustTick(dt, tt) {
   if (G.state !== 'flight' || !G.shot || G.shot.L.putt || G.rbow) { G.gustAcc = 0; return; }
   const ws = Math.hypot(G.wind[0], G.wind[1]); if (ws < 2.2) return;
@@ -4024,6 +4052,8 @@ const LINKS_OFF = { ROUGH: [.02, -.15, -.085], DEEP: [.07, -.2, -.1], FIRST: [.0
 // Pebble Beach: [dl, ds, dh] likewise. Fairways a deep, cool emerald cut in narrow stripes, small bright greens, the rough a tawny olive (the summer-dry kikuyu and ryegrass of the
 // peninsula), white silica sand, grey asphalt cart paths
 const PEB_OFF = { ROUGH: [-.035, -.1, -.052], DEEP: [-.02, -.16, -.075], FIRST: [-.04, -.04, -.02], FAIR: [-.04, .0, .012], GREEN: [-.03, .02, .006], FRINGE: [-.035, .0, .008], TEE: [-.04, .0, .01], SAND: [.045, -.3, .012], PATH: [-.5, -.1, 0] };
+// Mountain Valley: [dl, ds, dh] likewise. Cool, deep mountain turf, clean-cut fairways, a dark rough, pale grey-tan sand, black asphalt paths
+const RIDGE_OFF = { ROUGH: [-.03, -.07, -.065], DEEP: [-.04, -.11, -.09], FIRST: [-.035, -.03, -.035], FAIR: [-.03, .03, .008], GREEN: [-.025, .04, .008], FRINGE: [-.03, .02, .006], TEE: [-.03, .03, .01], SAND: [.01, -.24, -.004], PATH: [-.45, -.1, 0] };
 const AUT_OFF = { ROUGH: [-.035, .03, .03], DEEP: [-.035, .02, .02], FIRST: [-.025, .04, .03], FAIR: [-.005, .06, .035], GREEN: [-.01, .07, .045], FRINGE: [-.02, .06, .04], TEE: [-.02, .06, .04], SAND: [.05, -.16, .005], PATH: [-.04, -.12, 0] };
 function terrainMatFrom(o) {
   const { A, B, T, w, h, x0, z0, res, R, wlo, whi } = o;
@@ -4056,6 +4086,11 @@ function terrainMatFrom(o) {
     U.cRough.value = q('ROUGH'); U.cDeep.value = q('DEEP'); U.cFirst.value = q('FIRST'); U.cFairA.value = q('FAIR', .028); U.cFairB.value = q('FAIR', -.016);
     U.cGreenA.value = q('GREEN', .016); U.cGreenB.value = q('GREEN', -.006); U.cFringe.value = q('FRINGE'); U.cTee.value = q('TEE'); U.cSand.value = q('SAND'); U.cWaste.value = q('SAND', -.06); U.cPath.value = q('PATH');
     U.cDune.value = v3(hslToRgb(.13, .2, .66)); U.isLinks.value = 1;
+  }
+  if (o.ridge) { // Mountain Valley
+    const q = (k, dl) => { const f = RIDGE_OFF[k]; return pc(S[k], (dl || 0) + f[0], f[1], f[2]); };
+    U.cRough.value = q('ROUGH'); U.cDeep.value = q('DEEP'); U.cFirst.value = q('FIRST'); U.cFairA.value = q('FAIR', .035); U.cFairB.value = q('FAIR', -.02);
+    U.cGreenA.value = q('GREEN', .016); U.cGreenB.value = q('GREEN', -.008); U.cFringe.value = q('FRINGE'); U.cTee.value = q('TEE'); U.cSand.value = q('SAND'); U.cWaste.value = q('SAND', -.07); U.cPath.value = q('PATH');
   }
   if (o.coast) { // Pebble Beach
     const q = (k, dl) => { const f = PEB_OFF[k]; return pc(S[k], (dl || 0) + f[0], f[1], f[2]); };
@@ -4573,6 +4608,7 @@ function renderPlan(C) {
     colOf[S.TEE] = RDC.dry ? colOf[S.FRINGE] : RDC.lush ? pcc(S.FRINGE, -.02, .04, .02) : pcc(S.TEE); colOf[S.PATH] = RDC.dry ? hslToRgb(.125, .30, .84) : pcc(S.PATH);
     if (RDC.autumn) for (const k in AUT_OFF) { const f = AUT_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
     if (RDC.marram) for (const k in LINKS_OFF) { const f = LINKS_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
+    if (RDC.ridge) for (const k in RIDGE_OFF) { const f = RIDGE_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
     if (RDC.coast) for (const k in PEB_OFF) { const f = PEB_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
   }
   // heights first, for a soft hillshade so slopes and hummocks read on the yardage map
@@ -6116,6 +6152,12 @@ function ambSetup(a, bus, out) {
       src.buffer = mkNoise(a, 7); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; g.gain.value = g0; lfo.frequency.value = lf; lg.gain.value = ld;
       lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
     }
+  } else if (COURSE.key === 'mountainvalley') { // wind moving through the ridge's hardwoods (a low rush that swells and falls) and the dry rattle of the last leaves
+    for (const [f, q, g0, lf, ld] of [[520, .35, .017, .041, .012], [3100, .6, .004, .067, .0034]]) {
+      const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+      src.buffer = mkNoise(a, 7); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; g.gain.value = g0; lfo.frequency.value = lf; lg.gain.value = ld;
+      lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
+    }
   } else if (COURSE.key === 'pebblebeach') { // the Pacific breaking on the rocks below the 7th and the 18th: a deep roar that builds and draws back, white water hissing on top, the wind in the cypress
     for (const [f, q, g0, lf, ld] of [[300, .5, .017, .068, .014], [1900, .6, .007, .045, .0055], [720, .3, .0065, .031, .004]]) {
       const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
@@ -6195,6 +6237,25 @@ function ambRobin(a, t) { // a robin in the hedge: a short phrase of thin, quick
     tt += d + .03 + Math.random() * .09;
   }
 }
+function ambCrow(a, t) { // a crow somewhere over the ridge: two or three hoarse, flat 'caw' calls
+  const n = 2 + ((Math.random() * 2) | 0), f0 = 330 + Math.random() * 60; let tt = t;
+  for (let k = 0; k < n; k++) {
+    const o = a.createOscillator(), bp = a.createBiquadFilter(), g = a.createGain(), d = .24 + Math.random() * .08;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(f0 * 1.1, tt); o.frequency.exponentialRampToValueAtTime(f0 * .8, tt + d);
+    bp.type = 'bandpass'; bp.frequency.value = 1000; bp.Q.value = 1.1;
+    g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(.026, tt + .03); g.gain.setValueAtTime(.026, tt + d * .6); g.gain.exponentialRampToValueAtTime(.0001, tt + d); o.connect(bp).connect(g).connect(MUS.bus); o.start(tt); o.stop(tt + d + .02);
+    tt += d + .22 + Math.random() * .12;
+  }
+}
+function ambWoodpecker(a, t) { // a woodpecker drumming on a dead trunk far off: a quick roll of dry taps that slows at the end
+  const n = 9 + ((Math.random() * 8) | 0); let tt = t, gap = .07;
+  for (let k = 0; k < n; k++) {
+    const o = a.createOscillator(), bp = a.createBiquadFilter(), g = a.createGain();
+    o.type = 'square'; o.frequency.value = 1500 + Math.random() * 200; bp.type = 'bandpass'; bp.frequency.value = 1700; bp.Q.value = 2;
+    g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(.014, tt + .002); g.gain.exponentialRampToValueAtTime(.0001, tt + .018); o.connect(bp).connect(g).connect(MUS.bus); o.start(tt); o.stop(tt + .03);
+    tt += gap; if (k > n - 4) gap *= 1.25;
+  }
+}
 function ambSeaLion(a, t) { // California sea lions on the rocks off Point Joe, far below: a few hoarse, barking calls
   const n = 2 + ((Math.random() * 5) | 0), f0 = 190 + Math.random() * 50; let tt = t;
   for (let k = 0; k < n; k++) {
@@ -6267,7 +6328,18 @@ const AMB = {
       [[0, 81, 4], [4, 78, 2], [6, 81, 2]], [[0, 86, 3], [3, 83, 1], [4, 81, 4]], [[0, 78, 2], [2, 81, 2], [4, 85, 4]], [[0, 83, 2], [2, 81, 2], [4, 78, 4]],
       [[0, 76, 2], [2, 79, 2], [4, 83, 4]], [[0, 81, 3], [3, 79, 1], [4, 76, 4]], [[0, 81, 2], [2, 79, 2], [4, 76, 2], [6, 74, 2]], [[0, 73, 4], [4, 74, 4]]],
     pat: [[0, 2, 4, 3, 5, 3, 4, 2], [0, 3, 5, 4, 2, 4, 5, 3], [0, 2, 3, 5, 4, 3, 2, 1], [0, 1, 2, 3, 4, 3, 2, 1]],
-    vars: ['plain', 'surf', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] }
+    vars: ['plain', 'surf', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] },
+  mountainvalley: { per: .4, echo: .9, level: .3,
+    // a slow 4/4 in G, a dulcimer and a banjo-like harp over open fifths: G C G D Em C D G, two bars each; chord = [bass, pad, harp notes]
+    ch: [[43, [55, 59, 62, 67], [43, 50, 55, 59, 62, 67]], [48, [52, 55, 60, 64], [48, 55, 60, 64, 67, 72]], [43, [55, 59, 62, 67], [43, 50, 55, 59, 62, 67]], [38, [50, 54, 57, 62], [50, 57, 62, 66, 69, 74]],
+      [40, [52, 55, 59, 64], [52, 59, 64, 67, 71, 76]], [48, [52, 55, 60, 64], [48, 55, 60, 64, 67, 72]], [38, [50, 54, 57, 62], [50, 57, 62, 66, 69, 74]], [43, [55, 59, 62, 67], [43, 50, 55, 59, 62, 67]]],
+    // the dulcimer's tune, bar by bar: [eighth, note, length in eighths]
+    mel: [[[0, 79, 2], [2, 83, 2], [4, 86, 4]], [[0, 88, 3], [3, 86, 1], [4, 83, 4]], [[0, 84, 2], [2, 88, 2], [4, 91, 4]], [[0, 88, 2], [2, 86, 2], [4, 84, 4]],
+      [[0, 83, 2], [2, 86, 2], [4, 91, 4]], [[0, 88, 3], [3, 86, 1], [4, 83, 4]], [[0, 81, 2], [2, 86, 2], [4, 90, 4]], [[0, 88, 2], [2, 86, 2], [4, 81, 4]],
+      [[0, 83, 2], [2, 88, 2], [4, 91, 4]], [[0, 95, 3], [3, 91, 1], [4, 88, 4]], [[0, 84, 2], [2, 88, 2], [4, 91, 4]], [[0, 91, 3], [3, 88, 1], [4, 84, 4]],
+      [[0, 86, 2], [2, 90, 2], [4, 93, 4]], [[0, 90, 2], [2, 86, 2], [4, 81, 4]], [[0, 79, 2], [2, 83, 2], [4, 86, 4]], [[0, 79, 8]]],
+    pat: [[0, 2, 4, 3, 5, 3, 4, 2], [0, 3, 5, 4, 2, 4, 5, 3], [0, 2, 3, 5, 4, 3, 2, 1], [0, 1, 2, 4, 5, 4, 2, 1]],
+    vars: ['plain', 'woods', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] }
 };
 function ambStep(a, kind, st, t) {
   const K = AMB[kind], hum = () => (Math.random() - .5) * .02;
@@ -6315,6 +6387,22 @@ function ambStep(a, kind, st, t) {
       if (v === 'echo' && len >= 3) ambFlute(a, mm - 12, t + 3 * K.per, len * K.per * .6, .02);
     }
     if (e === 0 && Math.random() < (v === 'sea' ? .22 : .05)) ambGull(a, t + Math.random() * 1.5);
+    return;
+  }
+  if (kind === 'mountainvalley') {
+    // 4/4 in eighths, sixteen bars to a cycle; on 'woods' cycles the dulcimer rests and the ridge has the piece: crows, a woodpecker, the wind
+    const cyc = Math.floor(st / 128), bar = Math.floor(st / 8) % 16, e = st % 8, ch = K.ch[Math.floor(bar / 2)], v = K.vars[cyc % 8], intro = cyc === 0 ? Math.min(1, bar / 6) : 1;
+    if (st % 128 === 0) { ambTone(a, 43, t, 52, .05, 'triangle'); ambTone(a, 50, t, 52, .022, 'triangle'); } // open fifths, a low drone under the tune
+    if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, 6, .07, 1100); ambTone(a, ch[0], t, 5.4, .08); }
+    const pat = K.pat[(cyc + Math.floor(bar / 4)) % 4], hn = ch[2][pat[e]];
+    if (v !== 'sparse' || e % 2 === 0) ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .13 : .08) * intro);
+    if (v !== 'woods' && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of K.mel[bar]) {
+      if (pos !== e || (v === 'sparse' && bar % 2 === 1)) continue; const mm = m - 12 + (v === 'up' && bar >= 8 ? 12 : 0) - (v === 'low' ? 12 : 0);
+      ambBox(a, mm, t + hum(), .1 * intro);
+      if (v === 'echo' && len >= 3) ambBox(a, mm, t + 3 * K.per, .04);
+    }
+    if (e === 0 && Math.random() < (v === 'woods' ? .16 : .035)) ambCrow(a, t + Math.random() * 1.5);
+    if (e === 4 && Math.random() < (v === 'woods' ? .08 : .012)) ambWoodpecker(a, t + Math.random());
     return;
   }
   if (kind === 'pebblebeach') {
@@ -6557,10 +6645,10 @@ function resumeRound(course) {
   beginHole(); G.snapCam = true; updateHUD(); // straight to the address view, no flyover
   return true;
 }
-// Pebble Beach is still being built: a note says so when a round starts there (and the first time a hole is practised in a session)
+// Mountain Valley is still being built: a note says so when a round starts there (and the first time a hole is practised in a session)
 const PBN = { practice: false };
 function pbNotice(practice) {
-  if (!COURSE || COURSE.key !== 'pebblebeach') return;
+  if (!COURSE || COURSE.key !== 'mountainvalley') return;
   if (practice) { if (PBN.practice) return; PBN.practice = true; }
   $('pbNote').classList.add('on');
 }
@@ -8414,7 +8502,7 @@ function logShot(sh, r, holed, pen) {
 /* ---------- clips: a shot as a handful of numbers, shown again by simulating it ---------- */
 // A great shot is kept as the course, hole, pin, weather, wind and how it left the club (18 numbers). Playing it builds that hole and flies the shot
 // again exactly as it happened - the same machinery as watching someone live - so a replay costs nothing to store, post and send.
-const CLIP_COURSES = ['gccb', 'alsace', 'augusta', 'rothley', 'stpatricks', 'pebblebeach'];
+const CLIP_COURSES = ['gccb', 'alsace', 'augusta', 'rothley', 'stpatricks', 'pebblebeach', 'mountainvalley'];
 function clipOf(sh) {
   const L = sh.L, pre = sh.pre, pv = G.prev, ci = CLIP_COURSES.indexOf(COURSE.key); if (!L || !pre || !pv || ci < 0 || !L.v || !L.w) return null;
   const r = v => Math.round(v * 1e4) / 1e4;
