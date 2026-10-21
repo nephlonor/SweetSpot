@@ -191,7 +191,7 @@ body.taught .how{display:none}
 .playRow{display:flex;gap:10px}.playRow .btn{flex:1;min-width:0}.playRow .btn.alt{flex:1.35}
 .btn.alt{background:rgba(255,255,255,.92);color:#2f6b35;text-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
 .btn.alt small{font:600 12px var(--cond);letter-spacing:.1em;color:var(--ink2);margin-top:3px}
-.titleFoot{text-align:center;margin-top:10px;font:600 12px var(--cond);letter-spacing:.12em;text-transform:uppercase;color:var(--w2);text-shadow:var(--tsh)}.titleFoot b{font-weight:700;color:var(--w1)}
+.titleFoot{text-align:center;margin-top:10px;font:600 6px var(--cond);letter-spacing:.12em;text-transform:uppercase;color:var(--w2);text-shadow:var(--tsh)}.titleFoot b{font-weight:700;color:var(--w1)}
 .best{text-align:center;font:600 13px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--w1);text-shadow:var(--tsh);min-height:16px}
 #intro,#done{display:flex;align-items:flex-end;justify-content:center;padding:0 calc(var(--sr) + 12px) calc(var(--sb) + 12px) calc(var(--sl) + 12px)}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
@@ -448,13 +448,10 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .tabs button.sel{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(22,33,28,.14)}
 .lb{display:flex;flex-direction:column;gap:5px}
 #boardSheet{height:88vh}
-.cwrap{position:relative;margin:0 0 10px;border-radius:16px;overflow:hidden;background:var(--soft)}
-.cwrap::before{content:'';position:absolute;left:8px;right:8px;top:50%;height:44px;margin-top:-22px;border-radius:12px;background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);pointer-events:none;z-index:1}
-.cwrap::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(40,70,48,.55),rgba(40,70,48,0) 30%,rgba(40,70,48,0) 70%,rgba(40,70,48,.55));pointer-events:none;z-index:3}
-.cwheel{position:relative;z-index:2;height:132px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;perspective:240px;perspective-origin:50% 50%;scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-y}
-.cwheel::-webkit-scrollbar{display:none}
-.cwheel .cwp{height:44px}
-.cwi{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;scroll-snap-stop:always;font:600 22px var(--cond);text-transform:uppercase;letter-spacing:.07em;color:var(--ink);will-change:transform,opacity;cursor:pointer;backface-visibility:hidden;white-space:nowrap}
+.cwrap{position:relative;margin:0 0 10px;height:64px;border-radius:16px;overflow:hidden;background:var(--soft);perspective:520px;perspective-origin:50% 50%;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+.cwrap::before{content:'';position:absolute;left:50%;top:10px;bottom:10px;width:152px;margin-left:-76px;border-radius:12px;background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);pointer-events:none;z-index:0}
+.cwrap::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(40,70,48,.6),rgba(40,70,48,0) 26%,rgba(40,70,48,0) 74%,rgba(40,70,48,.6));pointer-events:none;z-index:3}
+.cwi{position:absolute;left:50%;top:10px;width:150px;height:44px;display:flex;align-items:center;justify-content:center;font:600 20px var(--cond);text-transform:uppercase;letter-spacing:.06em;color:var(--ink);will-change:transform,opacity;backface-visibility:hidden;white-space:nowrap;z-index:1;pointer-events:none}
 .lb .row{display:grid;grid-template-columns:30px 1fr auto 44px;align-items:center;gap:8px;background:var(--soft);border-radius:14px;padding:8px 12px;font:600 17px var(--cond);font-variant-numeric:tabular-nums}
 .lb .row .rk{font:600 13px var(--cond);color:var(--ink3)}
 .lb .row .nm{text-transform:uppercase;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -8759,29 +8756,55 @@ async function retryUnposted() {
   }
 }
 // list for the chosen tab; names are other people's text, so everything goes in with textContent
-// the course picker: a vertical wheel, the name in the middle is the course shown; it turns with a finger (snapping to a name) or a tap on a name
+// the course picker: a horizontal wheel like the iOS pickers. The name in the middle is the course shown. A finger drags it; let go and it spins on with the speed it had,
+// slows down by friction, and comes to rest on a name (a soft ease onto it), which is then selected. A tap on a name rolls to that name.
 function courseWheel(key) {
-  const IH = 44, list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), wrap = document.createElement('div'), wh = document.createElement('div');
-  wrap.className = 'cwrap'; wh.className = 'cwheel'; wh.setAttribute('role', 'listbox'); wh.setAttribute('aria-label', 'Course');
-  const sp = () => { const d = document.createElement('div'); d.className = 'cwp'; return d; }; wh.appendChild(sp());
-  const items = list.map((c, i) => { const d = document.createElement('div'); d.className = 'cwi'; d.textContent = c.short; d.setAttribute('role', 'option'); d.onclick = () => wh.scrollTo({ top: i * IH, behavior: 'smooth' }); wh.appendChild(d); return d; });
-  wh.appendChild(sp()); wrap.appendChild(wh);
-  const paint = () => { const pos = wh.scrollTop / IH; items.forEach((d, i) => { const o = i - pos, a = Math.abs(o), q = Math.min(a, 2.4); d.style.transform = `rotateX(${-Math.sign(o) * q * 26}deg) scale(${1 - .05 * q})`; d.style.opacity = String(Math.max(.16, 1 - .42 * q)); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false'); }); };
-  let tm = 0, cur = Math.max(0, list.findIndex(c => c.key === key));
-  // when the wheel comes to rest it eases the last bit onto the nearest name (a soft snap, whatever the browser's own snapping did) and that course is selected
-  let easing = 0;
-  const settle = () => {
-    if (!wh.isConnected) return; // (a wheel the board has rebuilt: its late timers do nothing)
-    if (placing) { clearTimeout(tm); tm = setTimeout(settle, 120); return; } // (just put in place: nothing to select yet)
-    const i = clamp(Math.round(wh.scrollTop / IH), 0, list.length - 1), off = i * IH - wh.scrollTop;
-    if (Math.abs(off) > 1.5 && !easing) { easing = 1; const y0 = wh.scrollTop, t0 = performance.now(); wh.style.scrollSnapType = 'none'; const step = now => { const u = Math.min(1, (now - t0) / 220), e = 1 - Math.pow(1 - u, 3); wh.scrollTop = y0 + off * e; if (u < 1) requestAnimationFrame(step); else { easing = 0; wh.style.scrollSnapType = ''; settle(); } }; requestAnimationFrame(step); return; }
-    if (easing) return;
-    if (i !== cur) { cur = i; Board.view = list[i].key; loadWorld(false, list[i].key); refreshBoards(); }
+  const IW = 150, list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), N = list.length, wrap = document.createElement('div');
+  wrap.className = 'cwrap'; wrap.setAttribute('role', 'listbox'); wrap.setAttribute('aria-label', 'Course');
+  const items = list.map(c => { const d = document.createElement('div'); d.className = 'cwi'; d.textContent = c.short; d.setAttribute('role', 'option'); wrap.appendChild(d); return d; });
+  let cur = Math.max(0, list.findIndex(c => c.key === key)), pos = cur, vel = 0, raf = 0, drag = null, lastTick = cur;
+  const paint = () => {
+    const w = wrap.clientWidth || 360;
+    items.forEach((d, i) => {
+      const o = i - pos, a = Math.abs(o), q = Math.min(a, 2.6);
+      d.style.transform = `translateX(${o * IW * (1 - .12 * Math.min(a, 1.4)) - IW / 2}px) rotateY(${-Math.sign(o) * q * 30}deg) scale(${1 - .06 * q})`;
+      d.style.opacity = a * IW > w / 2 + IW ? '0' : String(Math.max(.14, 1 - .4 * q)); d.setAttribute('aria-selected', a < .5 ? 'true' : 'false');
+    });
+    const t = Math.round(pos); if (t !== lastTick && t >= 0 && t < N) { lastTick = t; try { tone(2300, .012, 'sine', .035); } catch (e) { } } // a tick as each name passes the middle
   };
-  wh.addEventListener('scroll', () => { paint(); clearTimeout(tm); tm = setTimeout(settle, 120); }, { passive: true });
-  // placed once it is in the page (the board is rebuilt after every turn of the wheel, at the same place)
-  let placing = 0;
-  wh._place = () => { placing = 1; wh.style.scrollSnapType = 'none'; wh.scrollTop = cur * IH; paint(); requestAnimationFrame(() => { wh.scrollTop = cur * IH; paint(); requestAnimationFrame(() => { wh.style.scrollSnapType = ''; placing = 0; }); }); };
+  const choose = i => { if (!wrap.isConnected || i === cur) return; cur = i; Board.view = list[i].key; loadWorld(false, list[i].key); refreshBoards(); };
+  let last = 0, settling = false;
+  const frame = now => {
+    const dt = Math.min(.08, (now - last) / 1000 || .016); last = now;
+    if (!wrap.isConnected) return;
+    for (let rem = dt; rem > 1e-6; rem -= 1 / 240) { // (small fixed steps: the same motion at any frame rate)
+      const h = Math.min(rem, 1 / 240);
+      if (!settling && Math.abs(vel) > .5 && pos > -.45 && pos < N - 1 + .45) { pos += vel * h; vel *= Math.exp(-h * 3.4); } // spinning on: friction takes the speed away
+      else { // slow enough (or past an end): a critically damped spring onto the nearest name
+        settling = true;
+        const tgt = clamp(Math.round(pos), 0, N - 1), k = 120, c = 2 * Math.sqrt(k);
+        vel += ((tgt - pos) * k - vel * c) * h; pos += vel * h;
+        if (Math.abs(tgt - pos) < .004 && Math.abs(vel) < .05) { pos = tgt; vel = 0; paint(); raf = 0; choose(tgt); return; }
+      }
+    }
+    paint(); raf = requestAnimationFrame(frame);
+  };
+  const run = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+  wrap.addEventListener('pointerdown', e => { if (e.button) return; try { wrap.setPointerCapture(e.pointerId); } catch (x) { } cancelAnimationFrame(raf); raf = 0; vel = 0; settling = false; drag = { x0: e.clientX, x: e.clientX, t: performance.now(), v: 0, moved: 0, id: e.pointerId }; });
+  wrap.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return; const now = performance.now(), dx = e.clientX - drag.x, dtm = Math.max(1, now - drag.t) / 1000;
+    drag.moved += Math.abs(dx); let d = -dx / IW; if (pos < 0 || pos > N - 1) d *= .4; // beyond an end the wheel gives reluctantly
+    pos += d; drag.v = drag.v * .6 + (d / dtm) * .4; drag.x = e.clientX; drag.t = now; paint();
+  });
+  const up = e => {
+    if (!drag || e.pointerId !== drag.id) return; const d = drag; drag = null;
+    if (d.moved < 6) { const i = clamp(Math.round(pos + (e.clientX - (wrap.getBoundingClientRect().left + wrap.clientWidth / 2)) / IW), 0, N - 1); vel = 0; pos = pos; const from = pos; // a tap: the wheel rolls to that name
+      const t0 = performance.now(); cancelAnimationFrame(raf); const roll = now => { const u = Math.min(1, (now - t0) / 260), ee = 1 - Math.pow(1 - u, 3); pos = from + (i - from) * ee; paint(); if (u < 1) raf = requestAnimationFrame(roll); else { raf = 0; choose(i); } }; raf = requestAnimationFrame(roll); return; }
+    vel = performance.now() - d.t > 120 ? 0 : clamp(d.v, -22, 22); settling = false; run(); // let go: the speed it had (none if the finger rested before lifting)
+  };
+  wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
+  wrap.addEventListener('wheel', e => { const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; if (!d) return; e.preventDefault(); vel = clamp(vel + d / IW * 3, -16, 16); settling = false; run(); }, { passive: false });
+  wrap._paint = paint;
   return wrap;
 }
 function fillBoard(el, limit, key, pick) {
@@ -8790,7 +8813,7 @@ function fillBoard(el, limit, key, pick) {
   // the leaderboard sheet can show any course's board, without touching the round in play
   if (pick) {
     $('boardName').textContent = CO.name;
-    { const cw = courseWheel(key); el.appendChild(cw); cw.firstChild._place(); }
+    { const cw = courseWheel(key); el.appendChild(cw); cw._paint(); }
     const dc = document.createElement('button'); dc.className = 'dlCard dlMini dl-' + dlStatus().k; dc.innerHTML = '<i class="ic"></i><span><b></b><small></small></span><em></em>'; dc.querySelector('.ic').innerHTML = ICONS.flag;
     const st = dlStatus(); dc.querySelector('b').textContent = st.big; dc.querySelector('small').textContent = st.sub; dc.querySelector('em').textContent = st.tag; dc.onclick = dailyTap; el.appendChild(dc);
   }
