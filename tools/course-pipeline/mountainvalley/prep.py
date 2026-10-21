@@ -52,6 +52,8 @@ BLD = [w['pts'][:-1] for w in O['buildings'] if dh(cen(w['pts']), MH) < 300]
 # ---------------- tees: play the card's Gold (back) tees. Each hole starts at the OSM tee box whose length is nearest the card; a hole still short is lengthened
 # backward along its opening leg (a tee further back in the trees), to the card's length
 GOLD = {1: 314, 2: 182, 3: 414, 4: 394, 5: 521, 6: 451, 7: 509, 8: 367, 9: 175, 10: 358, 11: 365, 12: 600, 13: 253, 14: 388, 15: 405, 16: 172, 17: 512, 18: 359}
+# hole 12: the westmost of the three boxes in the row north of the OSM line's start (they play 577, 558 and 528 yards to the green: the Gold tee, 600 yards, lies 21 m behind them)
+TEE_BOX = {12: (938.7, -5.5)}
 def plen(L): return sum(math.dist(L[i], L[i+1]) for i in range(len(L)-1))
 for ref, L in HL.items():
     tgt = GOLD[ref]*.9144; nxp = L[1]; b0 = math.atan2(nxp[1]-L[0][1], nxp[0]-L[0][0]); opts = [tuple(L[0])]
@@ -63,12 +65,15 @@ for ref, L in HL.items():
         dd = [((q[0]-p[0])*ux + (q[1]-p[1])*uy, q) for q in t]; dm = max(d for d, _ in dd)
         ex = [q for d, q in dd if d >= dm-3]; opts += [p, (sum(q[0] for q in ex)/len(ex) - ux*2.5, sum(q[1] for q in ex)/len(ex) - uy*2.5)]
     def hl(p_): return math.dist(p_, nxp) + plen(L[1:])
-    tee = min(opts, key=lambda p_: abs(hl(p_) - tgt)); short = tgt - hl(tee)
+    tee = min(opts, key=lambda p_: abs(hl(p_) - tgt))
+    if ref in TEE_BOX:   # the 12th: OSM draws the hole from the lower tee strip across the forest; the real tees are the row of three boxes 60 m north, level with the fairway
+        tee = TEE_BOX[ref]
+    short = tgt - hl(tee)
     if short > 1.5:
         ux, uy = tee[0]-nxp[0], tee[1]-nxp[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul; tee = (tee[0] + ux*short, tee[1] + uy*short)
     # the tee stands on a real box when one lies within 25 m and plays within 10 m of the card (hole 12's OSM line starts at a box's edge: the tee goes to the centre of the box that plays 554 m of 549)
     best = None
-    for t in TEES:
+    for t in ([] if ref in TEE_BOX else TEES):
         c = cen(t)
         if math.dist(c, tee) < 25 and abs(hl(c) - tgt) <= 10 and (best is None or abs(hl(c) - tgt) < abs(hl(best) - tgt)): best = c
     if best is not None: tee = best
