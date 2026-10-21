@@ -1076,7 +1076,7 @@ function simulateShot(C, o) {
   if (!res.holed && !res.water && !res.ob && C.isOB(fx, fz)) {
     // Pebble Beach: the beach and the cliffs between the course's edge and the Pacific are a penalty area (red stakes), not out of bounds; only the fences and roads inland are
     if (RDC.coast && nearSea(C, fx, fz)) {
-      res.water = true; res.shore = true;
+      res.water = true; res.shore = true; res.lost = true; // (a ball on the beach or the rocks is searched for like a lost ball: found, it can be played from there, as the pros have)
       for (let k = n - 1; k >= 0; k--) { const px = fr[k * 5 + 1], pz = fr[k * 5 + 3]; if (!C.isOB(px, pz)) { lastDry[0] = px; lastDry[1] = pz; break; } } // the relief is taken from where it crossed the course's edge
     } else res.ob = true;
   }
@@ -7067,7 +7067,10 @@ function finishShot() {
   }
   if (r.lost && !sh.searchDone) { startSearch(sh, r); return; }
   let big = '', sub = '';
-  if (r.water) { G.strokes++; G.pens[h]++; waterRelief(sh, r, first); return; } // one penalty stroke, then the player picks where to drop
+  if (r.water) {
+    if (r.shore && sh.searchDone === 'found') { waterRelief(sh, r, first, true); return; } // found on the beach or the rocks: play it as it lies (no penalty) or take relief (one stroke)
+    G.strokes++; G.pens[h]++; waterRelief(sh, r, first); return;
+  } // one penalty stroke, then the player picks where to drop
   else if (r.ob) {
     G.strokes++; G.pens[h]++;
     placeBall(G.prev.x, G.prev.z, G.prev.teed); big = `<span class="bad">${r.lost ? 'Ball not found' : 'Out of bounds'}</span>`; sub = 'Stroke and distance';
@@ -7133,13 +7136,13 @@ function searchTap(e) {
   S2.done = true; $('searchHint').classList.remove('on');
   searchMark(S2.tries, p.x, p.z, found ? 5 : 5, found ? 0x7ee08a : 0xff8a7a);
   if (found) { resetBallFade(); W.ball.visible = true; SFX.chime(); readout('<div class="r1 good">Found your ball</div>', 1.8); }
-  else { SFX.tree(); readout('<div class="r1 bad">Not there</div><div class="r3"><span>The ball is lost · stroke and distance</span></div>', 2.4); }
+  else { SFX.tree(); readout('<div class="r1 bad">Not there</div><div class="r3"><span>' + (r.shore ? 'The ball is lost in the penalty area · relief, one stroke' : 'The ball is lost · stroke and distance') + '</span></div>', 2.4); }
   setTimeout(() => {
     if (G.state !== 'search' || G.search !== S2) return;
     for (const m of W.sMarks || []) m.visible = false;
     searchGrassOff(); G.search = null; document.body.classList.remove('search'); camSnap(); resetBallFade();
     if (found) { S2.sh.searchDone = 'found'; ST.found = (ST.found | 0) + 1; W.ball.visible = true; }
-    else { S2.sh.searchDone = 'lost'; r.ob = true; ST.lost++; W.ball.visible = true; }
+    else { S2.sh.searchDone = 'lost'; if (!r.shore) r.ob = true; ST.lost++; W.ball.visible = true; }
     G.state = 'flight'; finishShot();
   }, found ? 1100 : 2300);
 }
@@ -7201,9 +7204,11 @@ function waterOptions(r) {
   opts.push({ k: 'replay', t: 'Play it again', d: `From where you hit it (stroke and distance) · ${toPin(prev.x, prev.z)} m to the pin`, x: prev.x, z: prev.z, teed: prev.teed });
   return opts;
 }
-function waterRelief(sh, r, first) {
-  const opts = waterOptions(r); G.relief = { kind: 'water', opts, forced: true, sh, r, first };
-  openRelief(r.shore ? 'Ball in the penalty area' : 'Ball in the water', 'One penalty stroke. Where do you drop?', opts, 0);
+function waterRelief(sh, r, first, found) {
+  const opts = waterOptions(r);
+  if (found) opts.unshift({ k: 'play', t: 'Play it as it lies', d: `No penalty · from where you found it · ${Math.round(Math.hypot(G.C.cup.x - r.final.x, G.C.cup.z - r.final.z))} m to the pin`, x: r.final.x, z: r.final.z });
+  G.relief = { kind: 'water', opts, forced: true, sh, r, first, pend: !!found }; // (pend: the penalty stroke is taken only if relief is chosen)
+  openRelief(r.shore ? 'Ball in the penalty area' : 'Ball in the water', found ? 'Found it. Play it as it lies, or take relief for one penalty stroke.' : 'One penalty stroke. Where do you drop?', opts, 0);
 }
 function openRelief(title, text, opts, rec) {
   $('reliefTitle').textContent = title; $('reliefText').textContent = text; const body = $('reliefBody'); body.textContent = '';
@@ -7216,6 +7221,8 @@ function openRelief(title, text, opts, rec) {
 function chooseRelief(i) {
   const R = G.relief; if (!R) return; const o = R.opts[i]; if (!o) return; G.relief = null; closeSheets();
   if (R.kind === 'water') {
+    if (o.k === 'play') { placeBall(o.x, o.z, false); finishTail(R.sh, R.r, 'Playing it as it lies', 'In the penalty area · no penalty', R.first); return; }
+    if (R.pend) { const h = G.hole; G.strokes++; G.pens[h]++; } // (relief taken after a search: the penalty stroke counts now)
     placeBall(o.x, o.z, !!o.teed && o.k === 'replay'); const sub = 'Penalty stroke · ' + ({ zone: 'drop zone', lateral: 'lateral relief', back: 'back on the line', replay: 'stroke and distance' })[o.k];
     finishTail(R.sh, R.r, '<span class="bad">' + (R.r.shore ? 'Penalty area' : 'Water hazard') + '</span>', sub, R.first); return;
   }
