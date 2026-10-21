@@ -149,8 +149,9 @@ feat['tee'] = enc_polys([[t] for t in tee_polys])
 # ---------------- trees from the canopy height model: Monterey cypress (7), Monterey pine (8), coast live oak (0), scrub (1)
 MH = CHM.copy()
 def _shift(w):   # the 2nd tee's view: the house 16 m right of the line, 40 m out, stood in the line of sight; moved 16 m further right (south-south-west of the line)
-    if w['id'] != '686557676': return w['pts']
-    return [(x + 3.5, y - 15.6) for x, y in w['pts']]
+    if w['id'] == '686557676': return [(x + 3.5, y - 15.6) for x, y in w['pts']]
+    if w['id'] == '686557674': return [(x - 5.0, y - 24.5) for x, y in w['pts']]   # the big house 31 m right of the line, 50 m out: 25 m further right
+    return w['pts']
 BLD = [_shift(w) for w in O['buildings'] if len(w['pts']) > 3 and inside_box(w['pts'], -40) and min(math.dist(centroid(w['pts']), q) for q in bnd[::6]) < 260]
 bm = raster(BLD, 3)
 MH = np.where(bm, 0, np.clip(MH, 0, 45)); MH[SEAM | ROCKM] = 0
