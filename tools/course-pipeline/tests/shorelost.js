@@ -9,7 +9,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(2500);
   const mode = process.argv[2] || 'found', pick = process.argv[3] || 'play';
   await p.evaluate(() => loadData('pebblebeach').then(() => setCourse('pebblebeach')));
-  await p.evaluate(() => { $('title').classList.remove('on'); G.weather = WEATHERS[0]; G.wxNext = WEATHERS[0]; G.wxLeft = 9; startRound(); $('pbNote').classList.remove('on'); startHole(17); beginHole(); });
+  await p.evaluate(() => { $('title').classList.remove('on'); G.weather = WEATHERS[0]; G.wxNext = WEATHERS[0]; G.wxLeft = 9; startRound(); startHole(17); beginHole(); });
   await p.waitForFunction(() => G.state === 'address', null, { timeout: 400000 }); await p.waitForTimeout(800);
   console.log('strokes before', await p.evaluate(() => {
     const orig = simulateShot; window.simulateShot = (C, o) => {
