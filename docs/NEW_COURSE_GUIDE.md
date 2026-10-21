@@ -158,6 +158,7 @@ These come from the canopy model, in `build.py`:
 - `GUST_COLS`, `CLIP_COURSES` (append at the end only; clip indices are stored in saved clips), `AMB` and `musicWanted`.
 - `DAILY_COURSES*`: start the new rotation on a future date so past days keep their course. Make the same change in the **leaderboard workflow** (course-of-the-day check, and par in its `COURSES` map) and in `.github/scripts/daily-overall.js`.
 - An empty `leaderboard/<course>.json` (`[]`).
+- **The build number** on the title screen is the number of courses plus an iteration (`APP_ITER` in `index.html`: 7.1 is seven courses, first iteration). A new course makes it `N.0` by itself; later updates without a new course raise `APP_ITER.n`.
 - The help text "The courses", with data credits and licences.
 - Weather, if the course has its own climate: `WX_COURSE`.
 

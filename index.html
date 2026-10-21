@@ -191,6 +191,7 @@ body.taught .how{display:none}
 .playRow{display:flex;gap:10px}.playRow .btn{flex:1;min-width:0}.playRow .btn.alt{flex:1.35}
 .btn.alt{background:rgba(255,255,255,.92);color:#2f6b35;text-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
 .btn.alt small{font:600 12px var(--cond);letter-spacing:.1em;color:var(--ink2);margin-top:3px}
+.titleFoot{text-align:center;margin-top:10px;font:600 12px var(--cond);letter-spacing:.12em;text-transform:uppercase;color:var(--w2);text-shadow:var(--tsh)}.titleFoot b{font-weight:700;color:var(--w1)}
 .best{text-align:center;font:600 13px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--w1);text-shadow:var(--tsh);min-height:16px}
 #intro,#done{display:flex;align-items:flex-end;justify-content:center;padding:0 calc(var(--sr) + 12px) calc(var(--sb) + 12px) calc(var(--sl) + 12px)}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
@@ -557,6 +558,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="nameHint" id="nameHintT" hidden></div>
     <div class="playRow"><button class="btn alt" id="btnResume" style="display:none">Resume<small id="resumeInfo"></small></button><button class="btn" id="btnPlay">Tee off</button></div>
     <div class="best" id="best"></div>
+    <div class="titleFoot"><b id="buildNo">Build</b> · built by Nephlonor · free forever</div>
   </div>
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
@@ -3444,6 +3446,10 @@ const RDS = {
 };
 // Alsace, Augusta, Rothley Park and St Patrick's bring their terrain, features, trees and relief as separate files (data-<course>.js), fetched the first time the course is used and then kept
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
+// the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
+// APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
+const APP_ITER = { courses: 7, n: 1 };
+function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
 function loadData(k) {
@@ -3481,6 +3487,7 @@ const COURSES = {
   mountainvalley: { key: 'mountainvalley', name: 'Mountain Valley Golf Course', short: 'Mountain Valley', defs: MOUNTAINVALLEY_DEFS, best: 'ssg-best-mountainvalley', board: 'ssg-board-mountainvalley', coll: 'rounds-mountainvalley' },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
 };
+document.getElementById('buildNo').textContent = 'Build ' + buildNo();
 const LEGACY_ON = false;
 let COURSE = COURSES.gccb;
 // each round sets a pin (0-3: front, back, left, right) per hole in G.pins
