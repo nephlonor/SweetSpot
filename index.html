@@ -3661,7 +3661,8 @@ function initRain() {
         vec3 vel = vec3(uWind.x, -uFall * (.85 + .3 * seed.w), uWind.y);
         vec3 p = vec3(seed.x * S, seed.y * uH, seed.z * S) + vel * uTime;
         vec3 head = vec3(uCam.x + mod(p.x - uCam.x + uHalf, S) - uHalf, uGround + mod(p.y, uH), uCam.z + mod(p.z - uCam.z + uHalf, S) - uHalf);
-        vec3 rel = vel - uCamVel; float rl = length(rel);
+        vec3 cv = uCamVel; cv.y = max(cv.y, vel.y * .7); // a camera sinking faster than the rain would make the streaks point upward: it never counts as falling faster than 70 % of the drops
+        vec3 rel = vel - cv; float rl = length(rel);
         float sl = clamp(max(rl * .05, .45), .45, 9.); vec3 tail = head - rel / max(rl, .001) * sl;
         vec4 ch = projectionMatrix * viewMatrix * vec4(head, 1.), ct = projectionMatrix * viewMatrix * vec4(tail, 1.);
         float dist = length(head - cameraPosition), hd = length((head - uCam).xz);
