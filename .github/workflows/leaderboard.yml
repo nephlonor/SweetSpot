@@ -146,5 +146,7 @@ jobs:
             fs.writeFileSync(file, JSON.stringify(rows) + '\n');
             const rank = rows.findIndex(x => x.name === name && x.at === r.at) + 1;
             const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
+            // (a posted score also brings the archive and the standings up to date with any day that has closed: the scheduled run can come hours late)
+            try { const zd = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); files.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(zd)); } catch (e) { core.warning('overall: ' + e.message); }
             await save(files, `Leaderboard: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar} on ${r.course}`);
             await finish(true, `Posted. You are #${rank} of ${rows.length} on the ${r.course} board.`);
