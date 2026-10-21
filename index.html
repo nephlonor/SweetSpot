@@ -6069,7 +6069,7 @@ function ambSetup(a, bus, out) {
       lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
     }
   } else if (COURSE.key === 'pebblebeach') { // the Pacific breaking on the rocks below the 7th and the 18th: a deep roar that builds and draws back, white water hissing on top, the wind in the cypress
-    for (const [f, q, g0, lf, ld] of [[300, .5, .024, .068, .02], [1900, .6, .01, .045, .008], [720, .3, .009, .031, .006]]) {
+    for (const [f, q, g0, lf, ld] of [[300, .5, .017, .068, .014], [1900, .6, .007, .045, .0055], [720, .3, .0065, .031, .004]]) {
       const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
       src.buffer = mkNoise(a, 8); src.loop = true; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; g.gain.value = g0; lfo.frequency.value = lf; lg.gain.value = ld;
       lfo.connect(lg).connect(g.gain); src.connect(bp).connect(g).connect(bus); src.start(); lfo.start(); MUS.stops.push(src, lfo);
@@ -6272,14 +6272,14 @@ function ambStep(a, kind, st, t) {
   if (kind === 'pebblebeach') {
     // 4/4 in eighths, sixteen bars to a cycle; on 'surf' cycles the vibraphone rests and the shore has the piece: gulls, sea lions, the bell buoy
     const cyc = Math.floor(st / 128), bar = Math.floor(st / 8) % 16, e = st % 8, ch = K.ch[Math.floor(bar / 2)], v = K.vars[cyc % 8], intro = cyc === 0 ? Math.min(1, bar / 6) : 1;
-    if (st % 128 === 0) { ambTone(a, 38, t, 54, .035, 'triangle'); ambTone(a, 50, t, 54, .014, 'triangle'); } // a low drone, the swell under the cliffs
-    if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, 6.2, .05, 1000); ambTone(a, ch[0], t, 5.6, .06); }
+    if (st % 128 === 0) { ambTone(a, 38, t, 54, .05, 'triangle'); ambTone(a, 50, t, 54, .02, 'triangle'); } // a low drone, the swell under the cliffs
+    if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, 6.2, .085, 1000); ambTone(a, ch[0], t, 5.6, .1); }
     const pat = K.pat[(cyc + Math.floor(bar / 4)) % 4], hn = ch[2][pat[e]];
-    if (v !== 'sparse' || e % 2 === 0) ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .085 : .05) * intro);
+    if (v !== 'sparse' || e % 2 === 0) ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .15 : .09) * intro);
     if (v !== 'surf' && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of K.mel[bar]) {
       if (pos !== e || (v === 'sparse' && bar % 2 === 1)) continue; const mm = m + (v === 'up' && bar >= 8 ? 12 : 0) - (v === 'low' ? 12 : 0);
-      ambBell(a, mm - 12, t + hum(), .05 * intro, 1.8 + len * .35);
-      if (v === 'echo' && len >= 3) ambBell(a, mm - 12, t + 3 * K.per, .018, 2.4);
+      ambBell(a, mm - 12, t + hum(), .09 * intro, 1.8 + len * .35);
+      if (v === 'echo' && len >= 3) ambBell(a, mm - 12, t + 3 * K.per, .032, 2.4);
     }
     if (e === 0 && Math.random() < (v === 'surf' ? .24 : .05)) ambGull(a, t + Math.random() * 1.5);
     if (e === 4 && Math.random() < (v === 'surf' ? .1 : .015)) ambSeaLion(a, t + Math.random() * 1.2);
