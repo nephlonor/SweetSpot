@@ -66,6 +66,12 @@ for ref, L in HL.items():
     tee = min(opts, key=lambda p_: abs(hl(p_) - tgt)); short = tgt - hl(tee)
     if short > 1.5:
         ux, uy = tee[0]-nxp[0], tee[1]-nxp[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul; tee = (tee[0] + ux*short, tee[1] + uy*short)
+    # the tee stands on a real box when one lies within 25 m and plays within 10 m of the card (hole 12's OSM line starts at a box's edge: the tee goes to the centre of the box that plays 554 m of 549)
+    best = None
+    for t in TEES:
+        c = cen(t)
+        if math.dist(c, tee) < 25 and abs(hl(c) - tgt) <= 10 and (best is None or abs(hl(c) - tgt) < abs(hl(best) - tgt)): best = c
+    if best is not None: tee = best
     L[0] = [tee[0], tee[1]]
     print(ref, 'tee', [round(v) for v in tee], 'length', round(plen(L)), 'card', round(tgt), 'extended' if short > 1.5 else '', round(max(0, short)))
 # the boundary: the playing corridor, 55 m round the Mountain's holes and features, smoothed (the OSM outline holds both courses)
