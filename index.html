@@ -40,7 +40,9 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 button:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
 input{-webkit-user-select:text;user-select:text;touch-action:manipulation}
 #gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
-#fx{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:4}
+#fx{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:4;transition:opacity .4s}
+body.flight #fx{opacity:.4}
+body.finale #fx,body.clip #fx,body:has(.sheet.on:not(#mapSheet)) #fx{opacity:0!important;transition:opacity .25s}
 /* glass surfaces */
 .card,.glass{background:var(--gl-bg),var(--gl-tint);-webkit-backdrop-filter:var(--gl-blur);backdrop-filter:var(--gl-blur);border:1px solid var(--gl-line);box-shadow:var(--gl-sh);border-radius:22px;color:var(--w1);text-shadow:var(--tsh)}
 .good{color:var(--good)}.ok{color:var(--ok)}.bad{color:var(--bad)}.lb .row.me .good{color:#d6ffd0}
@@ -50,7 +52,7 @@ input{-webkit-user-select:text;user-select:text;touch-action:manipulation}
 #hud.off{opacity:0}
 /* the end of a round: the camera circles the last hole from high up, one button at the bottom */
 #finale{position:fixed;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom));z-index:5;display:flex;justify-content:center;opacity:0;pointer-events:none;transition:opacity .5s var(--ease)}
-#finale .btn{min-width:230px;padding:0 34px}
+#finale .btn{min-width:230px;padding:0 34px;background:var(--gl-bg),var(--gl-tint);-webkit-backdrop-filter:var(--gl-blur);backdrop-filter:var(--gl-blur);border:1px solid var(--gl-line);box-shadow:var(--gl-sh);color:var(--w1);text-shadow:var(--tsh)}
 body.finale #finale{opacity:1}body.finale #finale .btn{pointer-events:auto}
 body.finale #tempo,body.finale #strike,body.finale #coach,body.finale #aimHint,body.finale #readout,body.finale #unplayBtn,body.finale #skipBtn,body.finale #pinTag,body.finale #ballTag,body.finale #mpPanel,body.finale #dlPanel,body.finale #mpTags{opacity:0!important;pointer-events:none!important}
 #hud button{pointer-events:auto}
@@ -3477,7 +3479,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 22 };
+const APP_ITER = { courses: 7, n: 23 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
