@@ -3497,7 +3497,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 29 };
+const APP_ITER = { courses: 7, n: 30 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3814,8 +3814,9 @@ function nightTick(dt) {
   const lit = G.nightU > .02, nightOn = G.nightU > .5 && onGccb;
   batTick(dt, nightOn); wormTick(dt, nightOn);
   if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl comes and goes on its own)
-    G.owlT = (G.owlT == null ? 5 + Math.random() * 6 : G.owlT) - dt; if (G.owlT <= 0) { owlHoot(); G.owlT = 14 + Math.random() * 20; }
-  } else if (!nightOn) G.owlT = null;
+    G.owlT = (G.owlT == null ? 12 + Math.random() * 18 : G.owlT) - dt; if (G.owlT <= 0) { owlHoot(); G.owlT = 45 + Math.random() * 60; } // (rarely)
+    G.howlT = (G.howlT == null ? 40 + Math.random() * 40 : G.howlT) - dt; if (G.howlT <= 0) { howl(); G.howlT = 80 + Math.random() * 90; }
+  } else if (!nightOn) G.owlT = G.howlT = null;
   if (W.ballGlow) {
     W.ballGlow.visible = lit && !!W.ball.visible;
     if (W.ballGlow.visible) { // a constant size on screen (34 px out from the ball), so it reads far away and does not swamp the ball close up
@@ -3901,10 +3902,40 @@ function spiderCrawl() {
   };
   requestAnimationFrame(step);
 }
-// an owl on the course: 'hoo, hoo-hoo-hooo', soft round notes that fall a little, and a far one answering, quieter and lower
+// owls on the course: one of several calls each time - a tawny's 'hoo, hoo-hoo-hooo', a great horned's low five notes, a double hoot, a trill,
+// a single long note, a barn owl's screech - and often a far one answering, lower and quieter
+function owlNotes(list, vol, mul, delay) { for (const [d, du, f1, f2] of list) { tone(f1 * mul, du, 'sine', vol, f2 * mul, delay + d); tone(f1 * mul * 2, du * .8, 'sine', vol * .16, f2 * mul * 2, delay + d); } }
+const OWL_CALLS = [
+  () => [[0, .3, 440, 380], [.6, .16, 420, 390], [.85, .2, 420, 385], [1.15, .8, 420, 300]],                                   // tawny
+  () => [[0, .14, 270, 255], [.3, .34, 300, 255], [.85, .2, 255, 245], [1.2, .2, 250, 240], [1.55, .5, 245, 215]],             // great horned
+  () => [[0, .22, 400, 360], [.35, .26, 390, 340], [1.4, .22, 400, 360], [1.75, .3, 390, 330]],                                // double hoot
+  () => Array.from({ length: 7 }, (_, k) => [k * .14, .09, 410 - k * 6, 395 - k * 6]),                                         // trill
+  () => [[0, 1.3, 390, 280]],                                                                                                   // one long note
+  () => [[0, .5, 350, 330], [.75, .45, 340, 300]]                                                                               // a soft, short pair
+];
 function owlHoot() {
-  for (const [d, du, f1, f2] of [[0, .3, 440, 380], [.6, .16, 420, 390], [.85, .2, 420, 385], [1.15, .8, 420, 300]]) { tone(f1, du, 'sine', .22, f2, d); tone(f1 * 2, du * .8, 'sine', .035, f2 * 2, d); }
-  for (const [d, du, f1, f2] of [[3.4, .3, 340, 300], [4, .16, 330, 305], [4.25, .85, 330, 240]]) tone(f1, du, 'sine', .08, f2, d);
+  if (Math.random() < .14) { tone(2100, .9, 'sawtooth', .04, 1500); noiseBurst(.9, .06, 3200, 3); return; } // a barn owl screeches
+  const call = OWL_CALLS[(Math.random() * OWL_CALLS.length) | 0], mul = .92 + Math.random() * .16;
+  owlNotes(call(), .2, mul, 0);
+  if (Math.random() < .55) owlNotes(OWL_CALLS[(Math.random() * OWL_CALLS.length) | 0](), .07, mul * .8, 2.6 + Math.random() * 2); // a far one answers
+}
+// a howl far off: a voice rising, held with a wobble, and sinking away; one of three shapes, now and then answered from further still
+function howl() {
+  if (!settings.sound) return; const a = audio(); if (!a) return;
+  const shapes = [[[0, 1], [.3, 1.9], [.65, 1.85], [1, 1.2]], [[0, 1], [.2, 1.6], [.32, 1.45], [.52, 2], [1, 1.1]], [[0, 1.2], [.45, 2.1], [1, 1.5]]];
+  const one = (t0, f0, dur, vol) => {
+    const sh = shapes[(Math.random() * shapes.length) | 0], o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(), lf = a.createOscillator(), lg = a.createGain();
+    o.type = 'sine'; o2.type = 'triangle'; lp.type = 'lowpass'; lp.frequency.value = 1100;
+    for (const [u, m] of sh) { o.frequency.linearRampToValueAtTime(f0 * m, t0 + u * dur); o2.frequency.linearRampToValueAtTime(f0 * m * 2, t0 + u * dur); }
+    o.frequency.setValueAtTime(f0 * sh[0][1], t0); o2.frequency.setValueAtTime(f0 * sh[0][1] * 2, t0);
+    lf.frequency.value = 5.2; lg.gain.setValueAtTime(0, t0); lg.gain.linearRampToValueAtTime(f0 * .035, t0 + dur * .6); lf.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + dur * .22); g.gain.setValueAtTime(vol, t0 + dur * .7); g.gain.linearRampToValueAtTime(0, t0 + dur);
+    const g2 = a.createGain(); g2.gain.value = .25; o.connect(g); o2.connect(g2).connect(g); g.connect(lp).connect(a.destination);
+    for (const n of [o, o2, lf]) { n.start(t0); n.stop(t0 + dur + .05); }
+  };
+  const t = a.currentTime + .05, f0 = 250 + Math.random() * 90, dur = 3.4 + Math.random() * 2.2;
+  one(t, f0, dur, .1);
+  if (Math.random() < .5) one(t + dur * .55 + 1.2, f0 * .8, dur * .9, .045); // a second voice, further away
 }
 // sparkles instead of confetti: glowing points fall twinkling, and some pop into two or more on the way down
 function burstSparkles() {
