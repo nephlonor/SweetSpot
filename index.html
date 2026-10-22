@@ -3473,7 +3473,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 17 };
+const APP_ITER = { courses: 7, n: 18 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7614,7 +7614,12 @@ function sizeCanvases() {
 function VH() { return window.innerHeight; }
 // iOS can pan the visual viewport (or leave it scrolled after the keyboard or a gesture), which would shift the drawn UI against the touch areas: keep it at the origin
 // the on-screen keyboard: sheets and the pop-up sit above it, and the field being typed in is scrolled into view
-function kbSync() { try { const vv = window.visualViewport; if (!vv) return; const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)), r = document.documentElement.style; r.setProperty('--kb', kb > 80 ? kb + 'px' : '0px'); r.setProperty('--vvh', kb > 80 ? Math.round(vv.height) + 'px' : '100vh'); } catch (e) { } }
+function kbSync() { try { const vv = window.visualViewport; if (!vv) return; const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)), r = document.documentElement.style; r.setProperty('--kb', kb > 80 ? kb + 'px' : '0px'); r.setProperty('--vvh', kb > 80 ? Math.round(vv.height) + 'px' : '100vh');
+    // the start screen is a full-screen layer, not a sheet: lift it just enough that the name field clears the keyboard
+    const t = $('title'), f = document.activeElement; let lift = 0;
+    if (kb > 80 && f && f.matches && f.matches('#title input') && t.classList.contains('on')) { if (!t._lift) t._base = f.getBoundingClientRect().bottom; lift = Math.max(0, Math.round(t._base + 16 - (vv.offsetTop + vv.height))); }
+    if (lift !== (t._lift || 0)) { t._lift = lift; t.style.transition = 'opacity .35s var(--ease), transform .25s var(--ease)'; t.style.transform = lift ? `translateY(${-lift}px)` : ''; }
+  } catch (e) { } }
 if (window.visualViewport) { visualViewport.addEventListener('resize', kbSync); visualViewport.addEventListener('scroll', kbSync); }
 document.addEventListener('focusin', e => { const t = e.target; if (!t || !t.matches || !t.matches('input, textarea')) return; [250, 600].forEach(d => setTimeout(() => { kbSync(); try { if (document.activeElement === t) t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) { } }, d)); });
 document.addEventListener('focusout', () => setTimeout(kbSync, 150));
