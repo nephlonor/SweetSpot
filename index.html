@@ -3497,7 +3497,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 28 };
+const APP_ITER = { courses: 7, n: 29 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3813,10 +3813,9 @@ function nightTick(dt) {
   if (G.night && onGccb && !G.neon && G.state === 'address' && !$('neonAsk').classList.contains('on')) $('neonAsk').classList.add('on');
   const lit = G.nightU > .02, nightOn = G.nightU > .5 && onGccb;
   batTick(dt, nightOn); wormTick(dt, nightOn);
-  if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl and the spider come and go on their own)
+  if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl comes and goes on its own)
     G.owlT = (G.owlT == null ? 5 + Math.random() * 6 : G.owlT) - dt; if (G.owlT <= 0) { owlHoot(); G.owlT = 14 + Math.random() * 20; }
-    G.spiderT = (G.spiderT == null ? 7 + Math.random() * 8 : G.spiderT) - dt; if (G.spiderT <= 0) { spiderCrawl(); G.spiderT = 35 + Math.random() * 50; }
-  } else if (!nightOn) { G.owlT = G.spiderT = null; }
+  } else if (!nightOn) G.owlT = null;
   if (W.ballGlow) {
     W.ballGlow.visible = lit && !!W.ball.visible;
     if (W.ballGlow.visible) { // a constant size on screen (34 px out from the ball), so it reads far away and does not swamp the ball close up
@@ -3884,7 +3883,7 @@ function wormTick(dt, on) {
   });
   Wm.pts.geometry.attributes.position.needsUpdate = true; Wm.pts.geometry.attributes.color.needsUpdate = true; Wm.pts.visible = true;
 }
-// a spider crawls over the screen now and then: across from one side to the other along a wobbling line, its legs going
+// a spider crawls over the screen after a bogey or worse (a pick-up too): across from one side to the other along a wobbling line, its legs going
 const SPIDER_SVG = '<svg id="spider" viewBox="0 0 48 48" aria-hidden="true"><g class="lgA"><path d="M26 20L36 12L42 8M22 23L10 20L3 20M26 26L38 30L44 34M23 29L14 38L10 45"/></g><g class="lgB"><path d="M22 20L12 12L6 8M26 23L38 20L45 20M22 26L10 30L4 34M25 29L34 38L38 45"/></g><ellipse cx="24" cy="31" rx="6.5" ry="8.5"/><ellipse cx="24" cy="20" rx="4" ry="4.5"/><circle class="eye" cx="22" cy="18" r="1.1"/><circle class="eye" cx="26" cy="18" r="1.1"/></svg>';
 function spiderCrawl() {
   let el = $('spider'); if (!el) { document.body.insertAdjacentHTML('beforeend', SPIDER_SVG); el = $('spider'); }
@@ -8514,6 +8513,7 @@ function showDone(pickedUp) {
   $('dNext').textContent = G.practice ? 'Play again' : last ? 'Final scorecard' : 'Next hole';
   $('done').classList.add('on');
   if (!pickedUp && d <= -1) burstConfetti();
+  if ((pickedUp || d >= 1) && G.night && G.nightU > .5 && COURSE.key === 'gccb') setTimeout(spiderCrawl, 500); // (at night a bogey or worse brings the spider)
 }
 function burstConfetti() {
   if (G.night && G.nightU > .5 && COURSE.key === 'gccb') { burstSparkles(); return; } // (at night: sparkles)
