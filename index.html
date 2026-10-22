@@ -3497,7 +3497,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 32 };
+const APP_ITER = { courses: 7, n: 34 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3812,7 +3812,7 @@ function nightTick(dt) {
   G.nightU = (G.nightU || 0) + (want - (G.nightU || 0)) * (1 - Math.exp(-dt / 1.6));
   if (G.night && onGccb && !G.neon && G.state === 'address' && !$('neonAsk').classList.contains('on')) $('neonAsk').classList.add('on');
   const lit = G.nightU > .02, nightOn = G.nightU > .5 && onGccb;
-  batTick(dt, nightOn); wormTick(dt, nightOn); ballPoolTick(nightOn);
+  batTick(dt, nightOn); wormTick(dt, nightOn); ballLightTick(nightOn, dt);
   if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl comes and goes on its own)
     G.owlT = (G.owlT == null ? 12 + Math.random() * 18 : G.owlT) - dt; if (G.owlT <= 0) { owlHoot(); G.owlT = 45 + Math.random() * 60; } // (rarely)
     G.howlT = (G.howlT == null ? 40 + Math.random() * 40 : G.howlT) - dt; if (G.howlT <= 0) { howl(); G.howlT = 80 + Math.random() * 90; }
@@ -3891,32 +3891,15 @@ function wormTick(dt, on) {
   });
   Wm.pts.geometry.attributes.position.needsUpdate = true; Wm.pts.geometry.attributes.color.needsUpdate = true; Wm.pts.visible = true;
 }
-// the ball lights the ground round it a little: a soft disc in its colour that follows the ball and the lie of the land
-const BP_RING = 7, BP_SEG = 32, _nwhite = new THREE.Color(0xffffff);
-// (blended over the ground, never added to it: added light brought out the fine colour flecks of the ground and the trees as coloured dots)
-let _areaTex = null;
-function areaTex() { // a wide, even glow: a soft shoulder in the middle and gone at the edge
-  if (_areaTex) return _areaTex;
-  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.45, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-  x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return _areaTex = new THREE.CanvasTexture(cv);
-}
-function ballPoolTick(on) {
-  const C = G.C;
-  if (!on || !C || !W.ball.visible) { if (W.ballPool) W.ballPool.visible = false; return; }
-  if (!W.ballPool) {
-    const n = 1 + BP_RING * BP_SEG, uv = [.5, .5], idx = [];
-    for (let i = 1; i <= BP_RING; i++) for (let j = 0; j < BP_SEG; j++) { const a = j / BP_SEG * TAU; uv.push(.5 + .5 * Math.cos(a) * i / BP_RING, .5 + .5 * Math.sin(a) * i / BP_RING); }
-    for (let j = 0; j < BP_SEG; j++) idx.push(0, 1 + j, 1 + (j + 1) % BP_SEG);
-    for (let i = 1; i < BP_RING; i++) for (let j = 0; j < BP_SEG; j++) { const a = 1 + (i - 1) * BP_SEG, b = 1 + i * BP_SEG, j1 = (j + 1) % BP_SEG; idx.push(a + j, b + j, b + j1, a + j, b + j1, a + j1); }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
-    W.ballPool = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: areaTex(), transparent: true, opacity: .26, depthWrite: false, fog: false, side: THREE.DoubleSide }));
-    W.ballPool.frustumCulled = false; W.ballPool.renderOrder = 2; W.scene.add(W.ballPool);
-  }
-  const m = W.ballPool, b = W.ball.position, pa = m.geometry.attributes.position.array, gy = C.h(b.x, b.z), ht = Math.max(0, b.y - gy), R = 17 * (1 + Math.min(ht, 30) * .02);
-  pa[0] = b.x; pa[1] = gy + .1; pa[2] = b.z;
-  for (let i = 1, k = 3; i <= BP_RING; i++) for (let j = 0; j < BP_SEG; j++, k += 3) { const a = j / BP_SEG * TAU, x = b.x + Math.cos(a) * R * i / BP_RING, z = b.z + Math.sin(a) * R * i / BP_RING; pa[k] = x; pa[k + 1] = C.h(x, z) + .1; pa[k + 2] = z; }
-  m.geometry.attributes.position.needsUpdate = true; m.material.opacity = .26 * clamp(1 - ht / 40, .25, 1); m.material.color.setHex(W.neonOn || 0xffffff).lerp(_nwhite, .55); m.visible = true;
+// the ball lights the course round it with a real light: a point light in its colour a few metres above it, so the ground and the trees
+// take the light in their own colours and shading (nothing is drawn over the scene). The light exists from the start, at no strength, so
+// that switching it on never makes the shaders compile again
+const _nwhite = new THREE.Color(0xffffff);
+function ballLightTick(on, dt) {
+  const L = W.ballLight; if (!L) return;
+  const want = on && W.ball.visible && W.neonOn ? 1 : 0, k = L.userData.k = (L.userData.k || 0) + (want - (L.userData.k || 0)) * (1 - Math.exp(-dt * 4));
+  L.intensity = .6 * k; if (k < .01) return;
+  const b = W.ball.position; L.position.set(b.x, b.y + 4, b.z); L.color.setHex(W.neonOn).lerp(_nwhite, .5);
 }
 // a spider crawls over the screen after a bogey or worse (a pick-up too): across from one side to the other along a wobbling line, its legs going
 const SPIDER_SVG = '<svg id="spider" viewBox="0 0 48 48" aria-hidden="true"><g class="lgA"><path d="M26 20L36 12L42 8M22 23L10 20L3 20M26 26L38 30L44 34M23 29L14 38L10 45"/></g><g class="lgB"><path d="M22 20L12 12L6 8M26 23L38 20L45 20M22 26L10 30L4 34M25 29L34 38L38 45"/></g><ellipse cx="24" cy="31" rx="6.5" ry="8.5"/><ellipse cx="24" cy="20" rx="4" ry="4.5"/><circle class="eye" cx="22" cy="18" r="1.1"/><circle class="eye" cx="26" cy="18" r="1.1"/></svg>';
@@ -4108,6 +4091,7 @@ function initThree() {
   W.ball = new THREE.Mesh(new THREE.SphereGeometry(VIS_R, 48, 32), new THREE.MeshPhongMaterial({ color: 0xffffff, map: bt.map, bumpMap: bt.bump, bumpScale: .004, specular: 0x2c2c2c, shininess: 38, emissive: 0xffffff, emissiveIntensity: .17 }));
   W.ball.castShadow = true; scene.add(W.ball);
   W.ballGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: 0xffffff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); W.ballGlow.scale.setScalar(VIS_R * 14); W.ballGlow.visible = false; scene.add(W.ballGlow);
+  W.ballLight = new THREE.PointLight(0xffffff, 0, 34, 1.2); scene.add(W.ballLight);
   // tee peg
   W.peg = new THREE.Mesh(new THREE.CylinderGeometry(.025, .012, .12, 6), lambert(0xffd1dc)); scene.add(W.peg);
   // soft contact shadow
