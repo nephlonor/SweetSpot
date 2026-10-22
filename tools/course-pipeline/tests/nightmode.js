@@ -10,7 +10,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(2500);
   await p.evaluate(() => { settings.name = 'T'; settings.course = 'gccb'; $('title').classList.remove('on'); startHole(0); beginHole(); });
   await p.waitForFunction(() => G.state === 'address', null, { timeout: 300000 }); await p.waitForTimeout(1500);
-  const st = () => p.evaluate(() => ({ night: !!G.night, nightU: +(G.nightU || 0).toFixed(2), look: +(G.nightLook || 0).toFixed(2), popup: $('neonAsk').classList.contains('on'), neon: G.neon, lights: W.flood.filter(o => o.visible).length, glow: W.ballGlow.visible }));
+  const st = () => p.evaluate(() => ({ night: !!G.night, nightU: +(G.nightU || 0).toFixed(2), look: +(G.nightLook || 0).toFixed(2), popup: $('neonAsk').classList.contains('on'), neon: G.neon, glow: W.ballGlow.visible }));
   // 1. the fairway: no trigger
   await p.evaluate(() => { G.yaw = 0; }); await p.waitForTimeout(2500); console.log('fairway', await st());
   // 2. the clubhouse on the first tee: the look has to hold
