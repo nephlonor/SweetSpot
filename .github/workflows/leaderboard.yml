@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[standings]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -98,6 +98,34 @@ jobs:
               await exec.exec('git', ['add', 'leaderboard/homecourses.json']); await exec.exec('git', ['commit', '-m', 'Home course noted']);
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, 'Thanks! Your home course is noted.');
+            }
+            if (issue.title.startsWith('[feature]') || issue.title.startsWith('[vote]')) {
+              // feature requests (leaderboard/features.json): [{ id, t, d, n, by, at, s: 'open'|'done', done, v: { deviceHash: 1|-1 } }]; a request's id is its issue number.
+              // Only the maintainers mark one done (they edit the file); a vote can be changed or taken back (v: 0).
+              const who = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
+              let ff = []; try { ff = JSON.parse(fs.readFileSync('leaderboard/features.json', 'utf8')); } catch (e) { }
+              const cl = (v, n) => typeof v === 'string' ? v.replace(/\p{C}/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, n) : '';
+              let msg;
+              if (issue.title.startsWith('[feature]')) {
+                const t = cl(r.title, 60), d = cl(r.text, 300);
+                if (t.length < 4) return finish(false, 'The request needs a title.');
+                const day = Date.now() - 864e5;
+                if (ff.filter(x => x.by === who && x.at > day).length >= 3) return finish(false, 'Three requests a day is the limit.');
+                if (ff.some(x => x.s === 'open' && x.t.toLowerCase() === t.toLowerCase())) return finish(false, 'This request is already on the list.');
+                const nm = typeof r.name === 'string' && /^[\p{L}\p{N} ._'-]{1,14}$/u.test(r.name.trim()) ? r.name.trim() : '';
+                ff.push({ id: issue.number, t, d, n: nm, by: who, at: Date.now(), s: 'open', v: { [who]: 1 } });
+                msg = 'Thanks! Your request is on the list.';
+              } else {
+                const f = ff.find(x => x.id === r.id);
+                if (!f || f.s !== 'open' || ![1, -1, 0].includes(r.vote)) return finish(false, 'Unknown request.');
+                f.v = f.v || {}; if (r.vote) f.v[who] = r.vote; else delete f.v[who];
+                msg = 'Vote counted.';
+              }
+              fs.writeFileSync('leaderboard/features.json', JSON.stringify(ff) + '\n');
+              await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
+              await exec.exec('git', ['add', 'leaderboard/features.json']); await exec.exec('git', ['commit', '-m', 'Feature requests updated']);
+              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              return finish(true, msg);
             }
             const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71, pebblebeach: 72, mountainvalley: 72 };
             const int = v => Number.isInteger(v);
