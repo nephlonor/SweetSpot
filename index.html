@@ -3498,7 +3498,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 37 };
+const APP_ITER = { courses: 7, n: 38 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -6771,22 +6771,94 @@ function fileMusic(want) {
   if (want && el.paused && AC.state === 'running') { const pr = el.play(); if (pr && pr.catch) pr.catch(() => { }); }
   if (!want && F.vol < .002 && !el.paused) el.pause();
 }
-// Halloween at night: a spooky waltz in A minor, 3/4 at 120 bpm. A music box plays the tune over a bass on the first beat and two
-// chord stabs, in a long cold echo. The first eight bars fall chromatically; the next eight sing higher.
-const HW_PER = .25, HW_CH = { Am: [57, 60, 64], E7: [56, 59, 62], Dm: [57, 62, 65], F: [57, 60, 65] }, HW_ROOT = { Am: 45, E7: 40, Dm: 38, F: 41 };
-const HW_BARS = ['Am', 'Am', 'E7', 'E7', 'Dm', 'Dm', 'E7', 'Am', 'Am', 'F', 'Dm', 'E7', 'Am', 'F', 'E7', 'Am'];
-const HW_MEL = [[81, 80, 79, 78, 77, 76], [0, 0, 72, 0, 69, 0], [71, 0, 74, 0, 71, 0], [68, 0, 71, 0, 0, 0], [74, 73, 74, 77, 0, 74], [72, 0, 69, 0, 0, 0], [71, 0, 68, 0, 71, 0], [69, 0, 0, 0, 0, 0],
-  [76, 0, 81, 0, 76, 0], [77, 0, 81, 0, 77, 0], [74, 0, 77, 0, 81, 0], [80, 0, 76, 0, 71, 0], [76, 0, 81, 0, 84, 0], [83, 0, 81, 0, 77, 0], [80, 0, 71, 0, 74, 0], [69, 0, 0, 0, 0, 0]];
+// Halloween at night: ten minutes of music, a haunting waltz in 3/4 at about 106 bpm. Two themes (a lament in A minor and a rising, plaintive
+// one) come back in 22 sections of 16 bars, each in another key and dress: slowed to half speed, in fragments, upside down, in canon, with a
+// voice a third below. The voices are a music box, a celesta, a cello, a choir, an organ and a theremin over harp, bass and a heartbeat, with
+// a wind that swells, thunder, a low bell. The score is built once, the same every time, and it loops after the last bar.
+const HW_PER = 60 / (2 * 105.6), HW_TOTAL = 352 * 6; // (an eighth note; 352 bars of six: ten minutes)
+const HW_TH = { // each bar: [slot, semitones above A4, length in slots]; chords: [root above A, third (3 minor, 4 major)]
+  A: { mel: [[[0, 7, 3], [3, 6, 1], [4, 7, 1], [5, 3, 1]], [[0, 0, 4], [4, 2, 1], [5, 3, 1]], [[0, 5, 3], [3, 3, 1], [4, 2, 2]], [[0, -1, 6]], [[0, 7, 3], [3, 6, 1], [4, 7, 1], [5, 10, 1]], [[0, 8, 4], [4, 7, 1], [5, 5, 1]], [[0, 3, 2], [2, 2, 2], [4, 0, 2]], [[0, 0, 6]]],
+    ch: [[0, 3], [0, 3], [5, 3], [7, 4], [0, 3], [8, 4], [7, 4], [0, 3]] },
+  B: { mel: [[[0, 0, 2], [2, 3, 2], [4, 7, 2]], [[0, 8, 3], [3, 7, 1], [4, 5, 2]], [[0, 5, 2], [2, 8, 2], [4, 12, 2]], [[0, 11, 3], [3, 7, 3]], [[0, 12, 3], [3, 11, 1], [4, 12, 1], [5, 14, 1]], [[0, 13, 3], [3, 12, 1], [4, 8, 2]], [[0, 11, 2], [2, 14, 2], [4, 11, 2]], [[0, 12, 6]]],
+    ch: [[0, 3], [8, 4], [5, 3], [7, 4], [0, 3], [8, 4], [7, 4], [0, 3]] }
+};
+const HW_SHIFT = { box: 0, bell: 0, cello: -12, choir: 0, organ: -12, ther: 0 };
+// k: key (semitones from A), t: theme, o: how it is played (second statement: o2), l: lead voices, a: accompaniment, d: loudness at the start and end, w: wind
+const HW_SECS = [
+  { k: 0, t: 'A', o: ['frag'], l: ['box'], a: ['pulse'], d: [.3, .5], w: .1 },
+  { k: 0, t: 'A', o: [], l: ['box'], a: ['waltz'], d: [.55, .65], w: .08 },
+  { k: 0, t: 'A', o: [], o2: ['oct+'], l: ['bell'], a: ['waltz', 'arp'], d: [.6, .7], w: .08 },
+  { k: -5, t: 'B', o: [], l: ['cello'], a: ['arp'], d: [.6, .7], w: .1 },
+  { k: 0, t: 'B', o: [], l: ['choir'], a: ['pad'], d: [.65, .75], w: .08 },
+  { k: 3, t: 'A', o: [], l: ['ther'], a: ['waltz'], d: [.65, .75], w: .1 },
+  { k: 0, t: 'A', o: ['frag'], l: ['box'], a: ['drone'], d: [.3, .4], w: .16 },
+  { k: 5, t: 'A', o: ['slow'], l: ['cello', 'choir'], a: ['pad'], d: [.7, .85], w: .08 },
+  { k: 0, t: 'B', o: [], l: ['organ', 'box'], a: ['waltz'], d: [.8, .85], w: .06 },
+  { k: -2, t: 'A', o: ['inv'], l: ['bell'], a: ['arp'], d: [.6, .7], w: .1 },
+  { k: 2, t: 'B', o: ['harm'], l: ['choir'], a: ['pad', 'waltz'], d: [.8, .9], w: .08 },
+  { k: 0, t: '', o: [], l: [], a: ['pulse'], d: [.5, .6], w: .3, x: 'storm' },
+  { k: 0, t: 'A', o: ['oct-'], l: ['organ', 'choir'], a: ['waltz'], d: [.9, 1], w: .06 },
+  { k: 3, t: 'B', o: [], l: ['choir', 'cello'], a: ['arp', 'pad'], d: [.9, 1], w: .08 },
+  { k: -5, t: 'B', o: ['harm'], l: ['bell', 'cello'], a: ['waltz'], d: [.8, .9], w: .08 },
+  { k: 5, t: 'A', o: [], o2: ['oct+'], l: ['ther'], a: ['waltz'], d: [.85, .9], w: .1 },
+  { k: 8, t: 'A', o: ['slow', 'harm'], l: ['choir', 'organ'], a: ['pad'], d: [.95, 1], w: .06 },
+  { k: 0, t: 'B', o: ['canon'], l: ['box', 'bell'], a: ['waltz'], d: [.8, .85], w: .08 },
+  { k: -5, t: 'A', o: [], l: ['cello'], a: ['pulse'], d: [.65, .7], w: .12 },
+  { k: 0, t: 'A', o: ['frag'], l: ['box'], a: ['drone'], d: [.45, .5], w: .14 },
+  { k: 0, t: 'B', o: ['slow'], l: ['choir'], a: ['pad'], d: [.55, .6], w: .1 },
+  { k: 0, t: 'A', o: ['slow'], l: ['box'], a: [], d: [.45, .1], w: .12, x: 'end' }
+];
+let HW_EV = null;
+function hwCompose() {
+  HW_EV = new Map(); const r = mulberry32(31337), secs = HW_SECS;
+  const add = (st, o) => { const k = ((st % HW_TOTAL) + HW_TOTAL) % HW_TOTAL; let l = HW_EV.get(k); if (!l) HW_EV.set(k, l = []); l.push(o); };
+  secs.forEach((S, si) => {
+    const b0 = si * 16, key = S.k, gain = bi => S.d[0] + (S.d[1] - S.d[0]) * bi / 15, slow = S.o.includes('slow');
+    if (S.t) for (let n = 0; n < (slow ? 1 : 2); n++) {
+      let ev = []; HW_TH[S.t].mel.forEach((bar, bi) => bar.forEach(([sl, rel, du]) => ev.push({ s: bi * 6 + sl, m: 69 + rel, d: du, bar: bi })));
+      const ops = S.o.concat(n === 1 && S.o2 ? S.o2 : []);
+      if (ops.includes('frag')) ev = ev.filter(e => [0, 1, 4, 5].includes(e.bar));
+      if (ops.includes('inv')) ev.forEach(e => e.m = 69 + 14 - (e.m - 69));
+      if (ops.includes('oct+')) ev.forEach(e => e.m += 12);
+      if (ops.includes('oct-')) ev.forEach(e => e.m -= 12);
+      if (slow) ev.forEach(e => { e.s *= 2; e.d *= 2; });
+      if (ops.includes('canon')) ev = ev.concat(ev.map(e => ({ s: e.s + 4, m: e.m - 12, d: e.d, q: .7 })));
+      if (ops.includes('harm')) ev = ev.concat(ev.map(e => ({ s: e.s, m: e.m - 3, d: e.d, q: .6 })));
+      for (const e of ev) for (const kind of S.l) {
+        let m = e.m + key + HW_SHIFT[kind]; while (m > 96) m -= 12; while (m < 30) m += 12;
+        add(b0 * 6 + n * 48 + e.s, { k: kind, m, d: e.d * HW_PER * .98, v: (e.q || 1) * gain(Math.min(15, Math.floor((e.s + n * 48) / 6))) });
+      }
+    }
+    for (let bi = 0; bi < 16; bi++) {
+      const T = HW_TH[S.t || 'A'], [rr, th] = slow ? T.ch[Math.floor(bi / 2)] : T.ch[bi % 8], root = 40 + ((45 + key + rr) % 12), g = gain(bi), bs = (b0 + bi) * 6, cho = [root + 12, root + 12 + th, root + 19];
+      for (const a of S.a) {
+        if (a === 'waltz') { add(bs, { k: 'bass', m: root, d: 1.4, v: g }); for (const sl of [2, 4]) cho.forEach(m => add(bs + sl, { k: 'harp', m, d: .4, v: g * .45 })); }
+        else if (a === 'arp') [root + 12, root + 12 + th, root + 19, root + 24, root + 19, root + 12 + th].forEach((m, i) => add(bs + i, { k: 'harp', m, d: .4, v: g * .7 }));
+        else if (a === 'pad') cho.forEach(m => add(bs, { k: 'choir', m: m + 12, d: 6 * HW_PER, v: g * .7 }));
+        else if (a === 'drone') add(bs, { k: 'organ', m: root, d: 6 * HW_PER, v: g * .9 });
+        else if (a === 'pulse') { add(bs, { k: 'beat', v: g }); add(bs + 3, { k: 'beat', v: g * .6 }); add(bs, { k: 'bass', m: root, d: 6 * HW_PER, v: g * .7 }); }
+      }
+      if (S.x === 'storm') {
+        if (bi % 4 === 0) add(bs, { k: 'toll', m: 33 + key, v: .8 });
+        if (bi % 2 === 1) add(bs + Math.floor(r() * 3), { k: 'slide', m: 81 + Math.floor(r() * 8), m2: 70 + Math.floor(r() * 6), d: 3, v: .9 });
+        if (bi === 3 || bi === 9 || bi === 13) add(bs + 1, { k: 'thunder', v: 1 });
+      }
+    }
+    if (si % 4 === 0) add(b0 * 6, { k: 'toll', m: 33 + key, v: .5 });
+    if (S.x === 'end') add((b0 + 15) * 6, { k: 'toll', m: 33, v: .9 });
+  });
+}
 function hwSetup(a) {
-  const bus = a.createGain(), out = a.createGain(), rv = a.createConvolver(), wet = a.createGain(), sr = a.sampleRate, L = Math.floor(sr * 3.6), ir = a.createBuffer(2, L, sr);
+  const bus = a.createGain(), out = a.createGain(), rv = a.createConvolver(), wet = a.createGain(), comp = a.createDynamicsCompressor(), sr = a.sampleRate, L = Math.floor(sr * 3.6), ir = a.createBuffer(2, L, sr);
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 2.4); }
-  rv.buffer = ir; wet.gain.value = .7; out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.5, a.currentTime + 2);
-  bus.connect(out); bus.connect(rv).connect(wet).connect(out); out.connect(a.destination);
+  rv.buffer = ir; wet.gain.value = .6; comp.threshold.value = -20; comp.ratio.value = 5; comp.attack.value = .02; comp.release.value = .35;
+  out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.95, a.currentTime + 2);
+  bus.connect(comp); bus.connect(rv).connect(wet).connect(comp); comp.connect(out); out.connect(a.destination);
   MUS.ac = a; MUS.bus = bus; MUS.out = out; MUS.ks = {}; MUS.step = 0; MUS.next = a.currentTime + .4; MUS.kind = 'halloween'; MUS.stops = [];
-  // the beds that never stop: a wind that moans (noise through a band that wanders up and down) and an organ drone on a tritone, A and E flat
-  const nb = a.createBuffer(1, sr * 3, sr), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  // the beds that never stop: a wind that moans (noise through a band that wanders up and down; its strength follows the score) and an organ drone on a tritone
+  const nb = a.createBuffer(1, sr * 4, sr), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1; MUS.nb = nb;
   const ns = a.createBufferSource(), bp = a.createBiquadFilter(), wg = a.createGain(), wl = a.createOscillator(), wlg = a.createGain();
-  ns.buffer = nb; ns.loop = true; bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 2.5; wg.gain.value = .09; wl.frequency.value = .11; wlg.gain.value = 330;
+  ns.buffer = nb; ns.loop = true; bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 2.5; wg.gain.value = .1; wl.frequency.value = .11; wlg.gain.value = 330; MUS.wg = wg;
   wl.connect(wlg).connect(bp.frequency); ns.connect(bp).connect(wg).connect(bus); ns.start(); wl.start(); MUS.stops.push(ns, wl);
   const lp = a.createBiquadFilter(), og = a.createGain(), ol = a.createOscillator(), olg = a.createGain(); lp.type = 'lowpass'; lp.frequency.value = 260; og.gain.value = .05; ol.frequency.value = .23; olg.gain.value = .03;
   ol.connect(olg).connect(og.gain); lp.connect(og).connect(bus); ol.start(); MUS.stops.push(ol);
@@ -6797,6 +6869,51 @@ function hwTone(a, f, t, dur, type, v) {
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dur + .05);
 }
+// a held note with a slow attack and a release: through one filter, with a vibrato
+function hwSus(a, f, t, dur, v, lpf, at, vib, vd) {
+  const o = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(), lf = a.createOscillator(), lg = a.createGain(), e = t + dur;
+  o.type = 'sawtooth'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.value = lpf; lf.frequency.value = vib; lg.gain.value = f * vd; lf.connect(lg).connect(o.frequency);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + at); g.gain.setValueAtTime(v, Math.max(t + at, e - .25)); g.gain.linearRampToValueAtTime(0, e + .3);
+  o.connect(lp).connect(g).connect(MUS.bus); o.start(t); lf.start(t); o.stop(e + .35); lf.stop(e + .35);
+}
+// a choir: three detuned saws through two vowel bands, slow in and slow out, breathing with a vibrato
+function hwChoir(a, f, t, dur, v) {
+  const g = a.createGain(), e = t + dur, f1 = a.createBiquadFilter(), f2 = a.createBiquadFilter(), lf = a.createOscillator(), lg = a.createGain();
+  f1.type = f2.type = 'bandpass'; f1.frequency.value = 650; f2.frequency.value = 1150; f1.Q.value = f2.Q.value = 4; lf.frequency.value = 5.3; lg.gain.value = f * .008; lf.connect(lg);
+  for (const d of [-9, 0, 9]) { const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = d; lg.connect(o.frequency); o.connect(f1); o.connect(f2); o.start(t); o.stop(e + .7); }
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * 4, t + .5); g.gain.setValueAtTime(v * 4, Math.max(t + .5, e - .1)); g.gain.linearRampToValueAtTime(0, e + .6);
+  f1.connect(g); f2.connect(g); g.connect(MUS.bus); lf.start(t); lf.stop(e + .7);
+}
+function hwOrgan(a, f, t, dur, v) {
+  const g = a.createGain(), e = t + dur; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .08); g.gain.setValueAtTime(v, Math.max(t + .08, e - .1)); g.gain.linearRampToValueAtTime(0, e + .25);
+  for (const [k, am] of [[1, 1], [2, .5], [3, .3], [4, .2], [6, .1]]) { const o = a.createOscillator(), og = a.createGain(); o.frequency.value = f * k; og.gain.value = am; o.connect(og).connect(g); o.start(t); o.stop(e + .3); }
+  g.connect(MUS.bus);
+}
+// a theremin: a sine that slides up into the note and wobbles
+function hwTher(a, f, t, dur, v) {
+  const o = a.createOscillator(), g = a.createGain(), lf = a.createOscillator(), lg = a.createGain(), e = t + dur;
+  o.frequency.setValueAtTime(f * .94, t); o.frequency.exponentialRampToValueAtTime(f, t + .18); lf.frequency.value = 5.8; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * .014, t + dur * .6); lf.connect(lg).connect(o.frequency);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .25); g.gain.setValueAtTime(v, Math.max(t + .25, e - .2)); g.gain.linearRampToValueAtTime(0, e + .3);
+  o.connect(g).connect(MUS.bus); o.start(t); lf.start(t); o.stop(e + .35); lf.stop(e + .35);
+}
+function hwBeat(a, t, v) { const o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(34, t + .25); g.gain.setValueAtTime(.4 * v, t); g.gain.exponentialRampToValueAtTime(.0001, t + .4); o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + .45); }
+function hwPlay(a, e, t) {
+  const f = e.m ? mHz(e.m) : 0, v = e.v == null ? 1 : e.v;
+  switch (e.k) {
+    case 'box': hwTone(a, f * 1.012, t, 1.5, 'sine', .22 * v); hwTone(a, f * .991, t, 1.1, 'sine', .12 * v); hwTone(a, f * 2.01, t, .5, 'triangle', .06 * v); break;
+    case 'bell': hwTone(a, f, t, 1.8, 'sine', .2 * v); hwTone(a, f * 4, t, .5, 'sine', .07 * v); hwTone(a, f * 2.76, t, .8, 'sine', .05 * v); break;
+    case 'harp': hwTone(a, f, t, .9, 'triangle', .16 * v); hwTone(a, f * 2, t, .35, 'sine', .05 * v); break;
+    case 'bass': hwTone(a, f, t, Math.max(.7, e.d), 'triangle', .34 * v); hwTone(a, f * 2, t, .4, 'sine', .06 * v); break;
+    case 'cello': hwSus(a, f, t, e.d, .13 * v, 900, .12, 5.2, .006); break;
+    case 'choir': hwChoir(a, f, t, e.d, .07 * v); break;
+    case 'organ': hwOrgan(a, f, t, e.d, .11 * v); break;
+    case 'ther': hwTher(a, f, t, e.d, .15 * v); break;
+    case 'beat': hwBeat(a, t, v); break;
+    case 'toll': hwTone(a, f, t, 7, 'sine', .26 * v); hwTone(a, f * 2.4, t, 4, 'sine', .1 * v); hwTone(a, f * 3.8, t, 2.5, 'sine', .06 * v); break;
+    case 'slide': hwSlide(a, f, mHz(e.m2), t, e.d, .1 * v); break;
+    case 'thunder': { const s = a.createBufferSource(), lp = a.createBiquadFilter(), g = a.createGain(); s.buffer = MUS.nb; lp.type = 'lowpass'; lp.frequency.value = 150; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.5 * v, t + .3); g.gain.exponentialRampToValueAtTime(.0001, t + 3.6); s.connect(lp).connect(g).connect(MUS.bus); s.start(t); s.stop(t + 3.8); break; }
+  }
+}
 // a ghostly voice: a sine that slides and wobbles like a theremin
 function hwSlide(a, f0, f1, t, dur, v) {
   const o = a.createOscillator(), g = a.createGain(), lf = a.createOscillator(), lg = a.createGain();
@@ -6806,16 +6923,10 @@ function hwSlide(a, f0, f1, t, dur, v) {
   o.connect(g).connect(MUS.bus); o.start(t); lf.start(t); o.stop(t + dur + .05); lf.stop(t + dur + .05);
 }
 function hwStep(a, st, t) {
-  const bar = Math.floor(st / 6) % 16, e = st % 6, ch = HW_BARS[bar], m = HW_MEL[bar][e];
-  if (m) { const f = mHz(m); hwTone(a, f * 1.012, t, 1.4, 'sine', .15); hwTone(a, f * .991, t, 1, 'sine', .08); hwTone(a, f * 2.01, t, .5, 'triangle', .04); } // a music box a little out of tune
-  if (e === 0) hwTone(a, mHz(HW_ROOT[ch]), t, 1.3, 'triangle', .3);
-  if (e === 0 && bar % 2 === 1) { const o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(34, t + .25); g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(.0001, t + .4); o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + .45); } // a heartbeat
-  if (e === 2 || e === 4) HW_CH[ch].forEach(n => hwTone(a, mHz(n), t, .22, 'triangle', .06));
-  if (bar === 15 && e === 2) [69, 70, 75].forEach(n => hwTone(a, mHz(n), t, .9, 'sawtooth', .05)); // a cluster with a tritone, before the tune comes round
-  if (bar % 4 === 3 && e === 0) hwSlide(a, mHz(88), mHz(75), t, 1.6, .07); // the ghost sings, falling a tritone
-  if (bar % 8 === 5 && e === 3) hwSlide(a, mHz(93), mHz(94), t, .9, .04);
-  if (st % 96 === 0) hwTone(a, mHz(33), t, 6, 'sine', .18); // a low bell at the top of the tune
-  if (st % 150 === 36) { const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.setValueAtTime(90, t); o.frequency.linearRampToValueAtTime(260, t + .9); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 6; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.05, t + .3); g.gain.linearRampToValueAtTime(0, t + .9); o.connect(f).connect(g).connect(MUS.bus); o.start(t); o.stop(t + 1); } // a door creaks
+  if (!HW_EV) hwCompose();
+  const k = st % HW_TOTAL;
+  if (k % 96 === 0 && MUS.wg) MUS.wg.gain.setTargetAtTime(HW_SECS[k / 96].w, t, 2.5);
+  const l = HW_EV.get(k); if (l) for (const e of l) hwPlay(a, e, t);
 }
 function musicTick() {
   const night = !!G.night && G.nightU > .5 && COURSE && COURSE.key === 'gccb';
