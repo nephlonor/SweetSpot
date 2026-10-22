@@ -198,9 +198,9 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
 .icard{width:100%;max-width:520px;padding:16px;display:flex;gap:14px;transform:translateY(30px);transition:transform .5s var(--spring);border-radius:28px}
 #intro.on .icard,#done.on .dcard{transform:none}
-#homeAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#featAsk,#homeAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .hcard{width:100%;max-width:420px;padding:22px 20px 18px;background:rgba(250,252,249,.93);text-align:center;transform:translateY(24px);transition:transform .5s var(--spring);border-radius:28px;--ink:#16211c;--ink2:rgba(22,33,28,.7)}
-#homeAsk.on .hcard{transform:none}
+#featAsk.on .hcard,#homeAsk.on .hcard{transform:none}
 .hcard .hk,.hcard .ht,.hcard .hb,.hcard .hn{text-shadow:none}
 .hcard .hk{font:700 12px var(--cond);letter-spacing:.2em;text-transform:uppercase;color:var(--g1);opacity:.9}
 .hcard .ht{font:700 24px var(--cond);margin:6px 0 8px;color:var(--ink)}
@@ -579,6 +579,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">Replay</button></div></div>
 <div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
+<div class="layer" id="featAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Shape the game</div><div class="ht">Request a feature</div><div class="hb">Missing something? Send in your ideas and vote on the ones from other players with a thumbs up or down. The most wanted ones get built, and finished requests move to the archive.</div><div class="hbtns"><button class="btn alt" id="faNo" type="button">Not now</button><button class="btn" id="faOk" type="button">See requests</button></div></div></div>
 <div class="layer" id="homeAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Thanks for playing</div><div class="ht">Add your home course</div><div class="hb">Tell us your home course: new courses are added often, and the home courses of our active players come first. Good luck, and thanks for playing!</div><input id="haC" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Course name" enterkeyhint="next"><input id="haR" maxlength="30" autocomplete="off" spellcheck="false" placeholder="State or country" enterkeyhint="done"><div class="hn" id="haN">You can change it later under Menu, Player &amp; golfer.</div><div class="hbtns"><button class="btn alt" id="haNo" type="button">Not now</button><button class="btn" id="haOk" type="button">Save</button></div></div></div>
 <div id="scrim"></div>
 <div id="dataLoad" class="glass"></div>
@@ -3473,7 +3474,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 18 };
+const APP_ITER = { courses: 7, n: 19 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8193,7 +8194,7 @@ function showScorecard(final) {
   if (final) { const w = $('rcWatch'), sh = $('rcShare'); if (w) w.onclick = () => { const top = chrono(bestShots((G.shotLog || []).filter(x => x.cl && x.p >= 15), 5)).map(clipItem); closeSheets(); setTimeout(() => playClips(top, 'Highlights'), 150); }; if (sh) sh.onclick = shareRecap; }
   if (final) { if (G.daily && dlRec(G.daily.day) && dlRec(G.daily.day).status === 'done') fillDaily($('finalBoard'), true); else fillBoard($('finalBoard'), 10); }
   openSheet('cardSheet');
-  if (final) { $('scAgain').onclick = () => { closeSheets(); endFinale(); startRound(); }; $('scClose').onclick = () => { closeSheets(); if (!G.orbit) { G.state = 'title'; $('title').classList.add('on'); showBest(); } }; } // (Close leaves the camera circling, with Play again at the bottom)
+  if (final) { $('scAgain').onclick = () => { closeSheets(); endFinale(); startRound(); }; $('scClose').onclick = () => { closeSheets(); if (!G.orbit) { G.state = 'title'; $('title').classList.add('on'); showBest(); } featAskCheck(); }; } // (Close leaves the camera circling, with Play again at the bottom)
 }
 function showBest() { const ni = $('nameIn'); if (ni && document.activeElement !== ni) ni.value = settings.name || ''; titleMenuSync(); let b = null; try { b = +localStorage.getItem(BEST_KEY) || null; } catch (e) { } $('best').textContent = b ? `Best round ${b} (${fmtToPar(b - PAR_TOTAL)})` : ''; }
 /* ---------- intro & hole done ---------- */
@@ -8696,8 +8697,10 @@ async function homeSync() {
 }
 let _homeT = 0;
 function homeSet(c, r) { settings.homeC = cleanHome(c, 40); settings.homeR = cleanHome(r, 30); saveSettings(); clearTimeout(_homeT); _homeT = setTimeout(homeSync, 3500); } // (filed a moment after the last edit, once)
+// once, after the first round is closed: what the feature-request page is
+function featAskCheck() { if (settings.featAsked || $('featAsk').classList.contains('on')) return; settings.featAsked = true; saveSettings(); setTimeout(() => { if (!document.querySelector('.sheet.on')) $('featAsk').classList.add('on'); }, 700); }
 function homeAskCheck() { // ten rounds played, no home course yet, never asked: on the title screen with nothing else open
-  if (!ST || ST.rounds < 10 || settings.homeAsked || settings.homeC || !$('title').classList.contains('on') || document.querySelector('.sheet.on') || $('homeAsk').classList.contains('on') || $('vidIntro').classList.contains('on')) return;
+  if (!ST || ST.rounds < 10 || settings.homeAsked || settings.homeC || !$('title').classList.contains('on') || document.querySelector('.sheet.on') || $('homeAsk').classList.contains('on') || $('featAsk').classList.contains('on') || $('vidIntro').classList.contains('on')) return;
   settings.homeAsked = true; saveSettings(); $('haC').value = ''; $('haR').value = ''; $('homeAsk').classList.add('on');
 }
 setInterval(homeAskCheck, 3000); setTimeout(homeSync, 6000);
@@ -9627,6 +9630,8 @@ function initInput() {
   { const mc = $('mHomeC'), mr = $('mHomeR'), save = () => { homeSet(mc.value, mr.value); mc.value = settings.homeC || ''; mr.value = settings.homeR || ''; };
     mc.addEventListener('change', save); mr.addEventListener('change', save); mc.addEventListener('keydown', e => { if (e.key === 'Enter') mr.focus(); }); mr.addEventListener('keydown', e => { if (e.key === 'Enter') mr.blur(); });
     const hc = $('haC'), hr = $('haR'), close = () => $('homeAsk').classList.remove('on');
+    $('faNo').onclick = () => $('featAsk').classList.remove('on');
+    $('faOk').onclick = () => { $('featAsk').classList.remove('on'); openSheet('menuSheet'); menuPage('feature'); };
     $('haNo').onclick = close;
     $('haOk').onclick = () => { const c = cleanHome(hc.value, 40), r = cleanHome(hr.value, 30); hc.classList.toggle('need', c.length < 2); hr.classList.toggle('need', r.length < 2); if (c.length < 2 || r.length < 2) return; homeSet(c, r); syncMenu(); close(); SFX.chime && SFX.chime(); };
     hc.addEventListener('keydown', e => { if (e.key === 'Enter') hr.focus(); }); hr.addEventListener('keydown', e => { if (e.key === 'Enter') $('haOk').click(); }); }
