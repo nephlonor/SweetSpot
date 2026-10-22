@@ -389,6 +389,8 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .stCard.rec .k{color:rgba(43,18,0,.6)}
 .stCard .v{font:700 28px/1.1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums;margin-top:3px}
 .stCard .n.rk{font-weight:700;color:var(--g1);margin-top:3px}
+.stCard .n.rk.m1,.stCard .n.rk.m2,.stCard .n.rk.m3{display:inline-block;padding:1px 8px;border-radius:999px;color:#2a1c00;text-shadow:none}
+.stCard .n.rk.m1{background:linear-gradient(135deg,#ffe27a,#e9b52e)}.stCard .n.rk.m2{background:linear-gradient(135deg,#f1f3f5,#aab2ba)}.stCard .n.rk.m3{background:linear-gradient(135deg,#e8a56b,#b8723a);color:#2a1300}
 .stCard .n{font:500 12px/1.25 var(--body);color:var(--ink2);margin-top:2px}
 .stFun{display:flex;flex-direction:column;gap:6px}.stFun div{background:var(--soft);border-radius:14px;padding:9px 12px;font:500 14px/1.35 var(--body);color:var(--ink2)}.stFun b{color:var(--ink);font-weight:700}
 .stRow{display:flex;justify-content:space-between;align-items:center;font:600 15px var(--cond);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--hair)}.stRow span:first-child{color:var(--ink3);letter-spacing:.08em;font-size:12px}
@@ -3475,7 +3477,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 20 };
+const APP_ITER = { courses: 7, n: 21 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8458,24 +8460,29 @@ function distFun(d) {
   let u = FUN_UNITS[0]; for (const x of FUN_UNITS) if (d / x[0] >= 2) u = x; const n = d / u[0];
   return `about <b>${n >= 100 ? Math.round(n).toLocaleString() : n >= 10 ? n.toFixed(0) : n.toFixed(1)}</b> ${u[1]}: ${u[2]}.`;
 }
-// where my records stand among the published players: [record key, profile key, higher is better, smallest value that counts]
+// where a player's records stand among the published players: record key -> [profile key, higher is better, smallest value that counts]
 const REC_PF = { holed: ['ho', 1, 10], putt: ['pt', 1, 3], drive: ['dr', 1, 0], girStreak: ['gs', 1, 0], fwStreak: ['fs', 1, 0], birdStreak: ['bk', 1, 0], round: ['br', 0] };
-function recordRanks(all) {
-  const me = playerName().toLowerCase(), groups = new Map();
+// mine: { profile key: value } for the player in question; everyone else with the same name (the player's other devices) is left out of the field
+function recordRanks(all, name, mine) {
+  const me = String(name || '').toLowerCase(), groups = new Map();
   for (const q of Object.values(all || {})) { if (!q || !cleanPf(q.pf)) continue; const n = String(q.n || '').toLowerCase(); if (n === me) continue; (groups.get(n) || groups.set(n, []).get(n)).push(q); }
   const others = [...groups.values()].map(g => (g.length > 1 ? mergeProfiles(g).pf : cleanPf(g[0].pf)) || {}), out = {};
   for (const [k, [pk, hi, lo]] of Object.entries(REC_PF)) {
-    const R = ST.rec[k]; if (!R || R.at == null) continue;
+    const v0 = mine[pk]; if (!Number.isFinite(v0) || (hi && v0 <= lo)) continue;
     const vals = others.map(o => o[pk]).filter(v => Number.isFinite(v) && (hi ? v > lo : true));
-    out[k] = { n: vals.length + 1, rank: 1 + vals.filter(v => hi ? v > R.v : v < R.v).length };
+    out[pk] = { n: vals.length + 1, rank: 1 + vals.filter(v => hi ? v > v0 : v < v0).length };
   }
   return out;
+}
+// writes "#2 of 3 players" into the [data-rk] lines under a root, tinted gold, silver or bronze for the top three
+function showRanks(root, rk) {
+  root.querySelectorAll('[data-rk]').forEach(e => { const r = rk[e.dataset.rk]; if (!r || r.n < 2) return; e.textContent = `#${r.rank} of ${r.n} players`; e.classList.toggle('m1', r.rank === 1); e.classList.toggle('m2', r.rank === 2); e.classList.toggle('m3', r.rank === 3); });
 }
 function openStats() {
   const S = ST, el = $('statsBody'), pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–', km = S.dist / 1000;
   const lv = levelOf(S.xp);
   const card = (k, e, v, n, rec) => `<div class="stCard${rec ? ' rec' : ''}"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
-  const rc = k => { const R = S.rec[k], d = REC[k], h = card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', R.at != null); return R.at != null && REC_PF[k] ? h.replace(/<\/div>$/, `<div class="n rk" data-rk="${k}"></div></div>`) : h; };
+  const rc = k => { const R = S.rec[k], d = REC[k], h = card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', R.at != null); return R.at != null && REC_PF[k] ? h.replace(/<\/div>$/, `<div class="n rk" data-rk="${REC_PF[k][0]}"></div></div>`) : h; };
   const pace = S.holes ? (S.strokes / S.holes).toFixed(2) : '–';
   const fun = [];
   if (S.dist > 0) fun.push(`Your shots have flown <b>${km >= 1 ? (km >= 100 ? Math.round(km).toLocaleString() : km.toFixed(2)) + ' km' : Math.round(S.dist) + ' m'}</b>, ${distFun(S.dist)}`);
@@ -8497,7 +8504,7 @@ function openStats() {
     <div class="sub"><span>Fun facts</span></div><div class="stFun">${fun.map(f => `<div>${f}</div>`).join('')}</div>
     <div class="mbtns"><button class="mbtn" id="stReset">Reset stats</button><button class="mbtn dark" id="stClose">Close</button></div>`;
   $('stSub').textContent = playerName(); $('stClose').onclick = () => closeSheets();
-  loadPlayers().then(all => { const rk = recordRanks(all); document.querySelectorAll('#statsBody [data-rk]').forEach(e => { const r = rk[e.dataset.rk]; if (r && r.n >= 2) e.textContent = `#${r.rank} of ${r.n} players`; }); });
+  loadPlayers().then(all => { const mine = {}; for (const [k, [pk]] of Object.entries(REC_PF)) if (S.rec[k].at != null) mine[pk] = S.rec[k].v; showRanks($('statsBody'), recordRanks(all, playerName(), mine)); });
   $('stReset').onclick = () => { if (confirm('Reset all stats and records on this device?')) { ST = defStats(); saveStats(); openStats(); } };
   openSheet('statsSheet');
 }
@@ -9476,13 +9483,13 @@ function openPlayer(o) {
   const render = (pf, bs, rs, on) => {
     const S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
     const lv = levelOf(S.xp != null ? S.xp : (S.h || 0) * 10 + (S.r || 0) * 30);
-    const card = (k, e, v, n) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+    const card = (k, e, v, n, rk) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}${rk ? `<div class="n rk" data-rk="${rk}"></div>` : ''}</div>`;
     $('plSub').textContent = pf ? lv.name : '';
     el.innerHTML = (pf ? `<div class="stLvl"><b>${lv.name}</b><span>Level ${lv.n} of ${LEVEL_NAMES.length} · ${S.h || 0} holes · ${S.r || 0} round${S.r === 1 ? '' : 's'}</span>${lv.next ? `<div class="stBar"><i style="width:${Math.round(100 * lv.f)}%"></i></div>` : ''}</div>` : '<div class="empty">No stats published for this player yet.</div>')
       + (home && home.c ? `<div class="stRow"><span>Home course</span><span>${escH(home.c)}${home.r ? ', ' + escH(home.r) : ''}</span></div>` : '')
       + (cardHtml(o.card) || (o.card ? '<div class="lbnote" style="margin:8px 0">The scorecard of this round was not filed.</div>' : ''))
       + bestShotsHtml(rs, 'Best shots of the round', 'a')
-      + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? S.dr + ' m' : '–')}${card('Longest shot holed', 'target', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–')}${card('Longest putt holed', 'flag', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–')}${card('Greens in a row', 'dot', S.gs || 0)}${card('Fairways in a row', 'road', S.fs || 0)}</div>
+      + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? S.dr + ' m' : '–', '', 'dr')}${card('Longest shot holed', 'target', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–', '', 'ho')}${card('Longest putt holed', 'flag', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–', '', 'pt')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–', '', 'br')}${card('Greens in a row', 'dot', S.gs || 0, '', 'gs')}${card('Fairways in a row', 'road', S.fs || 0, '', 'fs')}</div>
       ${bestShotsHtml(bs, 'Player highlights', 'b')}
       <div class="sub"><span>Scoring</span></div>
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
@@ -9491,6 +9498,7 @@ function openPlayer(o) {
       + (pf ? `<div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${(S.tw || []).length}</span></div>${S.tw && S.tw.length ? trophyHtml(S.tw) : ''}` : '')
       + (on && on.length ? `<div class="sub"><span>Other usernames used in the past</span></div>${on.map(n => `<div class="stRow"><span>${String(n).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span><span></span></div>`).join('')}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '');
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
+    if (DL.players && pf) showRanks(el, recordRanks(DL.players, o.name || playerName(), S));
   };
   const clean = a => (Array.isArray(a) ? a : []).map(cleanShot).filter(Boolean);
   // the round's own best shots (carried by the row, or kept for the player's last rounds), and the player's highlights over the career
@@ -9510,6 +9518,7 @@ function openPlayer(o) {
       render(cleanPf(q.pf) || cleanPf(o.pf), clean(q.bs).length ? clean(q.bs) : clean(o.bs), roundOf(q), on);
     });
   }
+  if (o.me) loadPlayers().then(() => { if ($('playerSheet').classList.contains('on') && PL_LAST === o) render(profileCompact(), reelList().slice(0, 3), roundOf(null), settings.oldNames); });
   openSheet('playerSheet');
 }
 
