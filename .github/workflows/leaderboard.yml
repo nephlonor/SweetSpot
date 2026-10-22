@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[standings]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[standings]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -83,6 +83,21 @@ jobs:
               await exec.exec('git', ['add', ...changed]); await exec.exec('git', ['commit', '-m', `Leaderboard: a player is now ${nn}`]);
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, `Renamed: your scores are now listed as ${nn}.`);
+            }
+            if (issue.title.startsWith('[home]')) {
+              // a player's home course (asked after ten rounds, editable in the menu): kept by device hash in leaderboard/homecourses.json, newest answer wins
+              const OK = /^[\p{L}\p{N} .,'&()\/-]+$/u, cl = (v, n) => typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : '';
+              const hc = cl(r && r.course), hr = cl(r && r.region);
+              if (!hc || hc.length < 2 || hc.length > 40 || !OK.test(hc) || !hr || hr.length < 2 || hr.length > 30 || !OK.test(hr)) return finish(false, 'Invalid home course.');
+              const who = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
+              let hf = {}; try { hf = JSON.parse(fs.readFileSync('leaderboard/homecourses.json', 'utf8')); } catch (e) { }
+              const nm = typeof r.name === 'string' && /^[\p{L}\p{N} ._'-]{1,14}$/u.test(r.name.trim()) ? r.name.trim() : '';
+              hf[who] = { c: hc, r: hr, n: nm, at: Date.now() };
+              fs.writeFileSync('leaderboard/homecourses.json', JSON.stringify(hf) + '\n');
+              await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
+              await exec.exec('git', ['add', 'leaderboard/homecourses.json']); await exec.exec('git', ['commit', '-m', 'Home course noted']);
+              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              return finish(true, 'Thanks! Your home course is noted.');
             }
             const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71, pebblebeach: 72, mountainvalley: 72 };
             const int = v => Number.isInteger(v);
