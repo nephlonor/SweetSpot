@@ -3497,7 +3497,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 35 };
+const APP_ITER = { courses: 7, n: 36 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3796,7 +3796,7 @@ function syncNeon() {
   if (!W.ball || !W.ballGlow) return;
   const want = G.night && COURSE.key === 'gccb' && G.neon ? G.neon : 0, m = W.ball.material;
   if (W.neonOn === want) return; W.neonOn = want;
-  if (want) { m.color.setHex(0xffffff); m.emissive.setHex(want); m.emissiveIntensity = .9; W.ballGlow.material.color.setHex(want).multiplyScalar(1.6); }
+  if (want) { m.color.setHex(0xffffff); m.emissive.setHex(want); m.emissiveIntensity = 1.5; W.ballGlow.material.color.setHex(want).multiplyScalar(2.4); }
   else { m.emissive.setHex(0xffffff); m.emissiveIntensity = .17; }
 }
 function setNeon(c) { G.neon = c; syncNeon(); try { saveRound(); } catch (e) { } }
@@ -3819,9 +3819,9 @@ function nightTick(dt) {
   } else if (!nightOn) G.owlT = G.howlT = null;
   if (W.ballGlow) {
     W.ballGlow.visible = lit && !!W.ball.visible;
-    if (W.ballGlow.visible) { // a constant size on screen (34 px out from the ball), so it reads far away and does not swamp the ball close up
+    if (W.ballGlow.visible) { // a constant size on screen (56 px out from the ball), so it reads far away and does not swamp the ball close up
       W.ballGlow.position.copy(W.ball.position); const d = Math.max(.5, W.cam.position.distanceTo(W.ball.position));
-      W.ballGlow.scale.setScalar(2 * d * Math.tan(W.cam.fov * DEG / 2) * 34 / VH());
+      W.ballGlow.scale.setScalar(2 * d * Math.tan(W.cam.fov * DEG / 2) * 56 / VH());
     }
   }
   if (document.body.classList.contains('night') !== lit) document.body.classList.toggle('night', lit);
