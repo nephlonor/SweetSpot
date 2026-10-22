@@ -205,6 +205,7 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #featAsk.on .hcard,#homeAsk.on .hcard{transform:none}
 #neonAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(4,8,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #neonAsk.on .hcard{transform:none}
+body.night{--gl-tint:rgba(176,210,188,.40);--gl-bg:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.18))}
 .neonOpts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .neonO{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px 12px;border:1px solid rgba(22,33,28,.12);border-radius:18px;background:#fff;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .neonO i{width:46px;height:46px;border-radius:50%;background:var(--nc);box-shadow:0 0 16px var(--nc),0 0 40px var(--nc)}
@@ -3486,7 +3487,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 24 };
+const APP_ITER = { courses: 7, n: 25 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3782,7 +3783,7 @@ function nightStart() {
 }
 function setNeon(c) {
   G.neon = c; const m = W.ball.material; m.color.setHex(0xffffff); m.emissive.setHex(c); m.emissiveIntensity = .9;
-  W.ballGlow.material.color.setHex(c);
+  W.ballGlow.material.color.setHex(c).multiplyScalar(1.6);
 }
 // each frame: hold the aim on the clubhouse from the first tee to start the night, ease the lights, show the colour pop-up
 function nightTick(dt) {
@@ -3797,7 +3798,14 @@ function nightTick(dt) {
   if (G.night && onGccb && !G.neon && G.state === 'address' && !$('neonAsk').classList.contains('on')) $('neonAsk').classList.add('on');
   const lit = G.nightU > .02;
   if (W.flood) for (const o of W.flood) o.visible = lit;
-  if (W.ballGlow) { W.ballGlow.visible = lit && !!W.ball.visible; if (W.ballGlow.visible) W.ballGlow.position.copy(W.ball.position); }
+  if (W.ballGlow) {
+    W.ballGlow.visible = lit && !!W.ball.visible;
+    if (W.ballGlow.visible) { // a constant size on screen (34 px out from the ball), so it reads far away and does not swamp the ball close up
+      W.ballGlow.position.copy(W.ball.position); const d = Math.max(.5, W.cam.position.distanceTo(W.ball.position));
+      W.ballGlow.scale.setScalar(2 * d * Math.tan(W.cam.fov * DEG / 2) * 34 / VH());
+    }
+  }
+  if (document.body.classList.contains('night') !== lit) document.body.classList.toggle('night', lit);
 }
 // the sky, the light and the clouds go from day to night in step with G.nightU
 function nightDress(u) {
@@ -3806,22 +3814,31 @@ function nightDress(u) {
   W.hemi.color.lerp(NIGHT.hem, u); W.hemi.groundColor.lerp(NIGHT.gnd, u);
   W.sky.material.color.lerp(NIGHT.bg, u); W.cloudMat.color.lerp(NIGHT.cloud, u);
 }
-// floodlights: a pole, a lamp head with a glow, and a pool of light on the grass. One at the green, one at the tee, one on the fairway
-// between them; they are hidden until the night starts
+// floodlights: tall masts with a lamp head and a wide pool of light on the grass, along each hole at the tee, the fairway and the green,
+// on both sides of the line; hidden until the night starts
+let _poolTex = null;
+function poolTex() { // a wide soft disc of light: bright in the middle, gone at the edge
+  if (_poolTex) return _poolTex;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.5, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return _poolTex = new THREE.CanvasTexture(cv);
+}
 function buildFloodlights(C, grp) {
   W.flood = [];
   const pole = lambert(0x2c3138), head = new THREE.MeshBasicMaterial({ color: 0xfff1d0 }), halo = new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff1d0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-  const pool = new THREE.MeshBasicMaterial({ map: glowTex(), color: 0xffe9b8, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pool = new THREE.MeshBasicMaterial({ map: poolTex(), color: 0xffe9b8, transparent: true, opacity: .4, depthWrite: false, blending: THREE.AdditiveBlending });
+  const mast = new THREE.CylinderGeometry(.2, .32, 26, 7), lamp = new THREE.BoxGeometry(3.4, .9, 1.4), ground = new THREE.CircleGeometry(38, 32);
   const t = C.startPos, g = C.green, dx = g.cx - t.x, dz = g.cz - t.z, dl = Math.hypot(dx, dz) || 1, ux = dx / dl, uz = dz / dl;
-  const spots = [spotBeside(C, g.cx - ux * 14, g.cz - uz * 14, 11, 0), spotBeside(C, t.x + ux * 6, t.z + uz * 6, 9, 0), spotBeside(C, t.x + dx / 2, t.z + dz / 2, 16, 0)];
-  for (const sp of spots) {
+  const marks = [[t.x + ux * 8, t.z + uz * 8], [t.x + dx * .25, t.z + dz * .25], [t.x + dx * .5, t.z + dz * .5], [t.x + dx * .75, t.z + dz * .75], [g.cx - ux * 16, g.cz - uz * 16]];
+  for (const m of marks) for (const side of [12, 22]) {
+    const sp = spotBeside(C, m[0], m[1], side, 0);
     if (!sp) continue;
-    const [X, Z] = sp, grpL = new THREE.Group();
-    const p = new THREE.Mesh(new THREE.CylinderGeometry(.16, .24, 15, 7), pole); p.position.y = 7.5; grpL.add(p);
-    const hd = new THREE.Mesh(unitBox, head); hd.scale.set(2.6, .7, .9); hd.position.y = 15.2; grpL.add(hd);
-    const hs = new THREE.Sprite(halo); hs.scale.setScalar(9); hs.position.y = 15.2; grpL.add(hs);
-    const pl = new THREE.Mesh(new THREE.CircleGeometry(15, 28), pool); pl.rotation.x = -Math.PI / 2; pl.position.y = .25; grpL.add(pl);
-    grpL.position.set(X, C.h(X, Z), Z); grpL.visible = false; grp.add(grpL); W.flood.push(grpL);
+    const [X, Z] = sp, L = new THREE.Group();
+    const p = new THREE.Mesh(mast, pole); p.position.y = 13; L.add(p);
+    const hd = new THREE.Mesh(lamp, head); hd.position.y = 26.2; L.add(hd);
+    const hs = new THREE.Sprite(halo); hs.scale.setScalar(16); hs.position.y = 26.2; L.add(hs);
+    const pl = new THREE.Mesh(ground, pool); pl.rotation.x = -Math.PI / 2; pl.position.y = .25; L.add(pl);
+    L.position.set(X, C.h(X, Z), Z); L.visible = false; grp.add(L); W.flood.push(L);
   }
 }
 // "Enjoy the rainbow": the camera climbs above the treetops to the rainbow, stays for three seconds and glides back
@@ -7217,7 +7234,8 @@ function updateFlight(dt) {
     else if (e.type === 'hop') readoutNote('Too hot · hopped the cup', 'ok');
     else if (e.type === 'cup') { SFX.cup(); buzz([20, 40, 20]); }
   }
-  if (!sh.L.putt) {
+  if (!sh.L.putt && G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); }
+  else if (!sh.L.putt) {
     const pa = W.tracer.geometry.attributes.position.array, cam = W.cam.position; let n = 0;
     for (let k = 0; k < r.n && fr[k * 5] <= tt && n < W.tracerMax; k += 2) {
       if (fr[k * 5 + 4] !== 0 && k > 0) break;
@@ -7231,6 +7249,25 @@ function updateFlight(dt) {
   // finish exactly once (the old build re-entered here every frame after holing out)
   if (!sh.finished && G.playT >= tEnd + .7) { sh.finished = true; finishShot(); }
   else if (sh.replay && !sh.over && G.playT >= tEnd + .7) { sh.over = true; endReplay(); }
+}
+// at night the flight leaves small glowing particles: they peel off the ball, drift a little and fade out over about a second and a half
+const TRAIL_T = 1.5, TRAIL_MAX = 240;
+function trailFill(fr, rn, tt) {
+  if (!W.trail) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * 3), 3));
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * 3), 3));
+    W.trail = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex(), vertexColors: true, size: 6, sizeAttenuation: false, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    W.trail.frustumCulled = false; W.trail.visible = false; W.scene.add(W.trail);
+  }
+  let last = 0; while (last < rn - 1 && fr[(last + 1) * 5] <= tt) last++;
+  const pa = W.trail.geometry.attributes.position.array, ca = W.trail.geometry.attributes.color.array, c = new THREE.Color(G.neon || 0xffffff); let n = 0;
+  for (let k = last; k >= 0 && n < TRAIL_MAX && fr[k * 5] >= tt - TRAIL_T; k--) {
+    const age = tt - fr[k * 5], b = Math.exp(-age * 2.4), j = k * 12.9898, jit = .03 + .12 * age, o = n * 3;
+    pa[o] = fr[k * 5 + 1] + Math.sin(j) * jit; pa[o + 1] = fr[k * 5 + 2] + VIS_R + Math.cos(j * 1.3) * jit; pa[o + 2] = fr[k * 5 + 3] + Math.sin(j * 2.1) * jit;
+    ca[o] = c.r * b; ca[o + 1] = c.g * b; ca[o + 2] = c.b * b; n++;
+  }
+  W.trail.geometry.attributes.position.needsUpdate = true; W.trail.geometry.attributes.color.needsUpdate = true; W.trail.geometry.setDrawRange(0, n);
 }
 // menu: watch the last shot again from where it was struck; nothing in the round changes (no stroke, no stats, the ball ends where it lies)
 function replayLast() {
@@ -9829,6 +9866,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
+  if (W.trail) W.trail.visible = W.tracer.visible && G.nightU > .5;
   swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') { mpSpecCam(dt); if (MP.clip) clipTick(); } else updateCamera(dt); nightTick(dt); updateWeatherVisuals(dt); gustTick(dt, now / 1000); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
     const ext = G.state === 'intro' ? 300 : 75, sc = W.sun.shadow.camera;
