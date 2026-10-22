@@ -290,6 +290,10 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .mtitle{display:flex;flex-direction:column;min-width:0}
 .mtitle span{font:700 30px/1.05 var(--cond);text-transform:uppercase;letter-spacing:.02em}
 .mtitle small{font:600 12px var(--cond);letter-spacing:.14em;text-transform:uppercase;opacity:.78;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frTabs{display:flex;gap:3px;background:rgba(255,255,255,.14);padding:3px;border-radius:12px;margin-bottom:10px}.frTabs button{flex:1;height:36px;border-radius:10px;font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.8)}.frTabs button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none}
+.frC{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);border-radius:16px;padding:10px 10px 10px 14px;margin-bottom:8px}.frC>div{flex:1;min-width:0}.frC b{display:block;font:700 16px/1.2 var(--cond);letter-spacing:.02em}.frC p{margin:3px 0 0;font:500 13px/1.35 var(--sans,system-ui);opacity:.85;overflow-wrap:anywhere}.frC small{display:block;margin-top:4px;font:600 11px var(--cond);letter-spacing:.1em;text-transform:uppercase;opacity:.65}
+.frV{display:flex;flex-direction:column;gap:4px;align-items:stretch}.frV button{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.14);font:700 14px var(--cond);color:#fff;min-width:62px}.frV button .ic{width:16px;height:16px}.frV button.on{background:rgba(255,255,255,.92);color:#16211c}
+#frForm input,#frForm textarea{display:block;width:100%;box-sizing:border-box;border:0;outline:0;border-radius:14px;padding:10px 14px;margin-bottom:6px;font:600 16px var(--cond);color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);resize:none}#frForm textarea{font-weight:500;font-size:14px}#frForm .mbtn{width:100%;margin-top:2px}#frForm ::placeholder{color:rgba(255,255,255,.55)}
 .mpg{display:none}.mpg.on{display:block;animation:pgIn .3s var(--ease)}
 @keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .dlCard{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px 12px 12px;border-radius:22px;text-align:left;color:#fff;text-shadow:var(--tsh);margin-bottom:10px;
@@ -601,6 +605,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
       <button class="mli" data-go="gfx"><i class="ic" data-ic="chart"></i><span>Graphics<small id="mvGfx"></small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="live"><i class="ic" data-ic="users"></i><span>Live play<small id="mvLive"></small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="practice"><i class="ic" data-ic="target"></i><span>Practice<small>Any hole, nothing scored</small></span><i class="ic chev" data-ic="chev"></i></button>
+      <button class="mli" data-go="feature"><i class="ic" data-ic="bulb"></i><span>Request a feature<small>Vote on ideas, send your own</small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" id="mHelp"><i class="ic" data-ic="help"></i><span>How to swing<small>Tempo, strike, aim</small></span><i class="ic chev" data-ic="chev"></i></button>
     </div>
     <button class="mbtn dark wide mnew" id="mRound">Start a new round</button>
@@ -630,6 +635,12 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="sub"><span>Private room</span></div>
     <div class="mgrp"><div class="mrow mpRow">Room code<div class="mpRoom"><input id="mpCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code" enterkeyhint="go"><button class="mpb" id="mpJoin">Join</button></div></div></div>
     <div class="mpInfo" id="mpInfo">Play live with friends: everyone in the same room sees the others' balls fly on the same hole, and the scores.<div class="mpBtns"><button class="mpb" id="mpNew">New room</button><button class="mpb" id="mpShare">Share link</button></div></div>
+  </section>
+  <section class="mpg" data-pg="feature">
+    <div class="frTabs"><button class="sel" data-t="open">Requests</button><button data-t="done">Archive</button></div>
+    <div id="frList"></div>
+    <div class="mgrp" id="frForm"><input id="frT" maxlength="60" autocomplete="off" placeholder="What should the game do?" enterkeyhint="next"><textarea id="frD" maxlength="300" rows="3" placeholder="Details (optional)"></textarea><button class="mbtn dark wide" id="frSend">Send request</button></div>
+    <div class="mnote" id="frNote">Anyone can vote. Requests that are built move to the archive.</div>
   </section>
   <section class="mpg" data-pg="practice">
     <div class="sub"><span id="pracHint">Practice</span></div><div class="pracHoles" id="pracHoles"></div>
@@ -1339,7 +1350,7 @@ const HOLE_BASE = [
     ob: () => false, obLines: [],
     treeLines: [{ pts: [[-62, 20], [-80, 90]], gap: 10, jit: 6 }, { pts: [[62, 20], [84, 90]], gap: 10, jit: 6 }],
     treeClusters: [{ x: -4, f: 232, r: 44, n: 28 }, { x: -64, f: 170, r: 22, n: 10 }, { x: 60, f: 176, r: 22, n: 10 }, { x: -30, f: -22, r: 16, n: 7 }, { x: 30, f: -22, r: 16, n: 6 }],
-    azaleas: [{ x: -4, f: 200, r: 34, n: 34 }, { x: -52, f: 148, r: 20, n: 14 }, { x: 50, f: 158, r: 18, n: 14 }, { x: -24, f: 30, r: 18, n: 10 }],
+    azaleas: [{ x: -4, f: 200, r: 34, n: 34 }, { x: -52, f: 148, r: 20, n: 15 }, { x: 50, f: 158, r: 18, n: 14 }, { x: -24, f: 30, r: 18, n: 10 }],
     // a broad oak overhangs the right of the green above the pond; towering pines frame the back left
     landmarks: [{ x: 22, f: 157, kind: 'oak', h: 16, r: 7 }, { x: -40, f: 197, kind: 'pine', h: 25, r: 5 }, { x: -27, f: 214, kind: 'pine', h: 27, r: 5.5 }, { x: 34, f: 214, kind: 'pine', h: 24, r: 5 }],
     // amphitheatre: tee hill, flanking hills on both sides, bowl around the green
@@ -8960,6 +8971,9 @@ const ICONS = {
   road: '<svg viewBox="0 0 24 24"><path d="M9 4L6 20M15 4l3 16M12 6v2M12 11v2M12 16v2"/></svg>', feather: '<svg viewBox="0 0 24 24"><path d="M20 4c-8 0-13 5-13 12l-3 4M20 4c0 8-5 13-12 13M9 15l6-6"/></svg>',
   sparkle: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16v4M17 18h4"/></svg>', crown: '<svg viewBox="0 0 24 24"><path d="M4 18h16l1-10-5 4-4-7-4 7-5-4z"/></svg>',
   film: '<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 5v14M16 5v14M4 9h4M4 15h4M16 9h4M16 15h4"/></svg>', star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>',
+  up: '<svg viewBox="0 0 24 24"><path d="M7 11v9H4v-9h3zM7 11l4-8c1.7 0 2.6 1.2 2.2 3L12.7 9H19a2 2 0 0 1 2 2.4l-1.3 6.8A2 2 0 0 1 17.7 20H7"/></svg>',
+  down: '<svg viewBox="0 0 24 24"><path d="M7 13V4H4v9h3zM7 13l4 8c1.7 0 2.6-1.2 2.2-3l-.5-3H19a2 2 0 0 0 2-2.4l-1.3-6.8A2 2 0 0 0 17.7 4H7"/></svg>',
   help: '<svg viewBox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.8.5-1.1 1-1.1 1.8M12 17h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>'
 };
 // the second time the app is opened (not the first): how to put it on the home screen. Once only, and never when it already runs as an installed app.
@@ -9003,12 +9017,55 @@ function openInstall() {
   $('installOk').onclick = () => closeSheets(); openSheet('installSheet');
 }
 function initIcons() { document.querySelectorAll('.ic[data-ic]').forEach(e => { e.innerHTML = ICONS[e.dataset.ic] || ''; }); }
-const MENU_PAGES = { player: 'Player & golfer', audio: 'Sound & music', gfx: 'Graphics', live: 'Live play', practice: 'Practice' };
+// feature requests: leaderboard/features.json, kept by the leaderboard workflow from [feature] and [vote] issues; the maintainer marks one done (s: 'done'), and it moves to the archive tab
+const FR = { list: null, at: 0, tab: 'open', pend: {}, sent: [], me: '' };
+try { crypto.subtle.digest('SHA-1', new TextEncoder().encode(deviceId().toLowerCase())).then(b => { FR.me = [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('').slice(0, 8); }).catch(() => { }); } catch (e) { }
+const frEsc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+async function loadFeatures(force) {
+  if (!force && FR.list && Date.now() - FR.at < 60000) return FR.list; FR.at = Date.now();
+  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/features.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); const j = r.ok ? await r.json() : null; if (Array.isArray(j)) FR.list = j; } catch (e) { }
+  return FR.list || [];
+}
+function frMine(f) { const p = FR.pend[f.id], s = (f.v || {})[FR.me] || 0; if (p != null && p === s) delete FR.pend[f.id]; return FR.pend[f.id] != null ? FR.pend[f.id] : s; }
+function frCount(f) { let u = 0, d = 0; for (const [k, x] of Object.entries(f.v || {})) if (k !== FR.me) { if (x > 0) u++; else if (x < 0) d++; } const m = frMine(f); if (m > 0) u++; else if (m < 0) d++; return [u, d, m]; }
+function frRender() {
+  const el = $('frList'); if (!el) return; const done = FR.tab === 'done';
+  document.querySelectorAll('#menuSheet .frTabs button').forEach(b => b.classList.toggle('sel', b.dataset.t === FR.tab));
+  $('frForm').style.display = done ? 'none' : '';
+  const all = (FR.list || []).filter(f => f && typeof f.t === 'string' && (f.s === 'done') === done);
+  const dt = a => new Date(a).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  if (done) { all.sort((a, b) => (b.done || 0) - (a.done || 0)); el.innerHTML = all.length ? all.map(f => `<div class="frC"><div><b>${frEsc(f.t)}</b>${f.d ? `<p>${frEsc(f.d)}</p>` : ''}<small>Done${f.done ? ' · ' + dt(f.done) : ''}${f.n ? ' · asked by ' + frEsc(f.n) : ''} · ${frCount(f)[0]} up</small></div></div>`).join('') : '<div class="mnote">Nothing built from a request yet.</div>'; return; }
+  const rows = all.map(f => ({ f, c: frCount(f) })).sort((a, b) => (b.c[0] - b.c[1]) - (a.c[0] - a.c[1]) || b.f.at - a.f.at);
+  const titles = new Set(all.map(f => f.t.toLowerCase()));
+  FR.sent = FR.sent.filter(q => Date.now() - q.at < 900000 && !titles.has(q.t.toLowerCase()));
+  el.innerHTML = (rows.length || FR.sent.length ? '' : '<div class="mnote">No open requests. Be the first.</div>')
+    + FR.sent.map(q => `<div class="frC"><div><b>${frEsc(q.t)}</b>${q.d ? `<p>${frEsc(q.d)}</p>` : ''}<small>Sending · appears in a minute or two</small></div></div>`).join('')
+    + rows.map(({ f, c }) => `<div class="frC"><div><b>${frEsc(f.t)}</b>${f.d ? `<p>${frEsc(f.d)}</p>` : ''}<small>${f.n ? frEsc(f.n) + ' · ' : ''}${dt(f.at)}</small></div><div class="frV"><button data-id="${+f.id}" data-v="1" class="${c[2] > 0 ? 'on' : ''}" aria-label="Thumbs up"><i class="ic">${ICONS.up}</i>${c[0]}</button><button data-id="${+f.id}" data-v="-1" class="${c[2] < 0 ? 'on' : ''}" aria-label="Thumbs down"><i class="ic">${ICONS.down}</i>${c[1]}</button></div></div>`).join('');
+}
+function frOpen() { frRender(); loadFeatures().then(frRender); }
+async function frPost(title, payload) {
+  const k = ghKey(); if (!k) { $('frNote').textContent = 'Posting is not available on this device right now.'; return false; }
+  try { const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ title, body: 'From Sweet Spot Golf.\n\n```json\n' + JSON.stringify(Object.assign({ v: 1, dev: deviceId() }, payload)) + '\n```\n' }) }); return res.ok; } catch (e) { return false; }
+}
+function frVote(id, v) {
+  const f = (FR.list || []).find(x => x.id === id); if (!f) return;
+  const nv = frMine(f) === v ? 0 : v; FR.pend[id] = nv; frRender();
+  frPost('[vote] ' + id, { id, vote: nv }).then(ok => { if (!ok) { delete FR.pend[id]; frRender(); $('frNote').textContent = 'The vote did not go through. Try again.'; } else setTimeout(() => { loadFeatures(true).then(frRender); }, 40000); });
+}
+async function frSend() {
+  const t = String($('frT').value).replace(/\s+/g, ' ').trim().slice(0, 60), d = String($('frD').value).replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (t.length < 4) { $('frNote').textContent = 'Give the request a short title first.'; return; }
+  $('frSend').disabled = true; const ok = await frPost('[feature] ' + t, { title: t, text: d, name: cleanName(settings.name) }); $('frSend').disabled = false;
+  if (!ok) { if (ghKey()) $('frNote').textContent = 'The request did not go through. Try again.'; return; }
+  FR.sent.push({ t, d, at: Date.now() }); $('frT').value = ''; $('frD').value = ''; $('frNote').textContent = 'Thanks! Your request is on its way.'; frRender();
+  setTimeout(() => loadFeatures(true).then(frRender), 30000); setTimeout(() => loadFeatures(true).then(frRender), 75000);
+}
+const MENU_PAGES = { player: 'Player & golfer', audio: 'Sound & music', gfx: 'Graphics', live: 'Live play', practice: 'Practice', feature: 'Feature requests' };
 function menuPage(n) {
   n = MENU_PAGES[n] ? n : 'home';
   document.querySelectorAll('#menuSheet .mpg').forEach(x => x.classList.toggle('on', x.dataset.pg === n));
   $('mBack').style.display = n === 'home' ? 'none' : ''; $('mTitle').textContent = n === 'home' ? 'Menu' : MENU_PAGES[n];
-  $('menuSheet').scrollTop = 0; if (n === 'live') { MP.listSig = ''; mpList(); } syncMenu();
+  $('menuSheet').scrollTop = 0; if (n === 'live') { MP.listSig = ''; mpList(); } if (n === 'feature') frOpen(); syncMenu();
 }
 // the menu button: in practice it opens the hole picker first; a second tap while the picker is showing goes to the main menu
 // the menu button on the start screen: only once a name has been entered
@@ -9597,6 +9654,9 @@ function initInput() {
   $('mReplay').onclick = () => openReel();
   $('mStats').onclick = () => openStats();
   $('mHelp').onclick = () => openSheet('helpSheet');
+  document.querySelectorAll('#menuSheet .frTabs button').forEach(b => b.onclick = () => { FR.tab = b.dataset.t; frRender(); });
+  $('frList').onclick = e => { const b = e.target.closest && e.target.closest('button[data-id]'); if (b) frVote(+b.dataset.id, +b.dataset.v); };
+  $('frSend').onclick = frSend;
   $('mRound').onclick = () => { closeSheets(); startRound(); };
   $('mBack').onclick = () => menuPage('home');
   document.querySelectorAll('#menuSheet .mli[data-go]').forEach(b => b.onclick = () => menuPage(b.dataset.go));
