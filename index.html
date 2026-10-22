@@ -1350,7 +1350,7 @@ const HOLE_BASE = [
     ob: () => false, obLines: [],
     treeLines: [{ pts: [[-62, 20], [-80, 90]], gap: 10, jit: 6 }, { pts: [[62, 20], [84, 90]], gap: 10, jit: 6 }],
     treeClusters: [{ x: -4, f: 232, r: 44, n: 28 }, { x: -64, f: 170, r: 22, n: 10 }, { x: 60, f: 176, r: 22, n: 10 }, { x: -30, f: -22, r: 16, n: 7 }, { x: 30, f: -22, r: 16, n: 6 }],
-    azaleas: [{ x: -4, f: 200, r: 34, n: 34 }, { x: -52, f: 148, r: 20, n: 16 }, { x: 50, f: 158, r: 18, n: 14 }, { x: -24, f: 30, r: 18, n: 10 }],
+    azaleas: [{ x: -4, f: 200, r: 34, n: 34 }, { x: -52, f: 148, r: 20, n: 15 }, { x: 50, f: 158, r: 18, n: 14 }, { x: -24, f: 30, r: 18, n: 10 }],
     // a broad oak overhangs the right of the green above the pond; towering pines frame the back left
     landmarks: [{ x: 22, f: 157, kind: 'oak', h: 16, r: 7 }, { x: -40, f: 197, kind: 'pine', h: 25, r: 5 }, { x: -27, f: 214, kind: 'pine', h: 27, r: 5.5 }, { x: 34, f: 214, kind: 'pine', h: 24, r: 5 }],
     // amphitheatre: tee hill, flanking hills on both sides, bowl around the green
@@ -3473,7 +3473,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 14 };
+const APP_ITER = { courses: 7, n: 16 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
