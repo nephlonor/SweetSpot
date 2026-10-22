@@ -3498,7 +3498,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 39 };
+const APP_ITER = { courses: 7, n: 40 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -6797,11 +6797,11 @@ const HW_SECS = [
   { k: -2, t: 'A', o: ['inv'], l: ['bell'], a: ['arp'], d: [.6, .7], w: .1 },
   { k: 2, t: 'B', o: ['harm'], l: ['choir'], a: ['pad', 'waltz'], d: [.8, .9], w: .08 },
   { k: 0, t: '', o: [], l: [], a: ['pulse'], d: [.5, .6], w: .3, x: 'storm' },
-  { k: 0, t: 'A', o: ['oct-'], l: ['organ', 'choir'], a: ['waltz'], d: [.9, 1], w: .06 },
-  { k: 3, t: 'B', o: [], l: ['choir', 'cello'], a: ['arp', 'pad'], d: [.9, 1], w: .08 },
+  { k: 0, t: 'A', o: ['oct-'], l: ['organ', 'choir'], a: ['waltz'], d: [.8, .88], w: .06 },
+  { k: 3, t: 'B', o: [], l: ['choir', 'cello'], a: ['arp', 'pad'], d: [.8, .88], w: .08 },
   { k: -5, t: 'B', o: ['harm'], l: ['bell', 'cello'], a: ['waltz'], d: [.8, .9], w: .08 },
   { k: 5, t: 'A', o: [], o2: ['oct+'], l: ['ther'], a: ['waltz'], d: [.85, .9], w: .1 },
-  { k: 8, t: 'A', o: ['slow', 'harm'], l: ['choir', 'organ'], a: ['pad'], d: [.95, 1], w: .06 },
+  { k: 8, t: 'A', o: ['slow', 'harm'], l: ['choir', 'organ'], a: ['pad'], d: [.85, .92], w: .06 },
   { k: 0, t: 'B', o: ['canon'], l: ['box', 'bell'], a: ['waltz'], d: [.8, .85], w: .08 },
   { k: -5, t: 'A', o: [], l: ['cello'], a: ['pulse'], d: [.65, .7], w: .12 },
   { k: 0, t: 'A', o: ['frag'], l: ['box'], a: ['drone'], d: [.45, .5], w: .14 },
