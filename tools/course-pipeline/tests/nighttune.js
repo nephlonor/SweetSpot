@@ -12,7 +12,7 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   for (const [name, sec0] of [['intro', 0], ['climax', 16]]) {
     console.log(name, await p.evaluate(async ([s0]) => {
       const secLen = 96 * HW_PER, dur = secLen * 2, a = new OfflineAudioContext(2, Math.ceil(44100 * dur), 44100);
-      hwSetup(a); for (let st = s0 * 96; st < s0 * 96 + 192; st++) hwStep(a, st, (st - s0 * 96) * HW_PER);
+      hwSetup(a); MUS.ac = null; for (let st = s0 * 96; st < s0 * 96 + 192; st++) hwStep(a, st, (st - s0 * 96) * HW_PER);
       const buf = await a.startRendering(), d = buf.getChannelData(0), out = [];
       for (let w = 0; w + 441000 <= d.length; w += 441000) { let pk = 0, sq = 0; for (let i = w; i < w + 441000; i++) { const x = Math.abs(d[i]); if (x > pk) pk = x; sq += x * x; } out.push({ peak: +pk.toFixed(2), rms: +Math.sqrt(sq / 441000).toFixed(3) }); }
       return out;
