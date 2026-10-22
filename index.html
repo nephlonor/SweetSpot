@@ -388,9 +388,9 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .stCard .k{font:600 11px/1.15 var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding-right:26px}
 .stCard.rec .k{color:rgba(43,18,0,.6)}
 .stCard .v{font:700 28px/1.1 var(--cond);color:var(--ink);font-variant-numeric:tabular-nums;margin-top:3px}
-.stCard .n.rk{font-weight:700;color:var(--g1);margin-top:3px}
-.stCard .n.rk.m1,.stCard .n.rk.m2,.stCard .n.rk.m3{display:inline-block;padding:1px 8px;border-radius:999px;color:#2a1c00;text-shadow:none}
-.stCard .n.rk.m1{background:linear-gradient(135deg,#ffe27a,#e9b52e)}.stCard .n.rk.m2{background:linear-gradient(135deg,#f1f3f5,#aab2ba)}.stCard .n.rk.m3{background:linear-gradient(135deg,#e8a56b,#b8723a);color:#2a1300}
+.stCard .n.rk{font-weight:700;margin-top:3px}
+.stCard.m1{background:linear-gradient(135deg,#ffe58a,#e9b52e)}.stCard.m2{background:linear-gradient(135deg,#f4f6f8,#aab2ba)}.stCard.m3{background:linear-gradient(135deg,#eeb07a,#b8723a)}
+.stCard.m1 .v,.stCard.m1 .n,.stCard.m1 .em,.stCard.m2 .v,.stCard.m2 .n,.stCard.m2 .em,.stCard.m3 .v,.stCard.m3 .n,.stCard.m3 .em{color:#2a1a00;text-shadow:none}.stCard.m1 .k,.stCard.m2 .k,.stCard.m3 .k{color:rgba(30,18,0,.62);text-shadow:none}
 .stCard .n{font:500 12px/1.25 var(--body);color:var(--ink2);margin-top:2px}
 .stFun{display:flex;flex-direction:column;gap:6px}.stFun div{background:var(--soft);border-radius:14px;padding:9px 12px;font:500 14px/1.35 var(--body);color:var(--ink2)}.stFun b{color:var(--ink);font-weight:700}
 .stRow{display:flex;justify-content:space-between;align-items:center;font:600 15px var(--cond);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--hair)}.stRow span:first-child{color:var(--ink3);letter-spacing:.08em;font-size:12px}
@@ -3477,7 +3477,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 21 };
+const APP_ITER = { courses: 7, n: 22 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8476,13 +8476,13 @@ function recordRanks(all, name, mine) {
 }
 // writes "#2 of 3 players" into the [data-rk] lines under a root, tinted gold, silver or bronze for the top three
 function showRanks(root, rk) {
-  root.querySelectorAll('[data-rk]').forEach(e => { const r = rk[e.dataset.rk]; if (!r || r.n < 2) return; e.textContent = `#${r.rank} of ${r.n} players`; e.classList.toggle('m1', r.rank === 1); e.classList.toggle('m2', r.rank === 2); e.classList.toggle('m3', r.rank === 3); });
+  root.querySelectorAll('[data-rk]').forEach(e => { const r = rk[e.dataset.rk]; if (!r || r.n < 2) return; e.textContent = `#${r.rank} of ${r.n} players`; const c = e.closest('.stCard'); if (c) [1, 2, 3].forEach(m => c.classList.toggle('m' + m, r.rank === m)); });
 }
 function openStats() {
   const S = ST, el = $('statsBody'), pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–', km = S.dist / 1000;
   const lv = levelOf(S.xp);
   const card = (k, e, v, n, rec) => `<div class="stCard${rec ? ' rec' : ''}"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
-  const rc = k => { const R = S.rec[k], d = REC[k], h = card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', R.at != null); return R.at != null && REC_PF[k] ? h.replace(/<\/div>$/, `<div class="n rk" data-rk="${REC_PF[k][0]}"></div></div>`) : h; };
+  const rc = k => { const R = S.rec[k], d = REC[k], h = card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', false); return R.at != null && REC_PF[k] ? h.replace(/<\/div>$/, `<div class="n rk" data-rk="${REC_PF[k][0]}"></div></div>`) : h; };
   const pace = S.holes ? (S.strokes / S.holes).toFixed(2) : '–';
   const fun = [];
   if (S.dist > 0) fun.push(`Your shots have flown <b>${km >= 1 ? (km >= 100 ? Math.round(km).toLocaleString() : km.toFixed(2)) + ' km' : Math.round(S.dist) + ' m'}</b>, ${distFun(S.dist)}`);
