@@ -205,6 +205,9 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #featAsk.on .hcard,#homeAsk.on .hcard{transform:none}
 #neonAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(4,8,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #neonAsk.on .hcard{transform:none}
+#spider{position:fixed;left:0;top:0;width:54px;height:54px;z-index:12;pointer-events:none;opacity:0;filter:drop-shadow(0 0 3px rgba(255,255,255,.75)) drop-shadow(0 0 9px rgba(255,255,255,.25))}#spider.on{opacity:1}
+#spider path{fill:none;stroke:#0b0c0e;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}#spider ellipse{fill:#0b0c0e;stroke:rgba(255,255,255,.4);stroke-width:.7}#spider .eye{fill:#ff3b3b}
+#spider g{transform-origin:24px 24px}#spider .lgA{animation:spLeg .26s ease-in-out infinite}#spider .lgB{animation:spLeg .26s ease-in-out -.13s infinite}@keyframes spLeg{0%,100%{transform:rotate(-13deg)}50%{transform:rotate(13deg)}}
 body.night{--gl-tint:rgba(5,6,8,.80);--gl-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0));--gl-line:rgba(255,255,255,.16)}
 body.night .btn,body.night .btn.alt{background:linear-gradient(180deg,#1b1d20,#050607);color:#fff;border:1px solid rgba(255,255,255,.2);box-shadow:0 10px 24px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14)}
 body.night .btn.alt small{color:rgba(255,255,255,.7)}
@@ -3162,7 +3165,6 @@ function buildRealDecor(C, grp) {
   def.props = props; buildProps(C, grp);
   if (COURSE.key === 'gccb' && C.idx + 1 === 6) { const p = spotBeside(C, C.startPos.x, C.startPos.z, 14, 6); if (p) weatherStation(C, grp, p[0], p[1]); }
   realBuildingMeshes(C, grp);
-  if (COURSE.key === 'gccb') buildFloodlights(C, grp);
   realRanges(C, grp);
   // grass tufts in the deep rough
   let tuftG = new THREE.ConeGeometry(.2, .5, 6); tuftG.translate(0, .2, 0);
@@ -3763,7 +3765,7 @@ function updateWeatherVisuals(dt) {
 // Started only one way: on the first tee of an ordinary round, before the first stroke, turn the aim to the clubhouse and hold it
 // there for about a second. The floodlights come on, the sky goes dark and a pop-up asks for the neon colour of the ball.
 const NEON = [{ c: 0xff2fa0, n: 'Pink' }, { c: 0x6dff2e, n: 'Lime' }, { c: 0x2ef2ff, n: 'Cyan' }, { c: 0xffb020, n: 'Amber' }];
-const NIGHT = { bg: new THREE.Color(0x060b18), hem: new THREE.Color(0x2b3d6e), gnd: new THREE.Color(0x0b1020), cloud: new THREE.Color(0x141b2e) };
+const NIGHT = { bg: new THREE.Color(0x060b18), hem: new THREE.Color(0x5d78b8), gnd: new THREE.Color(0x1a2640), cloud: new THREE.Color(0x141b2e) };
 const NIGHT_LOOK = .9; // seconds the aim has to stay on the clubhouse
 let _glowTex = null;
 function glowTex() { // a soft white dot, tinted by the material that uses it
@@ -3808,8 +3810,12 @@ function nightTick(dt) {
   const want = G.night && onGccb ? 1 : 0;
   G.nightU = (G.nightU || 0) + (want - (G.nightU || 0)) * (1 - Math.exp(-dt / 1.6));
   if (G.night && onGccb && !G.neon && G.state === 'address' && !$('neonAsk').classList.contains('on')) $('neonAsk').classList.add('on');
-  const lit = G.nightU > .02;
-  if (W.flood) for (const o of W.flood) o.visible = lit;
+  const lit = G.nightU > .02, nightOn = G.nightU > .5 && onGccb;
+  batTick(dt, nightOn);
+  if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl and the spider come and go on their own)
+    G.owlT = (G.owlT == null ? 5 + Math.random() * 6 : G.owlT) - dt; if (G.owlT <= 0) { owlHoot(); G.owlT = 14 + Math.random() * 20; }
+    G.spiderT = (G.spiderT == null ? 7 + Math.random() * 8 : G.spiderT) - dt; if (G.spiderT <= 0) { spiderCrawl(); G.spiderT = 35 + Math.random() * 50; }
+  } else if (!nightOn) { G.owlT = G.spiderT = null; }
   if (W.ballGlow) {
     W.ballGlow.visible = lit && !!W.ball.visible;
     if (W.ballGlow.visible) { // a constant size on screen (34 px out from the ball), so it reads far away and does not swamp the ball close up
@@ -3823,62 +3829,89 @@ function nightTick(dt) {
 // the sky, the light and the clouds go from day to night in step with G.nightU
 function nightDress(u) {
   W.scene.background.lerp(NIGHT.bg, u); W.scene.fog.color.lerp(NIGHT.bg, u);
-  W.sun.intensity *= 1 - u; W.hemi.intensity = W.hemi.intensity * (1 - u) + .95 * u;
+  W.sun.intensity *= 1 - u; W.hemi.intensity = W.hemi.intensity * (1 - u) + 1.35 * u;
   W.hemi.color.lerp(NIGHT.hem, u); W.hemi.groundColor.lerp(NIGHT.gnd, u);
   W.sky.material.color.lerp(NIGHT.bg, u); W.cloudMat.color.lerp(NIGHT.cloud, u);
 }
-// floodlights: tall masts with a lamp head and a wide pool of light on the grass, along each hole at the tee, the fairway and the green,
-// on both sides of the line; hidden until the night starts
-let _poolTex = null;
-function poolTex() { // a wide soft disc of light: bright in the middle, gone at the edge
-  if (_poolTex) return _poolTex;
-  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.5, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-  x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return _poolTex = new THREE.CanvasTexture(cv);
-}
-// a disc of light that follows the ground: rings of vertices lifted to the terrain, so it is never buried on a slope
-function lightDisc(C, cx, cz, r, mat) {
-  const R = 7, S = 32, pos = [cx, C.h(cx, cz) + .2, cz], uv = [.5, .5], idx = [];
-  for (let i = 1; i <= R; i++) for (let j = 0; j < S; j++) {
-    const a = j / S * TAU, x = cx + Math.cos(a) * r * i / R, z = cz + Math.sin(a) * r * i / R;
-    pos.push(x, C.h(x, z) + .2, z); uv.push(.5 + .5 * Math.cos(a) * i / R, .5 + .5 * Math.sin(a) * i / R);
+// bats: a few black silhouettes that flap and swerve over the course after dark, round a point ahead of the camera
+const BAT_N = 7;
+function batInit() {
+  const mat = new THREE.MeshBasicMaterial({ color: 0x050608, side: THREE.DoubleSide, fog: false });
+  const P = [[0, 0, .15], [.45, .02, .28], [.85, 0, .05], [.55, -.01, -.18], [.3, -.02, -.2], [0, 0, -.18]], pos = [];
+  for (let k = 1; k < 5; k++) pos.push(...P[0], ...P[k], ...P[k + 1]);
+  const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  const bg = new THREE.SphereGeometry(.12, 7, 5); bg.scale(1, .8, 1.9);
+  W.bats = [];
+  for (let n = 0; n < BAT_N; n++) {
+    const g = new THREE.Group(), wr = new THREE.Mesh(wg, mat), wl = new THREE.Mesh(wg, mat); wl.scale.x = -1;
+    g.add(new THREE.Mesh(bg, mat), wr, wl); g.scale.setScalar(3); g.rotation.order = 'YXZ'; g.visible = false; W.scene.add(g);
+    W.bats.push({ g, wr, wl, sx: .35 + Math.random() * .4, sy: .5 + Math.random() * .6, sz: .3 + Math.random() * .4, rx: 12 + Math.random() * 10, ry: 2.5 + Math.random() * 3, rz: 6 + Math.random() * 6, p1: Math.random() * TAU, p2: Math.random() * TAU, p3: Math.random() * TAU, p4: Math.random() * TAU });
   }
-  for (let j = 0; j < S; j++) idx.push(0, 1 + j, 1 + (j + 1) % S);
-  for (let i = 1; i < R; i++) for (let j = 0; j < S; j++) { const a = 1 + (i - 1) * S, b = 1 + i * S, j1 = (j + 1) % S; idx.push(a + j, b + j, b + j1, a + j, b + j1, a + j1); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
-  const m = new THREE.Mesh(g, mat); m.visible = false; m.frustumCulled = false; m.renderOrder = 2; return m;
 }
-function buildFloodlights(C, grp) {
-  W.flood = [];
-  const pole = lambert(0x2c3138), head = new THREE.MeshBasicMaterial({ color: 0xfff1d0 }), halo = new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff1d0, depthWrite: false, transparent: true, opacity: .9, fog: false });
-  // (the light is blended over the ground, not added to it: stacked additive pools ran past white and the grain of the ground clipped into red, green and blue dots)
-  const pool = new THREE.MeshBasicMaterial({ map: poolTex(), color: 0xe8dba8, transparent: true, opacity: .42, depthWrite: false, fog: false });
-  const mast = new THREE.CylinderGeometry(.2, .32, 26, 7), lamp = new THREE.BoxGeometry(3.4, .9, 1.4), poolG = pool.clone();
-  poolG.opacity = .62; // (the green: lit fully)
-  const t = C.startPos, g = C.green, dx = g.cx - t.x, dz = g.cz - t.z, dl = Math.hypot(dx, dz) || 1, ux = dx / dl, uz = dz / dl;
-  const marks = [[t.x + ux * 8, t.z + uz * 8], [t.x + dx * .25, t.z + dz * .25], [t.x + dx * .5, t.z + dz * .5], [t.x + dx * .75, t.z + dz * .75], [g.cx - ux * 16, g.cz - uz * 16]];
-  for (const m of marks) for (const side of [12, 22]) {
-    const sp = spotBeside(C, m[0], m[1], side, 0);
-    if (!sp) continue;
-    const [X, Z] = sp, L = new THREE.Group();
-    const p = new THREE.Mesh(mast, pole); p.position.y = 13; L.add(p);
-    const hd = new THREE.Mesh(lamp, head); hd.position.y = 26.2; L.add(hd);
-    const hs = new THREE.Sprite(halo); hs.scale.setScalar(10); hs.position.y = 26.2; L.add(hs);
-    L.position.set(X, C.h(X, Z), Z); L.visible = false; grp.add(L); W.flood.push(L);
-    const pd = lightDisc(C, X, Z, 38, pool); grp.add(pd); W.flood.push(pd);
+function batTick(dt, on) {
+  if (!on) { if (W.bats) for (const b of W.bats) b.g.visible = false; return; }
+  if (!W.bats) batInit();
+  const cam = W.cam.position, fx = G.camLook.x - cam.x, fz = G.camLook.z - cam.z, fl = Math.hypot(fx, fz) || 1, tx = cam.x + fx / fl * 22, ty = cam.y + 5, tz = cam.z + fz / fl * 22;
+  if (!W.batA) W.batA = new THREE.Vector3(tx, ty, tz);
+  const k = 1 - Math.exp(-dt * 1.5), A = W.batA; A.x += (tx - A.x) * k; A.y += (ty - A.y) * k; A.z += (tz - A.z) * k;
+  const t = W.batT = (W.batT || 0) + dt;
+  for (const b of W.bats) {
+    const x = A.x + Math.sin(t * b.sx + b.p1) * b.rx + Math.sin(t * b.sx * 2.7 + b.p2) * 2.5, y = A.y + 2 + Math.sin(t * b.sy + b.p3) * b.ry, z = A.z + Math.cos(t * b.sz + b.p4) * b.rz;
+    const dx = x - b.g.position.x, dz = z - b.g.position.z; if (dx * dx + dz * dz > 1e-6) b.g.rotation.y = Math.atan2(dx, dz);
+    b.g.position.set(x, y, z); b.g.rotation.z = Math.sin(t * 2 + b.p2) * .3; b.g.visible = true;
+    const f = Math.sin(t * 17 + b.p1) * .85; b.wr.rotation.z = f; b.wl.rotation.z = -f;
   }
-  const gp = lightDisc(C, g.cx, g.cz, 34, poolG); grp.add(gp); W.flood.push(gp);
-  // the fairway wash: overlapping pools of light along the line of the hole, so the fairway itself is lit between the masts
-  const ln = C.def.rh && C.def.rh.line, wash = pool.clone(); wash.opacity = .3;
-  if (ln && ln.length > 1) {
-    const P = ln.map(q => { const l = C.loc(q[0], q[1]); return [l[0], -l[1]]; });
-    let acc = 0, next = 0;
-    for (let i = 1; i < P.length; i++) {
-      const ax = P[i - 1][0], az = P[i - 1][1], bx = P[i][0], bz = P[i][1], sl = Math.hypot(bx - ax, bz - az) || 1;
-      while (acc + sl >= next) { const u = (next - acc) / sl, wd = lightDisc(C, ax + (bx - ax) * u, az + (bz - az) * u, 30, wash); grp.add(wd); W.flood.push(wd); next += 26; }
-      acc += sl;
+}
+// a spider crawls over the screen now and then: across from one side to the other along a wobbling line, its legs going
+const SPIDER_SVG = '<svg id="spider" viewBox="0 0 48 48" aria-hidden="true"><g class="lgA"><path d="M26 20L36 12L42 8M22 23L10 20L3 20M26 26L38 30L44 34M23 29L14 38L10 45"/></g><g class="lgB"><path d="M22 20L12 12L6 8M26 23L38 20L45 20M22 26L10 30L4 34M25 29L34 38L38 45"/></g><ellipse cx="24" cy="31" rx="6.5" ry="8.5"/><ellipse cx="24" cy="20" rx="4" ry="4.5"/><circle class="eye" cx="22" cy="18" r="1.1"/><circle class="eye" cx="26" cy="18" r="1.1"/></svg>';
+function spiderCrawl() {
+  let el = $('spider'); if (!el) { document.body.insertAdjacentHTML('beforeend', SPIDER_SVG); el = $('spider'); }
+  if (el.classList.contains('on')) return;
+  const w = innerWidth, h = innerHeight, side = Math.floor(Math.random() * 4), m = 50;
+  const pt = (sd) => sd === 0 ? [-m, Math.random() * h] : sd === 1 ? [w + m, Math.random() * h] : sd === 2 ? [Math.random() * w, -m] : [Math.random() * w, h + m];
+  const a = pt(side), b = pt(side ^ 1), c = [(a[0] + b[0]) / 2 + (Math.random() - .5) * w * .8, (a[1] + b[1]) / 2 + (Math.random() - .5) * h * .5];
+  let u = 0, t = 0, last = performance.now(); el.classList.add('on');
+  const step = now => {
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; u += dt / 8 * (.35 + .9 * (.5 + .5 * Math.sin(t * 2.3)));
+    if (u >= 1) { el.classList.remove('on'); return; }
+    const v = 1 - u, x = v * v * a[0] + 2 * v * u * c[0] + u * u * b[0], y = v * v * a[1] + 2 * v * u * c[1] + u * u * b[1];
+    const dx = 2 * v * (c[0] - a[0]) + 2 * u * (b[0] - c[0]), dy = 2 * v * (c[1] - a[1]) + 2 * u * (b[1] - c[1]);
+    el.style.transform = `translate(${x - 27}px,${y - 27}px) rotate(${Math.atan2(dy, dx) * 180 / Math.PI + 90}deg)`; requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+// an owl on the course: 'hoo, hoo-hoo-hooo', soft round notes that fall a little, and a far one answering, quieter and lower
+function owlHoot() {
+  for (const [d, du, f1, f2] of [[0, .3, 440, 380], [.6, .16, 420, 390], [.85, .2, 420, 385], [1.15, .8, 420, 300]]) { tone(f1, du, 'sine', .22, f2, d); tone(f1 * 2, du * .8, 'sine', .035, f2 * 2, d); }
+  for (const [d, du, f1, f2] of [[3.4, .3, 340, 300], [4, .16, 330, 305], [4.25, .85, 330, 240]]) tone(f1, du, 'sine', .08, f2, d);
+}
+// sparkles instead of confetti: glowing points fall twinkling, and some pop into two or more on the way down
+function burstSparkles() {
+  let cv = $('sparkles'); if (!cv) { cv = document.createElement('canvas'); cv.id = 'sparkles'; cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9'; document.body.appendChild(cv); }
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), CW = cv.width = Math.round(innerWidth * dpr), CH = cv.height = Math.round(innerHeight * dpr), ctx = cv.getContext('2d');
+  const cols = ['255,236,150', '255,255,255', '255,170,225', '140,240,255', '190,255,140'], P = [], run = W.sparkRun = (W.sparkRun || 0) + 1;
+  const mk = (x, y, vx, vy, s, life, pop, c, d) => P.push({ x, y, vx, vy, s, life, t: 0, pop, c, d, ph: Math.random() * 6 });
+  for (let i = 0; i < 60; i++) mk(Math.random() * CW, -Math.random() * CH * .35, (Math.random() - .5) * 40 * dpr, (140 + Math.random() * 170) * dpr, (2 + Math.random() * 3) * dpr, 3 + Math.random() * 1.8, Math.random() < .5 ? .6 + Math.random() * 1.8 : 0, cols[i % 5], 0);
+  let last = performance.now();
+  const step = now => {
+    if (run !== W.sparkRun) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; ctx.clearRect(0, 0, CW, CH); ctx.globalCompositeOperation = 'lighter';
+    for (let i = P.length - 1; i >= 0; i--) {
+      const p = P[i]; p.t += dt;
+      if (p.t > p.life) { P.splice(i, 1); continue; }
+      if (p.pop && p.t > p.pop) { // the pop: a flash, and two or more new sparkles flying apart
+        const kids = 2 + (Math.random() < .5 ? 1 : 0) + (Math.random() < .25 ? 1 : 0);
+        for (let j = 0; j < kids; j++) { const an = Math.random() * TAU, v = (45 + Math.random() * 75) * dpr; mk(p.x, p.y, p.vx + Math.cos(an) * v, p.vy * .4 + Math.sin(an) * v, p.s * .75, .9 + Math.random() * .9, p.d < 1 && Math.random() < .3 ? .35 : 0, p.c, p.d + 1); }
+        mk(p.x, p.y, 0, 0, p.s * 3.4, .16, 0, '255,255,255', 9); P.splice(i, 1); continue;
+      }
+      p.vy += 60 * dpr * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .995;
+      const al = clamp(1 - p.t / p.life, 0, 1) * (p.d === 9 ? 1 : .65 + .35 * Math.sin(p.t * 22 + p.ph)), r = p.s * 3, g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      g.addColorStop(0, `rgba(${p.c},${al})`); g.addColorStop(.35, `rgba(${p.c},${al * .35})`); g.addColorStop(1, `rgba(${p.c},0)`); ctx.fillStyle = g; ctx.fillRect(p.x - r, p.y - r, r * 2, r * 2);
+      if (p.d !== 9 && Math.sin(p.t * 22 + p.ph) > .6) { ctx.strokeStyle = `rgba(${p.c},${al * .8})`; ctx.lineWidth = Math.max(1, dpr * .8); ctx.beginPath(); ctx.moveTo(p.x - r, p.y); ctx.lineTo(p.x + r, p.y); ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x, p.y + r); ctx.stroke(); }
     }
-  }
+    if (P.length) requestAnimationFrame(step); else { ctx.clearRect(0, 0, CW, CH); cv.remove(); }
+  };
+  requestAnimationFrame(step);
 }
 // "Enjoy the rainbow": the camera climbs above the treetops to the rainbow, stays for three seconds and glides back
 const RBOW = { up: 1.6, hold: 3, down: 1.6 };
@@ -8460,6 +8493,7 @@ function showDone(pickedUp) {
   if (!pickedUp && d <= -1) burstConfetti();
 }
 function burstConfetti() {
+  if (G.night && G.nightU > .5 && COURSE.key === 'gccb') { burstSparkles(); return; } // (at night: sparkles)
   const box = $('confetti'); box.innerHTML = '';
   const cols = ['#f7dc2e', '#e2392f', '#8dce69', '#ffffff', '#2f6b35', '#9fd6e2'];
   for (let i = 0; i < 70; i++) { const s = document.createElement('i'); s.style.left = (Math.random() * 100) + '%'; s.style.background = cols[i % 6]; s.style.animationDelay = (Math.random() * .6) + 's'; s.style.animationDuration = (1.6 + Math.random() * 1.4) + 's'; box.appendChild(s); }
