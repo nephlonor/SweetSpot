@@ -198,7 +198,7 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
 .icard{width:100%;max-width:520px;padding:16px;display:flex;gap:14px;transform:translateY(30px);transition:transform .5s var(--spring);border-radius:28px}
 #intro.on .icard,#done.on .dcard{transform:none}
-#homeAsk{z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#homeAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .hcard{width:100%;max-width:420px;padding:22px 20px 18px;background:rgba(250,252,249,.93);text-align:center;transform:translateY(24px);transition:transform .5s var(--spring);border-radius:28px;--ink:#16211c;--ink2:rgba(22,33,28,.7)}
 #homeAsk.on .hcard{transform:none}
 .hcard .hk,.hcard .ht,.hcard .hb,.hcard .hn{text-shadow:none}
@@ -228,7 +228,7 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #scrim{position:fixed;inset:0;background:rgba(10,30,18,.28);z-index:7;opacity:0;pointer-events:none;transition:opacity .3s}
 #scrim.on{opacity:1;pointer-events:auto}
 /* sheets: light frosted glass, dark text for dense content */
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:8;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,251,246,.86));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.75);border-bottom:0;border-radius:28px 28px 0 0;padding:10px calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);transform:translateY(105%);transition:transform .42s var(--spring);max-height:88vh;overflow:auto;box-shadow:0 -10px 40px rgba(18,42,28,.22);margin:0 auto;max-width:560px}
+.sheet{position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:8;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,251,246,.86));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);border:1px solid rgba(255,255,255,.75);border-bottom:0;border-radius:28px 28px 0 0;padding:10px calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);transform:translateY(105%);transition:transform .42s var(--spring);max-height:min(88vh,calc(var(--vvh,100vh) - 12px));overflow:auto;box-shadow:0 -10px 40px rgba(18,42,28,.22);margin:0 auto;max-width:560px}
 .sheet.on{transform:none}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto 10px}
 .sht{font:600 24px var(--cond);text-transform:uppercase;margin:2px 0 12px;display:flex;justify-content:space-between;align-items:baseline}
@@ -1350,7 +1350,7 @@ const HOLE_BASE = [
     ob: () => false, obLines: [],
     treeLines: [{ pts: [[-62, 20], [-80, 90]], gap: 10, jit: 6 }, { pts: [[62, 20], [84, 90]], gap: 10, jit: 6 }],
     treeClusters: [{ x: -4, f: 232, r: 44, n: 28 }, { x: -64, f: 170, r: 22, n: 10 }, { x: 60, f: 176, r: 22, n: 10 }, { x: -30, f: -22, r: 16, n: 7 }, { x: 30, f: -22, r: 16, n: 6 }],
-    azaleas: [{ x: -4, f: 200, r: 34, n: 34 }, { x: -52, f: 148, r: 20, n: 15 }, { x: 50, f: 158, r: 18, n: 14 }, { x: -24, f: 30, r: 18, n: 10 }],
+    azaleas: [{ x: -4, f: 200, r: 34, n: 34 }, { x: -52, f: 148, r: 20, n: 14 }, { x: 50, f: 158, r: 18, n: 14 }, { x: -24, f: 30, r: 18, n: 10 }],
     // a broad oak overhangs the right of the green above the pond; towering pines frame the back left
     landmarks: [{ x: 22, f: 157, kind: 'oak', h: 16, r: 7 }, { x: -40, f: 197, kind: 'pine', h: 25, r: 5 }, { x: -27, f: 214, kind: 'pine', h: 27, r: 5.5 }, { x: 34, f: 214, kind: 'pine', h: 24, r: 5 }],
     // amphitheatre: tee hill, flanking hills on both sides, bowl around the green
@@ -3473,7 +3473,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 14 };
+const APP_ITER = { courses: 7, n: 16 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7613,6 +7613,11 @@ function sizeCanvases() {
 // the viewport height (kept as one function so every screen-space calculation agrees)
 function VH() { return window.innerHeight; }
 // iOS can pan the visual viewport (or leave it scrolled after the keyboard or a gesture), which would shift the drawn UI against the touch areas: keep it at the origin
+// the on-screen keyboard: sheets and the pop-up sit above it, and the field being typed in is scrolled into view
+function kbSync() { try { const vv = window.visualViewport; if (!vv) return; const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)), r = document.documentElement.style; r.setProperty('--kb', kb > 80 ? kb + 'px' : '0px'); r.setProperty('--vvh', kb > 80 ? Math.round(vv.height) + 'px' : '100vh'); } catch (e) { } }
+if (window.visualViewport) { visualViewport.addEventListener('resize', kbSync); visualViewport.addEventListener('scroll', kbSync); }
+document.addEventListener('focusin', e => { const t = e.target; if (!t || !t.matches || !t.matches('input, textarea')) return; [250, 600].forEach(d => setTimeout(() => { kbSync(); try { if (document.activeElement === t) t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) { } }, d)); });
+document.addEventListener('focusout', () => setTimeout(kbSync, 150));
 function pinViewport() { try { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); const vv = window.visualViewport; if (vv && (vv.offsetTop || vv.offsetLeft) && !document.activeElement.matches('input')) window.scrollTo(0, 0); } catch (e) { } }
 ['scroll', 'resize', 'orientationchange', 'pageshow', 'focus'].forEach(ev => window.addEventListener(ev, pinViewport)); if (window.visualViewport) { visualViewport.addEventListener('resize', pinViewport); visualViewport.addEventListener('scroll', pinViewport); }
 document.addEventListener('touchmove', e => { if (!e.target.closest || !e.target.closest('.sheet, input')) e.preventDefault(); }, { passive: false });
