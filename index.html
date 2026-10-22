@@ -6829,7 +6829,7 @@ function loadRound(k) {
     if (k === 'daily' && !(r && r.daily && r.daily.day === dayId() && r.daily.course === r.course)) return null; // the challenge of an earlier day is over
     if (k !== 'daily' && r && r.daily) return null;
     if (!r || !c || (k !== 'daily' && r.course !== k) || !Array.isArray(r.scores) || r.scores.length !== c.defs.length || Date.now() - r.at > 30 * 864e5) return null;
-    if (r.scores.every(v => v != null) || (!r.mid && r.scores.every(v => v == null))) return null;
+    if (r.scores.every(v => v != null) || (!r.mid && !r.night && r.scores.every(v => v == null))) return null; // (a night round kept before the first stroke is still the player's round: its night and neon ball wait there)
     return r;
   } catch (e) { return null; }
 }
