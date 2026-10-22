@@ -205,8 +205,14 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #featAsk.on .hcard,#homeAsk.on .hcard{transform:none}
 #neonAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(4,8,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #neonAsk.on .hcard{transform:none}
-body.night .btn{background:linear-gradient(180deg,#2a2c30,#08090a);box-shadow:0 10px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2)}
-body.night{--gl-tint:rgba(176,210,188,.40);--gl-bg:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.18))}
+body.night{--gl-tint:rgba(5,6,8,.80);--gl-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0));--gl-line:rgba(255,255,255,.16)}
+body.night .btn,body.night .btn.alt{background:linear-gradient(180deg,#1b1d20,#050607);color:#fff;border:1px solid rgba(255,255,255,.2);box-shadow:0 10px 24px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14)}
+body.night .btn.alt small{color:rgba(255,255,255,.7)}
+body.night .sheet,body.night .hcard{background:rgba(6,7,9,.95)!important;--ink:#f1f3f1;--ink2:rgba(241,243,241,.7);color:#f1f3f1}
+body.night .gtag,body.night .rnote{background:rgba(5,6,8,.8)}
+body.night .seg button.sel,body.night .tabs button.sel,body.night .courseRow .seg button.sel,body.night .sheet .tabs button.sel{background:#24272b;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+body.night .mrow input,body.night .hcard input,body.night .neonO,body.night #frForm input,body.night #frForm textarea,body.night .csel select{background:#14161a;color:#fff;border-color:rgba(255,255,255,.18)}
+body.night .csel option{background:#14161a;color:#fff}
 .neonOpts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .neonO{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px 12px;border:1px solid rgba(22,33,28,.12);border-radius:18px;background:#fff;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .neonO i{width:46px;height:46px;border-radius:50%;background:var(--nc);box-shadow:0 0 16px var(--nc),0 0 40px var(--nc)}
@@ -3488,7 +3494,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 26 };
+const APP_ITER = { courses: 7, n: 27 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3779,16 +3785,21 @@ function clubhouseOf(C) {
 }
 function todLabel() { return G.night ? 'Night' : TOD_NAMES[G.tod] || 'Golden light'; }
 function nightStart() {
-  G.night = true; G.nightLook = 0;
+  G.night = true; G.nightLook = 0; try { saveRound(); } catch (e) { }
   readout('<div class="r1">Night falls over the club</div><div class="r3"><span>Pick your neon ball before the first shot</span></div>', 2.6);
 }
-function setNeon(c) {
-  G.neon = c; const m = W.ball.material; m.color.setHex(0xffffff); m.emissive.setHex(c); m.emissiveIntensity = .9;
-  W.ballGlow.material.color.setHex(c).multiplyScalar(1.6);
+// the ball's neon follows the round's state (G.night, G.neon): it comes back with a resumed round and goes with a new one
+function syncNeon() {
+  if (!W.ball || !W.ballGlow) return;
+  const want = G.night && COURSE.key === 'gccb' && G.neon ? G.neon : 0, m = W.ball.material;
+  if (W.neonOn === want) return; W.neonOn = want;
+  if (want) { m.color.setHex(0xffffff); m.emissive.setHex(want); m.emissiveIntensity = .9; W.ballGlow.material.color.setHex(want).multiplyScalar(1.6); }
+  else { m.emissive.setHex(0xffffff); m.emissiveIntensity = .17; }
 }
+function setNeon(c) { G.neon = c; syncNeon(); try { saveRound(); } catch (e) { } }
 // each frame: hold the aim on the clubhouse from the first tee to start the night, ease the lights, show the colour pop-up
 function nightTick(dt) {
-  const C = G.C, onGccb = COURSE.key === 'gccb';
+  const C = G.C, onGccb = COURSE.key === 'gccb'; syncNeon();
   if (!G.night && C && onGccb && !G.daily && G.hole === 0 && G.strokes === 0 && G.state === 'address') {
     const cl = clubhouseOf(C);
     G.nightLook = cl && Math.abs(angWrap(G.yaw - cl.yaw)) < cl.tol ? (G.nightLook || 0) + dt : 0;
@@ -3851,11 +3862,22 @@ function buildFloodlights(C, grp) {
     const [X, Z] = sp, L = new THREE.Group();
     const p = new THREE.Mesh(mast, pole); p.position.y = 13; L.add(p);
     const hd = new THREE.Mesh(lamp, head); hd.position.y = 26.2; L.add(hd);
-    const hs = new THREE.Sprite(halo); hs.scale.setScalar(16); hs.position.y = 26.2; L.add(hs);
+    const hs = new THREE.Sprite(halo); hs.scale.setScalar(10); hs.position.y = 26.2; L.add(hs);
     L.position.set(X, C.h(X, Z), Z); L.visible = false; grp.add(L); W.flood.push(L);
     const pd = lightDisc(C, X, Z, 38, pool); grp.add(pd); W.flood.push(pd);
   }
   const gp = lightDisc(C, g.cx, g.cz, 34, poolG); grp.add(gp); W.flood.push(gp);
+  // the fairway wash: overlapping pools of light along the line of the hole, so the fairway itself is lit between the masts
+  const ln = C.def.rh && C.def.rh.line, wash = pool.clone(); wash.opacity = .3;
+  if (ln && ln.length > 1) {
+    const P = ln.map(q => { const l = C.loc(q[0], q[1]); return [l[0], -l[1]]; });
+    let acc = 0, next = 0;
+    for (let i = 1; i < P.length; i++) {
+      const ax = P[i - 1][0], az = P[i - 1][1], bx = P[i][0], bz = P[i][1], sl = Math.hypot(bx - ax, bz - az) || 1;
+      while (acc + sl >= next) { const u = (next - acc) / sl, wd = lightDisc(C, ax + (bx - ax) * u, az + (bz - az) * u, 30, wash); grp.add(wd); W.flood.push(wd); next += 26; }
+      acc += sl;
+    }
+  }
 }
 // "Enjoy the rainbow": the camera climbs above the treetops to the rainbow, stays for three seconds and glides back
 const RBOW = { up: 1.6, hold: 3, down: 1.6 };
@@ -6650,23 +6672,44 @@ const HW_BARS = ['Am', 'Am', 'E7', 'E7', 'Dm', 'Dm', 'E7', 'Am', 'Am', 'F', 'Dm'
 const HW_MEL = [[81, 80, 79, 78, 77, 76], [0, 0, 72, 0, 69, 0], [71, 0, 74, 0, 71, 0], [68, 0, 71, 0, 0, 0], [74, 73, 74, 77, 0, 74], [72, 0, 69, 0, 0, 0], [71, 0, 68, 0, 71, 0], [69, 0, 0, 0, 0, 0],
   [76, 0, 81, 0, 76, 0], [77, 0, 81, 0, 77, 0], [74, 0, 77, 0, 81, 0], [80, 0, 76, 0, 71, 0], [76, 0, 81, 0, 84, 0], [83, 0, 81, 0, 77, 0], [80, 0, 71, 0, 74, 0], [69, 0, 0, 0, 0, 0]];
 function hwSetup(a) {
-  const bus = a.createGain(), out = a.createGain(), rv = a.createConvolver(), wet = a.createGain(), sr = a.sampleRate, L = Math.floor(sr * 2.6), ir = a.createBuffer(2, L, sr);
-  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 3); }
-  rv.buffer = ir; wet.gain.value = .45; out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.45, a.currentTime + 2);
+  const bus = a.createGain(), out = a.createGain(), rv = a.createConvolver(), wet = a.createGain(), sr = a.sampleRate, L = Math.floor(sr * 3.6), ir = a.createBuffer(2, L, sr);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 2.4); }
+  rv.buffer = ir; wet.gain.value = .7; out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.5, a.currentTime + 2);
   bus.connect(out); bus.connect(rv).connect(wet).connect(out); out.connect(a.destination);
   MUS.ac = a; MUS.bus = bus; MUS.out = out; MUS.ks = {}; MUS.step = 0; MUS.next = a.currentTime + .4; MUS.kind = 'halloween'; MUS.stops = [];
+  // the beds that never stop: a wind that moans (noise through a band that wanders up and down) and an organ drone on a tritone, A and E flat
+  const nb = a.createBuffer(1, sr * 3, sr), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  const ns = a.createBufferSource(), bp = a.createBiquadFilter(), wg = a.createGain(), wl = a.createOscillator(), wlg = a.createGain();
+  ns.buffer = nb; ns.loop = true; bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 2.5; wg.gain.value = .09; wl.frequency.value = .11; wlg.gain.value = 330;
+  wl.connect(wlg).connect(bp.frequency); ns.connect(bp).connect(wg).connect(bus); ns.start(); wl.start(); MUS.stops.push(ns, wl);
+  const lp = a.createBiquadFilter(), og = a.createGain(), ol = a.createOscillator(), olg = a.createGain(); lp.type = 'lowpass'; lp.frequency.value = 260; og.gain.value = .05; ol.frequency.value = .23; olg.gain.value = .03;
+  ol.connect(olg).connect(og.gain); lp.connect(og).connect(bus); ol.start(); MUS.stops.push(ol);
+  for (const f of [55, 77.8, 110.4]) { const o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(); MUS.stops.push(o); }
 }
 function hwTone(a, f, t, dur, type, v) {
   const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = f;
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dur + .05);
 }
+// a ghostly voice: a sine that slides and wobbles like a theremin
+function hwSlide(a, f0, f1, t, dur, v) {
+  const o = a.createOscillator(), g = a.createGain(), lf = a.createOscillator(), lg = a.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  lf.frequency.value = 5.5; lg.gain.value = f0 * .014; lf.connect(lg).connect(o.frequency);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + dur * .35); g.gain.linearRampToValueAtTime(0, t + dur);
+  o.connect(g).connect(MUS.bus); o.start(t); lf.start(t); o.stop(t + dur + .05); lf.stop(t + dur + .05);
+}
 function hwStep(a, st, t) {
   const bar = Math.floor(st / 6) % 16, e = st % 6, ch = HW_BARS[bar], m = HW_MEL[bar][e];
-  if (m) { const f = mHz(m); hwTone(a, f, t, 1.1, 'sine', .16); hwTone(a, f * 2, t, .5, 'triangle', .04); }
-  if (e === 0) hwTone(a, mHz(HW_ROOT[ch]), t, 1.2, 'triangle', .3);
+  if (m) { const f = mHz(m); hwTone(a, f * 1.012, t, 1.4, 'sine', .15); hwTone(a, f * .991, t, 1, 'sine', .08); hwTone(a, f * 2.01, t, .5, 'triangle', .04); } // a music box a little out of tune
+  if (e === 0) hwTone(a, mHz(HW_ROOT[ch]), t, 1.3, 'triangle', .3);
+  if (e === 0 && bar % 2 === 1) { const o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(34, t + .25); g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(.0001, t + .4); o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + .45); } // a heartbeat
   if (e === 2 || e === 4) HW_CH[ch].forEach(n => hwTone(a, mHz(n), t, .22, 'triangle', .06));
-  if (st % 96 === 0) hwTone(a, mHz(33), t, 5, 'sine', .14); // a low toll at the top of the tune
+  if (bar === 15 && e === 2) [69, 70, 75].forEach(n => hwTone(a, mHz(n), t, .9, 'sawtooth', .05)); // a cluster with a tritone, before the tune comes round
+  if (bar % 4 === 3 && e === 0) hwSlide(a, mHz(88), mHz(75), t, 1.6, .07); // the ghost sings, falling a tritone
+  if (bar % 8 === 5 && e === 3) hwSlide(a, mHz(93), mHz(94), t, .9, .04);
+  if (st % 96 === 0) hwTone(a, mHz(33), t, 6, 'sine', .18); // a low bell at the top of the tune
+  if (st % 150 === 36) { const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.setValueAtTime(90, t); o.frequency.linearRampToValueAtTime(260, t + .9); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 6; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.05, t + .3); g.gain.linearRampToValueAtTime(0, t + .9); o.connect(f).connect(g).connect(MUS.bus); o.start(t); o.stop(t + 1); } // a door creaks
 }
 function musicTick() {
   const night = !!G.night && G.nightU > .5 && COURSE && COURSE.key === 'gccb';
@@ -7303,21 +7346,36 @@ function updateFlight(dt) {
   else if (sh.replay && !sh.over && G.playT >= tEnd + .7) { sh.over = true; endReplay(); }
 }
 // at night the flight leaves small glowing particles: they peel off the ball, drift a little and fade out over about a second and a half
-const TRAIL_T = 1.5, TRAIL_MAX = 240;
+const TRAIL_T = 3.5, TRAIL_MAX = 480;
+// the moment the ball has almost stopped on the ground: after it first lands, the first frame slower than 0.6 m/s (else the end of the shot)
+function trailRest(fr, rn) {
+  if (fr._rest != null) return fr._rest;
+  let landed = false, t = fr[(rn - 1) * 5];
+  for (let k = 1; k < rn; k++) {
+    if (fr[k * 5 + 4] !== 0) landed = true; if (!landed) continue;
+    const dt = fr[k * 5] - fr[(k - 1) * 5] || 1e-3, v = Math.hypot(fr[k * 5 + 1] - fr[(k - 1) * 5 + 1], fr[k * 5 + 2] - fr[(k - 1) * 5 + 2], fr[k * 5 + 3] - fr[(k - 1) * 5 + 3]) / dt;
+    if (v < .6) { t = fr[k * 5]; break; }
+  }
+  return fr._rest = t;
+}
 function trailFill(fr, rn, tt) {
   if (!W.trail) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * 3), 3));
     g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * 3), 3));
-    W.trail = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex(), vertexColors: true, size: 6, sizeAttenuation: false, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    W.trail = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex(), vertexColors: true, size: 13, sizeAttenuation: false, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     W.trail.frustumCulled = false; W.trail.visible = false; W.scene.add(W.trail);
   }
   let last = 0; while (last < rn - 1 && fr[(last + 1) * 5] <= tt) last++;
-  const pa = W.trail.geometry.attributes.position.array, ca = W.trail.geometry.attributes.color.array, c = new THREE.Color(G.neon || 0xffffff); let n = 0;
-  for (let k = last; k >= 0 && n < TRAIL_MAX && fr[k * 5] >= tt - TRAIL_T; k--) {
-    const age = tt - fr[k * 5], b = Math.exp(-age * 2.4), j = k * 12.9898, jit = .03 + .12 * age, o = n * 3;
-    pa[o] = fr[k * 5 + 1] + Math.sin(j) * jit; pa[o + 1] = fr[k * 5 + 2] + VIS_R + Math.cos(j * 1.3) * jit; pa[o + 2] = fr[k * 5 + 3] + Math.sin(j * 2.1) * jit;
-    ca[o] = c.r * b; ca[o + 1] = c.g * b; ca[o + 2] = c.b * b; n++;
+  const pa = W.trail.geometry.attributes.position.array, ca = W.trail.geometry.attributes.color.array, c = new THREE.Color(G.neon || 0xffffff).lerp(new THREE.Color(0xffffff), .5); let n = 0; // (the ball's colour, lighter)
+  const rest = trailRest(fr, rn), fade = tt > rest ? Math.exp(-(tt - rest) * 3) : 1; W.trailFade = fade; // (gone about a second after the ball has almost stopped)
+  for (let k = last; k >= 0 && n < TRAIL_MAX - 1 && fr[k * 5] >= tt - TRAIL_T; k--) {
+    const age = tt - fr[k * 5], b = Math.exp(-age * .9) * fade, jit = .04 + .1 * age;
+    for (let q = 0; q < 2; q++) { // two particles a frame: a thick trail
+      const j = k * 12.9898 + q * 7.7, o = n * 3;
+      pa[o] = fr[k * 5 + 1] + Math.sin(j) * jit; pa[o + 1] = fr[k * 5 + 2] + VIS_R + Math.cos(j * 1.3) * jit; pa[o + 2] = fr[k * 5 + 3] + Math.sin(j * 2.1) * jit;
+      ca[o] = c.r * b; ca[o + 1] = c.g * b; ca[o + 2] = c.b * b; n++;
+    }
   }
   W.trail.geometry.attributes.position.needsUpdate = true; W.trail.geometry.attributes.color.needsUpdate = true; W.trail.geometry.setDrawRange(0, n);
 }
@@ -9917,8 +9975,8 @@ function frame(now) {
     W.blob.material.opacity = clamp(1 - hh / 40, .15, 1); W.blob.visible = W.ball.visible && Math.hypot(W.ball.position.x - C.cup.x, W.ball.position.z - C.cup.z) > CUP_RIM;
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
-  if (W.tracer.visible) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
-  if (W.trail) W.trail.visible = W.tracer.visible && G.nightU > .5;
+  if (W.tracer.visible && !(G.nightU > .5)) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
+  if (W.trail) W.trail.visible = W.tracer.visible && G.nightU > .5 && (G.state === 'flight' || G.state === 'holed') && W.trailFade > .01;
   swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') { mpSpecCam(dt); if (MP.clip) clipTick(); } else updateCamera(dt); nightTick(dt); updateWeatherVisuals(dt); gustTick(dt, now / 1000); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
     const ext = G.state === 'intro' ? 300 : 75, sc = W.sun.shadow.camera;
