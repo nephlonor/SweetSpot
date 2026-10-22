@@ -292,7 +292,7 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .mtitle small{font:600 12px var(--cond);letter-spacing:.14em;text-transform:uppercase;opacity:.78;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .frTabs{display:flex;gap:3px;background:rgba(255,255,255,.14);padding:3px;border-radius:12px;margin-bottom:10px}.frTabs button{flex:1;height:36px;border-radius:10px;font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.8)}.frTabs button.sel{background:rgba(255,255,255,.92);color:#16211c;text-shadow:none}
 .frC{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);border-radius:16px;padding:10px 10px 10px 14px;margin-bottom:8px}.frC>div{flex:1;min-width:0}.frC b{display:block;font:700 16px/1.2 var(--cond);letter-spacing:.02em}.frC p{margin:3px 0 0;font:500 13px/1.35 var(--sans,system-ui);opacity:.85;overflow-wrap:anywhere}.frC small{display:block;margin-top:4px;font:600 11px var(--cond);letter-spacing:.1em;text-transform:uppercase;opacity:.65}
-.frV{display:flex;flex-direction:column;gap:4px;align-items:stretch}.frV button{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.14);font:700 14px var(--cond);color:#fff;min-width:62px}.frV button .ic{width:16px;height:16px}.frV button.on{background:rgba(255,255,255,.92);color:#16211c}
+.frC>.frV{flex:none}.frV{display:flex;flex-direction:column;gap:4px;align-items:stretch;flex:none}.frV button{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;background:rgba(255,255,255,.14);font:700 14px var(--cond);color:#fff;justify-content:center}.frV button .ic{width:16px;height:16px}.frV button.on{background:rgba(255,255,255,.92);color:#16211c}
 #frForm input,#frForm textarea{display:block;width:100%;box-sizing:border-box;border:0;outline:0;border-radius:14px;padding:10px 14px;margin-bottom:6px;font:600 16px var(--cond);color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);resize:none}#frForm textarea{font-weight:500;font-size:14px}#frForm .mbtn{width:100%;margin-top:2px}#frForm ::placeholder{color:rgba(255,255,255,.55)}
 .mpg{display:none}.mpg.on{display:block;animation:pgIn .3s var(--ease)}
 @keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -3473,7 +3473,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 16 };
+const APP_ITER = { courses: 7, n: 17 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
