@@ -3850,10 +3850,11 @@ function lightDisc(C, cx, cz, r, mat) {
 }
 function buildFloodlights(C, grp) {
   W.flood = [];
-  const pole = lambert(0x2c3138), head = new THREE.MeshBasicMaterial({ color: 0xfff1d0 }), halo = new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff1d0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-  const pool = new THREE.MeshBasicMaterial({ map: poolTex(), color: 0xffe9b8, transparent: true, opacity: .4, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pole = lambert(0x2c3138), head = new THREE.MeshBasicMaterial({ color: 0xfff1d0 }), halo = new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff1d0, depthWrite: false, transparent: true, opacity: .9, fog: false });
+  // (the light is blended over the ground, not added to it: stacked additive pools ran past white and the grain of the ground clipped into red, green and blue dots)
+  const pool = new THREE.MeshBasicMaterial({ map: poolTex(), color: 0xe8dba8, transparent: true, opacity: .42, depthWrite: false, fog: false });
   const mast = new THREE.CylinderGeometry(.2, .32, 26, 7), lamp = new THREE.BoxGeometry(3.4, .9, 1.4), poolG = pool.clone();
-  poolG.opacity = .8; // (the green: lit fully)
+  poolG.opacity = .62; // (the green: lit fully)
   const t = C.startPos, g = C.green, dx = g.cx - t.x, dz = g.cz - t.z, dl = Math.hypot(dx, dz) || 1, ux = dx / dl, uz = dz / dl;
   const marks = [[t.x + ux * 8, t.z + uz * 8], [t.x + dx * .25, t.z + dz * .25], [t.x + dx * .5, t.z + dz * .5], [t.x + dx * .75, t.z + dz * .75], [g.cx - ux * 16, g.cz - uz * 16]];
   for (const m of marks) for (const side of [12, 22]) {
