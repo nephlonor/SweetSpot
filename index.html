@@ -210,6 +210,7 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #spider g{transform-origin:24px 24px}#spider .lgA{animation:spLeg .26s ease-in-out infinite}#spider .lgB{animation:spLeg .26s ease-in-out -.13s infinite}@keyframes spLeg{0%,100%{transform:rotate(-13deg)}50%{transform:rotate(13deg)}}
 body.night{--gl-tint:rgba(5,6,8,.80);--gl-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0));--gl-line:rgba(255,255,255,.16)}
 body.night .btn,body.night .btn.alt{background:linear-gradient(180deg,#1b1d20,#050607);color:#fff;border:1px solid rgba(255,255,255,.2);box-shadow:0 10px 24px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14)}
+body.night .mbtn,body.night .mbtn.dark{background:linear-gradient(180deg,#1b1d20,#050607)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2);box-shadow:0 8px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14)!important}
 body.night .btn.alt small{color:rgba(255,255,255,.7)}
 body.night .sheet,body.night .hcard{background:rgba(6,7,9,.95)!important;--ink:#f1f3f1;--ink2:rgba(241,243,241,.7);color:#f1f3f1}
 body.night .gtag,body.night .rnote{background:rgba(5,6,8,.8)}
@@ -3496,7 +3497,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 28 };
+const APP_ITER = { courses: 7, n: 29 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3765,7 +3766,7 @@ function updateWeatherVisuals(dt) {
 // Started only one way: on the first tee of an ordinary round, before the first stroke, turn the aim to the clubhouse and hold it
 // there for about a second. The floodlights come on, the sky goes dark and a pop-up asks for the neon colour of the ball.
 const NEON = [{ c: 0xff2fa0, n: 'Pink' }, { c: 0x6dff2e, n: 'Lime' }, { c: 0x2ef2ff, n: 'Cyan' }, { c: 0xffb020, n: 'Amber' }];
-const NIGHT = { bg: new THREE.Color(0x060b18), hem: new THREE.Color(0x5d78b8), gnd: new THREE.Color(0x1a2640), cloud: new THREE.Color(0x141b2e) };
+const NIGHT = { bg: new THREE.Color(0x060b18), hem: new THREE.Color(0x4a64a2), gnd: new THREE.Color(0x0e1626), cloud: new THREE.Color(0x141b2e) };
 const NIGHT_LOOK = .9; // seconds the aim has to stay on the clubhouse
 let _glowTex = null;
 function glowTex() { // a soft white dot, tinted by the material that uses it
@@ -3811,11 +3812,10 @@ function nightTick(dt) {
   G.nightU = (G.nightU || 0) + (want - (G.nightU || 0)) * (1 - Math.exp(-dt / 1.6));
   if (G.night && onGccb && !G.neon && G.state === 'address' && !$('neonAsk').classList.contains('on')) $('neonAsk').classList.add('on');
   const lit = G.nightU > .02, nightOn = G.nightU > .5 && onGccb;
-  batTick(dt, nightOn);
-  if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl and the spider come and go on their own)
+  batTick(dt, nightOn); wormTick(dt, nightOn);
+  if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl comes and goes on its own)
     G.owlT = (G.owlT == null ? 5 + Math.random() * 6 : G.owlT) - dt; if (G.owlT <= 0) { owlHoot(); G.owlT = 14 + Math.random() * 20; }
-    G.spiderT = (G.spiderT == null ? 7 + Math.random() * 8 : G.spiderT) - dt; if (G.spiderT <= 0) { spiderCrawl(); G.spiderT = 35 + Math.random() * 50; }
-  } else if (!nightOn) { G.owlT = G.spiderT = null; }
+  } else if (!nightOn) G.owlT = null;
   if (W.ballGlow) {
     W.ballGlow.visible = lit && !!W.ball.visible;
     if (W.ballGlow.visible) { // a constant size on screen (34 px out from the ball), so it reads far away and does not swamp the ball close up
@@ -3829,7 +3829,7 @@ function nightTick(dt) {
 // the sky, the light and the clouds go from day to night in step with G.nightU
 function nightDress(u) {
   W.scene.background.lerp(NIGHT.bg, u); W.scene.fog.color.lerp(NIGHT.bg, u);
-  W.sun.intensity *= 1 - u; W.hemi.intensity = W.hemi.intensity * (1 - u) + 1.1 * u;
+  W.sun.intensity *= 1 - u; W.hemi.intensity = W.hemi.intensity * (1 - u) + .5 * u;
   W.hemi.color.lerp(NIGHT.hem, u); W.hemi.groundColor.lerp(NIGHT.gnd, u);
   W.sky.material.color.lerp(NIGHT.bg, u); W.cloudMat.color.lerp(NIGHT.cloud, u);
 }
@@ -3862,7 +3862,28 @@ function batTick(dt, on) {
     const f = Math.sin(t * 17 + b.p1) * .85; b.wr.rotation.z = f; b.wl.rotation.z = -f;
   }
 }
-// a spider crawls over the screen now and then: across from one side to the other along a wobbling line, its legs going
+// glow worms: small yellow-green lights that drift about low over the grass, each pulsing at its own pace
+const WORM_N = 16;
+function wormTick(dt, on) {
+  if (!on) { if (W.worms) W.worms.pts.visible = false; return; }
+  if (!W.worms) {
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(WORM_N * 3), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(WORM_N * 3), 3));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex(), vertexColors: true, size: 11, sizeAttenuation: false, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    pts.frustumCulled = false; W.scene.add(pts); const d = [];
+    for (let i = 0; i < WORM_N; i++) d.push({ s1: .2 + Math.random() * .35, s2: .25 + Math.random() * .4, r1: 3 + Math.random() * 10, r2: 2 + Math.random() * 7, h: .5 + Math.random() * 2.2, pu: .5 + Math.random() * .9, p: [Math.random() * TAU, Math.random() * TAU, Math.random() * TAU, Math.random() * TAU] });
+    W.worms = { pts, d };
+  }
+  const Wm = W.worms, cam = W.cam.position, fx = G.camLook.x - cam.x, fz = G.camLook.z - cam.z, fl = Math.hypot(fx, fz) || 1, tx = cam.x + fx / fl * 14, tz = cam.z + fz / fl * 14;
+  if (!Wm.A) Wm.A = [tx, tz]; const k = 1 - Math.exp(-dt * 1.5); Wm.A[0] += (tx - Wm.A[0]) * k; Wm.A[1] += (tz - Wm.A[1]) * k;
+  const t = Wm.t = (Wm.t || 0) + dt, pa = Wm.pts.geometry.attributes.position.array, ca = Wm.pts.geometry.attributes.color.array;
+  Wm.d.forEach((w, i) => {
+    const x = Wm.A[0] + Math.sin(t * w.s1 + w.p[0]) * w.r1 + Math.sin(t * w.s1 * 2.3 + w.p[1]) * 1.5, z = Wm.A[1] + Math.cos(t * w.s2 + w.p[2]) * w.r2 + Math.cos(t * w.s2 * 1.9 + w.p[1]) * 1.2;
+    pa[i * 3] = x; pa[i * 3 + 1] = (G.C ? G.C.h(x, z) : cam.y - 2) + w.h + Math.sin(t * 1.3 + w.p[3]) * .4; pa[i * 3 + 2] = z;
+    const b = .2 + .8 * (.5 + .5 * Math.sin(t * w.pu * 2.2 + w.p[3])); ca[i * 3] = .72 * b; ca[i * 3 + 1] = b; ca[i * 3 + 2] = .3 * b;
+  });
+  Wm.pts.geometry.attributes.position.needsUpdate = true; Wm.pts.geometry.attributes.color.needsUpdate = true; Wm.pts.visible = true;
+}
+// a spider crawls over the screen after a bogey or worse (a pick-up too): across from one side to the other along a wobbling line, its legs going
 const SPIDER_SVG = '<svg id="spider" viewBox="0 0 48 48" aria-hidden="true"><g class="lgA"><path d="M26 20L36 12L42 8M22 23L10 20L3 20M26 26L38 30L44 34M23 29L14 38L10 45"/></g><g class="lgB"><path d="M22 20L12 12L6 8M26 23L38 20L45 20M22 26L10 30L4 34M25 29L34 38L38 45"/></g><ellipse cx="24" cy="31" rx="6.5" ry="8.5"/><ellipse cx="24" cy="20" rx="4" ry="4.5"/><circle class="eye" cx="22" cy="18" r="1.1"/><circle class="eye" cx="26" cy="18" r="1.1"/></svg>';
 function spiderCrawl() {
   let el = $('spider'); if (!el) { document.body.insertAdjacentHTML('beforeend', SPIDER_SVG); el = $('spider'); }
@@ -6912,7 +6933,7 @@ function resumeRound(course) {
     const cp = new THREE.Vector3(), lk = new THREE.Vector3(), v = L.v; addressCamFor(cp, lk, G.ball.x, G.ball.y, G.ball.z, Math.atan2(v[0], -v[2]), !!L.putt, G.teed);
     W.cam.position.copy(cp); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
     document.body.classList.add('flight'); if (G.rig) { G.rig.arr = null; G.rig.launch = null; }
-    W.tracerT0 = performance.now(); W.tracer.visible = !L.putt; W.tracer.material.opacity = .8; W.tracer.geometry.setDrawRange(0, 0);
+    W.tracerT0 = performance.now(); W.tracer.visible = !L.putt || G.nightU > .5; W.tracer.material.opacity = .8; W.tracer.geometry.setDrawRange(0, 0);
     W.aim.visible = W.ring.visible = W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; $('aimHint').classList.remove('on');
     G.state = 'flight'; G.playT = t; G.shake = 0; updateHUD();
     return true;
@@ -7364,7 +7385,7 @@ function updateFlight(dt) {
     else if (e.type === 'hop') readoutNote('Too hot · hopped the cup', 'ok');
     else if (e.type === 'cup') { SFX.cup(); buzz([20, 40, 20]); }
   }
-  if (!sh.L.putt && G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); }
+  if (G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); } // (at night putts leave the trail too, into the hole)
   else if (!sh.L.putt) {
     const pa = W.tracer.geometry.attributes.position.array, cam = W.cam.position; let n = 0;
     for (let k = 0; k < r.n && fr[k * 5] <= tt && n < W.tracerMax; k += 2) {
@@ -8492,6 +8513,7 @@ function showDone(pickedUp) {
   $('dNext').textContent = G.practice ? 'Play again' : last ? 'Final scorecard' : 'Next hole';
   $('done').classList.add('on');
   if (!pickedUp && d <= -1) burstConfetti();
+  if ((pickedUp || d >= 1) && G.night && G.nightU > .5 && COURSE.key === 'gccb') setTimeout(spiderCrawl, 500); // (at night a bogey or worse brings the spider)
 }
 function burstConfetti() {
   if (G.night && G.nightU > .5 && COURSE.key === 'gccb') { burstSparkles(); return; } // (at night: sparkles)
