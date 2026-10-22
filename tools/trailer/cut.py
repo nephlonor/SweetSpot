@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
 import edit as E
 from edit import W, H, FPS, YEL, WHT, GRN
-BPM = 124.; BEAT = 60 / BPM; BF = BEAT * FPS      # frames per beat (14.516)
+BPM = 116.; BEAT = 60 / BPM; BF = BEAT * FPS      # frames per beat (14.516)
 CL = '/tmp/pbs/clips'
 class Clip:
     def __init__(self, name):
@@ -28,7 +28,7 @@ class Seg:
     """clip, runs: [(x0, x1, nOutFrames)] source clip-frame ranges played over nOutFrames output frames each; fx at output-frame offsets"""
     def __init__(self, c, runs, **kw):
         self.c = c; self.runs = runs; self.kw = kw; self.len = sum(r[2] for r in runs); self.start = 0
-        self.zoom = kw.get('zoom', lambda t: 1.); self.pan = kw.get('pan', lambda t: (.5, .5)); self.punch = kw.get('punch', []); self.shake = kw.get('shake', []); self.flash = kw.get('flash', []); self.rot = kw.get('rot', lambda t: 0.)
+        self.zoom = kw.get('zoom', lambda t: 1.); self.pan = kw.get('pan', lambda t: (.5, .5)); self.punch = [(a, b * .55, c) for a, b, c in kw.get('punch', [])]; self.shake = [(a, b * .45, c) for a, b, c in kw.get('shake', [])]; self.flash = [(a, b * .5, c * 1.4) for a, b, c in kw.get('flash', [])]; self.rot = kw.get('rot', lambda t: 0.)
         self.speedramp = kw.get('ramp', None)
     def at(self, i):
         for (x0, x1, n) in self.runs:

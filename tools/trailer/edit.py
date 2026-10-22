@@ -26,7 +26,7 @@ def cover(img, zoom=1., cx=.5, cy=.5, rot=0.):
 def text_layer(lines, size, pos, t, color=WHT, it=True, outline=14, rot=-4, anchor='c', pop=.22, align='c'):
     """kinetic caption: pops in with overshoot, rotated a few degrees, thick dark outline and a coloured drop shadow"""
     if t < 0: return None
-    sc = ease_out_back(t / pop) if t < pop else 1 + .015 * math.sin(t * 6)
+    sc = ease_out_back(t / pop) if t < pop else 1.0
     if sc <= .02: return None
     f = font(int(size * sc), it); lay = Image.new('RGBA', (W * 2, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
     y = 0; items = []

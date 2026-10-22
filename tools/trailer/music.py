@@ -2,7 +2,7 @@
 import json, sys
 import numpy as np
 import synth as s
-BPM = 124.; BEAT = 60 / BPM
+BPM = 116.; BEAT = 60 / BPM
 NOTE = lambda m: 440 * 2 ** ((m - 69) / 12)
 CH = [(48, [60, 64, 67]), (43, [59, 62, 67]), (45, [57, 60, 64]), (41, [57, 60, 65])]   # C  G  Am  F  (bass root, chord)
 def build(plan, out):
@@ -24,7 +24,7 @@ def build(plan, out):
         if sc == 'build' and step in (1, 3): M.add(t, s.clap(.6), .3)
         if full or sc == 'build':
             for h in range(2):
-                M.add(t + h * BEAT / 2, s.hat(.7 if h == 0 else 1., o=(h == 1 and full)), .35 if full else .22)
+                M.add(t + h * BEAT / 2, s.hat(.7 if h == 0 else 1., o=(h == 1 and full)), .26 if full else .18)
         # bass: off-beat eighths
         if full:
             M.add(t + BEAT / 2, s.bass(NOTE(ch[0]), BEAT * .42), .5)
@@ -33,8 +33,8 @@ def build(plan, out):
         if full or brk or sc == 'end':
             for q in range(4):
                 n = ch[1][(q + (1 if bar % 2 else 0)) % 3] + (12 if q % 2 else 24 if (b + q) % 3 == 0 else 12)
-                v = .26 if full else .14
-                if sc == 'hype': v = .32
+                v = .19 if full else .12
+                if sc == 'hype': v = .24
                 M.add(t + q * BEAT / 4, s.pluck(NOTE(n), .3, 1), v, pan=(-.35 if q % 2 else .35))
         if step == 0 and sc != 'build' or (sc == 'build' and b == 0):
             M.add(t, s.pad([NOTE(m) for m in ch[1]], BEAT * 4, 1), .22 if not brk else .3)
