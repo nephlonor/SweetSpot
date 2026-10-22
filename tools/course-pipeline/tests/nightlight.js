@@ -15,6 +15,6 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   await p.waitForTimeout(3500);
   console.log(await p.evaluate(() => ({ k: +W.ballLight.userData.k.toFixed(2), intensity: +W.ballLight.intensity.toFixed(2), pos: W.ballLight.position.toArray().map(v => +v.toFixed(1)), ball: W.ball.position.toArray().map(v => +v.toFixed(1)) })));
   await p.screenshot({ path: '/tmp/pbs/light-on.png' });
-  await p.evaluate(() => { W.ballLight.userData.pow = 0; }); await p.waitForTimeout(2500); await p.screenshot({ path: '/tmp/pbs/light-off.png' });
+  await p.evaluate(() => { W.ballLight.intensity = 0; W.ballLight.userData.k = 0; window.nightTick = () => { }; }); await p.waitForTimeout(2500); await p.screenshot({ path: '/tmp/pbs/light-off.png' });
   await b.close();
 })();

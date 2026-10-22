@@ -3497,7 +3497,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 33 };
+const APP_ITER = { courses: 7, n: 34 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3898,7 +3898,7 @@ const _nwhite = new THREE.Color(0xffffff);
 function ballLightTick(on, dt) {
   const L = W.ballLight; if (!L) return;
   const want = on && W.ball.visible && W.neonOn ? 1 : 0, k = L.userData.k = (L.userData.k || 0) + (want - (L.userData.k || 0)) * (1 - Math.exp(-dt * 4));
-  L.intensity = (L.userData.pow || .9) * k; if (k < .01) return;
+  L.intensity = .6 * k; if (k < .01) return;
   const b = W.ball.position; L.position.set(b.x, b.y + 4, b.z); L.color.setHex(W.neonOn).lerp(_nwhite, .5);
 }
 // a spider crawls over the screen after a bogey or worse (a pick-up too): across from one side to the other along a wobbling line, its legs going
