@@ -205,6 +205,7 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #featAsk.on .hcard,#homeAsk.on .hcard{transform:none}
 #neonAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(4,8,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #neonAsk.on .hcard{transform:none}
+body.night .btn{background:linear-gradient(180deg,#2a2c30,#08090a);box-shadow:0 10px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2)}
 body.night{--gl-tint:rgba(176,210,188,.40);--gl-bg:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.18))}
 .neonOpts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .neonO{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px 12px;border:1px solid rgba(22,33,28,.12);border-radius:18px;background:#fff;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
@@ -3487,7 +3488,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 7, n: 25 };
+const APP_ITER = { courses: 7, n: 26 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3806,6 +3807,7 @@ function nightTick(dt) {
     }
   }
   if (document.body.classList.contains('night') !== lit) document.body.classList.toggle('night', lit);
+  if (W.life && W.life.hMesh) W.life.hMesh.visible = W.life.sMesh.visible = G.nightU < .5; // (the wildflowers close at night)
 }
 // the sky, the light and the clouds go from day to night in step with G.nightU
 function nightDress(u) {
@@ -3823,11 +3825,24 @@ function poolTex() { // a wide soft disc of light: bright in the middle, gone at
   gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.5, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
   x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return _poolTex = new THREE.CanvasTexture(cv);
 }
+// a disc of light that follows the ground: rings of vertices lifted to the terrain, so it is never buried on a slope
+function lightDisc(C, cx, cz, r, mat) {
+  const R = 7, S = 32, pos = [cx, C.h(cx, cz) + .2, cz], uv = [.5, .5], idx = [];
+  for (let i = 1; i <= R; i++) for (let j = 0; j < S; j++) {
+    const a = j / S * TAU, x = cx + Math.cos(a) * r * i / R, z = cz + Math.sin(a) * r * i / R;
+    pos.push(x, C.h(x, z) + .2, z); uv.push(.5 + .5 * Math.cos(a) * i / R, .5 + .5 * Math.sin(a) * i / R);
+  }
+  for (let j = 0; j < S; j++) idx.push(0, 1 + j, 1 + (j + 1) % S);
+  for (let i = 1; i < R; i++) for (let j = 0; j < S; j++) { const a = 1 + (i - 1) * S, b = 1 + i * S, j1 = (j + 1) % S; idx.push(a + j, b + j, b + j1, a + j, b + j1, a + j1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+  const m = new THREE.Mesh(g, mat); m.visible = false; m.frustumCulled = false; m.renderOrder = 2; return m;
+}
 function buildFloodlights(C, grp) {
   W.flood = [];
   const pole = lambert(0x2c3138), head = new THREE.MeshBasicMaterial({ color: 0xfff1d0 }), halo = new THREE.SpriteMaterial({ map: glowTex(), color: 0xfff1d0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
   const pool = new THREE.MeshBasicMaterial({ map: poolTex(), color: 0xffe9b8, transparent: true, opacity: .4, depthWrite: false, blending: THREE.AdditiveBlending });
-  const mast = new THREE.CylinderGeometry(.2, .32, 26, 7), lamp = new THREE.BoxGeometry(3.4, .9, 1.4), ground = new THREE.CircleGeometry(38, 32);
+  const mast = new THREE.CylinderGeometry(.2, .32, 26, 7), lamp = new THREE.BoxGeometry(3.4, .9, 1.4), poolG = pool.clone();
+  poolG.opacity = .8; // (the green: lit fully)
   const t = C.startPos, g = C.green, dx = g.cx - t.x, dz = g.cz - t.z, dl = Math.hypot(dx, dz) || 1, ux = dx / dl, uz = dz / dl;
   const marks = [[t.x + ux * 8, t.z + uz * 8], [t.x + dx * .25, t.z + dz * .25], [t.x + dx * .5, t.z + dz * .5], [t.x + dx * .75, t.z + dz * .75], [g.cx - ux * 16, g.cz - uz * 16]];
   for (const m of marks) for (const side of [12, 22]) {
@@ -3837,9 +3852,10 @@ function buildFloodlights(C, grp) {
     const p = new THREE.Mesh(mast, pole); p.position.y = 13; L.add(p);
     const hd = new THREE.Mesh(lamp, head); hd.position.y = 26.2; L.add(hd);
     const hs = new THREE.Sprite(halo); hs.scale.setScalar(16); hs.position.y = 26.2; L.add(hs);
-    const pl = new THREE.Mesh(ground, pool); pl.rotation.x = -Math.PI / 2; pl.position.y = .25; L.add(pl);
     L.position.set(X, C.h(X, Z), Z); L.visible = false; grp.add(L); W.flood.push(L);
+    const pd = lightDisc(C, X, Z, 38, pool); grp.add(pd); W.flood.push(pd);
   }
+  const gp = lightDisc(C, g.cx, g.cz, 34, poolG); grp.add(gp); W.flood.push(gp);
 }
 // "Enjoy the rainbow": the camera climbs above the treetops to the rainbow, stays for three seconds and glides back
 const RBOW = { up: 1.6, hold: 3, down: 1.6 };
@@ -6627,7 +6643,43 @@ function fileMusic(want) {
   if (want && el.paused && AC.state === 'running') { const pr = el.play(); if (pr && pr.catch) pr.catch(() => { }); }
   if (!want && F.vol < .002 && !el.paused) el.pause();
 }
+// Halloween at night: a spooky waltz in A minor, 3/4 at 120 bpm. A music box plays the tune over a bass on the first beat and two
+// chord stabs, in a long cold echo. The first eight bars fall chromatically; the next eight sing higher.
+const HW_PER = .25, HW_CH = { Am: [57, 60, 64], E7: [56, 59, 62], Dm: [57, 62, 65], F: [57, 60, 65] }, HW_ROOT = { Am: 45, E7: 40, Dm: 38, F: 41 };
+const HW_BARS = ['Am', 'Am', 'E7', 'E7', 'Dm', 'Dm', 'E7', 'Am', 'Am', 'F', 'Dm', 'E7', 'Am', 'F', 'E7', 'Am'];
+const HW_MEL = [[81, 80, 79, 78, 77, 76], [0, 0, 72, 0, 69, 0], [71, 0, 74, 0, 71, 0], [68, 0, 71, 0, 0, 0], [74, 73, 74, 77, 0, 74], [72, 0, 69, 0, 0, 0], [71, 0, 68, 0, 71, 0], [69, 0, 0, 0, 0, 0],
+  [76, 0, 81, 0, 76, 0], [77, 0, 81, 0, 77, 0], [74, 0, 77, 0, 81, 0], [80, 0, 76, 0, 71, 0], [76, 0, 81, 0, 84, 0], [83, 0, 81, 0, 77, 0], [80, 0, 71, 0, 74, 0], [69, 0, 0, 0, 0, 0]];
+function hwSetup(a) {
+  const bus = a.createGain(), out = a.createGain(), rv = a.createConvolver(), wet = a.createGain(), sr = a.sampleRate, L = Math.floor(sr * 2.6), ir = a.createBuffer(2, L, sr);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 3); }
+  rv.buffer = ir; wet.gain.value = .45; out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.45, a.currentTime + 2);
+  bus.connect(out); bus.connect(rv).connect(wet).connect(out); out.connect(a.destination);
+  MUS.ac = a; MUS.bus = bus; MUS.out = out; MUS.ks = {}; MUS.step = 0; MUS.next = a.currentTime + .4; MUS.kind = 'halloween'; MUS.stops = [];
+}
+function hwTone(a, f, t, dur, type, v) {
+  const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dur + .05);
+}
+function hwStep(a, st, t) {
+  const bar = Math.floor(st / 6) % 16, e = st % 6, ch = HW_BARS[bar], m = HW_MEL[bar][e];
+  if (m) { const f = mHz(m); hwTone(a, f, t, 1.1, 'sine', .16); hwTone(a, f * 2, t, .5, 'triangle', .04); }
+  if (e === 0) hwTone(a, mHz(HW_ROOT[ch]), t, 1.2, 'triangle', .3);
+  if (e === 2 || e === 4) HW_CH[ch].forEach(n => hwTone(a, mHz(n), t, .22, 'triangle', .06));
+  if (st % 96 === 0) hwTone(a, mHz(33), t, 5, 'sine', .14); // a low toll at the top of the tune
+}
 function musicTick() {
+  const night = !!G.night && G.nightU > .5 && COURSE && COURSE.key === 'gccb';
+  if (night) { // (the night at GCC Basel: the waltz instead of the recording)
+    fileMusic(false);
+    if (!musicWanted()) { musicStop(); return; }
+    const a = AC; if (!a || a.state !== 'running') return;
+    if (MUS.ac === a && MUS.kind !== 'halloween') musicStop();
+    if (MUS.ac !== a) hwSetup(a);
+    if (MUS.next < a.currentTime) MUS.next = a.currentTime + .1;
+    while (MUS.next < a.currentTime + .7) { hwStep(a, MUS.step, MUS.next); MUS.next += HW_PER; MUS.step++; }
+    return;
+  }
   if (COURSE && COURSE.key === 'gccb') { musicStop(); fileMusic(musicWanted()); return; } // (GCC Basel: the recording)
   fileMusic(false);
   if (!musicWanted()) { musicStop(); return; }
