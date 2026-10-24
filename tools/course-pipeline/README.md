@@ -14,6 +14,10 @@ The method, its checks and its pitfalls are in **[docs/NEW_COURSE_GUIDE.md](../.
   - **Course plan:** `reg.py` + `geo.py` (rectify the board photo and fit it to the aerial), `sbs.py` / `quad.py` / `cr.py` (gridded crops of several sources side by side).
   - **Trace:** `holes.py` (routing, tees to the card), `greens.json` (hand traces), `fw.py` (mown grass near the hole lines), `sand.py`, `feat.py` (fairways, bunkers, beach, sea, paths, boundary), `teeview.py`.
   - **Build:** `build.py`.
+- `fourmile/` is the route for a US course whose point cloud has **no building or vegetation classes** (USGS CONMGaps 2026, only unclassified and ground):
+  - **Fetch:** `dl.sh` (the LAZ tiles; rockyweb throttles with HTTP 429 and wants a browser User-Agent, so it resumes with retries), `parse.py` (OSM), `gm.py` / `gme.py` (imagery).
+  - **Ground and canopy:** `lidar.py` (LAZ tiles into 1 m grids), `mkgrids.py` (ground from class 2, canopy = surface minus ground), `bld2.py` (houses: flat-roofed, compact canopy blobs fitted with minimum rectangles).
+  - **Select and build:** `prep.py`, `build.py` (the tee goes back along the first leg to the card's length; a 9 m pad is mown where the Black tee is on no traced tee box). The desert palette, the piñon and juniper, the soundscape and the 8-course daily rotation are in `index.html`.
 - `check.sh` runs the checks every edit to `index.html` needs.
 - `augusta-build.py`, `ept.py`, `chm.py`, `dem.py` are the US LiDAR route (USGS 3DEP).
 - `tests/` holds the headless Playwright checks:
