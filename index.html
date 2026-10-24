@@ -3531,7 +3531,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 5 };
+const APP_ITER = { courses: 8, n: 6 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10278,7 +10278,7 @@ function initInput() {
         if (Math.abs(dx) < 60 || Math.abs(dx) < 1.8 * Math.abs(dy) || performance.now() - q.t > 800) return;
         const list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), i = list.findIndex(c => c.key === (Board.view || COURSE.key)), j = clamp(i + (dx < 0 ? 1 : -1), 0, list.length - 1);
         if (j === i) return; loadWorld(false, list[j].key); const cw = bb.querySelector('.cwrap');
-        if (cw && cw._roll) cw._roll(j, 500); else { Board.view = list[j].key; refreshBoards(); } // (the wheel rolls to the next name and the board follows when it has slotted in)
+        if (cw && cw._roll) cw._roll(j, 260); else { Board.view = list[j].key; refreshBoards(); } // (the wheel rolls to the next name in 260 ms, as for a tap, and the board follows when it has slotted in)
       }, { passive: true });
     }
     $('faNo').onclick = () => $('featAsk').classList.remove('on');
