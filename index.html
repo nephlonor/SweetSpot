@@ -7675,10 +7675,10 @@ function waterOptions(r) {
       if (lat) break;
     }
   }
-  if (!lat) for (const rr of [.6, 1.2, 1.8, 2 * CLUB_LEN, 3, 4, 5, 6.5, 8]) { // (the nearest ring with a dry spot, no nearer the hole, that is more than 3 m from the water; the best of that ring)
+  if (!lat) for (const rr of [.6, 1.2, 1.8, 2 * CLUB_LEN, 3, 4, 5, 6.5, 8]) { // (the nearest ring with a dry spot, no nearer the hole, that is at least 3 m from the water; the best of that ring)
     for (let a = 0; a < 24; a++) {
       const x = E[0] + Math.cos(a * TAU / 24) * rr, z = E[1] + Math.sin(a * TAU / 24) * rr; if (!dryGround(x, z) || C.surf(x, z) === S.SAND) continue;
-      if (Math.hypot(cup.x - x, cup.z - z) < dEnt - .05) continue; const wd = waterDist(x, z); if (wd > 3 && wd > ld) { ld = wd; lat = [x, z]; }
+      if (Math.hypot(cup.x - x, cup.z - z) < dEnt - .05) continue; const wd = waterDist(x, z); if (wd >= 3 && wd > ld) { ld = wd; lat = [x, z]; }
     }
     if (lat) break;
   }
