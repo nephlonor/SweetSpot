@@ -6,6 +6,8 @@ The Rothley Park pipeline (`tools/course-pipeline/rothley/`) is the reference im
 
 Pebble Beach (`tools/course-pipeline/pebblebeach/`) shows the route for a US course whose **OSM data is complete** (every green, fairway, bunker and tee drawn, routing lines from the championship tees): `prep.py` only selects and cleans the OSM shapes, makes the sea from the OSM coastline and the beach from the aerial photograph, and `build.py` places the tees to the scorecard.
 
+Four Mile Ranch (`tools/course-pipeline/fourmile/`) shows the route for a US course with an **unclassified point cloud** (only ground and unclassified returns, no vegetation or building classes): trees come from the canopy height model, houses from flat-roofed compact blobs in it, and the nearest 3DEP project does not always cover the site, so read the project's tile index (TNM API, `datasets=Lidar Point Cloud (LPC)`) before assuming there is no LiDAR.
+
 Lessons from Rothley Park, St Patrick's and Pebble Beach are marked **Pitfall**. Each one cost a round of feedback.
 
 ---
