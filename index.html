@@ -8,6 +8,13 @@
 <meta name="apple-mobile-web-app-title" content="Sweet Spot">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head><body>
+<style>#splash{position:fixed;inset:0;z-index:100;background:#1d3a22;overflow:hidden;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
+#splash img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#splash:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,22,12,.55) 0,rgba(8,22,12,.12) 42%,rgba(8,22,12,.5) 100%)}
+#splash h1{position:absolute;z-index:1;left:0;right:0;top:10%;margin:0;text-align:center;color:#fff;text-transform:uppercase;font:700 clamp(40px,13vw,66px)/.95 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.015em;text-shadow:0 3px 22px rgba(0,0,0,.45)}
+#splash h1 span{color:#c6f2a9}#splash i{position:absolute;z-index:1;left:0;right:0;bottom:calc(9% + env(safe-area-inset-bottom));text-align:center;font:600 13px/1 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.78);font-style:normal;animation:spl 1.4s ease-in-out infinite}@keyframes spl{50%{opacity:.35}}</style>
+<div id="splash"><img src="splash.jpg" alt=""><h1>Sweet <span>Spot</span><br>Golf</h1><i>Loading</i></div>
+<script>window.__splashT0=Date.now();setTimeout(function(){var e=document.getElementById('splash');if(e){e.classList.add('off');setTimeout(function(){e.remove()},900)}},12000)</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@500;600;700&display=swap">
@@ -3524,7 +3531,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 2 };
+const APP_ITER = { courses: 8, n: 3 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10376,6 +10383,13 @@ function boot(data) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { sizeCanvases(); });
   requestAnimationFrame(frame);
   setTimeout(onResize, 300);
+  // the loading page (see the top of the body) stays up until the start screen is built and drawn, and for at least a second, then fades out
+  const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]) : Promise.resolve();
+  fonts.then(() => requestAnimationFrame(() => requestAnimationFrame(splashHide)));
+}
+function splashHide() {
+  const el = document.getElementById('splash'); if (!el || el._going) return; el._going = true;
+  setTimeout(() => { el.classList.add('off'); setTimeout(() => el.remove(), 900); }, Math.max(0, 1000 - (Date.now() - (window.__splashT0 || 0))));
 }
 // Updates: GitHub Pages lets browsers keep the page for 10 minutes, and a home-screen app much longer. The deploy stamps BUILD and
 // writes version.txt; when the two differ the page reloads itself through a fresh URL.
