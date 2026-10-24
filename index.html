@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 8 };
+const APP_ITER = { courses: 8, n: 9 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8214,7 +8214,7 @@ function loadClubSprites() {
 function clubSprite(c) { const o = CLUB_SPR[c.type === 'putter' ? 'putter' : c.type === 'wood' || c.type === 'hybrid' ? 'wood' : 'iron']; return o && o.ok ? o : null; }
 // the face (hitting area) of the club as drawn on the dial: width by club type, height from the sprite when there is one
 function faceFor(c, R) {
-  const fw = c.type === 'putter' ? R * 1.1 : c.type === 'wood' ? R * .96 : R * .86, sp = clubSprite(c), fh = sp ? fw * sp.fh / sp.fw : fw * (c.type === 'putter' ? .27 : c.type === 'wood' ? .5 : .44);
+  const fw = c.type === 'putter' ? R * 1.1 : c.type === 'wood' ? R * .96 : R * .72, sp = clubSprite(c), fh = sp ? fw * sp.fh / sp.fw : fw * (c.type === 'putter' ? .27 : c.type === 'wood' ? .5 : .44);
   return { hw: fw / 2, hh: fh / 2, fw, fh };
 }
 loadClubSprites();
