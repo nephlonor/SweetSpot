@@ -3531,7 +3531,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 3 };
+const APP_ITER = { courses: 8, n: 4 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -9293,11 +9293,50 @@ function mgAbsorb(entry) {
   if (Number.isFinite(pf.br) && (ST.rec.round.at == null || pf.br < ST.rec.round.v)) { ST.rec.round = Object.assign({}, ST.rec.round, { v: pf.br, at: ST.rec.round.at || 1 }); ch = true; }
   if (ch) { ST.mgAbs = abs; saveStats(); if ($('statsSheet') && $('statsSheet').classList.contains('on')) try { openStats(); } catch (e) { } }
 }
-async function mgSyncSend(force) {
+// the rest of the account, as this device holds it: scorecard history per course, best scores, shot clips, trophies, daily results, the home course, and the
+// counters the profile does not carry (holes in one shot, holes played in rain: only this device's own share, like the stats)
+function acctEx(limit) {
+  const ex = { v: 1, rounds: {}, best: {}, reel: reelList().slice(0, 8), trophies: ST.trophies.slice(-60), hs: Math.max(0, (ST.holedShots || 0) - ((ST.mgAbs || {}).hs || 0)), rh: Math.max(0, (ST.rainHoles || 0) - ((ST.mgAbs || {}).rh || 0)), dl: {}, home: settings.homeC ? { c: settings.homeC, r: settings.homeR || '' } : null };
+  for (const c of Object.values(COURSES)) {
+    const rs = localRounds(c.key); if (rs.length) ex.rounds[c.key] = sortRounds(rs).slice(0, limit);
+    try { const b = +localStorage.getItem(c.best); if (b) ex.best[c.key] = b; } catch (e) { }
+  }
+  const dl = dlRecs(); for (const d of Object.keys(dl)) if (dl[d] && (dl[d].status === 'done' || dl[d].status === 'missed')) ex.dl[d] = dl[d];
+  return ex;
+}
+function mgEx() { for (const n of [30, 20, 12, 6, 3]) { const ex = acctEx(n); if (JSON.stringify(ex).length < 54000) return ex; } return acctEx(1); }
+async function mgSyncSend(force, now) {
   if (!(settings.mgP || settings.mgReq || settings.mgAcc)) return;
-  const pf = profileCompact(true), sig = JSON.stringify(pf);
-  if (!force && (settings.mgSig === sig || Date.now() - (settings.mgSigAt || 0) < 180000)) return;
-  if (await ghIssue('[sync] stats', { v: 1, sync: true, dev: deviceId(), name: cleanName(settings.name), pf }, 'Stats of a merged account from Sweet Spot Golf.')) { settings.mgSig = sig; settings.mgSigAt = Date.now(); saveSettings(); }
+  const pf = profileCompact(true), ex = mgEx(), sig = JSON.stringify([pf, ex]);
+  if (!force && (settings.mgSig === sig.length + ':' + hash2str(sig) || (!now && Date.now() - (settings.mgSigAt || 0) < 180000))) return;
+  if (await ghIssue('[sync] stats', { v: 1, sync: true, dev: deviceId(), name: cleanName(settings.name), pf, ex }, 'Stats of a merged account from Sweet Spot Golf.')) { settings.mgSig = sig.length + ':' + hash2str(sig); settings.mgSigAt = Date.now(); saveSettings(); }
+}
+function hash2str(t) { let h = 2166136261; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 16777619); return (h >>> 0).toString(36); }
+async function loadAcct(id) {
+  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/acct/${id}.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch (e) { return null; }
+}
+// take over what the other device holds (union: nothing is ever taken away)
+function mgAbsorbEx(ex) {
+  if (!ex || typeof ex !== 'object') return;
+  let ch = false; const nm = cleanName(settings.name);
+  for (const [key, rs] of Object.entries(ex.rounds || {})) {
+    const c = COURSES[key]; if (!c || !Array.isArray(rs)) continue;
+    const loc = localRounds(key), have = new Map(loc.map(r => [r.at + '|' + r.strokes, r]));
+    for (const r of rs) { if (!validRound(r, c.defs.length)) continue; const k = r.at + '|' + r.strokes, o = have.get(k); if (o) { if (r.posted && !o.posted) { o.posted = true; ch = true; } continue; } loc.push(Object.assign({}, r, nm ? { name: nm } : {})); have.set(k, r); ch = true; }
+    if (ch) try { localStorage.setItem(c.board, JSON.stringify(sortRounds(loc).slice(0, 60))); } catch (e) { }
+  }
+  for (const [key, b] of Object.entries(ex.best || {})) { const c = COURSES[key]; if (!c || !Number.isFinite(b) || b < 18 || b > 200) continue; try { const cur = +localStorage.getItem(c.best) || null; if (!cur || b < cur) { localStorage.setItem(c.best, b); ch = true; } } catch (e) { } }
+  if (Array.isArray(ex.reel)) for (const x of ex.reel) { const e = cleanShot(x); if (e && Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite)) { const before = reelList().length; reelAdd(Object.assign({}, x, { cl: x.cl })); if (reelList().length !== before) ch = true; } }
+  if (Array.isArray(ex.trophies)) for (const t of ex.trophies) if (t && /^\d{4}-\d{2}-\d{2}$/.test(t.day) && !ST.trophies.some(q => q.day === t.day)) { ST.trophies.push({ day: t.day, course: COURSES[t.course] ? t.course : 'gccb', tp: t.tp | 0, s: t.s | 0, n: t.n | 0 }); ch = true; }
+  ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1);
+  const abs = ST.mgAbs || {};
+  for (const [k, f] of [['hs', 'holedShots'], ['rh', 'rainHoles']]) if (Number.isFinite(ex[k]) && ex[k] >= 0) { const d = ex[k] - (abs[k] || 0); if (d) { ST[f] = Math.max(0, (ST[f] || 0) + d); abs[k] = ex[k]; ch = true; } }
+  ST.mgAbs = abs;
+  const dl = dlRecs(); let dch = false;
+  for (const [d, r] of Object.entries(ex.dl || {})) { if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !r || r.day !== d || (r.status !== 'done' && r.status !== 'missed')) continue; const o = dl[d]; if (!o || (o.status !== 'done' && r.status === 'done') || (!o.status) || (o.status === 'playing')) { dl[d] = r; dch = true; } }
+  if (dch) { for (const k of Object.keys(dl).sort().slice(0, -5)) delete dl[k]; try { localStorage.setItem('ssg-daily', JSON.stringify(dl)); } catch (e) { } ch = true; }
+  if (ex.home && !settings.homeC && typeof ex.home.c === 'string' && ex.home.c) { settings.homeC = cleanHome(ex.home.c, 40); settings.homeR = cleanHome(ex.home.r, 30); saveSettings(); ch = true; }
+  if (ch) { saveStats(); try { refreshBoards(); dlCards(); showBest(); } catch (e) { } if ($('statsSheet').classList.contains('on')) try { openStats(); } catch (e) { } }
 }
 function mgFast() { MG.fast = 12; const tick = () => { if (MG.fast-- > 0 && !(settings.mgP && !settings.mgReq && !settings.mgAcc)) { mgCheck(); setTimeout(tick, 25000); } }; setTimeout(tick, 25000); }
 async function mgCheck() {
@@ -9314,7 +9353,7 @@ async function mgCheck() {
         for (const c of Object.values(COURSES)) { try { const a = JSON.parse(localStorage.getItem(c.board) || '[]'); if (Array.isArray(a)) localStorage.setItem(c.board, JSON.stringify(a.map(x => Object.assign(x, { name: mine.n })))); } catch (e) { } }
         updateHUD(); titleMenuSync(); nameHint(); refreshBoards();
       } else if (mine.nat && (settings.nameAt || 0) < mine.nat && mine.n === settings.name) { settings.nameAt = mine.nat; saveSettings(); }
-      mgAbsorb((DL.players || {})[mine.p]); mgSyncSend(); loadDailyFile(dayId());
+      mgAbsorb((DL.players || {})[mine.p]); loadAcct(mine.p).then(ex => { mgAbsorbEx(ex); mgSyncSend(); }); loadDailyFile(dayId());
       if (wasPending && !MG.dlg) mgDialog('done'); else if (wasPending && MG.dlg && (MG.dlg.kind === 'waiting' || MG.dlg.kind === 'wait')) mgDialog('done');
     } else {
       for (const key of ['mgReq', 'mgAcc']) {
@@ -9352,7 +9391,7 @@ $('mgNo').addEventListener('click', async () => {
   mgClose();
 });
 setTimeout(mgCheck, 5000); setInterval(mgCheck, 150000); setTimeout(mgUI, 1000);
-document.addEventListener('visibilitychange', () => { if (document.hidden) mgSyncSend(); else setTimeout(mgCheck, 1500); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) mgSyncSend(false, true); else setTimeout(mgCheck, 1500); });
 function playerName() { return cleanName(settings.name) || 'Player'; }
 function cleanName(s) { return String(s || '').replace(/[^\p{L}\p{N} ._'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14); }
 function validRound(r, n) {

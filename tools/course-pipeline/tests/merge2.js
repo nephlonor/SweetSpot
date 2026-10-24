@@ -36,6 +36,15 @@ const stats = p => p.evaluate(() => ({ name: settings.name, rounds: ST.rounds, x
   await setup(A, 'Zoe', 5, 900, 250); const hA = await A.evaluate(() => dlMe()), pfA = await A.evaluate(() => profileCompact(true));
   fs.writeFileSync(W + '/leaderboard/players.json', JSON.stringify({ [hA]: { n: 'Zoe', pf: pfA, at: Date.now() } }));
   await setup(B, 'Max', 1, 100, 180);
+  // the rest of each account: scorecard history, best scores, trophies, holes in one shot, rain holes, a finished daily
+  const rich = (p, rounds, hs, rh, trophy, daily) => p.evaluate(([rounds, hs, rh, trophy, daily]) => {
+    localStorage.setItem(COURSES.gccb.board, JSON.stringify(rounds)); localStorage.setItem(COURSES.gccb.best, String(Math.min(...rounds.map(r => r.strokes))));
+    ST.holedShots = hs; ST.rainHoles = rh; ST.trophies = trophy ? [trophy] : []; saveStats();
+    if (daily) { const a = {}; a[daily.day] = daily; localStorage.setItem('ssg-daily', JSON.stringify(a)); }
+  }, [rounds, hs, rh, trophy, daily]);
+  const rd = (nm, st, at) => ({ name: nm, strokes: st, toPar: st - 72, holes: 18, at, v: 1, h: Array(18).fill(st / 18 | 0).map((v, i) => i < st - 18 * (st / 18 | 0) ? v + 1 : v), pt: Array(18).fill(2) });
+  await rich(A, [rd('Zoe', 80, 1790000000000), rd('Zoe', 85, 1790100000000)], 2, 3, { day: '2026-10-20', course: 'gccb', tp: -2, s: 70, n: 5 }, { day: '2026-10-22', course: 'gccb', status: 'done', h: Array(18).fill(4), tp: 0, strokes: 72, at: 1790200000000 });
+  await rich(B, [rd('Max', 90, 1790300000000)], 1, 4, null, null);
   // B types the name Zoe
   await B.evaluate(() => { $('title').classList.add('on'); $('nameIn').focus(); }); await B.fill('#nameIn', 'zoe'); await B.evaluate(() => $('nameIn').blur()); await B.waitForTimeout(4000);
   console.log('B after typing zoe:', JSON.stringify(await stats(B)));
@@ -64,6 +73,8 @@ const stats = p => p.evaluate(() => ({ name: settings.name, rounds: ST.rounds, x
   await B.evaluate(() => { openSheet('menuSheet'); menuPage('player'); }); await B.fill('#mName', 'Zoey'); await B.evaluate(() => $('mName').dispatchEvent(new Event('change'))); await B.waitForTimeout(1500);
   console.log('B renamed:', JSON.stringify(await stats(B)));
   await launch(A); console.log('A at launch after the rename:', JSON.stringify(await stats(A)), await A.evaluate(() => [$('nameIn').value, $('mName').value].join('/')));
+  const acct = p => p.evaluate(() => ({ gccbRounds: localRounds('gccb').map(r => r.strokes + '/' + r.name).join(','), best: localStorage.getItem(COURSES.gccb.best), trophies: ST.trophies.map(t => t.day).join(','), hs: ST.holedShots, rh: ST.rainHoles, daily: Object.keys(dlRecs()).join(','), dailyStatus: Object.values(dlRecs()).map(r => r.status).join(',') }));
+  console.log('account A:', JSON.stringify(await acct(A))); console.log('account B:', JSON.stringify(await acct(B)));
   console.log('public players.json:', fs.readFileSync(W + '/leaderboard/players.json', 'utf8').replace(/"bs":\[\],?/g, ''));
   console.log('--- workflow log'); console.log(log.join('\n'));
   await b.close();

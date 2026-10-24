@@ -88,9 +88,12 @@ jobs:
                 const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e8;
                 const pf = {}; if (r.pf && typeof r.pf === 'object') for (const k of PF) if (num(r.pf[k])) pf[k] = Math.round(r.pf[k] * 100) / 100;
                 if (!Object.keys(pf).length) return finish(false, 'No stats.');
-                const f = 'leaderboard/players.json', all = rdj(f, {}), old = all[who] || {};
+                const f = 'leaderboard/players.json', all = rdj(f, {}), old = all[who] || {}, files = [f];
                 all[who] = Object.assign({}, old, { n: old.n || (typeof r.name === 'string' && NAMEOK.test(r.name.trim()) ? r.name.trim() : 'Player'), pf, at: Date.now() });
-                fs.writeFileSync(f, JSON.stringify(all) + '\n'); await gitPush([f], 'Stats synced for a merged account'); return finish(true, 'Stats saved.');
+                fs.writeFileSync(f, JSON.stringify(all) + '\n');
+                // the rest of the account (scorecard history, trophies, shot clips, daily results ...): kept as is, for the other device to read; the game checks every entry again
+                if (r.ex && typeof r.ex === 'object' && !Array.isArray(r.ex)) { const js = JSON.stringify(r.ex); if (js.length <= 90000) { fs.mkdirSync('leaderboard/acct', { recursive: true }); fs.writeFileSync('leaderboard/acct/' + who + '.json', js + '\n'); files.push('leaderboard/acct/' + who + '.json'); } }
+                await gitPush(files, 'Stats synced for a merged account'); return finish(true, 'Stats saved.');
               }
               const act = r && r.act, now = Date.now(), files = [mf];
               if (act === 'ask') {
