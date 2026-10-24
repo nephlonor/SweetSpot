@@ -3522,7 +3522,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 0 };
+const APP_ITER = { courses: 8, n: 1 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7039,7 +7039,7 @@ function resumeRound(course) {
   if (r.daily) { G.daily = Object.assign({}, r.daily, { wx: dailyWeatherPlan(r.daily.seed, COURSES[r.course].defs.length, r.course) }); mpRelobby(); }
   const n = HOLE_DEFS.length, arr = (a, d) => Array.isArray(a) && a.length === n ? a : HOLE_DEFS.map(() => d);
   G.tod = r.daily ? todFor(r.daily.seed) : TOD[r.tod] ? r.tod : 'day';
-  G.night = !r.daily && !!r.night; G.neon = G.night ? r.neon || null : null; G.nightU = G.night ? 1 : 0;
+  G.night = r.daily ? dayNum(r.daily.day) === DAILY_ONE : !!r.night; G.neon = G.night ? r.neon || null : null; G.nightU = G.night ? 1 : 0;
   G.practice = false; G.submitted = false; G.shotLog = Array.isArray(r.log) ? r.log : []; if (r.planes != null) G.planes = r.planes;
   G.scores = arr(r.scores, null); G.putts = arr(r.putts, 0); G.fir = arr(r.fir, null); G.gir = arr(r.gir, null); G.pens = arr(r.pens, 0); G.pins = arr(r.pins, 0);
   const h = resumeHole(r), mid = r.mid && h === r.hole ? r.mid : null, pu = G.putts[h], pe = G.pens[h];
@@ -7084,7 +7084,7 @@ function startRound(daily) {
   if (!daily && G.daily) { saveRound(); G.daily = null; mpRelobby(); } // a new ordinary round: the daily challenge in play waits where it is
   clearRound(G.daily ? 'daily' : undefined);
   G.tod = G.daily ? todFor(G.daily.seed) : todPick(Math.random);
-  G.night = false; G.neon = null; G.nightLook = 0;
+  G.night = !!G.daily && dayNum(G.daily.day) === DAILY_ONE; G.neon = null; G.nightLook = 0; if (G.night) G.nightU = 1;
   G.gullDone = false; G.gullHole = Math.random() < .65 ? (Math.random() * 18) | 0 : -1; // (Pebble Beach: the hole where a gull comes to look at the ball, in about two rounds of three)
   G.practice = false; G.submitted = false; G.shotLog = []; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
@@ -9560,14 +9560,14 @@ function trophyHtml(list) { // the trophies of daily challenges won: [{day, cour
 // after the day closes (yesterday's final board). Final results are also filed in the repository (leaderboard/daily-<day>.json) so they last.
 // the course of the day goes round GCC Basel, Alsace, Augusta; from 19 October 2026 Rothley Park joins, first in the turn; from 20 October 2026 St Patrick's
 // joins, first in its turn, with Rothley Park moved to the end so it doesn't come round again the next day (the days before keep their course)
-const DAILY_ZONE = 'America/New_York', DAILY_COURSES = ['gccb', 'alsace', 'augusta'], DAILY_COURSES4 = ['rothley', 'gccb', 'alsace', 'augusta'], DAILY_D4 = 20745, DAILY_COURSES5 = ['stpatricks', 'gccb', 'alsace', 'augusta', 'rothley'], DAILY_D5 = 20746, DAILY_COURSES7 = ['pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], DAILY_D7 = 20750, DAILY_COURSES8 = ['fourmile', 'pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], DAILY_D8 = 20757; // (from 2026-10-24 all seven courses turn, the two never drawn before first; from 2026-10-31 Four Mile Ranch joins, first)
+const DAILY_ZONE = 'America/New_York', DAILY_COURSES = ['gccb', 'alsace', 'augusta'], DAILY_COURSES4 = ['rothley', 'gccb', 'alsace', 'augusta'], DAILY_D4 = 20745, DAILY_COURSES5 = ['stpatricks', 'gccb', 'alsace', 'augusta', 'rothley'], DAILY_D5 = 20746, DAILY_COURSES7 = ['pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], DAILY_D7 = 20750, DAILY_COURSES8 = ['fourmile', 'pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], DAILY_D8 = 20758, DAILY_ONE = 20757; // (from 2026-10-24 all seven courses turn, the two never drawn before first; from 2026-11-01 Four Mile Ranch joins, first; the one day in between is GCC Basel after dark)
 const _dFmt = new Intl.DateTimeFormat('en-CA', { timeZone: DAILY_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
 function zParts(ms) { const o = {}; for (const q of _dFmt.formatToParts(new Date(ms))) o[q.type] = q.value; return o; }
 function dayId(ms) { const o = zParts(ms || Date.now()); return `${o.year}-${o.month}-${o.day}`; }
 function dayNum(id) { return Math.floor(Date.UTC(+id.slice(0, 4), +id.slice(5, 7) - 1, +id.slice(8, 10)) / 864e5); }
 function dayAdd(id, n) { return new Date((dayNum(id) + n) * 864e5).toISOString().slice(0, 10); }
 function dayLeftSec() { const o = zParts(Date.now()); return 86400 - (+o.hour * 3600 + +o.minute * 60 + +o.second); }
-const dailyCourse = id => { const n = dayNum(id); return n >= DAILY_D8 ? DAILY_COURSES8[(n - DAILY_D8) % 8] : n >= DAILY_D7 ? DAILY_COURSES7[(n - DAILY_D7) % 7] : n >= DAILY_D5 ? DAILY_COURSES5[(n - DAILY_D5) % 5] : n >= DAILY_D4 ? DAILY_COURSES4[(n - DAILY_D4) % 4] : DAILY_COURSES[n % 3]; };
+const dailyCourse = id => { const n = dayNum(id); return n >= DAILY_D8 ? DAILY_COURSES8[(n - DAILY_D8) % 8] : n === DAILY_ONE ? 'gccb' : n >= DAILY_D7 ? DAILY_COURSES7[(n - DAILY_D7) % 7] : n >= DAILY_D5 ? DAILY_COURSES5[(n - DAILY_D5) % 5] : n >= DAILY_D4 ? DAILY_COURSES4[(n - DAILY_D4) % 4] : DAILY_COURSES[n % 3]; };
 function dailySeed(id) { let h = 2166136261; for (const c of 'ssg-daily-' + id) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
 function dailyWeatherPlan(seed, n, key) { // one spell of weather lasts 6-9 holes, drawn from the day's seed
   const r = mulberry32((seed ^ 0x5bd1e995) >>> 0), out = []; let w = null, left = 0;
