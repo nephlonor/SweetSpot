@@ -4355,8 +4355,8 @@ const LINKS_OFF = { ROUGH: [.02, -.15, -.085], DEEP: [.07, -.2, -.1], FIRST: [.0
 const PEB_OFF = { ROUGH: [-.035, -.1, -.052], DEEP: [-.02, -.16, -.075], FIRST: [-.04, -.04, -.02], FAIR: [-.04, .0, .012], GREEN: [-.03, .02, .006], FRINGE: [-.035, .0, .008], TEE: [-.04, .0, .01], SAND: [.045, -.3, .012], PATH: [-.5, -.1, 0] };
 // Mountain Valley: [dl, ds, dh] likewise. Cool, deep mountain turf, clean-cut fairways, a dark rough, pale grey-tan sand, black asphalt paths
 const RIDGE_OFF = { ROUGH: [-.03, -.07, -.065], DEEP: [-.04, -.11, -.09], FIRST: [-.035, -.03, -.035], FAIR: [-.03, .03, .008], GREEN: [-.025, .04, .008], FRINGE: [-.03, .02, .006], TEE: [-.03, .03, .01], SAND: [.01, -.24, -.004], PATH: [-.45, -.1, 0] };
-// Four Mile Ranch: [dl, ds, dh] likewise. High desert: dark irrigated fairways and small bright greens in tan, sun-bleached native grass and sage, white shale for sand, pale dirt tracks
-const DESERT_OFF = { ROUGH: [.25, -.17, -.19], DEEP: [.19, -.25, -.17], FIRST: [.16, -.22, -.17], FAIR: [-.25, -.1, .035], GREEN: [-.29, -.24, .035], FRINGE: [-.26, -.16, .035], TEE: [-.25, -.14, .035], SAND: [-.02, -.5, .0], PATH: [-.12, -.12, -.01] };
+// Four Mile Ranch: [dl, ds, dh] likewise. High desert: dark irrigated fairways and rough (a green band round every hole) and small bright greens, tan sun-bleached native grass and sage beyond it, white shale for sand, pale dirt tracks
+const DESERT_OFF = { ROUGH: [-.18, -.02, -.04], DEEP: [.19, -.25, -.17], FIRST: [-.19, .0, -.005], FAIR: [-.2, -.04, .03], GREEN: [-.29, -.24, .035], FRINGE: [-.26, -.16, .035], TEE: [-.25, -.14, .035], SAND: [-.02, -.5, .0], PATH: [-.12, -.12, -.01] };
 const AUT_OFF = { ROUGH: [-.035, .03, .03], DEEP: [-.035, .02, .02], FIRST: [-.025, .04, .03], FAIR: [-.005, .06, .035], GREEN: [-.01, .07, .045], FRINGE: [-.02, .06, .04], TEE: [-.02, .06, .04], SAND: [.05, -.16, .005], PATH: [-.04, -.12, 0] };
 function terrainMatFrom(o) {
   const { A, B, T, w, h, x0, z0, res, R, wlo, whi } = o;
