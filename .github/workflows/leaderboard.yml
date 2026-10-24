@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +48,82 @@ jobs:
             };
             const m = /```json\s*([\s\S]*?)```/.exec(issue.body || '');
             let r; try { r = JSON.parse(m[1]); } catch (e) { return finish(false, 'No valid score JSON found in this issue.'); }
+            // ---- helpers shared by the name change and the account merge
+            const sha8 = d => crypto.createHash('sha1').update(String(typeof d === 'string' && d.length >= 6 && d.length <= 40 ? d : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
+            const rdj = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
+            const NAMEOK = /^[\p{L}\p{N} ._'-]{1,14}$/u;
+            const gitPush = async (files, msg) => {
+              await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
+              await exec.exec('git', ['add', ...files]); await exec.exec('git', ['commit', '-m', msg]);
+              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+            };
+            // every score ever posted from these devices (the device id, not the name, is the player) and their profiles take the name; returns the files changed
+            const setNames = (devs, nn) => {
+              const changed = [], olds = new Set();
+              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
+                const rows = rdj('leaderboard/' + f, null); if (!Array.isArray(rows)) continue; let hit = false;
+                for (const x of rows) if (x && devs.includes(x.by) && x.name !== nn) { olds.add(x.name); x.name = nn; hit = true; }
+                if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
+              }
+              // the profile keeps the names used in the past (newest first), so a profile can show them
+              const pf0 = rdj('leaderboard/players.json', {}); let pch = false;
+              for (const d of devs) {
+                const prof = pf0[d];
+                if (prof && prof.n && prof.n !== nn) olds.add(prof.n);
+                const prev = [...olds, ...((prof && prof.on) || [])].filter((x, i, a) => typeof x === 'string' && x.toLowerCase() !== nn.toLowerCase() && a.findIndex(y => y.toLowerCase() === x.toLowerCase()) === i).slice(0, 10);
+                if (prof ? (prof.n !== nn || JSON.stringify(prof.on || []) !== JSON.stringify(prev)) : prev.length) { pf0[d] = Object.assign({}, prof || { at: Date.now() }, { n: nn }, prev.length ? { on: prev } : {}); pch = true; }
+              }
+              if (pch) { fs.writeFileSync('leaderboard/players.json', JSON.stringify(pf0) + '\n'); changed.push('leaderboard/players.json'); }
+              return changed;
+            };
+            if (issue.title.startsWith('[merge]') || issue.title.startsWith('[sync]')) {
+              // Two devices, one account. leaderboard/merges.json: { q: [{ f, t, n, at }] (open requests: device f asks device t), g: { device: { p: partner, n: name, nat: when the name last changed, at: merged } } }.
+              // A request is made by the new device, the merge happens only when the device that is asked accepts it; it cannot be undone.
+              // A merged pair (or a pair about to merge) also files its own stats here ([sync]) so each device can add the other's to its own.
+              const who = sha8(r.dev), HX = /^[0-9a-f]{8}$/, mf = 'leaderboard/merges.json';
+              const mg = rdj(mf, {}); mg.q = Array.isArray(mg.q) ? mg.q : []; mg.g = mg.g && typeof mg.g === 'object' ? mg.g : {};
+              if (issue.title.startsWith('[sync]')) {
+                if (!mg.g[who] && !mg.q.some(x => x.f === who || x.t === who)) return finish(false, 'This device is not merging.');
+                const PF = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'fd', 'lo', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
+                const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e8;
+                const pf = {}; if (r.pf && typeof r.pf === 'object') for (const k of PF) if (num(r.pf[k])) pf[k] = Math.round(r.pf[k] * 100) / 100;
+                if (!Object.keys(pf).length) return finish(false, 'No stats.');
+                const f = 'leaderboard/players.json', all = rdj(f, {}), old = all[who] || {}, files = [f];
+                all[who] = Object.assign({}, old, { n: old.n || (typeof r.name === 'string' && NAMEOK.test(r.name.trim()) ? r.name.trim() : 'Player'), pf, at: Date.now() });
+                fs.writeFileSync(f, JSON.stringify(all) + '\n');
+                // the rest of the account (scorecard history, trophies, shot clips, daily results ...): kept as is, for the other device to read; the game checks every entry again
+                if (r.ex && typeof r.ex === 'object' && !Array.isArray(r.ex)) { const js = JSON.stringify(r.ex); if (js.length <= 90000) { fs.mkdirSync('leaderboard/acct', { recursive: true }); fs.writeFileSync('leaderboard/acct/' + who + '.json', js + '\n'); files.push('leaderboard/acct/' + who + '.json'); } }
+                await gitPush(files, 'Stats synced for a merged account'); return finish(true, 'Stats saved.');
+              }
+              const act = r && r.act, now = Date.now(), files = [mf];
+              if (act === 'ask') {
+                const to = r.to, nm = typeof r.name === 'string' ? r.name.trim() : '';
+                if (!NAMEOK.test(nm) || typeof to !== 'string' || !HX.test(to) || to === who) return finish(false, 'Invalid request.');
+                if (mg.g[who] || mg.g[to]) return finish(false, 'One of the accounts is already merged.');
+                const pl = rdj('leaderboard/players.json', {});
+                let known = !!pl[to]; if (!known) for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile)\.json$/.test(f))) if ((rdj('leaderboard/' + f, []) || []).some(x => x && x.by === to)) { known = true; break; }
+                if (!known) return finish(false, 'No such player.');
+                if (pl[to] && pl[to].n && pl[to].n.toLowerCase() !== nm.toLowerCase()) return finish(false, 'The names do not match.');
+                mg.q = mg.q.filter(x => x.f !== who).concat({ f: who, t: to, n: (pl[to] && pl[to].n) || nm, at: now }).slice(-300);
+                fs.writeFileSync(mf, JSON.stringify(mg) + '\n'); await gitPush(files, 'Merge asked'); return finish(true, 'Request filed. It has to be accepted on the other device.');
+              }
+              const from = r.from;
+              if (typeof from !== 'string' || !HX.test(from)) return finish(false, 'Invalid request.');
+              const e = mg.q.find(x => x.f === from && x.t === who);
+              if (act === 'decline') {
+                if (!e) return finish(true, 'Nothing to decline.');
+                mg.q = mg.q.filter(x => x !== e); fs.writeFileSync(mf, JSON.stringify(mg) + '\n'); await gitPush(files, 'Merge declined'); return finish(true, 'Declined.');
+              }
+              if (act !== 'accept') return finish(false, 'Unknown action.');
+              if (!e) return finish(false, 'There is no such request.');
+              if (mg.g[who] || mg.g[from]) return finish(false, 'One of the accounts is already merged.');
+              mg.g[who] = { p: from, n: e.n, nat: now, at: now }; mg.g[from] = { p: who, n: e.n, nat: now, at: now };
+              mg.q = mg.q.filter(x => ![who, from].includes(x.f) && ![who, from].includes(x.t));
+              fs.writeFileSync(mf, JSON.stringify(mg) + '\n');
+              files.push(...setNames([who, from], e.n));
+              try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); files.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (err) { core.warning('overall: ' + err.message); }
+              await gitPush(files, `Accounts merged: ${e.n}`); return finish(true, 'The two devices are now one account.');
+            }
             if (issue.title.startsWith('[standings]')) {
               // a game that sees a closed day missing from the archive and the standings asks for them to be rebuilt (the scheduled run can be hours late, or skipped)
               const zs = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -60,28 +136,14 @@ jobs:
               return finish(true, 'The archive and the standings were rebuilt.');
             }
             if (issue.title.startsWith('[rename]')) {
-              // a name change: every score ever posted from this device (the device id, not the name, is the player) takes the new name
-              if (!r || typeof r.name !== 'string' || !/^[\p{L}\p{N} ._'-]{1,14}$/u.test(r.name.trim())) return finish(false, 'Invalid name.');
-              const nn = r.name.trim(), who = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
-              const rd = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
-              const changed = [], olds = new Set();
-              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
-                const rows = rd('leaderboard/' + f, null); if (!Array.isArray(rows)) continue; let hit = false;
-                for (const x of rows) if (x && x.by === who && x.name !== nn) { olds.add(x.name); x.name = nn; hit = true; }
-                if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
-              }
-              // the profile keeps the names used in the past (newest first), so a profile can show them
-              const pf0 = rd('leaderboard/players.json', {}), prof = pf0[who];
-              if (prof && prof.n && prof.n !== nn) olds.add(prof.n);
-              const prev = [...olds, ...((prof && prof.on) || [])].filter((x, i, a) => typeof x === 'string' && x.toLowerCase() !== nn.toLowerCase() && a.findIndex(y => y.toLowerCase() === x.toLowerCase()) === i).slice(0, 10);
-              if (prof ? (prof.n !== nn || JSON.stringify(prof.on || []) !== JSON.stringify(prev)) : prev.length) {
-                pf0[who] = Object.assign({}, prof || { at: Date.now() }, { n: nn }, prev.length ? { on: prev } : {}); fs.writeFileSync('leaderboard/players.json', JSON.stringify(pf0) + '\n'); changed.push('leaderboard/players.json');
-              }
+              // a name change: every score ever posted from this device (and from the device it is merged with) takes the new name
+              if (!r || typeof r.name !== 'string' || !NAMEOK.test(r.name.trim())) return finish(false, 'Invalid name.');
+              const nn = r.name.trim(), who = sha8(r.dev), mg = rdj('leaderboard/merges.json', {}), pr = mg.g && mg.g[who] ? mg.g[who].p : null;
+              const changed = setNames(pr ? [who, pr] : [who], nn);
+              if (pr && mg.g[pr]) { mg.g[who].n = mg.g[pr].n = nn; mg.g[who].nat = mg.g[pr].nat = Date.now(); fs.writeFileSync('leaderboard/merges.json', JSON.stringify(mg) + '\n'); changed.push('leaderboard/merges.json'); } // (the other device picks the new name up at its next launch)
               if (!changed.length) return finish(true, 'No scores from this device to rename.');
               try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); changed.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (e) { core.warning('overall: ' + e.message); }
-              await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
-              await exec.exec('git', ['add', ...changed]); await exec.exec('git', ['commit', '-m', `Leaderboard: a player is now ${nn}`]);
-              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              await gitPush(changed, `Leaderboard: a player is now ${nn}`);
               return finish(true, `Renamed: your scores are now listed as ${nn}.`);
             }
             if (issue.title.startsWith('[home]')) {

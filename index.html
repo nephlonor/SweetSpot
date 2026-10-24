@@ -8,6 +8,13 @@
 <meta name="apple-mobile-web-app-title" content="Sweet Spot">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head><body>
+<style>#splash{position:fixed;inset:0;z-index:100;background:#1d3a22;overflow:hidden;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
+#splash img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#splash:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,22,12,.55) 0,rgba(8,22,12,.12) 42%,rgba(8,22,12,.5) 100%)}
+#splash h1{position:absolute;z-index:1;left:0;right:0;top:10%;margin:0;text-align:center;color:#fff;text-transform:uppercase;font:700 clamp(40px,13vw,66px)/.95 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.015em;text-shadow:0 3px 22px rgba(0,0,0,.45)}
+#splash h1 span{color:#c6f2a9}#splash i{position:absolute;z-index:1;left:0;right:0;bottom:calc(9% + env(safe-area-inset-bottom));text-align:center;font:600 13px/1 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.78);font-style:normal;animation:spl 1.4s ease-in-out infinite}@keyframes spl{50%{opacity:.35}}</style>
+<div id="splash"><img src="splash.jpg" alt=""><h1>Sweet <span>Spot</span><br>Golf</h1><i>Loading</i></div>
+<script>window.__splashT0=Date.now();setTimeout(function(){var e=document.getElementById('splash');if(e){e.classList.add('off');setTimeout(function(){e.remove()},900)}},12000)</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@500;600;700&display=swap">
@@ -200,9 +207,9 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
 .icard{width:100%;max-width:520px;padding:16px;display:flex;gap:14px;transform:translateY(30px);transition:transform .5s var(--spring);border-radius:28px}
 #intro.on .icard,#done.on .dcard{transform:none}
-#featAsk,#homeAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#featAsk,#homeAsk,#mgAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .hcard{width:100%;max-width:420px;padding:22px 20px 18px;background:rgba(250,252,249,.93);text-align:center;transform:translateY(24px);transition:transform .5s var(--spring);border-radius:28px;--ink:#16211c;--ink2:rgba(22,33,28,.7)}
-#featAsk.on .hcard,#homeAsk.on .hcard{transform:none}
+#featAsk.on .hcard,#homeAsk.on .hcard,#mgAsk.on .hcard{transform:none}
 #neonAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(4,8,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #neonAsk.on .hcard{transform:none}
 #spider{position:fixed;left:0;top:0;width:54px;height:54px;z-index:12;pointer-events:none;opacity:0;filter:drop-shadow(0 0 3px rgba(255,255,255,calc(.75*var(--wk)))) drop-shadow(0 0 9px rgba(255,255,255,calc(.25*var(--wk))))}#spider.on{opacity:1}
@@ -611,6 +618,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
 <div class="layer" id="featAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Shape the game</div><div class="ht">Request a feature</div><div class="hb">Missing something? Send in your ideas and vote on the ones from other players with a thumbs up or down. The most wanted ones get built, and finished requests move to the archive.</div><div class="hbtns"><button class="btn alt" id="faNo" type="button">Not now</button><button class="btn" id="faOk" type="button">See requests</button></div></div></div>
 <div class="layer" id="neonAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Night round</div><div class="ht">Pick your neon ball</div><div class="hb">The floodlights are on. Choose the colour your ball glows before you take the first shot.</div><div class="neonOpts"><button class="neonO" type="button" data-i="0" style="--nc:#ff2fa0"><i></i>Pink</button><button class="neonO" type="button" data-i="1" style="--nc:#6dff2e"><i></i>Lime</button><button class="neonO" type="button" data-i="2" style="--nc:#2ef2ff"><i></i>Cyan</button><button class="neonO" type="button" data-i="3" style="--nc:#ffb020"><i></i>Amber</button></div></div></div>
+<div class="layer" id="mgAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk" id="mgK"></div><div class="ht" id="mgT"></div><div class="hb" id="mgB"></div><div class="hbtns"><button class="btn alt" id="mgNo" type="button"></button><button class="btn" id="mgOk" type="button"></button></div></div></div>
 <div class="layer" id="homeAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Thanks for playing</div><div class="ht">Add your home course</div><div class="hb">Tell us your home course: new courses are added often, and the home courses of our active players come first. Good luck, and thanks for playing!</div><input id="haC" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Course name" enterkeyhint="next"><input id="haR" maxlength="30" autocomplete="off" spellcheck="false" placeholder="State or country" enterkeyhint="done"><div class="hn" id="haN">You can change it later under Menu, Player &amp; golfer.</div><div class="hbtns"><button class="btn alt" id="haNo" type="button">Not now</button><button class="btn" id="haOk" type="button">Save</button></div></div></div>
 <div id="scrim"></div>
 <div id="dataLoad" class="glass"></div>
@@ -645,6 +653,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <section class="mpg" data-pg="player">
     <div class="mgrp"><div class="mrow">Name<input id="mName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="done"></div>
     <div class="nameHint" id="nameHintM" hidden></div>
+    <div class="nameHint" id="mgNote" hidden></div>
     <div class="mrow">Home course<input id="mHomeC" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Course name" enterkeyhint="next"></div>
     <div class="mrow">State / country<input id="mHomeR" maxlength="30" autocomplete="off" spellcheck="false" placeholder="State or country" enterkeyhint="done"></div>
     <div class="mnote">New courses are added often, and the home courses of our active players come first.</div>
@@ -3522,7 +3531,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 1 };
+const APP_ITER = { courses: 8, n: 4 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8873,6 +8882,7 @@ function statsHole(h) {
 function statsRound(tp) {
   ST.rounds++; ST.xp += 30; saveStats(); const pu = G.putts.reduce((a, b) => a + b, 0), c = COURSE.short;
   const b1 = beat('round', tp.d, c + ' · ' + tp.s + ' strokes'); setTimeout(() => beat('roundPutts', pu, c), b1 ? 4300 : 300);
+  setTimeout(() => mgSyncSend(), 5000); // (a merged account tells the other device about it)
 }
 // The road from Rookie to Legend: 48 levels, roughly 200 rounds to Hall of Famer and 260 to Legend at a steady pace. A hole is worth 10 points, a finished
 // round 30 more, a great shot up to 80 (the better the shot, the more) and a hole in one 300, so a player who keeps hitting great shots climbs faster.
@@ -9121,7 +9131,7 @@ const GH_REPO = 'nephlonor/SweetSpot';
 const GH_POST_KEY = ['Nnpt', 'VTZZcUtENzI0TVZGRWY4RmQw', 'QVBmeDF4R0ljTXVvM0VSa2RG', 'ODY0OUsyWmVaSlZ6SXJ0c2FL', 'SEEwcjVtdHN4NFdqQUNnX25L', 'Z2l0aHViX3BhdF8xMUEyNU1J']; // e.g. the base64 of the token, reversed, in a few strings
 const ghKey = () => { try { return GH_POST_KEY.length ? atob(GH_POST_KEY.slice().reverse().join('')) : ''; } catch (e) { return ''; } };
 function deviceId() { try { let d = localStorage.getItem('ssg-dev'); if (!d) { d = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('ssg-dev', d); } return d; } catch (e) { return 'x'; } }
-function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId(), pf: profileCompact(), bs: r.bs || [], h: r.h || null, pt: r.pt || null }; }
+function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId(), pf: profileCompact(true), bs: r.bs || [], h: r.h || null, pt: r.pt || null }; }
 // returns true when the round was filed (no account needed)
 async function postAuto(r) {
   const k = ghKey(); if (!k) return false;
@@ -9209,9 +9219,9 @@ function postWorld(r) {
 // is this name already used by another player? The name is still allowed, the player is told. Every board's names and the player profiles are checked.
 function nameTakenBy(nm) {
   const n = String(nm || '').trim().toLowerCase(), me = dlMe(); if (!n) return false;
-  for (const rows of Object.values(Board.gh)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && String(x.name).toLowerCase() === n)) return true;
-  for (const rows of Object.values(DL.files)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && String(x.name).toLowerCase() === n)) return true;
-  const pl = DL.players || {}; return Object.keys(pl).some(k => k !== me && pl[k] && String(pl[k].n).toLowerCase() === n);
+  for (const rows of Object.values(Board.gh)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && x.by !== settings.mgP && String(x.name).toLowerCase() === n)) return true;
+  for (const rows of Object.values(DL.files)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && x.by !== settings.mgP && String(x.name).toLowerCase() === n)) return true;
+  const pl = DL.players || {}; return Object.keys(pl).some(k => k !== me && k !== settings.mgP && pl[k] && String(pl[k].n).toLowerCase() === n);
 }
 function nameHint() {
   const nm = cleanName(settings.name), t = nm && nameTakenBy(nm) ? `"${nm}" is already used by another player. You can keep it, but the leaderboards show only one of you.` : '';
@@ -9222,6 +9232,166 @@ function loadNames() { // the boards of every course and the profiles, once a mi
   if (Date.now() - _namesAt < 60000) return; _namesAt = Date.now();
   Promise.all([loadPlayers(), ...Object.keys(COURSES).map(k => loadWorld(false, k))]).then(nameHint, () => { });
 }
+// ---- two devices, one account
+// A second device that enters a name another player already has is asked whether it is the same player. If so it files a merge request (an issue, like a name
+// change); the first device has to accept it. leaderboard/merges.json then pairs the two for good: { q: [{ f, t, n, at }] open requests, g: { device: { p: partner, n: name, nat } } }.
+// A merged device adds its partner's stats (from players.json, which each of the two keeps up to date with a [sync] issue) to its own, so both show the same totals; what goes
+// out is only its own share (ST.mgAbs is the partner's share already added), so the boards and profiles, which add up the devices of one name, never count anything twice.
+// The name follows: the server stamps every name change (nat) and each device takes the newer name at its launch.
+const MG = { merges: null, at: 0, busy: false, dlg: null, fast: 0 };
+const MG_MAP = { xp: 'xp', r: 'rounds', h: 'holes', st: 'strokes', pu: 'putts', ac: 'aces', ea: 'eagles', bi: 'birdies', pa: 'pars', bo: 'bogeys', dd: 'doubles', fh: 'fwHit', ft: 'fwTry', gh: 'gir', gt: 'girTry', sh: 'shots', di: 'dist', wa: 'water', ob: 'ob', tr: 'trees', rb: 'rainbows', ch: 'chipins', fd: 'found', lo: 'lost' };
+const MG_SUM = Object.keys(MG_MAP), MG_REC = { dr: 'drive', ho: 'holed', pt: 'putt', gs: 'girStreak', fs: 'fwStreak', bk: 'birdStreak' };
+async function ghIssue(title, payload, text) {
+  const k = ghKey(); if (!k) return false;
+  try { const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ title, body: (text || 'From Sweet Spot Golf.') + '\n\n```json\n' + JSON.stringify(payload) + '\n```\n' }) }); return res.ok; } catch (e) { return false; }
+}
+async function loadMerges(force) {
+  if (!force && MG.merges && Date.now() - MG.at < 60000) return MG.merges; MG.at = Date.now();
+  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/merges.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); const j = r.ok ? await r.json() : null; MG.merges = j && typeof j === 'object' ? { q: Array.isArray(j.q) ? j.q : [], g: j.g && typeof j.g === 'object' ? j.g : {} } : (MG.merges || { q: [], g: {} }); } catch (e) { MG.merges = MG.merges || { q: [], g: {} }; }
+  return MG.merges;
+}
+// the other devices that carry this name (boards, profiles)
+function nameOwners(nm) {
+  const n = String(nm || '').trim().toLowerCase(), me = dlMe(), ids = new Set(), add = (id, name) => { if (typeof id === 'string' && id !== me && id !== settings.mgP && String(name).toLowerCase() === n) ids.add(id); };
+  for (const rows of Object.values(Board.gh)) if (Array.isArray(rows)) for (const x of rows) if (x) add(x.by, x.name);
+  for (const rows of Object.values(DL.files)) if (Array.isArray(rows)) for (const x of rows) if (x) add(x.by, x.name);
+  const pl = DL.players || {}; for (const k of Object.keys(pl)) if (pl[k]) add(k, pl[k].n);
+  return [...ids];
+}
+function mgDialog(kind, o) {
+  const T = {
+    ask: ['Same name found', 'Merge your accounts?', `A player called "${o && o.name}" already exists. If that is you on another device, you can merge the two accounts: all stats and records are combined, both devices act as one, and a name change on one follows on the other. This can't be undone, and the other device has to accept the merge too.`, 'No', 'Merge'],
+    waiting: ['Merge requested', 'Accept it on your other device', `Open Sweet Spot on your other device and accept the merge there. Until you do, nothing changes. The request can take a minute to arrive.`, '', 'OK'],
+    accept: ['Merge request', 'Merge with another device?', `Another device has entered your name "${o && o.name}" and would like to merge with this account: all stats and records are combined, and both devices act as one. This can't be undone. Only accept if it is your own device.`, 'Not me', 'Merge'],
+    wait: ['Merging', 'One moment', 'The two accounts are being joined. This can take a minute.', '', 'OK'],
+    done: ['Merged', 'One account', 'Your two devices now share their stats and records, and a name change on one follows on the other.', '', 'OK'],
+    declined: ['Merge declined', 'Not merged', 'The other device did not accept the merge. The two accounts stay separate.', '', 'OK'],
+    fail: ['No connection', 'Could not send it', 'The request did not go out. Check your connection and try again.', '', 'OK']
+  }[kind];
+  MG.dlg = { kind, o }; $('mgK').textContent = T[0]; $('mgT').textContent = T[1]; $('mgB').textContent = T[2]; $('mgNo').textContent = T[3]; $('mgNo').hidden = !T[3]; $('mgOk').textContent = T[4]; $('mgAsk').classList.add('on');
+}
+function mgClose() { MG.dlg = null; $('mgAsk').classList.remove('on'); mgUI(); }
+function mgUI() {
+  const el = $('mgNote'); if (!el) return;
+  const t = settings.mgP ? 'Merged: this account is shared with another device.' : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
+  el.textContent = t; el.hidden = !t;
+}
+// the name has just been entered: is it somebody else's?
+async function mgNameCheck() {
+  const nm = cleanName(settings.name); if (!nm || settings.mgP || settings.mgReq || settings.mgAcc || MG.dlg || !ghKey()) return;
+  if ((settings.mgDecl || []).includes(nm.toLowerCase())) return;
+  await loadPlayers(true); const mg = await loadMerges(true); if (cleanName(settings.name) !== nm || MG.dlg) return;
+  const free = nameOwners(nm).filter(id => !mg.g[id]).sort((a, b) => ((DL.players[b] || {}).at || 0) - ((DL.players[a] || {}).at || 0));
+  if (free.length) mgDialog('ask', { to: free[0], name: nm });
+}
+// add the other device's share to this one's stats (counters add, records take the best); what was added last time is remembered, so only the change is added now
+function mgAbsorb(entry) {
+  const pf = cleanPf(entry && entry.pf); if (!pf) return;
+  const abs = ST.mgAbs || {}; let ch = false;
+  for (const k of MG_SUM) { if (!Number.isFinite(pf[k])) continue; const d = pf[k] - (abs[k] || 0); if (!d) continue; const f = MG_MAP[k]; ST[f] = Math.max(0, (ST[f] || 0) + d); abs[k] = pf[k]; ch = true; }
+  for (const [k, f] of Object.entries(MG_REC)) if (Number.isFinite(pf[k]) && pf[k] > ST.rec[f].v) { ST.rec[f].v = pf[k]; if (ST.rec[f].at == null) ST.rec[f].at = 1; ch = true; }
+  if (Number.isFinite(pf.br) && (ST.rec.round.at == null || pf.br < ST.rec.round.v)) { ST.rec.round = Object.assign({}, ST.rec.round, { v: pf.br, at: ST.rec.round.at || 1 }); ch = true; }
+  if (ch) { ST.mgAbs = abs; saveStats(); if ($('statsSheet') && $('statsSheet').classList.contains('on')) try { openStats(); } catch (e) { } }
+}
+// the rest of the account, as this device holds it: scorecard history per course, best scores, shot clips, trophies, daily results, the home course, and the
+// counters the profile does not carry (holes in one shot, holes played in rain: only this device's own share, like the stats)
+function acctEx(limit) {
+  const ex = { v: 1, rounds: {}, best: {}, reel: reelList().slice(0, 8), trophies: ST.trophies.slice(-60), hs: Math.max(0, (ST.holedShots || 0) - ((ST.mgAbs || {}).hs || 0)), rh: Math.max(0, (ST.rainHoles || 0) - ((ST.mgAbs || {}).rh || 0)), dl: {}, home: settings.homeC ? { c: settings.homeC, r: settings.homeR || '' } : null };
+  for (const c of Object.values(COURSES)) {
+    const rs = localRounds(c.key); if (rs.length) ex.rounds[c.key] = sortRounds(rs).slice(0, limit);
+    try { const b = +localStorage.getItem(c.best); if (b) ex.best[c.key] = b; } catch (e) { }
+  }
+  const dl = dlRecs(); for (const d of Object.keys(dl)) if (dl[d] && (dl[d].status === 'done' || dl[d].status === 'missed')) ex.dl[d] = dl[d];
+  return ex;
+}
+function mgEx() { for (const n of [30, 20, 12, 6, 3]) { const ex = acctEx(n); if (JSON.stringify(ex).length < 54000) return ex; } return acctEx(1); }
+async function mgSyncSend(force, now) {
+  if (!(settings.mgP || settings.mgReq || settings.mgAcc)) return;
+  const pf = profileCompact(true), ex = mgEx(), sig = JSON.stringify([pf, ex]);
+  if (!force && (settings.mgSig === sig.length + ':' + hash2str(sig) || (!now && Date.now() - (settings.mgSigAt || 0) < 180000))) return;
+  if (await ghIssue('[sync] stats', { v: 1, sync: true, dev: deviceId(), name: cleanName(settings.name), pf, ex }, 'Stats of a merged account from Sweet Spot Golf.')) { settings.mgSig = sig.length + ':' + hash2str(sig); settings.mgSigAt = Date.now(); saveSettings(); }
+}
+function hash2str(t) { let h = 2166136261; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 16777619); return (h >>> 0).toString(36); }
+async function loadAcct(id) {
+  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/acct/${id}.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch (e) { return null; }
+}
+// take over what the other device holds (union: nothing is ever taken away)
+function mgAbsorbEx(ex) {
+  if (!ex || typeof ex !== 'object') return;
+  let ch = false; const nm = cleanName(settings.name);
+  for (const [key, rs] of Object.entries(ex.rounds || {})) {
+    const c = COURSES[key]; if (!c || !Array.isArray(rs)) continue;
+    const loc = localRounds(key), have = new Map(loc.map(r => [r.at + '|' + r.strokes, r]));
+    for (const r of rs) { if (!validRound(r, c.defs.length)) continue; const k = r.at + '|' + r.strokes, o = have.get(k); if (o) { if (r.posted && !o.posted) { o.posted = true; ch = true; } continue; } loc.push(Object.assign({}, r, nm ? { name: nm } : {})); have.set(k, r); ch = true; }
+    if (ch) try { localStorage.setItem(c.board, JSON.stringify(sortRounds(loc).slice(0, 60))); } catch (e) { }
+  }
+  for (const [key, b] of Object.entries(ex.best || {})) { const c = COURSES[key]; if (!c || !Number.isFinite(b) || b < 18 || b > 200) continue; try { const cur = +localStorage.getItem(c.best) || null; if (!cur || b < cur) { localStorage.setItem(c.best, b); ch = true; } } catch (e) { } }
+  if (Array.isArray(ex.reel)) for (const x of ex.reel) { const e = cleanShot(x); if (e && Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite)) { const before = reelList().length; reelAdd(Object.assign({}, x, { cl: x.cl })); if (reelList().length !== before) ch = true; } }
+  if (Array.isArray(ex.trophies)) for (const t of ex.trophies) if (t && /^\d{4}-\d{2}-\d{2}$/.test(t.day) && !ST.trophies.some(q => q.day === t.day)) { ST.trophies.push({ day: t.day, course: COURSES[t.course] ? t.course : 'gccb', tp: t.tp | 0, s: t.s | 0, n: t.n | 0 }); ch = true; }
+  ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1);
+  const abs = ST.mgAbs || {};
+  for (const [k, f] of [['hs', 'holedShots'], ['rh', 'rainHoles']]) if (Number.isFinite(ex[k]) && ex[k] >= 0) { const d = ex[k] - (abs[k] || 0); if (d) { ST[f] = Math.max(0, (ST[f] || 0) + d); abs[k] = ex[k]; ch = true; } }
+  ST.mgAbs = abs;
+  const dl = dlRecs(); let dch = false;
+  for (const [d, r] of Object.entries(ex.dl || {})) { if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !r || r.day !== d || (r.status !== 'done' && r.status !== 'missed')) continue; const o = dl[d]; if (!o || (o.status !== 'done' && r.status === 'done') || (!o.status) || (o.status === 'playing')) { dl[d] = r; dch = true; } }
+  if (dch) { for (const k of Object.keys(dl).sort().slice(0, -5)) delete dl[k]; try { localStorage.setItem('ssg-daily', JSON.stringify(dl)); } catch (e) { } ch = true; }
+  if (ex.home && !settings.homeC && typeof ex.home.c === 'string' && ex.home.c) { settings.homeC = cleanHome(ex.home.c, 40); settings.homeR = cleanHome(ex.home.r, 30); saveSettings(); ch = true; }
+  if (ch) { saveStats(); try { refreshBoards(); dlCards(); showBest(); } catch (e) { } if ($('statsSheet').classList.contains('on')) try { openStats(); } catch (e) { } }
+}
+function mgFast() { MG.fast = 12; const tick = () => { if (MG.fast-- > 0 && !(settings.mgP && !settings.mgReq && !settings.mgAcc)) { mgCheck(); setTimeout(tick, 25000); } }; setTimeout(tick, 25000); }
+async function mgCheck() {
+  if (!ghKey() || MG.busy) return; MG.busy = true;
+  try {
+    const mg = await loadMerges(true), me = dlMe(), mine = mg.g[me]; await loadPlayers(true);
+    if (mine) {
+      const wasPending = !!(settings.mgReq || settings.mgAcc);
+      settings.mgP = mine.p; delete settings.mgReq; delete settings.mgAcc; if (!settings.nameSent && cleanName(settings.name)) settings.nameSent = cleanName(settings.name); saveSettings(); // (a later name change is then filed)
+      // the name follows: the newer change wins (the server stamps each one)
+      if (mine.n && mine.n !== settings.name && (mine.nat || 0) > (settings.nameAt || 0)) {
+        settings.name = mine.n; settings.nameSent = mine.n; settings.nameAt = mine.nat; saveSettings();
+        for (const id of ['nameIn', 'mName']) { const e = $(id); if (e) e.value = mine.n; }
+        for (const c of Object.values(COURSES)) { try { const a = JSON.parse(localStorage.getItem(c.board) || '[]'); if (Array.isArray(a)) localStorage.setItem(c.board, JSON.stringify(a.map(x => Object.assign(x, { name: mine.n })))); } catch (e) { } }
+        updateHUD(); titleMenuSync(); nameHint(); refreshBoards();
+      } else if (mine.nat && (settings.nameAt || 0) < mine.nat && mine.n === settings.name) { settings.nameAt = mine.nat; saveSettings(); }
+      mgAbsorb((DL.players || {})[mine.p]); loadAcct(mine.p).then(ex => { mgAbsorbEx(ex); mgSyncSend(); }); loadDailyFile(dayId());
+      if (wasPending && !MG.dlg) mgDialog('done'); else if (wasPending && MG.dlg && (MG.dlg.kind === 'waiting' || MG.dlg.kind === 'wait')) mgDialog('done');
+    } else {
+      for (const key of ['mgReq', 'mgAcc']) {
+        const q = settings[key]; if (!q) continue;
+        const open = key === 'mgReq' ? mg.q.some(x => x.f === me && x.t === q.to) : mg.q.some(x => x.t === me && x.f === q.from);
+        if (!open && Date.now() - q.at > 240000) { delete settings[key]; saveSettings(); if (key === 'mgReq' && !MG.dlg) mgDialog('declined'); }
+      }
+      const inc = mg.q.find(x => x.t === me);
+      if (inc && !MG.dlg && !settings.mgAcc && $('title').classList.contains('on') && !document.querySelector('.sheet.on')) mgDialog('accept', { from: inc.f, name: inc.n });
+    }
+  } catch (e) { } finally { MG.busy = false; mgUI(); }
+}
+$('mgOk').addEventListener('click', async () => {
+  const d = MG.dlg; if (!d) return;
+  if (d.kind === 'ask') {
+    $('mgOk').disabled = true;
+    const ok = await ghIssue(`[merge] ${d.o.name} asks`, { v: 1, merge: true, act: 'ask', to: d.o.to, name: d.o.name, dev: deviceId() }, 'Account merge request from Sweet Spot Golf.');
+    $('mgOk').disabled = false;
+    if (!ok) { mgDialog('fail'); return; }
+    settings.mgReq = { to: d.o.to, n: d.o.name, at: Date.now() }; saveSettings(); mgSyncSend(true); mgDialog('waiting'); mgFast(); return;
+  }
+  if (d.kind === 'accept') {
+    $('mgOk').disabled = true;
+    const ok = await ghIssue(`[merge] accepted`, { v: 1, merge: true, act: 'accept', from: d.o.from, dev: deviceId() }, 'Account merge accepted from Sweet Spot Golf.');
+    $('mgOk').disabled = false;
+    if (!ok) { mgDialog('fail'); return; }
+    settings.mgAcc = { from: d.o.from, at: Date.now() }; saveSettings(); mgSyncSend(true); mgDialog('wait'); mgFast(); return;
+  }
+  mgClose();
+});
+$('mgNo').addEventListener('click', async () => {
+  const d = MG.dlg; if (!d) return;
+  if (d.kind === 'ask') { settings.mgDecl = (settings.mgDecl || []).concat(String(d.o.name).toLowerCase()).slice(-20); saveSettings(); }
+  if (d.kind === 'accept') { ghIssue('[merge] declined', { v: 1, merge: true, act: 'decline', from: d.o.from, dev: deviceId() }, 'Account merge declined from Sweet Spot Golf.'); }
+  mgClose();
+});
+setTimeout(mgCheck, 5000); setInterval(mgCheck, 150000); setTimeout(mgUI, 1000);
+document.addEventListener('visibilitychange', () => { if (document.hidden) mgSyncSend(false, true); else setTimeout(mgCheck, 1500); });
 function playerName() { return cleanName(settings.name) || 'Player'; }
 function cleanName(s) { return String(s || '').replace(/[^\p{L}\p{N} ._'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14); }
 function validRound(r, n) {
@@ -9584,9 +9754,11 @@ function dlRecs() { try { const a = JSON.parse(localStorage.getItem('ssg-daily')
 function dlRec(day) { return dlRecs()[day || dayId()] || null; }
 function dlSet(rec) { const a = dlRecs(); a[rec.day] = rec; for (const k of Object.keys(a).sort().slice(0, -5)) delete a[k]; try { localStorage.setItem('ssg-daily', JSON.stringify(a)); } catch (e) { } }
 // compact stats profile and best shots, as filed with a round (numbers only)
-function profileCompact() {
+function profileCompact(post) { // post: what goes out is this device's own share (the other device's stats, added to ST by the merge, are taken off again)
   const S = ST, R = S.rec, o = { xp: S.xp, r: S.rounds, h: S.holes, st: S.strokes, pu: S.putts, ac: S.aces, ea: S.eagles, bi: S.birdies, pa: S.pars, bo: S.bogeys, dd: S.doubles, fh: S.fwHit, ft: S.fwTry, gh: S.gir, gt: S.girTry, sh: S.shots, di: Math.round(S.dist), wa: S.water, ob: S.ob, fd: S.found | 0, lo: S.lost | 0, tr: S.trees, rb: S.rainbows || 0, ch: S.chipins, dr: Math.round(R.drive.v), ho: +R.holed.v.toFixed(1), pt: +R.putt.v.toFixed(1), gs: R.girStreak.v, fs: R.fwStreak.v, bk: R.birdStreak.v };
-  if (R.round.at != null) o.br = R.round.v; if (S.trophies.length) o.tw = S.trophies.map(t => dayNum(t.day)).slice(-40); return o;
+  if (R.round.at != null) o.br = R.round.v; if (S.trophies.length) o.tw = S.trophies.map(t => dayNum(t.day)).slice(-40);
+  if (post && S.mgAbs) for (const k of MG_SUM) if (Number.isFinite(S.mgAbs[k]) && Number.isFinite(o[k])) o[k] = Math.max(0, +(o[k] - S.mgAbs[k]).toFixed(2));
+  return o;
 }
 function bestShotsCompact() { return bestShots(G.shotLog, 3).map(x => ({ h: x.h, n: x.n, c: x.c, k: x.k, l: x.l, f: x.f, d: x.d, e: x.e, t: x.t, o: x.o, b: x.b, q: x.q, sm: x.sm, s: x.s, fw: x.fw, lp: x.lp, p: x.p, cl: x.cl })); }
 const cleanShot = x => x && typeof x === 'object' && ['h', 'n', 'c', 'k', 'l', 'd', 'e', 'p'].every(k => Number.isFinite(x[k])) ? { h: x.h | 0, n: x.n | 0, c: x.c | 0, k: x.k | 0, l: x.l | 0, f: x.f ? 1 : 0, d: +x.d, e: +x.e, t: +x.t || 0, o: x.o ? 1 : 0, b: +x.b || 0, q: x.q | 0, sm: +x.sm || 0, s: x.s | 0, fw: x.fw ? 1 : 0, lp: x.lp ? 1 : 0, p: x.p | 0, cl: Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite) ? x.cl : undefined } : null;
@@ -9708,7 +9880,7 @@ function dlHole() {
 function dailyDone(tp) {
   const d = G.daily, rec = dlRec(d.day) || { day: d.day, course: d.course, startAt: Date.now() }, inTime = dayId() === d.day;
   rec.h = G.scores.slice(); rec.pt = G.putts.slice(); rec.tp = tp.d; rec.strokes = tp.s; rec.at = Date.now(); rec.status = inTime ? 'done' : 'missed';
-  statsRound(tp); rec.pf = profileCompact(); rec.bs = bestShotsCompact(); dlSet(rec);
+  statsRound(tp); rec.pf = profileCompact(true); rec.bs = bestShotsCompact(); dlSet(rec);
   if (!inTime) return; // finished after the day closed: counts as an ordinary round (finishRound goes on)
   G.submitted = true; dlPublish(); dlPost(rec); setTimeout(() => dlRefresh(), 300);
 }
@@ -9761,6 +9933,7 @@ function startDaily() {
   const day = dayId(), rec = dlRec(day);
   if (rec && (rec.status === 'done' || rec.status === 'missed')) { openDaily(); return; }
   if (!cleanName(settings.name)) { dlNeedName(); return; }
+  if (settings.mgP && !rec && (DL.files[day] || []).some(e => e.id === settings.mgP && e.done)) { const el = $('dataLoad'); el.textContent = 'Your other device has already played today'; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 3400); openDaily(); return; } // (one account, one chance)
   audio();
   if (G.state !== 'title' && G.C && !G.practice) saveRound(); // the round in play waits where it is
   if (MP.spec) mpResume(true);
@@ -10084,9 +10257,10 @@ function initInput() {
   ni.addEventListener('input', () => { nr.classList.remove('need'); settings.name = cleanName(ni.value); saveSettings(); titleMenuSync(); nameHint(); });
   ni.addEventListener('focus', loadNames); mn.addEventListener('focus', loadNames);
   mn.addEventListener('input', () => { const c = cleanName(mn.value); const keep = settings.name; settings.name = c; nameHint(); settings.name = keep; });
-  ni.addEventListener('blur', () => { ni.value = cleanName(ni.value); renameSync(); });
+  ni.addEventListener('focus', () => { ni._was = cleanName(ni.value); });
+  ni.addEventListener('blur', () => { ni.value = cleanName(ni.value); if (ni.value !== ni._was) settings.nameAt = Date.now(); renameSync(); mgNameCheck(); });
   ni.addEventListener('keydown', e => { if (e.key === 'Enter') { ni.blur(); $('btnPlay').click(); } });
-  mn.addEventListener('change', () => { setName(mn.value); mn.value = settings.name || ''; nameHint(); });
+  mn.addEventListener('change', () => { settings.nameAt = Date.now(); setName(mn.value); mn.value = settings.name || ''; nameHint(); mgNameCheck(); });
   mn.addEventListener('keydown', e => { if (e.key === 'Enter') mn.blur(); });
   { const mc = $('mHomeC'), mr = $('mHomeR'), save = () => { homeSet(mc.value, mr.value); mc.value = settings.homeC || ''; mr.value = settings.homeR || ''; };
     mc.addEventListener('change', save); mr.addEventListener('change', save); mc.addEventListener('keydown', e => { if (e.key === 'Enter') mr.focus(); }); mr.addEventListener('keydown', e => { if (e.key === 'Enter') mr.blur(); });
@@ -10248,6 +10422,13 @@ function boot(data) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { sizeCanvases(); });
   requestAnimationFrame(frame);
   setTimeout(onResize, 300);
+  // the loading page (see the top of the body) stays up until the start screen is built and drawn, and for at least a second, then fades out
+  const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]) : Promise.resolve();
+  fonts.then(() => requestAnimationFrame(() => requestAnimationFrame(splashHide)));
+}
+function splashHide() {
+  const el = document.getElementById('splash'); if (!el || el._going) return; el._going = true;
+  setTimeout(() => { el.classList.add('off'); setTimeout(() => el.remove(), 900); }, Math.max(0, 1000 - (Date.now() - (window.__splashT0 || 0))));
 }
 // Updates: GitHub Pages lets browsers keep the page for 10 minutes, and a home-screen app much longer. The deploy stamps BUILD and
 // writes version.txt; when the two differ the page reloads itself through a fresh URL.
