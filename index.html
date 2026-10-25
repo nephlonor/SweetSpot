@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 17 };
+const APP_ITER = { courses: 8, n: 18 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7555,7 +7555,7 @@ function swirlMake() {
   g.setAttribute('aS', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
   const mat = new THREE.ShaderMaterial({
     uniforms: { uPx: { value: 1 }, uCol: { value: new THREE.Color(0xffffff) } }, transparent: true, depthWrite: false,
-    vertexShader: 'attribute float aA; attribute float aS; uniform float uPx; varying float vA; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vA = aA; gl_PointSize = clamp(aS * 1100.0 * uPx / max(1.0, -mv.z), 5.0 * uPx, 64.0 * uPx); }',
+    vertexShader: 'attribute float aA; attribute float aS; uniform float uPx; varying float vA; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vA = aA; gl_PointSize = clamp(aS * 1100.0 * uPx / max(1.0, -mv.z), 3.5 * uPx, 64.0 * uPx); }',
     fragmentShader: 'uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d); a = a * a * (0.55 + 0.45 * smoothstep(0.55, 0.0, d)); gl_FragColor = vec4(uCol, a * vA); }'
   });
   W.swirl = new THREE.Points(g, mat); W.swirl.frustumCulled = false; W.swirl.visible = false; W.scene.add(W.swirl); W.swirlP = { list: [], k: 0, fr: null };
@@ -7576,8 +7576,10 @@ function tracerFill(fr, rn, tt) {
     const vx = ty * uz - tz * uy, vy = tz * ux - tx * uz, vz = tx * uy - ty * ux, born = now - Math.max(0, tt - fr[k * 5]) / 1.1;
     for (let q = 0; q <= S; q++) { // the strands, and a fine mist between them
       const id = k * 5 + q, mist = q === S;
-      P.list.push({ x: at(k, 1), y: at(k, 2) + VIS_R, z: at(k, 3), ux, uy, uz, vx, vy, vz, born, life: (mist ? .7 : .9) + 1.1 * swirlHash(id), spin: 2.6 + 3.2 * swirlHash(id + .5), ph0: mist ? swirlHash(id + 2) * 6.28 : q * TAU / S + k * .21,
-        rad: (mist ? .4 : 1) * (.6 + .8 * swirlHash(id + .9)), rise: .22 * (swirlHash(id + .3) - .35), size: mist ? .2 : .3, op: mist ? .55 : 1, id });
+      // a single swirl starts at the centre of the ball; two or three start on its edge, a ball's width apart (their axes stay parallel, each winds round its own)
+      const r0 = S === 1 ? 0 : S === 2 ? VIS_R : 1.155 * VIS_R, a0 = mist ? swirlHash(id + 2) * TAU : q * TAU / S + .6, rr = mist ? r0 * swirlHash(id + 4) : r0;
+      P.list.push({ x: at(k, 1), y: at(k, 2) + VIS_R, z: at(k, 3), ux, uy, uz, vx, vy, vz, born, life: (mist ? .7 : .9) + 1.1 * swirlHash(id), spin: 2.6 + 3.2 * swirlHash(id + .5), ph0: swirlHash(id + 2) * TAU,
+        ax: Math.cos(a0) * rr, ay: Math.sin(a0) * rr, rad: (mist ? 1.6 : 1) * (.6 + .8 * swirlHash(id + .9)), rise: .22 * (swirlHash(id + .3) - .35), size: mist ? .13 : S === 1 ? .28 : .15, op: mist ? .5 : 1, id });
     }
   }
 }
@@ -7587,9 +7589,9 @@ function swirlUpdate(dt) {
   const P = W.swirlP, g = W.swirl.geometry, pa = g.attributes.position.array, aa = g.attributes.aA.array, sa = g.attributes.aS.array; let n = 0;
   for (let i = P.list.length - 1; i >= 0; i--) {
     const o = P.list[i], age = now - o.born; if (age >= o.life) { P.list[i] = P.list[P.list.length - 1]; P.list.pop(); continue; }
-    if (age < 0) continue; const u = age / o.life, ph = o.ph0 + age * o.spin, rad = (.05 + .3 * (1 - Math.exp(-age * 1.2))) * o.rad, cx = Math.cos(ph) * rad, cy = Math.sin(ph) * rad, a3 = n * 3;
+    if (age < 0) continue; const u = age / o.life, ph = o.ph0 + age * o.spin, rad = (.02 + .2 * (1 - Math.exp(-age * 1.2))) * o.rad, cx = o.ax + Math.cos(ph) * rad, cy = o.ay + Math.sin(ph) * rad, a3 = n * 3;
     pa[a3] = o.x + o.ux * cx + o.vx * cy; pa[a3 + 1] = o.y + o.uy * cx + o.vy * cy + o.rise * age; pa[a3 + 2] = o.z + o.uz * cx + o.vz * cy;
-    aa[n] = o.op * Math.min(1, age / .1) * Math.pow(1 - u, 1.7) * (.7 + .3 * Math.sin(age * 9 + o.id)); sa[n] = (o.size + .2 * u) * (.8 + .4 * swirlHash(o.id + .2)); n++;
+    aa[n] = o.op * Math.min(1, age / .1) * Math.pow(1 - u, 1.7) * (.7 + .3 * Math.sin(age * 9 + o.id)); sa[n] = (o.size * (1 + .7 * u)) * (.8 + .4 * swirlHash(o.id + .2)); n++;
     if (n >= TR_MAX) break;
   }
   g.attributes.position.needsUpdate = true; g.attributes.aA.needsUpdate = true; g.attributes.aS.needsUpdate = true; g.setDrawRange(0, n);
