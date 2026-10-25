@@ -29,6 +29,7 @@ The method, its checks and its pitfalls are in **[docs/NEW_COURSE_GUIDE.md](../.
   - `snd.js`: soundscape render;
   - `rough.js`: ball in the rough, rain;
   - `overallcard.js`: a name on the daily challenge's Overall tab opens the player card.
-  - `merge2.js`: two devices merging into one account (runs the real workflow script from `leaderboard.yml` behind both browsers).
+  - `merge2.js`: two devices merging into one account (runs the real workflow script from `leaderboard.yml` behind both browsers);
+  - `merge3.js`: the request names one device id, another device of the same name answers it.
 
 The scripts were written for a scratch session. Paths such as `/tmp/rothley` and the scratchpad folder, and the course origin, are hard-coded. Copy the folder, set the origin and paths, and run the steps in the order the guide gives.

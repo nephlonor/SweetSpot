@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 19 };
+const APP_ITER = { courses: 8, n: 20 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -9331,7 +9331,9 @@ async function ghIssue(title, payload, text) {
 }
 async function loadMerges(force) {
   if (!force && MG.merges && Date.now() - MG.at < 60000) return MG.merges; MG.at = Date.now();
-  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/merges.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); const j = r.ok ? await r.json() : null; MG.merges = j && typeof j === 'object' ? { q: Array.isArray(j.q) ? j.q : [], g: j.g && typeof j.g === 'object' ? j.g : {} } : (MG.merges || { q: [], g: {} }); } catch (e) { MG.merges = MG.merges || { q: [], g: {} }; }
+  MG.ok = false; // (a fetch that failed decides nothing: the old copy may be out of date)
+  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/merges.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); if (r.status === 404) { MG.merges = { q: [], g: {} }; MG.ok = true; } else if (r.ok) { const j = await r.json(); if (j && typeof j === 'object') { MG.merges = { q: Array.isArray(j.q) ? j.q : [], g: j.g && typeof j.g === 'object' ? j.g : {} }; MG.ok = true; } } } catch (e) { }
+  if (!MG.merges) MG.merges = { q: [], g: {} };
   return MG.merges;
 }
 // the other devices that carry this name (boards, profiles)
@@ -9350,15 +9352,15 @@ function mgDialog(kind, o) {
     wait: ['Merging', 'One moment', 'The two accounts are being joined. This can take a minute.', '', 'OK'],
     done: ['Merged', 'One account', 'Your two devices now share their stats and records, and a name change on one follows on the other.', '', 'OK'],
     declined: ['Merge declined', 'Not merged', 'The other device did not accept the merge. The two accounts stay separate.', '', 'OK'],
-    fail: ['No connection', 'Could not send it', 'The request did not go out. Check your connection and try again.', '', 'OK']
+    fail: ['Not delivered', 'The request did not arrive', 'The merge request did not get through. Check your connection and enter the name again to retry.', '', 'OK']
   }[kind];
   MG.dlg = { kind, o }; $('mgK').textContent = T[0]; $('mgT').textContent = T[1]; $('mgB').textContent = T[2]; $('mgNo').textContent = T[3]; $('mgNo').hidden = !T[3]; $('mgOk').textContent = T[4]; $('mgAsk').classList.add('on');
 }
 function mgClose() { MG.dlg = null; $('mgAsk').classList.remove('on'); mgUI(); }
 function mgUI() {
   const el = $('mgNote'); if (!el) return;
-  const t = settings.mgP ? 'Merged: this account is shared with another device.' : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
-  el.textContent = t; el.hidden = !t;
+  const inc = !settings.mgP && !MG.dlg && MG.inc, t = settings.mgP ? 'Merged: this account is shared with another device.' : inc ? 'A merge request is waiting for you. Tap to answer.' : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
+  el.textContent = t; el.hidden = !t; el.style.cursor = inc ? 'pointer' : ''; el.onclick = inc ? () => mgDialog('accept', { from: inc.f, name: inc.n }) : null;
 }
 // the name has just been entered: is it somebody else's?
 async function mgNameCheck() {
@@ -9426,10 +9428,12 @@ function mgFast() { MG.fast = 12; const tick = () => { if (MG.fast-- > 0 && !(se
 async function mgCheck() {
   if (!ghKey() || MG.busy) return; MG.busy = true;
   try {
-    const mg = await loadMerges(true), me = dlMe(), mine = mg.g[me]; await loadPlayers(true);
+    const mg = await loadMerges(true), me = dlMe(), mine = mg.g[me]; if (!MG.ok) return; // (no answer from the server: nothing is decided)
+    if (mine && Date.now() - (MG.pAt || 0) > 100000) { MG.pAt = Date.now(); await loadPlayers(true); }
     if (mine) {
       const wasPending = !!(settings.mgReq || settings.mgAcc);
       settings.mgP = mine.p; delete settings.mgReq; delete settings.mgAcc; if (!settings.nameSent && cleanName(settings.name)) settings.nameSent = cleanName(settings.name); saveSettings(); // (a later name change is then filed)
+      MG.inc = null;
       // the name follows: the newer change wins (the server stamps each one)
       if (mine.n && mine.n !== settings.name && (mine.nat || 0) > (settings.nameAt || 0)) {
         settings.name = mine.n; settings.nameSent = mine.n; settings.nameAt = mine.nat; saveSettings();
@@ -9442,11 +9446,17 @@ async function mgCheck() {
     } else {
       for (const key of ['mgReq', 'mgAcc']) {
         const q = settings[key]; if (!q) continue;
-        const open = key === 'mgReq' ? mg.q.some(x => x.f === me && x.t === q.to) : mg.q.some(x => x.t === me && x.f === q.from);
-        if (!open && Date.now() - q.at > 240000) { delete settings[key]; saveSettings(); if (key === 'mgReq' && !MG.dlg) mgDialog('declined'); }
+        const open = key === 'mgReq' ? mg.q.some(x => x.f === me && x.t === q.to) : mg.q.some(x => x.f === q.from && (x.t === me || String(x.n).toLowerCase() === cleanName(settings.name).toLowerCase()));
+        if (open) { if (!q.seen) { q.seen = true; saveSettings(); } continue; }
+        // gone from the list: if it was there before, the other device has declined it (or it has been replaced); if it never showed up, it did not get through
+        if (q.seen && Date.now() - q.at > 30000) { delete settings[key]; saveSettings(); if (key === 'mgReq' && !MG.dlg) mgDialog('declined'); }
+        else if (!q.seen && Date.now() - q.at > 360000) { delete settings[key]; saveSettings(); if (key === 'mgReq' && !MG.dlg) mgDialog('fail'); }
       }
-      const inc = mg.q.find(x => x.t === me);
-      if (inc && !MG.dlg && !settings.mgAcc && $('title').classList.contains('on') && !document.querySelector('.sheet.on')) mgDialog('accept', { from: inc.f, name: inc.n });
+      // a request for this device: addressed to it, or to a player of the same name (the other device may have another id than the one the request was sent to)
+      const nm = cleanName(settings.name).toLowerCase(), inc = mg.q.find(x => x.f !== me && (x.t === me || (nm && String(x.n).toLowerCase() === nm)));
+      MG.inc = inc || null;
+      const calm = $('title').classList.contains('on') || (G.state === 'address' && SW.phase === 'idle'); // (never while a swing is going on)
+      if (inc && !MG.dlg && !settings.mgAcc && calm && !document.querySelector('.sheet.on')) mgDialog('accept', { from: inc.f, name: inc.n });
     }
   } catch (e) { } finally { MG.busy = false; mgUI(); }
 }
@@ -9461,7 +9471,7 @@ $('mgOk').addEventListener('click', async () => {
   }
   if (d.kind === 'accept') {
     $('mgOk').disabled = true;
-    const ok = await ghIssue(`[merge] accepted`, { v: 1, merge: true, act: 'accept', from: d.o.from, dev: deviceId() }, 'Account merge accepted from Sweet Spot Golf.');
+    const ok = await ghIssue(`[merge] accepted`, { v: 1, merge: true, act: 'accept', from: d.o.from, name: cleanName(settings.name), dev: deviceId() }, 'Account merge accepted from Sweet Spot Golf.');
     $('mgOk').disabled = false;
     if (!ok) { mgDialog('fail'); return; }
     settings.mgAcc = { from: d.o.from, at: Date.now() }; saveSettings(); mgSyncSend(true); mgDialog('wait'); mgFast(); return;
@@ -9471,10 +9481,10 @@ $('mgOk').addEventListener('click', async () => {
 $('mgNo').addEventListener('click', async () => {
   const d = MG.dlg; if (!d) return;
   if (d.kind === 'ask') { settings.mgDecl = (settings.mgDecl || []).concat(String(d.o.name).toLowerCase()).slice(-20); saveSettings(); }
-  if (d.kind === 'accept') { ghIssue('[merge] declined', { v: 1, merge: true, act: 'decline', from: d.o.from, dev: deviceId() }, 'Account merge declined from Sweet Spot Golf.'); }
+  if (d.kind === 'accept') { ghIssue('[merge] declined', { v: 1, merge: true, act: 'decline', from: d.o.from, name: cleanName(settings.name), dev: deviceId() }, 'Account merge declined from Sweet Spot Golf.'); }
   mgClose();
 });
-setTimeout(mgCheck, 5000); setInterval(mgCheck, 150000); setTimeout(mgUI, 1000);
+setTimeout(mgCheck, 4000); setInterval(mgCheck, 40000); setTimeout(mgUI, 1000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) mgSyncSend(false, true); else setTimeout(mgCheck, 1500); });
 function playerName() { return cleanName(settings.name) || 'Player'; }
 function cleanName(s) { return String(s || '').replace(/[^\p{L}\p{N} ._'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14); }

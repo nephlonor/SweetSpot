@@ -109,7 +109,9 @@ jobs:
               }
               const from = r.from;
               if (typeof from !== 'string' || !HX.test(from)) return finish(false, 'Invalid request.');
-              const e = mg.q.find(x => x.f === from && x.t === who);
+              // the request was sent to one device of the name; any device that carries the same name can answer it (the other device may have another id)
+              const nmA = typeof r.name === 'string' ? r.name.trim().toLowerCase() : '';
+              const e = mg.q.find(x => x.f === from && x.t === who) || (nmA && from !== who ? mg.q.find(x => x.f === from && String(x.n).toLowerCase() === nmA) : null);
               if (act === 'decline') {
                 if (!e) return finish(true, 'Nothing to decline.');
                 mg.q = mg.q.filter(x => x !== e); fs.writeFileSync(mf, JSON.stringify(mg) + '\n'); await gitPush(files, 'Merge declined'); return finish(true, 'Declined.');
