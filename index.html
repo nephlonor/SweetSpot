@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 20 };
+const APP_ITER = { courses: 8, n: 21 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -4038,23 +4038,25 @@ function burstSparkles() {
   };
   requestAnimationFrame(step);
 }
-// "Enjoy the rainbow": the camera climbs above the treetops to the rainbow, stays for three seconds and glides back
-const RBOW = { up: 1.6, hold: 3, down: 1.6 };
+// "Enjoy the rainbow": the camera turns a little to the foot of the rainbow (where it touches the horizon), stays a moment and turns back
+const RBOW = { up: 1.4, hold: 2.6, down: 1.4 };
 function rbowStart() {
   G.rbow = { t: 0 }; document.body.classList.add('rbow'); W.aim.visible = W.ring.visible = false; $('aimHint').classList.remove('on');
   readout('<div class="r1">Enjoy the rainbow</div>', RBOW.up + RBOW.hold);
 }
 function rbowEnd() { G.rbow = null; document.body.classList.remove('rbow'); if (G.state === 'address') W.aim.visible = W.ring.visible = true; }
-// the blend (0 = the address view, 1 = high above the trees looking at the rainbow), and the two views
+// the blend (0 = the address view, 1 = turned to the foot of the rainbow), and the two views
 function rbowU(dt) {
   const R = G.rbow; R.t += dt; const T = RBOW.up + RBOW.hold + RBOW.down; if (R.t >= T) { rbowEnd(); return 0; }
   return Math.min(smoother(R.t / RBOW.up), smoother((T - R.t) / RBOW.down));
 }
 function rbowCam(pos, look, u) {
-  const d = W.rainbow.dir, hl = Math.hypot(d.x, d.z) || 1, ux = d.x / hl, uz = d.z / hl, e = 15 * DEG, C = G.C;
-  const hy = Math.max(pos.y, C.h(pos.x, pos.z)) + 46; // above the tallest trees, the treetops and the course still at the bottom of the screen
-  const hp = _pm.set(pos.x, hy, pos.z), hlk = _pk.set(pos.x + ux * Math.cos(e) * 100, hy + Math.sin(e) * 100, pos.z + uz * Math.cos(e) * 100);
-  pos.lerp(hp, u); look.lerp(hlk, u);
+  // no climb: the camera stays where it is and turns a little towards the nearer foot of the rainbow, where the arc meets the horizon (the foot a little in from the edge of the view)
+  const d = W.rainbow.dir, el = Math.asin(clamp(d.y, -1, 1)), dz = Math.acos(clamp(Math.cos(42 * DEG) / Math.cos(el), -1, 1)); // (the arc is the 42 degree circle round the point opposite the sun: where it crosses the horizon)
+  const vx = look.x - pos.x, vy = look.y - pos.y, vz = look.z - pos.z, Lh = Math.hypot(vx, vz) || 1, p0 = Math.atan2(vx, -vz), pd = Math.atan2(d.x, -d.z), wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+  const a1 = wrap(pd + dz - p0), a2 = wrap(pd - dz - p0), df = Math.abs(a1) < Math.abs(a2) ? a1 : a2;
+  const turn = clamp(df - Math.sign(df || 1) * 7 * DEG, -55 * DEG, 55 * DEG), ps = p0 + turn * u;
+  look.set(pos.x + Math.sin(ps) * Lh, pos.y + lerp(vy, Lh * Math.tan(3 * DEG), u), pos.z - Math.cos(ps) * Lh);
 }
 function updateRainbow(dt) {
   const B = W.rainbow; if (!B) return;
@@ -4063,7 +4065,7 @@ function updateRainbow(dt) {
   const want = .34 * smooth(.03, .1, G.rainLvl || 0) * (1 - smooth(.35, .6, G.rainLvl || 0)) * (1 - smooth(.55, .8, G.cloud == null ? 1 : G.cloud));
   B.v += (want - B.v) * (1 - Math.exp(-dt / 6));
   if (B.v > .04 && !B.sang) { B.sang = true; try { SFX.rainbow(); } catch (e) { } } else if (B.v < .01) B.sang = false; // the jingle plays once each time it appears
-  // a rainbow seen in play is counted once; the first quiet moment while it is bright, the camera rises above the trees to enjoy it for a few seconds
+  // a rainbow seen in play is counted once; the first quiet moment while it is bright, the camera turns a little to the foot of the rainbow for a few seconds
   if (B.v < .01) { B.seen = false; B.shown = false; }
   const playing = G.C && G.scores && !MP.spec && ['address', 'flight', 'settle', 'holed'].includes(G.state);
   if (B.v > .12 && playing && !B.seen) { B.seen = true; ST.rainbows = (ST.rainbows || 0) + 1; saveStats(); }
@@ -8739,7 +8741,7 @@ function showIntro() {
 function beginHole() {
   if (G.state !== 'intro') return;
   $('intro').classList.remove('on'); SFX.blip();
-  G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone();
+  G.state = 'settle'; G.settleT = 0; G.camFrom = W.cam.position.clone(); G.lookFrom = G.camLook.clone(); G.snapCam = true; // (Play hole: the camera jumps straight to the tee, ready for the shot)
 }
 function showDone(pickedUp) {
   const h = G.hole, par = G.C.def.par, s = G.scores[h], last = h === HOLE_DEFS.length - 1, d = s - par;
