@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 14 };
+const APP_ITER = { courses: 8, n: 19 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3659,17 +3659,22 @@ function initTiltShift() {
   const rt = gl2 ? new THREE.WebGLMultisampleRenderTarget(size.x || 2, size.y || 2, { samples: 4, stencilBuffer: true }) : new THREE.WebGLRenderTarget(size.x || 2, size.y || 2, { stencilBuffer: true });
   rt.texture.minFilter = rt.texture.magFilter = THREE.LinearFilter; rt.texture.generateMipmaps = false;
   const mat = new THREE.ShaderMaterial({
-    uniforms: { tD: { value: rt.texture }, px: { value: new THREE.Vector2(1 / 2, 1 / 2) }, fy: { value: .55 }, band: { value: .11 }, fall: { value: .34 }, maxR: { value: 5 } },
+    uniforms: { tD: { value: rt.texture }, tDisp: { value: null }, uDisp: { value: 0 }, uBall: { value: new THREE.Vector3(0, 0, 0) }, uAsp: { value: 1 }, px: { value: new THREE.Vector2(1 / 2, 1 / 2) }, fy: { value: .55 }, band: { value: .11 }, fall: { value: .34 }, maxR: { value: 5 } },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
-    fragmentShader: `uniform sampler2D tD; uniform vec2 px; uniform float fy, band, fall, maxR; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D tD; uniform sampler2D tDisp; uniform float uDisp; uniform vec3 uBall; uniform float uAsp; uniform vec2 px; uniform float fy, band, fall, maxR; varying vec2 vUv;
       void main(){
         float r = smoothstep(band, band + fall, abs(vUv.y - fy)) * maxR;
-        vec3 c = texture2D(tD, vUv).rgb;
+        // the ball's wake bends the light: the picture behind it is shifted (a little differently per colour), with a faint light and dark streak
+        vec2 off = vec2(0.); float streak = 0.;
+        if (uDisp > .5) { vec4 dd = texture2D(tDisp, vUv); off = (dd.rg - .5) * .085; streak = (dd.b - .5) * .35; float bd = length((vUv - uBall.xy) * vec2(uAsp, 1.)); float keep = smoothstep(uBall.z * 1.2, uBall.z * 2.2, bd); off *= keep; streak *= keep; }
+        vec2 uvd = vUv + off;
+        vec3 c = texture2D(tD, uvd).rgb;
+        if (uDisp > .5 && dot(off, off) > 1e-9) { c = vec3(texture2D(tD, uvd + off * .12).r, c.g, texture2D(tD, uvd - off * .12).b); c *= 1. + streak; }
         if (r > .35) {
           float wsum = 1.;
           for (int i = 0; i < 32; i++) {
             float a = float(i) * 2.39996, rr = sqrt((float(i) + .5) / 32.) * r;
-            c += texture2D(tD, vUv + vec2(cos(a), sin(a)) * rr * px).rgb; wsum += 1.;
+            c += texture2D(tD, uvd + vec2(cos(a), sin(a)) * rr * px).rgb; wsum += 1.;
           }
           c /= wsum;
         }
@@ -3693,13 +3698,14 @@ function initTiltShift() {
         gl_FragColor = vec4(c / 12., 1.);
       }`, depthTest: false, depthWrite: false });
   const mbQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mbMat); mbQuad.frustumCulled = false; const mbSc = new THREE.Scene(); mbSc.add(mbQuad);
-  W.post = { rt, mat, sc, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), fy: .55, v: new THREE.Vector3(), lp: new THREE.Vector3(), rt2, mbMat, mbSc, prev: new THREE.Vector3(), t0: 0, spd: 0, mb: 0 };
+  const dRT = new THREE.WebGLRenderTarget(Math.max(2, (size.x || 2) >> 1), Math.max(2, (size.y || 2) >> 1), { depthBuffer: false }); dRT.texture.minFilter = dRT.texture.magFilter = THREE.LinearFilter; dRT.texture.generateMipmaps = false;
+  W.post = { dRT, dSc: new THREE.Scene(), rt, mat, sc, cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), fy: .55, v: new THREE.Vector3(), lp: new THREE.Vector3(), rt2, mbMat, mbSc, prev: new THREE.Vector3(), t0: 0, spd: 0, mb: 0 };
   resizeTiltShift();
 }
 function resizeTiltShift() {
   const P = W.post; if (!P) return;
   const s = W.ren.getDrawingBufferSize(new THREE.Vector2());
-  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.maxR0 = Math.max(2, s.y * .0070); P.mat.uniforms.maxR.value = P.maxR0;
+  P.rt.setSize(s.x, s.y); P.rt2.setSize(s.x, s.y); P.dRT.setSize(Math.max(2, s.x >> 1), Math.max(2, s.y >> 1)); P.mat.uniforms.px.value.set(1 / s.x, 1 / s.y); P.maxR0 = Math.max(2, s.y * .0070); P.mat.uniforms.maxR.value = P.maxR0;
 }
 function renderTiltShift(dt) {
   const P = W.post;
@@ -3726,6 +3732,19 @@ function renderTiltShift(dt) {
   if (P.mb > .004) {
     P.mbMat.uniforms.k.value = P.mb; W.ren.setRenderTarget(P.rt2); W.ren.render(P.mbSc, P.cam); P.mat.uniforms.tD.value = P.rt2.texture;
   } else P.mat.uniforms.tD.value = P.rt.texture;
+  // the wake of the ball: the particles draw how much the picture is shifted into a half-size target, the final pass applies it
+  let useD = 0;
+  if (W.swirlD && W.swirlD.visible && W.swirl.geometry.drawRange.count > 0) {
+    const ren = W.ren, oc = new THREE.Color(), oa = ren.getClearAlpha(); ren.getClearColor(oc);
+    ren.setRenderTarget(P.dRT); ren.setClearColor(new THREE.Color(.5, .5, .5), 1); ren.clear(); ren.render(P.dSc, W.cam); ren.setClearColor(oc, oa);
+    P.mat.uniforms.tDisp.value = P.dRT.texture; useD = 1;
+    // the ball itself is never bent: the shift fades out round it
+    const bp = P.bv || (P.bv = new THREE.Vector3()), sp = P.bw || (P.bw = new THREE.Vector3()); bp.copy(W.ball.position).project(W.cam);
+    sp.copy(W.ball.position).addScaledVector(new THREE.Vector3().setFromMatrixColumn(W.cam.matrixWorld, 0), VIS_R * (W.ball.scale.x || 1) * 1.3).project(W.cam);
+    const asp = innerWidth / Math.max(1, innerHeight), uvx = (sp.x - bp.x) * .5 * asp, uvy = (sp.y - bp.y) * .5;
+    P.mat.uniforms.uBall.value.set(bp.x * .5 + .5, bp.y * .5 + .5, Math.max(.018, Math.hypot(uvx, uvy))); P.mat.uniforms.uAsp.value = asp;
+  }
+  P.mat.uniforms.uDisp.value = useD;
   W.ren.setRenderTarget(null); W.ren.render(P.sc, P.cam);
 }
 /* ---------- rain (3D) ---------- */
@@ -7535,20 +7554,78 @@ function updateFlight(dt) {
     else if (e.type === 'cup') { SFX.cup(); buzz([20, 40, 20]); }
   }
   if (G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); } // (at night putts leave the trail too, into the hole)
-  else if (!sh.L.putt) {
-    const pa = W.tracer.geometry.attributes.position.array, cam = W.cam.position; let n = 0;
-    for (let k = 0; k < r.n && fr[k * 5] <= tt && n < W.tracerMax; k += 2) {
-      if (fr[k * 5 + 4] !== 0 && k > 0) break;
-      const fx = fr[k * 5 + 1], fy = fr[k * 5 + 2] + VIS_R, fz = fr[k * 5 + 3];
-      let sx2 = fz - cam.z, sz2 = -(fx - cam.x); const l = Math.hypot(sx2, sz2) || 1, w = .08 + .0035 * Math.hypot(fx - cam.x, fz - cam.z);
-      sx2 = sx2 / l * w; sz2 = sz2 / l * w;
-      const o = n * 6; pa[o] = fx - sx2; pa[o + 1] = fy; pa[o + 2] = fz - sz2; pa[o + 3] = fx + sx2; pa[o + 4] = fy; pa[o + 5] = fz + sz2; n++;
-    }
-    W.tracer.geometry.attributes.position.needsUpdate = true; W.tracer.geometry.setDrawRange(0, Math.max(0, (n - 1) * 6));
-  }
+  else if (!sh.L.putt) tracerFill(fr, r.n, tt);
   // finish exactly once (the old build re-entered here every frame after holing out)
   if (!sh.finished && G.playT >= tEnd + .7) { sh.finished = true; finishShot(); }
   else if (sh.replay && !sh.over && G.playT >= tEnd + .7) { sh.over = true; endReplay(); }
+}
+// by day the ball leaves a swirl: soft, translucent particles winding round the flight path (one strand after a bad strike, two after an ordinary one, three after a pure strike with a good smash factor).
+// Each particle is born on the path as the ball passes, then lives its own life by the game's clock (it keeps winding and drifting, also after the ball has landed and the shot is over) and fades out after one to two seconds.
+const TR_MAX = 2600;
+function swirlStrands() {
+  const L = G.shot && G.shot.L, c = CLUBS[G.club]; if (!L) return 2;
+  const sr = c && c.smash && L.smash ? L.smash / c.smash : 1, ql = L.qualityLevel | 0;
+  return ql >= 3 || sr < .8 ? 1 : ql === 2 || sr < .92 ? 2 : 3;
+}
+function swirlMake() {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TR_MAX * 3), 3));
+  g.setAttribute('aA', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
+  g.setAttribute('aS', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uPx: { value: 1 }, uCol: { value: new THREE.Color(0xffffff) } }, transparent: true, depthWrite: false,
+    vertexShader: 'attribute float aA; attribute float aS; uniform float uPx; varying float vA; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vA = aA; gl_PointSize = clamp(aS * 1100.0 * uPx / max(1.0, -mv.z), 3.5 * uPx, 64.0 * uPx); }',
+    fragmentShader: 'uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d); a = a * a * (0.55 + 0.45 * smoothstep(0.55, 0.0, d)); gl_FragColor = vec4(uCol, a * vA); }'
+  });
+  W.swirl = new THREE.Points(g, mat); W.swirl.frustumCulled = false; W.swirl.visible = false; W.scene.add(W.swirl); W.swirlP = { list: [], k: 0, fr: null };
+  // the same particles as a displacement map (schlieren): each one is a soft ring-shaped bump that pushes the picture behind it outwards and inwards in turn; offsets add up
+  g.setAttribute('aD', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
+  const dmat = new THREE.ShaderMaterial({
+    uniforms: { uPx: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
+    vertexShader: 'attribute float aA; attribute float aS; attribute float aD; uniform float uPx; varying float vA; varying float vD; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vA = aA; vD = aD; gl_PointSize = clamp(aS * 2300.0 * uPx / max(1.0, -mv.z), 6.0 * uPx, 84.0 * uPx); }',
+    fragmentShader: 'varying float vA; varying float vD; void main() { vec2 pc = gl_PointCoord - 0.5; float d = length(pc) * 2.0; if (d > 1.0) discard; float f = 1.0 - d; f = f * f; vec2 dir = vec2(cos(vD), sin(vD)); float rip = sin(d * 6.0 - vD * 2.0) * f; vec2 o = (dir * f * 0.8 + normalize(pc + vec2(1e-4)) * rip * 0.7) * vA; gl_FragColor = vec4(o * 0.5, rip * vA * 0.5, 0.0); }'
+  });
+  W.swirlD = new THREE.Points(g, dmat); W.swirlD.frustumCulled = false; W.swirlD.visible = false; if (W.post) W.post.dSc.add(W.swirlD);
+}
+const swirlHash = v => { const x = Math.sin(v * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+// called as the shot plays: births the particles for the frames the ball has just passed (through the roll-out, until it has almost stopped)
+function tracerFill(fr, rn, tt) {
+  if (!W.swirl) swirlMake();
+  if (G.shot && G.shot.camFreeze) return; // (a lost ball gives nothing away)
+  const P = W.swirlP; if (P.fr !== G.shot || tt < (P.tt || 0) - .05) { P.fr = G.shot; P.k = 0; P.list.length = 0; } P.tt = tt; // (a new shot, or the replay of one: its own swirl)
+  const now = W.swirlClock || 0, rest = trailRest(fr, rn), S = swirlStrands();
+  let last = 0; while (last < rn - 1 && fr[(last + 1) * 5] <= tt) last++;
+  const at = (k, o) => fr[Math.max(0, Math.min(rn - 1, k)) * 5 + o];
+  for (; P.k <= last; P.k++) {
+    const k = P.k; if (fr[k * 5] > rest || P.list.length > TR_MAX - 8) continue;
+    let tx = at(k + 2, 1) - at(k - 2, 1), ty = at(k + 2, 2) - at(k - 2, 2), tz = at(k + 2, 3) - at(k - 2, 3); const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+    let ux = -tz, uy = 0, uz = tx; const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul; // (tangent x up)
+    const vx = ty * uz - tz * uy, vy = tz * ux - tx * uz, vz = tx * uy - ty * ux, born = now - Math.max(0, tt - fr[k * 5]) / 1.1;
+    for (let q = 0; q <= S; q++) { // the strands, and a fine mist between them
+      const id = k * 5 + q, mist = q === S;
+      // a single swirl starts at the centre of the ball; two or three start on its edge, a ball's width apart (their axes stay parallel, each winds round its own)
+      const r0 = S === 1 ? 0 : S === 2 ? VIS_R : 1.155 * VIS_R, a0 = mist ? swirlHash(id + 2) * TAU : q * TAU / S + .6, rr = mist ? r0 * swirlHash(id + 4) : r0;
+      P.list.push({ x: at(k, 1), y: at(k, 2) + VIS_R, z: at(k, 3), ux, uy, uz, vx, vy, vz, born, life: (mist ? .7 : .9) + 1.1 * swirlHash(id), spin: 2.6 + 3.2 * swirlHash(id + .5), ph0: swirlHash(id + 2) * TAU,
+        ax: Math.cos(a0) * rr, ay: Math.sin(a0) * rr, rad: (mist ? 1.6 : 1) * (.6 + .8 * swirlHash(id + .9)), rise: .22 * (swirlHash(id + .3) - .35), size: mist ? .13 : S === 1 ? .28 : .15, op: mist ? .5 : 1, id });
+    }
+  }
+}
+// every frame: the particles that are alive, wherever the shot is (also after it has ended)
+function swirlUpdate(dt) {
+  if (!W.swirl) return; const now = W.swirlClock = (W.swirlClock || 0) + dt; // (the swirl's own clock runs with the game's: at a low frame rate everything slows together)
+  const P = W.swirlP, g = W.swirl.geometry, pa = g.attributes.position.array, aa = g.attributes.aA.array, sa = g.attributes.aS.array, da = g.attributes.aD.array; let n = 0;
+  for (let i = P.list.length - 1; i >= 0; i--) {
+    const o = P.list[i], age = now - o.born; if (age >= o.life) { P.list[i] = P.list[P.list.length - 1]; P.list.pop(); continue; }
+    if (age < 0) continue; const u = age / o.life, ph = o.ph0 + age * o.spin, rad = (.03 + .4 * (1 - Math.exp(-age * 1.1))) * o.rad, cx = o.ax + Math.cos(ph) * rad, cy = o.ay + Math.sin(ph) * rad, a3 = n * 3;
+    pa[a3] = o.x + o.ux * cx + o.vx * cy; pa[a3 + 1] = o.y + o.uy * cx + o.vy * cy + o.rise * age; pa[a3 + 2] = o.z + o.uz * cx + o.vz * cy;
+    aa[n] = o.op * Math.min(1, age / .2) * Math.pow(1 - u, 1.4) * (.7 + .3 * Math.sin(age * 9 + o.id)); sa[n] = (o.size * (1 + .7 * u)) * (.8 + .4 * swirlHash(o.id + .2)); da[n] = ph; n++;
+    if (n >= TR_MAX) break;
+  }
+  g.attributes.position.needsUpdate = true; g.attributes.aA.needsUpdate = true; g.attributes.aS.needsUpdate = true; g.attributes.aD.needsUpdate = true; g.setDrawRange(0, n);
+  const on = n > 0 && !(G.nightU > .5), px = W.ren.getPixelRatio();
+  W.swirl.visible = on && !!PERF.lite; // (the white swirl only where the picture cannot be bent: battery saver)
+  if (W.swirlD) { W.swirlD.visible = on && !PERF.lite; W.swirlD.material.uniforms.uPx.value = px * .5; }
+  W.swirl.material.uniforms.uPx.value = px;
 }
 // at night the flight leaves small glowing particles: they peel off the ball, drift a little and fade out over about a second and a half
 const TRAIL_T = 3.5, TRAIL_MAX = 480;
@@ -10379,6 +10456,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible && !(G.nightU > .5)) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
+  swirlUpdate(dt);
   if (W.trail) W.trail.visible = W.tracer.visible && G.nightU > .5 && (G.state === 'flight' || G.state === 'holed') && W.trailFade > .01;
   swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') { mpSpecCam(dt); if (MP.clip) clipTick(); } else updateCamera(dt); nightTick(dt); updateWeatherVisuals(dt); gustTick(dt, now / 1000); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
