@@ -3534,7 +3534,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 24 };
+const APP_ITER = { courses: 8, n: 25 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8969,7 +8969,7 @@ function statsHole(h) {
 function statsRound(tp) {
   ST.rounds++; ST.xp += 30; saveStats(); const pu = G.putts.reduce((a, b) => a + b, 0), c = COURSE.short;
   const b1 = beat('round', tp.d, c + ' · ' + tp.s + ' strokes'); setTimeout(() => beat('roundPutts', pu, c), b1 ? 4300 : 300);
-  setTimeout(() => mgSyncSend(), 5000); // (a merged account tells the other device about it)
+  setTimeout(() => mgSyncSend(false, true), 5000); // (a merged account tells the other device, once per finished round)
 }
 // The road from Rookie to Legend: 48 levels, roughly 200 rounds to Hall of Famer and 260 to Legend at a steady pace. A hole is worth 10 points, a finished
 // round 30 more, a great shot up to 80 (the better the shot, the more) and a hole in one 300, so a player who keeps hitting great shots climbs faster.
@@ -9444,7 +9444,7 @@ async function mgCheck() {
         for (const c of Object.values(COURSES)) { try { const a = JSON.parse(localStorage.getItem(c.board) || '[]'); if (Array.isArray(a)) localStorage.setItem(c.board, JSON.stringify(a.map(x => Object.assign(x, { name: mine.n })))); } catch (e) { } }
         updateHUD(); titleMenuSync(); nameHint(); refreshBoards();
       } else if (mine.nat && (settings.nameAt || 0) < mine.nat && mine.n === settings.name) { settings.nameAt = mine.nat; saveSettings(); }
-      mgAbsorb((DL.players || {})[mine.p]); loadAcct(mine.p).then(ex => { mgAbsorbEx(ex); mgSyncSend(); }); loadDailyFile(dayId());
+      mgAbsorb((DL.players || {})[mine.p]); loadAcct(mine.p).then(ex => { mgAbsorbEx(ex); if (!settings.mgSigAt) mgSyncSend(); }); loadDailyFile(dayId());
       if (wasPending && !MG.dlg) mgDialog('done'); else if (wasPending && MG.dlg && (MG.dlg.kind === 'waiting' || MG.dlg.kind === 'wait')) mgDialog('done');
     } else {
       for (const key of ['mgReq', 'mgAcc']) {
@@ -9488,7 +9488,7 @@ $('mgNo').addEventListener('click', async () => {
   mgClose();
 });
 setTimeout(mgCheck, 4000); setInterval(mgCheck, 40000); setTimeout(mgUI, 1000);
-document.addEventListener('visibilitychange', () => { if (document.hidden) mgSyncSend(false, true); else setTimeout(mgCheck, 1500); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(mgCheck, 1500); });
 function playerName() { return cleanName(settings.name) || 'Player'; }
 function cleanName(s) { return String(s || '').replace(/[^\p{L}\p{N} ._'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14); }
 function validRound(r, n) {

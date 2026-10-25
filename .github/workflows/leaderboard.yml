@@ -89,6 +89,8 @@ jobs:
                 const pf = {}; if (r.pf && typeof r.pf === 'object') for (const k of PF) if (num(r.pf[k])) pf[k] = Math.round(r.pf[k] * 100) / 100;
                 if (!Object.keys(pf).length) return finish(false, 'No stats.');
                 const f = 'leaderboard/players.json', all = rdj(f, {}), old = all[who] || {}, files = [f];
+                const af = 'leaderboard/acct/' + who + '.json', exJs = r.ex && typeof r.ex === 'object' && !Array.isArray(r.ex) ? JSON.stringify(r.ex) : null;
+                if (JSON.stringify(old.pf || {}) === JSON.stringify(pf) && (exJs === null || exJs.length > 90000 || (fs.existsSync(af) && fs.readFileSync(af, 'utf8').trim() === exJs))) return finish(true, 'Nothing new to save.');
                 all[who] = Object.assign({}, old, { n: old.n || (typeof r.name === 'string' && NAMEOK.test(r.name.trim()) ? r.name.trim() : 'Player'), pf, at: Date.now() });
                 fs.writeFileSync(f, JSON.stringify(all) + '\n');
                 // the rest of the account (scorecard history, trophies, shot clips, daily results ...): kept as is, for the other device to read; the game checks every entry again
