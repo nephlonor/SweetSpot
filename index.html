@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 14 };
+const APP_ITER = { courses: 8, n: 15 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7072,7 +7072,7 @@ function resumeRound(course) {
     const cp = new THREE.Vector3(), lk = new THREE.Vector3(), v = L.v; addressCamFor(cp, lk, G.ball.x, G.ball.y, G.ball.z, Math.atan2(v[0], -v[2]), !!L.putt, G.teed);
     W.cam.position.copy(cp); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
     document.body.classList.add('flight'); if (G.rig) { G.rig.arr = null; G.rig.launch = null; }
-    W.tracerT0 = performance.now(); W.tracer.visible = !L.putt || G.nightU > .5; W.tracer.material.opacity = .8; W.tracer.geometry.setDrawRange(0, 0);
+    W.tracerT0 = performance.now(); W.tracer.visible = !L.putt || G.nightU > .5; W.tracer.material.opacity = .8; W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0);
     W.aim.visible = W.ring.visible = W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; $('aimHint').classList.remove('on');
     G.state = 'flight'; G.playT = t; G.shake = 0; updateHUD();
     return true;
@@ -7136,7 +7136,7 @@ function startHole(i) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: true };
   autoClubAndAim();
   Object.assign(SW, { phase: 'idle', mark: null, last: null, resultT: 0, trail: [] });
-  W.tracer.geometry.setDrawRange(0, 0); resetBallFade(); W.ball.visible = true; W.aim.visible = W.ring.visible = false;
+  W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0); resetBallFade(); W.ball.visible = true; W.aim.visible = W.ring.visible = false;
   G.state = 'intro'; G.introT = 0; G.introSnap = true;
   showIntro(); drawMapThumb(); updateHUD();
 }
@@ -7446,7 +7446,7 @@ function impact(tImp) {
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12; saveRound(); G.savedT = 0; mpShot(res);
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
-  W.tracer.geometry.setDrawRange(0, 0);
+  W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0);
   if (!L.putt) {
     const d = aimDir(), sand = G.surf === S.SAND, colors = sand ? [0xf2e3bf, 0xe9d6a8, 0xfff3dc] : G.teed ? [0xffffff, 0xf7dc2e, 0x8dce69] : [0x8dce69, 0x6ab353, 0xa5d987, 0x7a5c45];
     burst(G.ball.x, G.ball.y + .05, G.ball.z, d[0], d[1], colors, sand ? 26 : 14, sand ? 4 : 6, sand ? 3.5 : 2);
@@ -7534,21 +7534,49 @@ function updateFlight(dt) {
     else if (e.type === 'hop') readoutNote('Too hot · hopped the cup', 'ok');
     else if (e.type === 'cup') { SFX.cup(); buzz([20, 40, 20]); }
   }
-  if (G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); } // (at night putts leave the trail too, into the hole)
-  else if (!sh.L.putt) {
-    const pa = W.tracer.geometry.attributes.position.array, cam = W.cam.position; let n = 0;
-    for (let k = 0; k < r.n && fr[k * 5] <= tt && n < W.tracerMax; k += 2) {
-      if (fr[k * 5 + 4] !== 0 && k > 0) break;
-      const fx = fr[k * 5 + 1], fy = fr[k * 5 + 2] + VIS_R, fz = fr[k * 5 + 3];
-      let sx2 = fz - cam.z, sz2 = -(fx - cam.x); const l = Math.hypot(sx2, sz2) || 1, w = .08 + .0035 * Math.hypot(fx - cam.x, fz - cam.z);
-      sx2 = sx2 / l * w; sz2 = sz2 / l * w;
-      const o = n * 6; pa[o] = fx - sx2; pa[o + 1] = fy; pa[o + 2] = fz - sz2; pa[o + 3] = fx + sx2; pa[o + 4] = fy; pa[o + 5] = fz + sz2; n++;
-    }
-    W.tracer.geometry.attributes.position.needsUpdate = true; W.tracer.geometry.setDrawRange(0, Math.max(0, (n - 1) * 6));
-  }
+  if (G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0); } // (at night putts leave the trail too, into the hole)
+  else if (!sh.L.putt) tracerFill(fr, r.n, tt);
   // finish exactly once (the old build re-entered here every frame after holing out)
   if (!sh.finished && G.playT >= tEnd + .7) { sh.finished = true; finishShot(); }
   else if (sh.replay && !sh.over && G.playT >= tEnd + .7) { sh.over = true; endReplay(); }
+}
+// by day the ball leaves a swirl: soft, translucent particles in two strands that wind round the flight path, widening and thinning out behind the ball
+const TR_MAX = 1500;
+function tracerFill(fr, rn, tt) {
+  if (!W.swirl) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TR_MAX * 3), 3));
+    g.setAttribute('aA', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
+    g.setAttribute('aS', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uOp: { value: 1 }, uPx: { value: 1 }, uCol: { value: new THREE.Color(0xffffff) } }, transparent: true, depthWrite: false,
+      vertexShader: 'attribute float aA; attribute float aS; uniform float uPx; varying float vA; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vA = aA; gl_PointSize = clamp(aS * 1100.0 * uPx / max(1.0, -mv.z), 5.0 * uPx, 64.0 * uPx); }',
+      fragmentShader: 'uniform float uOp; uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d); a = a * a * (0.55 + 0.45 * smoothstep(0.55, 0.0, d)); gl_FragColor = vec4(uCol, a * vA * uOp); }'
+    });
+    W.swirl = new THREE.Points(g, mat); W.swirl.frustumCulled = false; W.swirl.visible = false; W.scene.add(W.swirl);
+  }
+  const g = W.swirl.geometry, pa = g.attributes.position.array, aa = g.attributes.aA.array, sa = g.attributes.aS.array; let n = 0, last = 0;
+  while (last < rn - 1 && fr[(last + 1) * 5] <= tt && fr[(last + 1) * 5 + 4] === 0) last++;
+  const at = (k, o) => fr[Math.max(0, Math.min(rn - 1, k)) * 5 + o], T0 = fr[last * 5];
+  for (let k = last; k >= 0 && n < TR_MAX - 3; k -= 2) {
+    // the direction of flight here, and two directions across it to wind round
+    let tx = at(k + 2, 1) - at(k - 2, 1), ty = at(k + 2, 2) - at(k - 2, 2), tz = at(k + 2, 3) - at(k - 2, 3); const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+    let ux = ty * 0 - tz * 1, uy = tz * 0 - tx * 0, uz = tx * 1 - ty * 0; // (tangent x up)
+    const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul;
+    const vx = ty * uz - tz * uy, vy = tz * ux - tx * uz, vz = tx * uy - ty * ux;
+    const age = T0 - fr[k * 5], fade = Math.exp(-age * 1.15), rad = .05 + .26 * (1 - Math.exp(-age * 1.3));
+    for (let q = 0; q < 2; q++) {
+      const ph = k * .21 + q * Math.PI + age * 2.4, cx = Math.cos(ph) * rad, cy = Math.sin(ph) * rad, o = n * 3;
+      pa[o] = at(k, 1) + ux * cx + vx * cy; pa[o + 1] = at(k, 2) + VIS_R + uy * cx + vy * cy; pa[o + 2] = at(k, 3) + uz * cx + vz * cy;
+      aa[n] = .85 * fade * (.75 + .25 * Math.sin(k * 1.7 + q)); sa[n] = (.16 + .22 * (1 - fade)) * (.85 + .3 * Math.sin(k * .9 + q * 2)); n++;
+    }
+    if ((k >> 1) % 3 === 0) { // a fine mist between the strands
+      const ph = k * 1.31, rr = rad * (.3 + .5 * Math.abs(Math.sin(k * .77))), o = n * 3;
+      pa[o] = at(k, 1) + ux * Math.cos(ph) * rr + vx * Math.sin(ph) * rr; pa[o + 1] = at(k, 2) + VIS_R + uy * Math.cos(ph) * rr + vy * Math.sin(ph) * rr; pa[o + 2] = at(k, 3) + uz * Math.cos(ph) * rr + vz * Math.sin(ph) * rr;
+      aa[n] = .45 * fade; sa[n] = .15 + .12 * (1 - fade); n++;
+    }
+  }
+  g.attributes.position.needsUpdate = true; g.attributes.aA.needsUpdate = true; g.attributes.aS.needsUpdate = true; g.setDrawRange(0, n); W.swirl.material.uniforms.uPx.value = W.ren.getPixelRatio();
 }
 // at night the flight leaves small glowing particles: they peel off the ball, drift a little and fade out over about a second and a half
 const TRAIL_T = 3.5, TRAIL_MAX = 480;
@@ -7598,7 +7626,7 @@ function replayLast() {
   addressCamFor(a, lk, G.ball.x, G.ball.y, G.ball.z, yaw, !!R.L.putt, R.teed);
   W.cam.position.copy(a); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
   W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
-  W.tracer.geometry.setDrawRange(0, 0); G.state = 'flight'; G.playT = -2; G.shake = R.L.putt ? 0 : .12;
+  W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0); G.state = 'flight'; G.playT = -2; G.shake = R.L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null; $('aimHint').classList.remove('on');
   return true;
 }
@@ -10379,6 +10407,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible && !(G.nightU > .5)) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
+  if (W.swirl) { W.swirl.visible = W.tracer.visible && !(G.nightU > .5) && (G.state === 'flight' || G.state === 'holed' || G.state === 'settle'); W.swirl.material.uniforms.uOp.value = W.tracer.material.opacity / .8; }
   if (W.trail) W.trail.visible = W.tracer.visible && G.nightU > .5 && (G.state === 'flight' || G.state === 'holed') && W.trailFade > .01;
   swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') { mpSpecCam(dt); if (MP.clip) clipTick(); } else updateCamera(dt); nightTick(dt); updateWeatherVisuals(dt); gustTick(dt, now / 1000); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
