@@ -27,7 +27,8 @@ The method, its checks and its pitfalls are in **[docs/NEW_COURSE_GUIDE.md](../.
   - `tr7.js`: trees near a line of play;
   - `b18.js`: water profile;
   - `snd.js`: soundscape render;
-  - `rough.js`: ball in the rough, rain.
+  - `rough.js`: ball in the rough, rain;
+  - `overallcard.js`: a name on the daily challenge's Overall tab opens the player card.
   - `merge2.js`: two devices merging into one account (runs the real workflow script from `leaderboard.yml` behind both browsers).
 
 The scripts were written for a scratch session. Paths such as `/tmp/rothley` and the scratchpad folder, and the course origin, are hard-coded. Copy the folder, set the origin and paths, and run the steps in the order the guide gives.
