@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 16 };
+const APP_ITER = { courses: 8, n: 17 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7072,7 +7072,7 @@ function resumeRound(course) {
     const cp = new THREE.Vector3(), lk = new THREE.Vector3(), v = L.v; addressCamFor(cp, lk, G.ball.x, G.ball.y, G.ball.z, Math.atan2(v[0], -v[2]), !!L.putt, G.teed);
     W.cam.position.copy(cp); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
     document.body.classList.add('flight'); if (G.rig) { G.rig.arr = null; G.rig.launch = null; }
-    W.tracerT0 = performance.now(); W.tracer.visible = !L.putt || G.nightU > .5; W.tracer.material.opacity = .8; W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0);
+    W.tracerT0 = performance.now(); W.tracer.visible = !L.putt || G.nightU > .5; W.tracer.material.opacity = .8; W.tracer.geometry.setDrawRange(0, 0);
     W.aim.visible = W.ring.visible = W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; $('aimHint').classList.remove('on');
     G.state = 'flight'; G.playT = t; G.shake = 0; updateHUD();
     return true;
@@ -7136,7 +7136,7 @@ function startHole(i) {
   G.prev = { x: G.ball.x, z: G.ball.z, teed: true };
   autoClubAndAim();
   Object.assign(SW, { phase: 'idle', mark: null, last: null, resultT: 0, trail: [] });
-  W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0); resetBallFade(); W.ball.visible = true; W.aim.visible = W.ring.visible = false;
+  W.tracer.geometry.setDrawRange(0, 0); resetBallFade(); W.ball.visible = true; W.aim.visible = W.ring.visible = false;
   G.state = 'intro'; G.introT = 0; G.introSnap = true;
   showIntro(); drawMapThumb(); updateHUD();
 }
@@ -7446,7 +7446,7 @@ function impact(tImp) {
   G.state = 'flight'; G.playT = -.05; G.shake = L.putt ? 0 : .12; saveRound(); G.savedT = 0; mpShot(res);
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null;
   $('aimHint').classList.remove('on');
-  W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0);
+  W.tracer.geometry.setDrawRange(0, 0);
   if (!L.putt) {
     const d = aimDir(), sand = G.surf === S.SAND, colors = sand ? [0xf2e3bf, 0xe9d6a8, 0xfff3dc] : G.teed ? [0xffffff, 0xf7dc2e, 0x8dce69] : [0x8dce69, 0x6ab353, 0xa5d987, 0x7a5c45];
     burst(G.ball.x, G.ball.y + .05, G.ball.z, d[0], d[1], colors, sand ? 26 : 14, sand ? 4 : 6, sand ? 3.5 : 2);
@@ -7534,48 +7534,66 @@ function updateFlight(dt) {
     else if (e.type === 'hop') readoutNote('Too hot · hopped the cup', 'ok');
     else if (e.type === 'cup') { SFX.cup(); buzz([20, 40, 20]); }
   }
-  if (G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0); } // (at night putts leave the trail too, into the hole)
+  if (G.nightU > .5) { trailFill(fr, r.n, tt); W.tracer.geometry.setDrawRange(0, 0); } // (at night putts leave the trail too, into the hole)
   else if (!sh.L.putt) tracerFill(fr, r.n, tt);
   // finish exactly once (the old build re-entered here every frame after holing out)
   if (!sh.finished && G.playT >= tEnd + .7) { sh.finished = true; finishShot(); }
   else if (sh.replay && !sh.over && G.playT >= tEnd + .7) { sh.over = true; endReplay(); }
 }
-// by day the ball leaves a swirl: soft, translucent particles in two strands that wind round the flight path, widening and thinning out behind the ball
-const TR_MAX = 2400;
+// by day the ball leaves a swirl: soft, translucent particles winding round the flight path (one strand after a bad strike, two after an ordinary one, three after a pure strike with a good smash factor).
+// Each particle is born on the path as the ball passes, then lives its own life by the game's clock (it keeps winding and drifting, also after the ball has landed and the shot is over) and fades out after one to two seconds.
+const TR_MAX = 2600;
+function swirlStrands() {
+  const L = G.shot && G.shot.L, c = CLUBS[G.club]; if (!L) return 2;
+  const sr = c && c.smash && L.smash ? L.smash / c.smash : 1, ql = L.qualityLevel | 0;
+  return ql >= 3 || sr < .8 ? 1 : ql === 2 || sr < .92 ? 2 : 3;
+}
+function swirlMake() {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TR_MAX * 3), 3));
+  g.setAttribute('aA', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
+  g.setAttribute('aS', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uPx: { value: 1 }, uCol: { value: new THREE.Color(0xffffff) } }, transparent: true, depthWrite: false,
+    vertexShader: 'attribute float aA; attribute float aS; uniform float uPx; varying float vA; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vA = aA; gl_PointSize = clamp(aS * 1100.0 * uPx / max(1.0, -mv.z), 5.0 * uPx, 64.0 * uPx); }',
+    fragmentShader: 'uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d); a = a * a * (0.55 + 0.45 * smoothstep(0.55, 0.0, d)); gl_FragColor = vec4(uCol, a * vA); }'
+  });
+  W.swirl = new THREE.Points(g, mat); W.swirl.frustumCulled = false; W.swirl.visible = false; W.scene.add(W.swirl); W.swirlP = { list: [], k: 0, fr: null };
+}
+const swirlHash = v => { const x = Math.sin(v * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+// called as the shot plays: births the particles for the frames the ball has just passed (through the roll-out, until it has almost stopped)
 function tracerFill(fr, rn, tt) {
-  if (!W.swirl) {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TR_MAX * 3), 3));
-    g.setAttribute('aA', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
-    g.setAttribute('aS', new THREE.BufferAttribute(new Float32Array(TR_MAX), 1));
-    const mat = new THREE.ShaderMaterial({
-      uniforms: { uOp: { value: 1 }, uPx: { value: 1 }, uCol: { value: new THREE.Color(0xffffff) } }, transparent: true, depthWrite: false,
-      vertexShader: 'attribute float aA; attribute float aS; uniform float uPx; varying float vA; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vA = aA; gl_PointSize = clamp(aS * 1100.0 * uPx / max(1.0, -mv.z), 5.0 * uPx, 64.0 * uPx); }',
-      fragmentShader: 'uniform float uOp; uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d); a = a * a * (0.55 + 0.45 * smoothstep(0.55, 0.0, d)); gl_FragColor = vec4(uCol, a * vA * uOp); }'
-    });
-    W.swirl = new THREE.Points(g, mat); W.swirl.frustumCulled = false; W.swirl.visible = false; W.scene.add(W.swirl);
-  }
-  const g = W.swirl.geometry, pa = g.attributes.position.array, aa = g.attributes.aA.array, sa = g.attributes.aS.array; let n = 0, last = 0;
-  W.swirlSrc = { fr, rn, tt, wall: performance.now() / 1000 };
-  while (last < rn - 1 && fr[(last + 1) * 5] <= tt && fr[(last + 1) * 5 + 4] === 0) last++;
-  const at = (k, o) => fr[Math.max(0, Math.min(rn - 1, k)) * 5 + o], hs = v => { const x = Math.sin(v * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  // every particle is born on the path (at the moment the ball passed), keeps winding round it and drifting on its own, and fades out after a lifetime of its own (about one to two seconds)
-  for (let k = last; k >= 0 && n < TR_MAX - 3; k--) {
-    const age = tt - fr[k * 5]; if (age > 2.2) break;
+  if (!W.swirl) swirlMake();
+  if (G.shot && G.shot.camFreeze) return; // (a lost ball gives nothing away)
+  const P = W.swirlP; if (P.fr !== G.shot || tt < (P.tt || 0) - .05) { P.fr = G.shot; P.k = 0; P.list.length = 0; } P.tt = tt; // (a new shot, or the replay of one: its own swirl)
+  const now = W.swirlClock || 0, rest = trailRest(fr, rn), S = swirlStrands();
+  let last = 0; while (last < rn - 1 && fr[(last + 1) * 5] <= tt) last++;
+  const at = (k, o) => fr[Math.max(0, Math.min(rn - 1, k)) * 5 + o];
+  for (; P.k <= last; P.k++) {
+    const k = P.k; if (fr[k * 5] > rest || P.list.length > TR_MAX - 8) continue;
     let tx = at(k + 2, 1) - at(k - 2, 1), ty = at(k + 2, 2) - at(k - 2, 2), tz = at(k + 2, 3) - at(k - 2, 3); const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
     let ux = -tz, uy = 0, uz = tx; const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul; // (tangent x up)
-    const vx = ty * uz - tz * uy, vy = tz * ux - tx * uz, vz = tx * uy - ty * ux;
-    const per = (k & 1) ? 2 : 3; // (every frame, two or three particles)
-    for (let q = 0; q < per; q++) {
-      const id = k * 3 + q, life = .9 + 1.1 * hs(id), u = age / life; if (u >= 1) continue;
-      const spin = 2.6 + 3.2 * hs(id + .5), ph = id * 1.7 + q * Math.PI + age * spin, rad = (.05 + .3 * (1 - Math.exp(-age * 1.2))) * (.6 + .8 * hs(id + .9)), o = n * 3;
-      const cx = Math.cos(ph) * rad, cy = Math.sin(ph) * rad, rise = .22 * age * (hs(id + .3) - .35);
-      pa[o] = at(k, 1) + ux * cx + vx * cy; pa[o + 1] = at(k, 2) + VIS_R + uy * cx + vy * cy + rise; pa[o + 2] = at(k, 3) + uz * cx + vz * cy;
-      const inn = Math.min(1, age / .1), out = Math.pow(1 - u, 1.7);
-      aa[n] = .95 * inn * out * (.7 + .3 * Math.sin(age * 9 + id)); sa[n] = (.22 + .22 * u) * (.8 + .4 * hs(id + .2)); n++;
+    const vx = ty * uz - tz * uy, vy = tz * ux - tx * uz, vz = tx * uy - ty * ux, born = now - Math.max(0, tt - fr[k * 5]) / 1.1;
+    for (let q = 0; q <= S; q++) { // the strands, and a fine mist between them
+      const id = k * 5 + q, mist = q === S;
+      P.list.push({ x: at(k, 1), y: at(k, 2) + VIS_R, z: at(k, 3), ux, uy, uz, vx, vy, vz, born, life: (mist ? .7 : .9) + 1.1 * swirlHash(id), spin: 2.6 + 3.2 * swirlHash(id + .5), ph0: mist ? swirlHash(id + 2) * 6.28 : q * TAU / S + k * .21,
+        rad: (mist ? .4 : 1) * (.6 + .8 * swirlHash(id + .9)), rise: .22 * (swirlHash(id + .3) - .35), size: mist ? .2 : .3, op: mist ? .55 : 1, id });
     }
   }
-  g.attributes.position.needsUpdate = true; g.attributes.aA.needsUpdate = true; g.attributes.aS.needsUpdate = true; g.setDrawRange(0, n); W.swirl.material.uniforms.uPx.value = W.ren.getPixelRatio();
+}
+// every frame: the particles that are alive, wherever the shot is (also after it has ended)
+function swirlUpdate(dt) {
+  if (!W.swirl) return; const now = W.swirlClock = (W.swirlClock || 0) + dt; // (the swirl's own clock runs with the game's: at a low frame rate everything slows together)
+  const P = W.swirlP, g = W.swirl.geometry, pa = g.attributes.position.array, aa = g.attributes.aA.array, sa = g.attributes.aS.array; let n = 0;
+  for (let i = P.list.length - 1; i >= 0; i--) {
+    const o = P.list[i], age = now - o.born; if (age >= o.life) { P.list[i] = P.list[P.list.length - 1]; P.list.pop(); continue; }
+    if (age < 0) continue; const u = age / o.life, ph = o.ph0 + age * o.spin, rad = (.05 + .3 * (1 - Math.exp(-age * 1.2))) * o.rad, cx = Math.cos(ph) * rad, cy = Math.sin(ph) * rad, a3 = n * 3;
+    pa[a3] = o.x + o.ux * cx + o.vx * cy; pa[a3 + 1] = o.y + o.uy * cx + o.vy * cy + o.rise * age; pa[a3 + 2] = o.z + o.uz * cx + o.vz * cy;
+    aa[n] = o.op * Math.min(1, age / .1) * Math.pow(1 - u, 1.7) * (.7 + .3 * Math.sin(age * 9 + o.id)); sa[n] = (o.size + .2 * u) * (.8 + .4 * swirlHash(o.id + .2)); n++;
+    if (n >= TR_MAX) break;
+  }
+  g.attributes.position.needsUpdate = true; g.attributes.aA.needsUpdate = true; g.attributes.aS.needsUpdate = true; g.setDrawRange(0, n);
+  W.swirl.visible = n > 0 && !(G.nightU > .5); W.swirl.material.uniforms.uPx.value = W.ren.getPixelRatio();
 }
 // at night the flight leaves small glowing particles: they peel off the ball, drift a little and fade out over about a second and a half
 const TRAIL_T = 3.5, TRAIL_MAX = 480;
@@ -7625,7 +7643,7 @@ function replayLast() {
   addressCamFor(a, lk, G.ball.x, G.ball.y, G.ball.z, yaw, !!R.L.putt, R.teed);
   W.cam.position.copy(a); G.camLook.copy(lk); W.cam.lookAt(lk); camSnap();
   W.tracerT0 = performance.now(); W.tracer.visible = true; W.tracer.material.opacity = .8;
-  W.tracer.geometry.setDrawRange(0, 0); if (W.swirl) W.swirl.geometry.setDrawRange(0, 0); G.state = 'flight'; G.playT = -2; G.shake = R.L.putt ? 0 : .12;
+  W.tracer.geometry.setDrawRange(0, 0); G.state = 'flight'; G.playT = -2; G.shake = R.L.putt ? 0 : .12;
   W.aim.visible = W.ring.visible = false; W.peg.visible = false; if (W.slope) W.slope.mesh.visible = false; G.chip = null; $('aimHint').classList.remove('on');
   return true;
 }
@@ -10406,8 +10424,7 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible && !(G.nightU > .5)) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
-  if (W.swirl && W.swirlSrc && W.tracer.visible && !(G.nightU > .5) && G.state !== 'flight' && G.state !== 'holed') { const q = W.swirlSrc; tracerFill(q.fr, q.rn, q.tt + performance.now() / 1000 - q.wall); } // (once the shot is over the particles carry on: winding, drifting and fading on their own)
-  if (W.swirl) { W.swirl.visible = W.tracer.visible && !(G.nightU > .5); W.swirl.material.uniforms.uOp.value = W.tracer.material.opacity / .8; }
+  swirlUpdate(dt);
   if (W.trail) W.trail.visible = W.tracer.visible && G.nightU > .5 && (G.state === 'flight' || G.state === 'holed') && W.trailFade > .01;
   swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') { mpSpecCam(dt); if (MP.clip) clipTick(); } else updateCamera(dt); nightTick(dt); updateWeatherVisuals(dt); gustTick(dt, now / 1000); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
