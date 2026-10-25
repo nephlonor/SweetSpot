@@ -3533,7 +3533,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 15 };
+const APP_ITER = { courses: 8, n: 16 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7541,7 +7541,7 @@ function updateFlight(dt) {
   else if (sh.replay && !sh.over && G.playT >= tEnd + .7) { sh.over = true; endReplay(); }
 }
 // by day the ball leaves a swirl: soft, translucent particles in two strands that wind round the flight path, widening and thinning out behind the ball
-const TR_MAX = 1500;
+const TR_MAX = 2400;
 function tracerFill(fr, rn, tt) {
   if (!W.swirl) {
     const g = new THREE.BufferGeometry();
@@ -7556,24 +7556,23 @@ function tracerFill(fr, rn, tt) {
     W.swirl = new THREE.Points(g, mat); W.swirl.frustumCulled = false; W.swirl.visible = false; W.scene.add(W.swirl);
   }
   const g = W.swirl.geometry, pa = g.attributes.position.array, aa = g.attributes.aA.array, sa = g.attributes.aS.array; let n = 0, last = 0;
+  W.swirlSrc = { fr, rn, tt, wall: performance.now() / 1000 };
   while (last < rn - 1 && fr[(last + 1) * 5] <= tt && fr[(last + 1) * 5 + 4] === 0) last++;
-  const at = (k, o) => fr[Math.max(0, Math.min(rn - 1, k)) * 5 + o], T0 = fr[last * 5];
-  for (let k = last; k >= 0 && n < TR_MAX - 3; k -= 2) {
-    // the direction of flight here, and two directions across it to wind round
+  const at = (k, o) => fr[Math.max(0, Math.min(rn - 1, k)) * 5 + o], hs = v => { const x = Math.sin(v * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  // every particle is born on the path (at the moment the ball passed), keeps winding round it and drifting on its own, and fades out after a lifetime of its own (about one to two seconds)
+  for (let k = last; k >= 0 && n < TR_MAX - 3; k--) {
+    const age = tt - fr[k * 5]; if (age > 2.2) break;
     let tx = at(k + 2, 1) - at(k - 2, 1), ty = at(k + 2, 2) - at(k - 2, 2), tz = at(k + 2, 3) - at(k - 2, 3); const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
-    let ux = ty * 0 - tz * 1, uy = tz * 0 - tx * 0, uz = tx * 1 - ty * 0; // (tangent x up)
-    const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul;
+    let ux = -tz, uy = 0, uz = tx; const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul; // (tangent x up)
     const vx = ty * uz - tz * uy, vy = tz * ux - tx * uz, vz = tx * uy - ty * ux;
-    const age = T0 - fr[k * 5], fade = Math.exp(-age * 1.15), rad = .05 + .26 * (1 - Math.exp(-age * 1.3));
-    for (let q = 0; q < 2; q++) {
-      const ph = k * .21 + q * Math.PI + age * 2.4, cx = Math.cos(ph) * rad, cy = Math.sin(ph) * rad, o = n * 3;
-      pa[o] = at(k, 1) + ux * cx + vx * cy; pa[o + 1] = at(k, 2) + VIS_R + uy * cx + vy * cy; pa[o + 2] = at(k, 3) + uz * cx + vz * cy;
-      aa[n] = .85 * fade * (.75 + .25 * Math.sin(k * 1.7 + q)); sa[n] = (.16 + .22 * (1 - fade)) * (.85 + .3 * Math.sin(k * .9 + q * 2)); n++;
-    }
-    if ((k >> 1) % 3 === 0) { // a fine mist between the strands
-      const ph = k * 1.31, rr = rad * (.3 + .5 * Math.abs(Math.sin(k * .77))), o = n * 3;
-      pa[o] = at(k, 1) + ux * Math.cos(ph) * rr + vx * Math.sin(ph) * rr; pa[o + 1] = at(k, 2) + VIS_R + uy * Math.cos(ph) * rr + vy * Math.sin(ph) * rr; pa[o + 2] = at(k, 3) + uz * Math.cos(ph) * rr + vz * Math.sin(ph) * rr;
-      aa[n] = .45 * fade; sa[n] = .15 + .12 * (1 - fade); n++;
+    const per = (k & 1) ? 2 : 3; // (every frame, two or three particles)
+    for (let q = 0; q < per; q++) {
+      const id = k * 3 + q, life = .9 + 1.1 * hs(id), u = age / life; if (u >= 1) continue;
+      const spin = 2.6 + 3.2 * hs(id + .5), ph = id * 1.7 + q * Math.PI + age * spin, rad = (.05 + .3 * (1 - Math.exp(-age * 1.2))) * (.6 + .8 * hs(id + .9)), o = n * 3;
+      const cx = Math.cos(ph) * rad, cy = Math.sin(ph) * rad, rise = .22 * age * (hs(id + .3) - .35);
+      pa[o] = at(k, 1) + ux * cx + vx * cy; pa[o + 1] = at(k, 2) + VIS_R + uy * cx + vy * cy + rise; pa[o + 2] = at(k, 3) + uz * cx + vz * cy;
+      const inn = Math.min(1, age / .1), out = Math.pow(1 - u, 1.7);
+      aa[n] = .95 * inn * out * (.7 + .3 * Math.sin(age * 9 + id)); sa[n] = (.22 + .22 * u) * (.8 + .4 * hs(id + .2)); n++;
     }
   }
   g.attributes.position.needsUpdate = true; g.attributes.aA.needsUpdate = true; g.attributes.aS.needsUpdate = true; g.setDrawRange(0, n); W.swirl.material.uniforms.uPx.value = W.ren.getPixelRatio();
@@ -10407,7 +10406,8 @@ function frame(now) {
   }
   // the tracer fades out over the last second of its first four, so it never hangs in front of the view
   if (W.tracer.visible && !(G.nightU > .5)) { const o = .8 * clamp(4 - (now - W.tracerT0) / 1000, 0, 1); W.tracer.material.opacity = o; if (o <= 0) W.tracer.visible = false; }
-  if (W.swirl) { W.swirl.visible = W.tracer.visible && !(G.nightU > .5) && (G.state === 'flight' || G.state === 'holed' || G.state === 'settle'); W.swirl.material.uniforms.uOp.value = W.tracer.material.opacity / .8; }
+  if (W.swirl && W.swirlSrc && W.tracer.visible && !(G.nightU > .5) && G.state !== 'flight' && G.state !== 'holed') { const q = W.swirlSrc; tracerFill(q.fr, q.rn, q.tt + performance.now() / 1000 - q.wall); } // (once the shot is over the particles carry on: winding, drifting and fading on their own)
+  if (W.swirl) { W.swirl.visible = W.tracer.visible && !(G.nightU > .5); W.swirl.material.uniforms.uOp.value = W.tracer.material.opacity / .8; }
   if (W.trail) W.trail.visible = W.tracer.visible && G.nightU > .5 && (G.state === 'flight' || G.state === 'holed') && W.trailFade > .01;
   swirlWind(dt); updateSwirl(dt); mpUpdate(dt); dlTick(dt); if (G.state === 'spec') { mpSpecCam(dt); if (MP.clip) clipTick(); } else updateCamera(dt); nightTick(dt); updateWeatherVisuals(dt); gustTick(dt, now / 1000); updateRainbow(dt); updateRain(now, dt); if (W.treeOcc) updateTreeOcc(); updateParticles(dt); updateSlopeArrows(now / 1000); updateSea(now / 1000); updateFountains(now / 1000); updateLife(dt, now / 1000);
   { // the flyover sees the course from high up: shadows reach four times as far there
