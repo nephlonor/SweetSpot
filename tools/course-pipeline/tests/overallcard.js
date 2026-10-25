@@ -1,0 +1,21 @@
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const p = await (await b.newContext({ viewport: { width: 405, height: 720 } })).newPage();
+  p.on('pageerror', e => console.log('PAGEERR', e.message));
+  await p.addInitScript(() => localStorage.setItem('ssg-intro-seen', '1'));
+  await p.route('**/three.min.js', r => r.fulfill({ path: '' + (process.env.THREE || __dirname + '/three.min.js') + '', contentType: 'application/javascript' }));
+  await p.route('**/fonts.googleapis.com/**', r => r.abort());
+  const pf = { xp: 4200, r: 31, h: 540, st: 2300, pu: 900, ac: 1, ea: 4, bi: 60, pa: 200, bo: 150, dd: 40, fh: 200, ft: 400, gh: 180, gt: 540, sh: 2300, di: 300000, wa: 12, ob: 8, tr: 30, rb: 2, ch: 7, fd: 3, lo: 2, dr: 281, ho: 74.2, pt: 18.4, br: -3, gs: 5, fs: 7, bk: 3, tw: [20750, 20751] };
+  const files = { 'daily-index.json': [], 'daily-overall.json': [{ by: 'abc12345', n: 'Rory', p: 120, d: 9, w: 3, pod: 5, best: -5 }, { by: 'def67890', n: 'Sam', p: 80, d: 7, w: 1, pod: 2, best: -2 }], 'players.json': { abc12345: { n: 'Rory', pf, bs: [], at: Date.now() } } };
+  await p.route('**/raw.githubusercontent.com/**', r => { const f = r.request().url().split('/leaderboard/')[1].split('?')[0]; files[f] ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(files[f]) }) : r.fulfill({ status: 404, body: '' }); });
+  await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(3000);
+  await p.evaluate(() => openDaily('overall'));
+  await p.waitForTimeout(1500);
+  console.log('rows', await p.evaluate(() => [...document.querySelectorAll('#dailyBody .lb .row')].map(r => r.textContent.slice(0, 40)).join(' | ')));
+  await p.evaluate(() => document.querySelector('#dailyBody .lb .row').click()); await p.waitForTimeout(1200);
+  console.log('card open', await p.evaluate(() => [$('playerSheet').classList.contains('on'), $('plName').textContent, $('plSub').textContent, $('playerBody').textContent.replace(/\s+/g, ' ').slice(0, 220)]));
+  await p.screenshot({ path: (process.env.SHOTS || '/tmp') + '/ovcard.png' });
+  await p.evaluate(() => $('plBack').click()); await p.waitForTimeout(800); console.log('back to overall', await p.evaluate(() => [$('dailySheet').classList.contains('on'), DL.tab]));
+  await b.close();
+})();
