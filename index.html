@@ -239,6 +239,12 @@ body.night .csel option{background:#14161a;color:rgba(255,255,255,var(--wk))}
 .hcard input.need{border-color:#d63a2f;animation:shake .3s}
 .hcard .hn{font:500 12px/1.4 var(--body);color:var(--ink3,rgba(22,33,28,.5));margin:2px 0 14px}
 .hcard .hbtns{display:flex;gap:10px}.hcard .hbtns .btn{flex:1;min-width:0}
+#pbNote{z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.38);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ncard{width:100%;max-width:420px;padding:22px 20px 18px;background:rgba(250,252,249,.9);text-align:center;transform:translateY(24px);transition:transform .5s var(--spring);border-radius:28px}
+#pbNote.on .ncard{transform:none}
+.ncard .nk{font:700 12px var(--cond);letter-spacing:.2em;text-transform:uppercase;color:var(--w1,#2f6b35);opacity:.85}
+.ncard .nt{font:700 24px var(--disp,var(--cond));margin:6px 0 8px;color:var(--ink,#1c3a22)}
+.ncard .nb{font:500 16px/1.4 var(--body,system-ui);color:var(--ink2,#3c5a42);margin-bottom:16px}
 .icard canvas{width:86px;height:144px;border-radius:14px;flex:none;background:#cfe3c3;box-shadow:0 0 0 1px rgba(255,255,255,calc(.4*var(--wk)))}
 .ic-b{display:flex;flex-direction:column;justify-content:space-between;flex:1;min-width:0}
 .ic-k{font:600 13px var(--cond);letter-spacing:.14em;text-transform:uppercase;color:var(--w3)}
@@ -610,6 +616,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
+<div class="layer" id="pbNote" role="dialog" aria-live="polite"><div class="card ncard"><div class="nk" id="pbNoteK">New course</div><div class="nt">New course &middot; work in progress</div><div class="nb">This course is new and still being built &ndash; but you can already play it.</div><button class="btn" id="pbNoteOk" type="button">Let's play</button></div></div>
 <div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">Replay</button></div></div>
 <div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
@@ -7098,6 +7105,16 @@ function resumeRound(course) {
   beginHole(); G.snapCam = true; updateHUD(); // straight to the address view, no flyover
   return true;
 }
+// A course that is new and still being built shows a note when a round starts there (and the first time a hole is practised in a session): add its key to PB_WIP while building it, remove it when done (empty now: Four Mile Ranch is finished)
+const PB_WIP = [], PBN = { practice: false };
+function pbNotice(practice) {
+  if (!COURSE || !PB_WIP.includes(COURSE.key)) return;
+  if (practice) { if (PBN.practice) return; PBN.practice = true; }
+  $('pbNoteK').textContent = COURSE.short;
+  $('pbNote').classList.add('on');
+}
+$('pbNoteOk').addEventListener('click', () => $('pbNote').classList.remove('on'));
+$('pbNote').addEventListener('click', e => { if (e.target === $('pbNote')) $('pbNote').classList.remove('on'); });
 function startRound(daily) {
   if (!daily && G.daily) { saveRound(); G.daily = null; mpRelobby(); } // a new ordinary round: the daily challenge in play waits where it is
   clearRound(G.daily ? 'daily' : undefined);
@@ -7106,6 +7123,7 @@ function startRound(daily) {
   G.gullDone = false; G.gullHole = Math.random() < .65 ? (Math.random() * 18) | 0 : -1; // (Pebble Beach: the hole where a gull comes to look at the ball, in about two rounds of three)
   G.practice = false; G.submitted = false; G.shotLog = []; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
+  pbNotice(false);
   { const pr = G.daily ? mulberry32(G.daily.seed + 99) : Math.random; G.pins = HOLE_DEFS.map(() => Math.floor(pr() * 4)); } // a fresh pin sheet every round (the same one for everyone on the daily challenge)
   startHole(0);
 }
@@ -8634,7 +8652,7 @@ function startPractice(i) {
   G.practice = true; G.submitted = true; clearRound();
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
   if (!G.pins) G.pins = HOLE_DEFS.map(() => Math.floor(Math.random() * 4));
-  $('title').classList.remove('on'); closeSheets(); startHole(i);
+  $('title').classList.remove('on'); closeSheets(); startHole(i); pbNotice(true);
 }
 function totalToPar() { let s = 0, p = 0; G.scores.forEach((v, i) => { if (v != null) { s += v; p += HOLE_DEFS[i].par; } }); return { s, p, d: s - p }; }
 function fmtToPar(d) { return d === 0 ? 'E' : (d > 0 ? '+' + d : '' + d); }
