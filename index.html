@@ -504,6 +504,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .tabs button.sel{background:rgba(255,255,255,var(--wk));color:var(--ink);box-shadow:0 2px 6px rgba(22,33,28,.14)}
 .lb{display:flex;flex-direction:column;gap:5px}
 #boardSheet{height:88vh}
+#boardBody{touch-action:pan-y}
 .cwrap{position:relative;margin:0 0 10px;height:76px;border-radius:16px;overflow:hidden;background:var(--soft);perspective:300px;perspective-origin:50% 50%;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
 .cwrap::before{content:'';position:absolute;left:50%;top:14px;bottom:14px;width:104px;margin-left:-52px;border-radius:12px;background:rgba(255,255,255,calc(.2*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.32*var(--wk)));pointer-events:none;z-index:0}
 .cwrap::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(40,70,48,.6),rgba(40,70,48,0) 26%,rgba(40,70,48,0) 74%,rgba(40,70,48,.6));pointer-events:none;z-index:3}
@@ -3534,7 +3535,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 25 };
+const APP_ITER = { courses: 8, n: 26 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -9568,7 +9569,8 @@ function courseWheel(key) {
     });
     const t = Math.round(pos); if (t !== lastTick && t >= 0 && t < N) { lastTick = t; try { tone(2300, .012, 'sine', .035); } catch (e) { } } // a tick as each name passes the middle
   };
-  const choose = i => { if (!wrap.isConnected || i === cur) return; cur = i; Board.view = list[i].key; loadWorld(false, list[i].key); refreshBoards(); };
+  let tgtI = -1; // (the name the wheel is rolling to, while it rolls)
+  const choose = i => { tgtI = -1; if (!wrap.isConnected) return; if (i === cur) { if (Board.late) { Board.late = false; refreshBoards(); } return; } cur = i; Board.view = list[i].key; loadWorld(false, list[i].key); refreshBoards(); };
   let last = 0, settling = false;
   const frame = now => {
     const dt = Math.min(.08, (now - last) / 1000 || .016); last = now;
@@ -9588,7 +9590,7 @@ function courseWheel(key) {
   const run = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
   // the wheel rolls to name i in ms milliseconds (a soft ease at the end, a tick as each name passes) and the board follows when it has slotted in
   const rollTo = (i, ms) => {
-    vel = 0; settling = false; const from = pos, t0 = performance.now(); cancelAnimationFrame(raf);
+    vel = 0; settling = false; tgtI = i; const from = pos, t0 = performance.now(); cancelAnimationFrame(raf);
     const roll = now => { if (!wrap.isConnected) return; const u = Math.min(1, (now - t0) / ms), ee = 1 - Math.pow(1 - u, 3); pos = from + (i - from) * ee; paint(); if (u < 1) raf = requestAnimationFrame(roll); else { raf = 0; choose(i); } };
     raf = requestAnimationFrame(roll);
   };
@@ -9605,7 +9607,7 @@ function courseWheel(key) {
   };
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
   wrap.addEventListener('wheel', e => { const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; if (!d) return; e.preventDefault(); vel = clamp(vel + d / PX * 3, -16, 16); settling = false; run(); }, { passive: false });
-  wrap._paint = paint; wrap._roll = rollTo; wrap._index = () => cur;
+  wrap._paint = paint; wrap._roll = rollTo; wrap._index = () => cur; wrap._target = () => tgtI >= 0 ? tgtI : cur; wrap._busy = () => !!drag || !!raf;
   return wrap;
 }
 function fillBoard(el, limit, key, pick) {
@@ -9696,6 +9698,7 @@ function lbMarkPb(key, rows, drawn) {
   const el = drawn[i].el; el.classList.add('lbPb'); el.style.setProperty('--lbd', -age + 'ms');
 }
 function refreshBoards() {
+  { const cw = $('boardBody').querySelector('.cwrap'); if (cw && cw._busy && cw._busy() && $('boardSheet').classList.contains('on')) { Board.late = true; return; } } // (a board arriving while the wheel turns or is held waits: rebuilding the wheel then would cut the turn short)
   if ($('boardSheet').classList.contains('on')) fillBoard($('boardBody'), 30, Board.view, true);
   const fb = $('finalBoard'); if (fb && !fb.dataset.daily && $('cardSheet').classList.contains('on')) fillBoard(fb, 10);
 }
@@ -10375,8 +10378,8 @@ function initInput() {
       bb.addEventListener('touchend', e => {
         const q = sw; sw = null; if (!q || !e.changedTouches.length) return; const dx = e.changedTouches[0].clientX - q.x, dy = e.changedTouches[0].clientY - q.y;
         if (Math.abs(dx) < 60 || Math.abs(dx) < 1.8 * Math.abs(dy) || performance.now() - q.t > 800) return;
-        const list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), i = list.findIndex(c => c.key === (Board.view || COURSE.key)), j = clamp(i + (dx < 0 ? 1 : -1), 0, list.length - 1);
-        if (j === i) return; loadWorld(false, list[j].key); const cw = bb.querySelector('.cwrap');
+        const cw = bb.querySelector('.cwrap'), list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), i = cw && cw._target ? cw._target() : list.findIndex(c => c.key === (Board.view || COURSE.key)), j = clamp(i + (dx < 0 ? 1 : -1), 0, list.length - 1);
+        if (j === i) return;
         if (cw && cw._roll) cw._roll(j, 260); else { Board.view = list[j].key; refreshBoards(); } // (the wheel rolls to the next name in 260 ms, as for a tap, and the board follows when it has slotted in)
       }, { passive: true });
     }
