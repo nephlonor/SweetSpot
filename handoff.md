@@ -1,11 +1,21 @@
 # Handoff
 
-**Stand:** Kurs läuft auf Florians iPhone. Geheimer Kurs „The Isles" (`isles`, nur sichtbar für Spielername „Florian") ist in `main` (PR #699, Build 9.0; PR #702, Build 9.1). 18 Löcher, Par 72, 7301 yd, 4 Par 3 / 4 Par 5, schmale Inselfairways im Wasser, keine Bunker, kaum Gefälle, kleine bohnenförmige Par-3-Grüns. Pop-up beim Wählen („-10 oder besser … Good luck!"). Generator `isleHole()` in `index.html`; Wasser-Drop immer auf dem gespielten Loch (jedes Loch ist eine eigene Welt).
+**Stand:** Geheimer Kurs „The Isles" (`isles`, nur sichtbar für Spielername „Florian") ist jetzt **eine gemeinsame Inselwelt** (Build 9.6). Alle 18 Löcher liegen auf einer Karte (Kleeblatt-Route, ca. 2,8 × 2,5 km) und sind beim Spielen sichtbar; Löcher kreuzen sich (Loch 5 über 14, Loch 7 über 18). Jedes Loch wird im eigenen, gedrehten Rahmen gespielt (`C.enu`/`C.loc` wie bei den echten Kursen).
 
-**Behoben und auf dem iPhone bestätigt (Build 9.4):** Das Einfrieren auf dem iPhone kam vom Multiplayer: `mpState` ruft `G.C.enu()` auf, das nur echte Kurse hatten; im Frame-Loop warf das jedes Bild einen TypeError. `makeCourse` hat jetzt `C.enu`/`C.loc` (Identität). Headless trat es nicht auf, weil dort keine MQTT-Verbindung zustande kommt.
+**Aufbau in `index.html`** (Blöcke „The Isles"):
+- Welt: `islBuildWorld()` (einmalig, `ISL.wd`), Löcher `islHoleSpec(i)` (lokaler Rahmen: Abschlag bei 0/0, f vorwärts), Platzierung `islLayout()` (Parameter `ISL.shape/A/gap/s0` per Scan gewählt: keine Überlappung), Inselchen `islIslets`, zentraler Strand `islCentral`.
+- Boden/Flächen: `islEval` (Höhe, Küstenabstand, Mauer-/Strandmaske) und `islSurface`; `makeIslesCourse` baut das C-Objekt. Räumlicher Index in 128-m-Zellen.
+- Rendering: `buildIslesHole` (Kacheln, Terrain nur im Lochfenster mit Feldern, sonst Weltraster `islRaster` als „far"-Textur), `islesSea`, `islesExtras` (Mauern, Felsen, Stapel, Blumen), Meerestiere `initMarine`.
+- Shader: `isIsle` in `TERRAIN_GLSL` (Seegrund, Gischt, Fels außerhalb des Fensters).
 
-**Weiteres:**
-- Rundenwerte für `isles` landen im Leaderboard-Workflow nicht (nur Kurse aus `leaderboard.yml`); `leaderboard/isles.json` ist leer.
-- Wasser sieht aus wie See; Ufermauern aus dem Foto fehlen.
+**Früher behoben (Build 9.4):** Das Einfrieren auf dem iPhone kam vom Multiplayer: `mpState` ruft `G.C.enu()` auf; `makeIslesCourse` hat jetzt `C.enu`/`C.loc`.
+
+**Inhalt:** Fairways halb so schmal an Engstellen; Grüns schrumpfen von Loch 1 bis 18 auf ein Drittel der Fläche (`islGS`); Loch 18 mit Wasser direkt ums Grün; 5 Inselgrüns (3, 7, 12, 13, 16); Risiko-/Belohnungslöcher mit mehreren Fairways (2, 5, 9, 11, 14); Plateaus/Klippen (6, 8, 17, 18, Inseln der Gabellöcher), Steigung max. 4,5 % entlang der Mittellinie; Steinmauern bis ans Fairway (kein Rough an der Mauer); ~150 Inselchen; Strände: 3 kleine (4, 10, 15) und ein großer Halbmond in der Mitte der Karte; Blumen; Delfine, Schildkröten, Robben, Fischschwärme, Wal.
+
+**Spielregeln:** Wasser-Drop nur auf dem gespielten Loch (`C.holeLand`, `dryGround`, `waterOptions` wie Pebble Beach: nächstes Fairway/Abschlag).
+
+**Offen / Ideen:**
+- Auf dem iPhone noch nicht gemessen: Aufbauzeit pro Loch (Desktop ca. 0,2–0,8 s) und Bildrate (Kacheln, 120×120-Meer, ~150 Inselchen).
+- Rundenwerte für `isles` landen im Leaderboard-Workflow nicht; `leaderboard/isles.json` ist leer.
 - Testen ohne Beschränkung: `settings.name = 'Florian'; setCourse('isles')` in der Konsole.
 - Der User will PRs in diesem Repo automatisch gemergt haben.

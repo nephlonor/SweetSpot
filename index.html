@@ -1823,8 +1823,7 @@ Object.assign(H_FINALE, { props: [{ kind: 'flagpoles', x: -32, f: 544, rot: 0, n
 // The Legacy Course, in play order: two par-36 nines, out from the clubhouse and back to it
 const LEGACY_DEFS = [HOLE_BASE[0], H_DUNES, HOLE_BASE[1], H_HELL, H_LAKE, H_ISLAND, H_SHORT, HOLE_BASE[2], H_HOME,
   H_OAK, H_REDAN, H_PEWS, H_PRINCIPAL, H_CAULDRON, H_RIVER, H_CYPRESS, H_ROAD, H_FINALE];
-// ---- The Isles: a secret course for "Florian". Eighteen narrow strips of fairway floating in open water: no bunkers, no trees, very gentle slopes.
-// Each hole is its own world, so a ball in the water is only ever dropped on the hole being played ----
+// ---- The Isles (secret course for "Florian") ----
 function isleSpline(c, step) { // Catmull-Rom through c, a point about every `step`
   const out = [], n = c.length;
   for (let i = 0; i < n - 1; i++) {
@@ -1833,47 +1832,420 @@ function isleSpline(c, step) { // Catmull-Rom through c, a point about every `st
   }
   out.push(c[n - 1].slice()); return out;
 }
-function isleHole(no, par, len, off, name, hcp) {
-  const n = off.length, span = par === 3 ? Math.sqrt(len * len - 2 * off[n - 1] * off[n - 1]) : len, ctl = off.map((x, k) => [x * (par === 3 ? 1.4 : 1.6), span * k / (n - 1)]);
-  const plen = q => { let s = 0; for (let k = 1; k < q.length; k++) s += Math.hypot(q[k][0] - q[k - 1][0], q[k][1] - q[k - 1][1]); return s; };
-  let P = isleSpline(ctl, 6);
-  if (par !== 3) { const s = (len - 3) / plen(P); ctl.forEach(p => { p[0] *= s; p[1] *= s; }); P = isleSpline(ctl, 6); }
-  const N = P.length, cl = [0]; for (let k = 1; k < N; k++) cl.push(cl[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
-  const L = cl[N - 1], g = P[N - 1], gR = par === 3 ? 7 : 11.5, a0 = P[Math.max(0, N - 6)], head = Math.atan2(g[0] - a0[0], g[1] - a0[1]) / DEG;
-  const bell = (t, c, w) => Math.exp(-(((t - c) / w) ** 2));
-  const fwHW = t => par === 3 ? (t < .72 ? 0 : 6 + 9 * (t - .72)) : 8.6 + 3.4 * (par === 5 ? bell(t, .3, .09) + bell(t, .68, .1) : bell(t, .6, .11)) - 2.2 * bell(t, 0, .05);
-  let hw = P.map((_, k) => { const t = cl[k] / L, f = fwHW(t); let h = f ? f + 6.5 : 5.5; if (par === 3 && cl[k] < 16) h = 13; if (L - cl[k] < gR + 9) h = Math.max(h, gR + 6.5); return h; });
-  for (let pass = 0; pass < 3; pass++) hw = hw.map((_, k) => { let s = 0, c = 0; for (let j = -3; j <= 3; j++) if (P[k + j]) { s += hw[k + j]; c++; } return s / c; });
-  const nt = k => { const a = P[Math.max(k - 1, 0)], b = P[Math.min(k + 1, N - 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, tx = (b[0] - a[0]) / l, ty = (b[1] - a[1]) / l; return [-ty, tx, tx, ty]; };
-  const A = [], B = [], land = [];
-  for (let k = 0; k < N; k += k + 2 < N ? 2 : 1) { const q = nt(k); A.push([P[k][0] + q[0] * hw[k], P[k][1] + q[1] * hw[k]]); B.push([P[k][0] - q[0] * hw[k], P[k][1] - q[1] * hw[k]]); }
-  land.push(...A);
-  { const q = nt(N - 1), r = hw[N - 1]; for (let j = 1; j < 8; j++) { const a = j / 8 * Math.PI; land.push([g[0] + r * (q[0] * Math.cos(a) + q[2] * Math.sin(a)), g[1] + r * (q[1] * Math.cos(a) + q[3] * Math.sin(a))]); } }
-  land.push(...B.slice().reverse());
-  { const q = nt(0), r = hw[0], c = P[0]; for (let j = 1; j < 8; j++) { const a = j / 8 * Math.PI; land.push([c[0] - r * (q[0] * Math.cos(a) + q[2] * Math.sin(a)), c[1] - r * (q[1] * Math.cos(a) + q[3] * Math.sin(a))]); } }
-  const fp = [], fwid = [], f0 = par === 3 ? L * .72 : 55;
-  for (let k = 0; k < N; k += 2) if (cl[k] >= f0 && L - cl[k] >= gR * .6) { fp.push(P[k]); fwid.push(fwHW(cl[k] / L)); }
-  const sl = ((no * 37) % 7 - 3) * .0013;
-  return {
-    name, par, hcp, seed: 300 + no, inspo: 'A narrow strip of fairway in open water',
-    tee: { x: 0, f: 0, w: 12, l: 14, elev: .3 }, start: { x: 0, f: -3 }, teeMarkers: par === 3 ? T3 : T4,
-    route: [[0, -3]].concat(Array.from({ length: 8 }, (_, j) => P[Math.round((j + 1) * (N - 1) / 8)].slice())),
-    fairways: [{ pts: fp, w: fwid }], fairwayPods: [], roughIslands: [],
-    green: { x: g[0], f: g[1], rx: par === 3 ? 8.5 : 13, rz: par === 3 ? 5.5 : 10, rot: head, wob: par === 3 ? .2 : .08, elev: .3, sx: sl, sf: -sl, und: .03, blend: 5 },
-    pin: { x: g[0], f: g[1] + 1 },
-    bunkers: [], waters: [], creeks: [], paths: [],
-    coast: { sea: .2, bed: -3.5, land },
-    ob: () => false, obLines: [], treeLines: [], treeClusters: [], landmarks: [],
-    hum: .3, shape: () => 2.6, windMax: 4
-  };
+
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+const ISL = { sea: .2, z0: 1.6, wd: null, shape: 'tre', A: 375, B: 375, gap: 90, s0: 775, cc: [0, 60], cr: 150, ca: [-40, 110] };
+function islPolySD(P, x, y) { // signed distance (negative inside) to a closed polygon [x0, y0, x1, y1 ...]
+  const n = P.length >> 1; let inside = false, best = 1e18;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = P[2 * i], yi = P[2 * i + 1], xj = P[2 * j], yj = P[2 * j + 1];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    const vx = xj - xi, vy = yj - yi, l2 = vx * vx + vy * vy; let u = l2 ? ((x - xi) * vx + (y - yi) * vy) / l2 : 0; u = u < 0 ? 0 : u > 1 ? 1 : u;
+    const dx = xi + vx * u - x, dy = yi + vy * u - y, d2 = dx * dx + dy * dy; if (d2 < best) best = d2;
+  }
+  const d = Math.sqrt(best); return inside ? -d : d;
 }
-const ISLES_DEFS = [
-  [4, 430, [0, 18, 34, 26, 10], 'Shoal', 7], [5, 585, [0, -16, -30, -14, -34, -20], 'Cay', 13], [3, 215, [0, 8, 16], 'Skerry', 15], [4, 395, [0, -20, -34, -20, -6], 'Spit', 3],
-  [4, 455, [0, 22, 8, -18, -30], 'Lagoon', 1], [4, 380, [0, -14, 6, 22, 30], 'Reef', 11], [3, 185, [0, -9, -18], 'Tern', 17], [4, 420, [0, 16, 36, 18, 26], 'Sound', 5],
-  [5, 610, [0, -22, -4, 20, 32, 16], 'Atoll', 9], [4, 410, [0, 26, 12, -14, -26], 'Inlet', 8], [4, 445, [0, -24, -34, -12, 10], 'Strand', 2], [3, 230, [0, 12, 22], 'Mirror', 14],
-  [4, 365, [0, -20, -34, -16], 'Haven', 16], [5, 590, [0, 20, -4, -28, -10, 12], 'Drift', 6], [4, 400, [0, -18, 10, 28, 14], 'Narrows', 18], [3, 195, [0, -8, 10], 'Key', 10],
-  [4, 365, [0, 22, 32, 12], 'Harbour', 4], [5, 625, [0, -20, -34, -8, 18, 6], 'Crown', 12]
-].map((h, i) => isleHole(i + 1, h[0], h[1], h[2], h[3], h[4]));
+const islBB = P => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (let i = 0; i < P.length; i += 2) { a = Math.min(a, P[i]); c = Math.max(c, P[i]); b = Math.min(b, P[i + 1]); d = Math.max(d, P[i + 1]); } return [a, b, c, d]; };
+// piece of a hole: a spline strip with its own fairway, land outline and height profile
+// o: pts (control points), w (fairway half-width), fw [s0, s1] (metres along the strip), bells / pinch [[s, k, sigma]], rim, z [[t, z]], walls [[t0, t1, 'L'|'R'|'B']],
+//    beach [[t, length, 'L'|'R', depth]], a (min land half-width at the start, for 30 m), b (the same at the end), rad (end cap radius at the end)
+function islStrip(o) {
+  const rim = o.rim != null ? o.rim : 4.5, P = isleSpline(o.pts, 5), N = P.length, cl = [0];
+  for (let k = 1; k < N; k++) cl.push(cl[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+  const L = cl[N - 1], bell = (s, c, sg) => Math.exp(-(((s - c) / sg) ** 2)), fw = o.fw ? [o.fw[0], o.fw[1] ? o.fw[1] : L - (o.fe != null ? o.fe : 20)] : null;
+  const nrm = k => { const a = P[Math.max(k - 1, 0)], b = P[Math.min(k + 1, N - 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
+  const wallAt = (t, side) => { let v = 0; for (const w of o.walls || []) if (w[2] === 'B' || w[2] === side) v = Math.max(v, smooth(w[0] - .02, w[0] + .015, t) * smooth(w[1] + .02, w[1] - .015, t)); return v; };
+  const fwL = [], fwR = [], hwL = [], hwR = [], pres = [];
+  for (let k = 0; k < N; k++) {
+    const s = cl[k], t = s / L;
+    let p = 0; if (fw) p = smooth(fw[0] - 14, fw[0] + 6, s) * smooth(fw[1] + 14, fw[1] - 6, s);
+    let f = o.w || 7.2; for (const b of o.bells || []) f *= 1 + b[1] * bell(s, b[0], b[2]); for (const b of o.pinch || []) f *= 1 - b[1] * bell(s, b[0], b[2]);
+    const wl = wallAt(t, 'L'), wr = wallAt(t, 'R'); pres.push(p);
+    fwL.push(f * p + (rim - .9) * wl * p); fwR.push(f * p + (rim - .9) * wr * p);
+    const base = o.base || 5.2;
+    hwL.push(lerp(base, f + rim, p)); hwR.push(lerp(base, f + rim, p));
+    // (at a wall the fairway runs out to the wall: land edge = fairway edge + 0.9)
+    if (wl > .01) hwL[k] = lerp(hwL[k], fwL[k] + .9, wl); if (wr > .01) hwR[k] = lerp(hwR[k], fwR[k] + .9, wr);
+  }
+  // beaches: the land bulges out on that side by the depth of the sand
+  const beaches = [];
+  for (const b of o.beach || []) {
+    const sc = b[0] * L, hl = b[1] / 2;
+    for (let k = 0; k < N; k++) { const g = smooth(sc - hl - 8, sc - hl + 6, cl[k]) * smooth(sc + hl + 8, sc + hl - 6, cl[k]); if (b[2] === 'L') hwL[k] += b[3] * g; else hwR[k] += b[3] * g; }
+    beaches.push({ s: sc, len: b[1], side: b[2], depth: b[3] });
+  }
+  if (o.a) for (let k = 0; k < N; k++) if (cl[k] < 34) { const g = smooth(34, 16, cl[k]); hwL[k] = Math.max(hwL[k], lerp(hwL[k], o.a, g)); hwR[k] = Math.max(hwR[k], lerp(hwR[k], o.a, g)); }
+  if (o.b) for (let k = 0; k < N; k++) if (L - cl[k] < o.b + 24) { const g = smooth(o.b + 24, o.b + 4, L - cl[k]); hwL[k] = Math.max(hwL[k], lerp(hwL[k], o.rad, g)); hwR[k] = Math.max(hwR[k], lerp(hwR[k], o.rad, g)); }
+  const sm = A => { for (let pass = 0; pass < 2; pass++) { const B = A.slice(); for (let k = 0; k < N; k++) { let s = 0, c = 0; for (let j = -2; j <= 2; j++) if (A[k + j] != null) { s += A[k + j]; c++; } B[k] = s / c; } A = B; } return A; };
+  const hL = sm(hwL), hR = sm(hwR); for (let k = 0; k < N; k++) { if (wallAt(cl[k] / L, 'L') > .5) hL[k] = Math.min(hL[k], hwL[k]); if (wallAt(cl[k] / L, 'R') > .5) hR[k] = Math.min(hR[k], hwR[k]); }
+  // heights along the strip, the slope capped
+  const zl = o.z || [[0, ISL.z0], [1, ISL.z0]], zc = [];
+  for (let k = 0; k < N; k++) { const t = cl[k] / L; let z = zl[0][1]; for (let j = 0; j < zl.length; j++) if (t >= zl[j][0]) z = j + 1 < zl.length ? lerp(zl[j][1], zl[j + 1][1], smooth(zl[j][0], zl[j + 1][0], t)) : zl[j][1]; zc.push(z); }
+  const ms = .045, za = zc.slice(), zb = zc.slice();
+  for (let k = 1; k < N; k++) za[k] = clamp(za[k], za[k - 1] - ms * 5, za[k - 1] + ms * 5);
+  for (let k = N - 2; k >= 0; k--) zb[k] = clamp(zb[k], zb[k + 1] - ms * 5, zb[k + 1] + ms * 5);
+  for (let k = 0; k < N; k++) zc[k] = (za[k] + zb[k]) / 2;
+  const land = [], left = [], right = [];
+  for (let k = 0; k < N; k++) { const q = nrm(k); left.push([P[k][0] + q[0] * hL[k], P[k][1] + q[1] * hL[k]]); right.push([P[k][0] - q[0] * hR[k], P[k][1] - q[1] * hR[k]]); }
+  land.push(...left);
+  { const q = nrm(N - 1), r = (hL[N - 1] + hR[N - 1]) / 2, c = P[N - 1]; for (let j = 1; j < 8; j++) { const a = j / 8 * Math.PI; land.push([c[0] + r * (q[0] * Math.cos(a) + q[1] * Math.sin(a)), c[1] + r * (q[1] * Math.cos(a) + -q[0] * Math.sin(a))]); } }
+  land.push(...right.slice().reverse());
+  { const q = nrm(0), r = (hL[0] + hR[0]) / 2, c = P[0]; for (let j = 1; j < 8; j++) { const a = j / 8 * Math.PI; land.push([c[0] - r * (q[0] * Math.cos(a) + q[1] * Math.sin(a)), c[1] - r * (q[1] * Math.cos(a) - q[0] * Math.sin(a))]); } }
+  // fairway outline
+  let fair = null;
+  if (fw) {
+    const ks = []; for (let k = 0; k < N; k++) if (pres[k] > .05) ks.push(k);
+    if (ks.length > 2) {
+      const a = [], b = [], s0 = cl[ks[0]], s1 = cl[ks[ks.length - 1]];
+      for (const k of ks) { const q = nrm(k), cap = Math.sqrt(clamp(Math.min(cl[k] - s0 + 2, s1 - cl[k] + 2) / 12, 0.04, 1)), l = fwL[k] * cap, r = fwR[k] * cap; a.push([P[k][0] + q[0] * l, P[k][1] + q[1] * l]); b.push([P[k][0] - q[0] * r, P[k][1] - q[1] * r]); }
+      fair = a.concat(b.reverse());
+    }
+  }
+  // wall lines (a metre inside the edge)
+  const walls = [];
+  for (const w of o.walls || []) for (const side of w[2] === 'B' ? ['L', 'R'] : [w[2]]) {
+    const line = []; for (let k = 0; k < N; k++) { const t = cl[k] / L; if (t < w[0] || t > w[1]) continue; const q = nrm(k), h = (side === 'L' ? hL[k] : hR[k]) - .38, sg = side === 'L' ? 1 : -1; line.push([P[k][0] + q[0] * h * sg, P[k][1] + q[1] * h * sg]); }
+    if (line.length > 2) walls.push(line);
+  }
+  // beach blobs: centred on the coast
+  const bch = beaches.map(b => {
+    let k = 0; while (k < N - 1 && cl[k] < b.s) k++;
+    const q = nrm(k), sg = b.side === 'L' ? 1 : -1, hh = (b.side === 'L' ? hL[k] : hR[k]), ex = P[k][0] + q[0] * sg * hh, ey = P[k][1] + q[1] * sg * hh, a = P[Math.min(N - 1, k + 1)], bb = P[Math.max(0, k - 1)];
+    return { x: ex, y: ey, ang: Math.atan2(a[0] - bb[0], a[1] - bb[1]), len: b.len, depth: b.depth, k, side: b.side };
+  });
+  return { P, cl, L, zc, land, fair, walls, bch, kind: 'strip' };
+}
+// a round island (island greens, islets): wobbly outline around (x, f), radius R
+function islDisc(x, f, R, z, seed, o) {
+  o = o || {}; const n = o.n || 28, r = mulberry32(seed), ph = [r() * TAU, r() * TAU, r() * TAU], am = o.wob != null ? o.wob : .1, land = [];
+  for (let k = 0; k < n; k++) { const a = k / n * TAU, W2 = 1 + am * (.6 * Math.cos(2 * a + ph[0]) + .5 * Math.cos(3 * a + ph[1]) + .3 * Math.cos(5 * a + ph[2])); land.push([x + Math.cos(a) * R * W2 * (o.sx || 1), f + Math.sin(a) * R * W2 * (o.sy || 1)]); }
+  const walls = [];
+  for (const w of o.walls || []) { const line = []; for (let k = 0; k <= n; k++) { const a = (k % n) / n * TAU; if (a < w[0] * DEG || a > w[1] * DEG) continue; const p = land[k % n], d = Math.hypot(p[0] - x, p[1] - f) || 1; line.push([p[0] - (p[0] - x) / d * .4, p[1] - (p[1] - f) / d * .4]); } if (line.length > 2) walls.push(line); }
+  return { land, fair: null, walls, bch: [], P: null, zc: null, z, kind: 'disc', cx: x, cy: f, R, top: o.top || 0 };
+}
+
+// ---- the eighteen holes, each in its own frame: tee at (0, 0), x to the right, f forward ----
+const ISH_LEN = [430, 585, 215, 395, 455, 380, 185, 420, 610, 410, 445, 230, 365, 590, 400, 195, 365, 625];
+const ISH_NAME = ['Shoal', 'Cay', 'Skerry', 'Spit', 'Lagoon', 'Reef', 'Tern', 'Sound', 'Atoll', 'Inlet', 'Strand', 'Mirror', 'Haven', 'Drift', 'Narrows', 'Key', 'Harbour', 'Crown'];
+const ISH_PAR = [4, 5, 3, 4, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5, 4, 3, 4, 5], ISH_HCP = [7, 13, 15, 3, 1, 11, 17, 5, 9, 8, 2, 14, 16, 6, 18, 10, 4, 12];
+const islGS = n => lerp(1, .577, (n - 1) / 17); // the greens shrink round after round: the 18th is a third of the first in area
+function islGreenR(n, par) { const g = islGS(n); return par === 3 ? { ra: 5.5 * g, rc: 8.5 * g } : { ra: 10 * g, rc: 13 * g }; }
+const islOff = (L, off, par, f0) => off.map((x, k) => [x * (par === 3 ? 1.4 : 1.6), (f0 || 0) + (L - (f0 || 0)) * k / (off.length - 1)]);
+function islHoleSpec(i) {
+  const n = i + 1, par = ISH_PAR[i], L = ISH_LEN[i], gr = islGreenR(n, par), R = Math.max(gr.ra, gr.rc), rad = R + (n === 18 ? 1.5 : 3.5), z0 = ISL.z0;
+  const teeP = z => ({ pts: [[0, -14], [0, 14]], a: 10.5, z: [[0, z], [1, z]] });
+  const strip = (off, o) => Object.assign({ pts: [[0, -14]].concat(islOff(L, off, par)), w: 7.2, a: 10.5, b: R, rad, fe: R + 6, fw: [58, null], bells: [[.62 * L, .38, .11 * L]], tee: true }, o);
+  const fin = (p, extra) => { const len = (p.fw && p.fw[1] == null); return p; };
+  const H = { n, name: ISH_NAME[i], par, hcp: ISH_HCP[i], len: L, gr, R, pieces: [], route: null, g: null, gp: 0 };
+  const fork5 = (s, zP, o) => { // par 5: the long way round on the left, or stepping stones over the water
+    o = o || {}; const M = { pts: [[-6 * s, .2 * L], [-30 * s, .34 * L], [-66 * s, .5 * L], [-60 * s, .66 * L], [-30 * s, .82 * L], [0, L]], w: 8.6, b: R, rad, fe: R + 6, fw: [22, null], bells: [[62, .5, 34], [330, .4, 36]], pinch: [[200, .4, 22], [420, .5, 24]], z: o.zM, walls: o.wallsM, beach: o.beachM };
+    const X = { pts: [[2 * s, .43 * L], [8 * s, .49 * L], [4 * s, .55 * L]], w: 6.4, fw: [6, 0], fe: 6, rim: 4, base: 8, z: [[0, zP], [1, zP]], walls: o.wallsX };
+    const Y = { pts: [[8 * s, .72 * L], [12 * s, .79 * L], [6 * s, .86 * L]], w: 6.4, fw: [6, 0], fe: 6, rim: 4, base: 8, z: [[0, zP], [1, zP]], walls: o.wallsY };
+    H.pieces = [teeP(o.zT || z0), M, X, Y]; H.gp = 1; H.route = [[0, -3], [-28 * s, .34 * L], [-60 * s, .6 * L], [-26 * s, .84 * L], [0, L]];
+  };
+  const fork4 = (s, zP, o) => { // par 4: wide and far back, or the short, narrow island over the water
+    o = o || {};
+    const S = { pts: [[-4 * s, .24 * L], [-30 * s, .42 * L], [-46 * s, .6 * L], [-26 * s, .8 * L], [0, L]], w: 10.5, b: R, rad, fe: R + 6, fw: [20, null], bells: [[70, .35, 30]], pinch: [[250, .45, 24]], z: o.zS, walls: o.wallsS, beach: o.beachS };
+    const X = { pts: [[8 * s, .61 * L], [12 * s, .68 * L], [6 * s, .76 * L]], w: 6, fw: [6, 0], fe: 6, rim: 4, base: 8, z: [[0, zP], [1, zP]], walls: o.wallsX };
+    H.pieces = [teeP(o.zT || z0), S, X]; H.gp = 1; H.route = [[0, -3], [-26 * s, .42 * L], [-46 * s, .6 * L], [-24 * s, .8 * L], [0, L]];
+  };
+  const island3 = (zT, zG, wallsG, o) => { // par 3: a tee island and an island green
+    o = o || {}; const gx = o.gx || 0;
+    H.pieces = [teeP(zT), Object.assign(islDisc(gx, L, rad, zG, 500 + n, { walls: wallsG, wob: .06 }), { green: true })];
+    H.gp = 1; H.route = [[0, -3], [gx, L]];
+  };
+  switch (n) {
+    case 1: H.pieces = [strip([0, 18, 34, 26, 10], { fw: [58, null], pinch: [[.45 * L, .5, 24]], walls: [[.56, .73, 'R']] })]; break;
+    case 2: fork5(1, 5.2, { wallsX: [[0, 1, 'B']] }); break;
+    case 3: island3(3.4, z0, [[20, 200]]); break;
+    case 4: H.pieces = [strip([0, -20, -34, -20, -6], { w: 6.8, fw: [58, null], pinch: [[.3 * L, .45, 20], [.62 * L, .5, 22]], walls: [[.1, .26, 'R'], [.78, .92, 'R']], beach: [[.46, 50, 'L', 9]] })]; break;
+    case 5: fork4(-1, 4.4, { wallsX: [[0, 1, 'B']] }); break;
+    case 6: H.pieces = [strip([0, -14, 6, 22, 30], { w: 7, fw: [58, null], pinch: [[.52 * L, .5, 20]], z: [[0, z0], [.16, z0], [.78, 9.5], [1, 9.5]], walls: [[.82, .96, 'B']] })]; break;
+    case 7: island3(6, z0, [[0, 360]]); break;
+    case 8: H.pieces = [strip([0, 16, 36, 18, 26], { w: 7.4, fw: [58, null], pinch: [[.35 * L, .5, 22], [.8 * L, .45, 18]], z: [[0, 5], [.12, 5], [.56, z0], [1, z0]], walls: [[.3, .52, 'L']] })]; break;
+    case 9: fork5(-1, 3, { zT: 2.2 }); break;
+    case 10: H.pieces = [strip([0, 26, 12, -14, -26], { w: 7.2, fw: [58, null], pinch: [[.7 * L, .5, 20]], beach: [[.3, 44, 'L', 8]], walls: [[.78, .9, 'R']] })]; break;
+    case 11: fork4(1, 4, {}); break;
+    case 12: island3(z0, z0, [[0, 360]], { gx: 10 }); break;
+    case 13: { // a short par 4 with an island green
+      const m = strip([0, -20, -34, -16], { pts: [[0, -14]].concat(islOff(250, [0, -20, -34, -16], 4)), w: 7.4, b: 0, rad: 0, fw: [58, 236], bells: [[150, .45, 50]], pinch: [[90, .4, 18]], walls: [[.5, .8, 'R']] });
+      delete m.b; delete m.rad; H.pieces = [m, Object.assign(islDisc(-30, L, rad, z0, 513, { walls: [[0, 360]], wob: .06 }), { green: true })]; H.gp = 1; H.route = [[0, -3], [-26, 150], [-34, 245], [-30, L]]; break;
+    }
+    case 14: fork5(1, 4, { zT: 1.8, wallsX: [[0, 1, 'B']] }); break;
+    case 15: H.pieces = [strip([0, -18, 10, 28, 14], { w: 5.4, fw: [58, null], bells: [[.62 * L, .2, 60]], pinch: [[.25 * L, .45, 16], [.5 * L, .4, 14], [.8 * L, .4, 14]], beach: [[.72, 40, 'R', 8]], walls: [[.16, .4, 'L']] })]; break;
+    case 16: island3(z0, z0, [[100, 330]], { gx: -8 }); break;
+    case 17: H.pieces = [strip([0, 22, 32, 12], { w: 6.4, fw: [58, null], pinch: [[.6 * L, .3, 30]], z: [[0, 7], [1, 7]], walls: [[.22, .9, 'B']] })]; break;
+    case 18: H.pieces = [strip([0, -20, -34, -8, 18, 6], { w: 6.2, fw: [58, null], z: [[0, z0], [.2, z0], [.86, 12], [1, 12]], bells: [[.3 * L, .3, 60]], pinch: [[.45 * L, .5, 24], [.75 * L, .45, 22]], walls: [[.86, .95, 'B']] })]; break;
+  }
+  return H;
+}
+
+const ISL_CELL = 128;
+function islLayout() { // tee, heading (deg clockwise from north) of every hole: a figure of eight, the two loops crossing in the middle
+  const A = ISL.A || 1180, B = ISL.B || 800, Q = ISL.shape === 'tre' ? (t => [A * (Math.sin(t) + 2 * Math.sin(2 * t)), B * (Math.cos(t) - 2 * Math.cos(2 * t))]) : (t => [A * Math.sin(t), B * Math.sin(2 * t)]);
+  const tab = [0]; const M = 6000; let prev = Q(0);
+  for (let i = 1; i <= M; i++) { const q = Q(i / M * TAU); tab.push(tab[i - 1] + Math.hypot(q[0] - prev[0], q[1] - prev[1])); prev = q; }
+  const total = tab[M], at = s => { s = ((s % total) + total) % total; let lo = 0, hi = M; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (tab[m] <= s) lo = m; else hi = m; } return Q((lo + (s - tab[lo]) / (tab[hi] - tab[lo])) / M * TAU); };
+  const out = []; let s = ISL.s0 != null ? ISL.s0 : 0;
+  for (let i = 0; i < 18; i++) {
+    const L = ISH_LEN[i], a = at(s), b = at(s + L * .94), hd = Math.atan2(b[0] - a[0], b[1] - a[1]) / DEG + (ISL.hdj ? ISL.hdj[i] || 0 : 0);
+    out.push({ tx: a[0], ty: a[1], hd, s }); s += L * .94 + (ISL.gap || 85);
+  }
+  out.total = total; return out;
+}
+function islPlace(spec, pl, wd) {
+  const hd = pl.hd * DEG, sn = Math.sin(hd), cs = Math.cos(hd), T = (x, f) => [pl.tx + x * cs + f * sn, pl.ty - x * sn + f * cs];
+  const flat = L => { const a = new Float64Array(L.length * 2); for (let i = 0; i < L.length; i++) { const p = T(L[i][0], L[i][1]); a[2 * i] = p[0]; a[2 * i + 1] = p[1]; } return a; };
+  const hole = { spec, pl, T, isl: [], n: spec.n, par: spec.par, hd, sn, cs, lbb: [1e9, 1e9, -1e9, -1e9] };
+  spec.pieces.forEach((pc, pi) => {
+    const o = pc.kind ? pc : islStrip(pc), I = { hole: spec.n - 1, piece: pi, kind: o.kind, P: flat(o.land), z: o.z, top: o.top || 0, R: o.R || 0 };
+    I.bb = islBB(I.P);
+    if (o.kind === 'strip') { I.cl = flat(o.P); I.zc = Float64Array.from(o.zc); I.L = o.L; I.cx = 0; }
+    else { const c = T(o.cx, o.cy); I.cx = c[0]; I.cy = c[1]; }
+    if (o.fair) wd.fair.push({ P: flat(o.fair), hole: spec.n - 1, bb: islBB(flat(o.fair)) });
+    for (const w of o.walls) wd.walls.push({ P: flat(w), hole: spec.n - 1 });
+    for (const b of o.bch) { const c = T(b.x, b.y), v = [Math.sin(b.ang), Math.cos(b.ang)], vw = [v[0] * cs + v[1] * sn, -v[0] * sn + v[1] * cs]; wd.bch.push({ x: c[0], y: c[1], ang: Math.atan2(vw[0], vw[1]), len: b.len, depth: b.depth, hole: spec.n - 1 }); }
+    for (const p of o.land) { hole.lbb[0] = Math.min(hole.lbb[0], p[0]); hole.lbb[1] = Math.min(hole.lbb[1], p[1]); hole.lbb[2] = Math.max(hole.lbb[2], p[0]); hole.lbb[3] = Math.max(hole.lbb[3], p[1]); }
+    hole.isl.push(I); wd.isl.push(I);
+    if (pi === spec.gp) hole.gPiece = { o, I };
+  });
+  // tee and green
+  const t0 = hole.isl[0], tz = t0.kind === 'strip' ? t0.zc[0] : t0.z;
+  hole.tee = { x: pl.tx, y: pl.ty, w: 12, l: 14, ux: sn, uy: cs, rx: cs, ry: -sn, level: tz + .14, hole: spec.n - 1 };
+  let gl; const gpc = hole.gPiece.o;
+  if (gpc.kind === 'strip') gl = gpc.P[gpc.P.length - 1]; else gl = [gpc.cx, gpc.cy];
+  if (!spec.route) { const P = gpc.P, N = P.length; spec.route = [[0, -3]]; for (let j = 1; j <= 8; j++) spec.route.push(P[Math.round(j * (N - 1) / 8)].slice()); }
+  const gz = gpc.kind === 'strip' ? gpc.zc[gpc.zc.length - 1] : gpc.z, rt = spec.route, pv = rt[rt.length - 2], ph = Math.atan2(gl[0] - pv[0], gl[1] - pv[1]);
+  const gw = T(gl[0], gl[1]), fa = Math.atan2(Math.sin(ph) * cs + Math.cos(ph) * sn, -Math.sin(ph) * sn + Math.cos(ph) * cs);
+  const r = mulberry32(spec.n * 977 + 13), sl = ((spec.n * 37) % 7 - 3) * .0016;
+  hole.green = { cx: gw[0], cy: gw[1], ra: spec.gr.ra, rc: spec.gr.rc, fx: Math.sin(fa), fy: Math.cos(fa), level: gz + .12, sx: sl, sf: -sl * .8, und: .035, wob: [[2, .05 + .06 * r(), r() * TAU], [3, .06 * r(), r() * TAU], [5, .02 * r(), r() * TAU]], ph: [r() * TAU, r() * TAU], R: Math.max(spec.gr.ra, spec.gr.rc), hole: spec.n - 1, ang: fa };
+  hole.gl = gl; hole.route = spec.route.map(p => T(p[0], p[1]));
+  hole.wpos = hole.route; wd.holes.push(hole); wd.gr.push(hole.green); wd.tee.push(hole.tee);
+  return hole;
+}
+function islBuildWorld() {
+  const wd = { isl: [], fair: [], walls: [], bch: [], holes: [], gr: [], tee: [] }, lay = islLayout();
+  for (let i = 0; i < 18; i++) islPlace(islHoleSpec(i), lay[i], wd);
+  // the little islands next to the holes
+  islCentral(wd);
+  if (!ISL.noIslets) islIslets(wd);
+  // spatial index
+  let a = 1e9, b = 1e9, c = -1e9, d = -1e9;
+  for (const I of wd.isl) { a = Math.min(a, I.bb[0]); b = Math.min(b, I.bb[1]); c = Math.max(c, I.bb[2]); d = Math.max(d, I.bb[3]); }
+  const x0 = Math.floor((a - 200) / ISL_CELL) * ISL_CELL, y0 = Math.floor((b - 200) / ISL_CELL) * ISL_CELL, nx = Math.ceil((c + 200 - x0) / ISL_CELL), ny = Math.ceil((d + 200 - y0) / ISL_CELL);
+  wd.x0 = x0; wd.y0 = y0; wd.nx = nx; wd.ny = ny; wd.box = [x0, y0, x0 + nx * ISL_CELL, y0 + ny * ISL_CELL];
+  const cells = []; for (let i = 0; i < nx * ny; i++) cells.push({ isl: [], fair: [], gr: [], tee: [], bch: [], wall: [] });
+  const put = (key, o, bb, m) => { const i0 = Math.max(0, Math.floor((bb[0] - m - x0) / ISL_CELL)), i1 = Math.min(nx - 1, Math.floor((bb[2] + m - x0) / ISL_CELL)), j0 = Math.max(0, Math.floor((bb[1] - m - y0) / ISL_CELL)), j1 = Math.min(ny - 1, Math.floor((bb[3] + m - y0) / ISL_CELL)); for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) cells[j * nx + i][key].push(o); };
+  for (const I of wd.isl) put('isl', I, I.bb, 66);
+  for (const f of wd.fair) put('fair', f, f.bb, 34);
+  for (const g of wd.gr) put('gr', g, [g.cx, g.cy, g.cx, g.cy], g.R * 2 + 20);
+  for (const t of wd.tee) put('tee', t, [t.x, t.y, t.x, t.y], 40);
+  for (const k of wd.bch) put('bch', k, [k.x, k.y, k.x, k.y], k.len / 2 + k.depth + 40);
+  for (const w of wd.walls) { w.bb = islBB(w.P); put('wall', w, w.bb, 8); }
+  wd.cells = cells; wd.cell = (x, y) => { const i = Math.floor((x - x0) / ISL_CELL), j = Math.floor((y - y0) / ISL_CELL); return i < 0 || j < 0 || i >= nx || j >= ny ? null : cells[j * nx + i]; };
+  return wd;
+}
+// the long crescent beach in the middle of the archipelago, with its dune ridge behind
+function islCentral(wd) {
+  const c = ISL.cc, r = ISL.cr, pts = []; for (let a = ISL.ca[0]; a <= ISL.ca[1] + .1; a += 15) { const t = a * DEG; pts.push([c[0] + r * Math.cos(t), c[1] + r * Math.sin(t)]); }
+  const o = islStrip({ pts, base: 7, z: [[0, 1.3], [.5, 3.1], [1, 1.3]], beach: [[.5, 330, 'L', 22]] }), I = { hole: -1, piece: 0, kind: 'strip', P: Float64Array.from(o.land.flat()), z: 0, top: 0, R: 0, central: true };
+  I.bb = islBB(I.P); I.cl = Float64Array.from(o.P.flat()); I.zc = Float64Array.from(o.zc); I.L = o.L; wd.isl.push(I);
+  for (const b of o.bch) wd.bch.push({ x: b.x, y: b.y, ang: b.ang, len: b.len, depth: b.depth, hole: -1 });
+}
+const ISL_EMPTY = { isl: [], fair: [], gr: [], tee: [], bch: [], wall: [] };
+// small islands: rocky or grassy islets and sandbars scattered 20-120 m from the holes, never on a landing zone or across another island
+function islIslets(wd) {
+  const r = mulberry32(8123), L = [];
+  for (const h of wd.holes) for (const I of h.isl) { if (I.kind === 'strip') for (let k = 0; k < I.cl.length / 2; k += 3) L.push([I.cl[2 * k], I.cl[2 * k + 1], h.n]); else L.push([I.cx, I.cy, h.n]); }
+  const near = (x, y, rr, skip) => { for (const I of wd.isl) { if (x < I.bb[0] - rr || x > I.bb[2] + rr || y < I.bb[1] - rr || y > I.bb[3] + rr) continue; if (islPolySD(I.P, x, y) < rr) return true; } return false; };
+  let tries = 0, n = 0;
+  while (n < 150 && tries++ < 9000) {
+    const b = L[(r() * L.length) | 0], a = r() * TAU, d = 34 + r() * 100, x = b[0] + Math.cos(a) * d, y = b[1] + Math.sin(a) * d, R = r() < .18 ? 8 + r() * 7 : 2.2 + r() * 5.5;
+    if (near(x, y, R + 15)) continue;
+    // keep clear of the lines of play
+    let ok = true; for (const h of wd.holes) { const rt = h.route; for (let k = 0; k < rt.length - 1 && ok; k++) { const ax = rt[k][0], ay = rt[k][1], bx = rt[k + 1][0], by = rt[k + 1][1], vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy || 1, u = clamp(((x - ax) * vx + (y - ay) * vy) / l2, 0, 1); if (Math.hypot(ax + vx * u - x, ay + vy * u - y) < R + 22) ok = false; } if (!ok) break; }
+    if (!ok) continue;
+    const kind = r(), tall = kind < .3, bar = kind > .86;
+    const D = islDisc(0, 0, R, bar ? .75 : tall ? 1.8 + r() * 2.4 : .8 + r() * 1.3, 700 + n, { n: 16, wob: .22, sx: bar ? 1.9 : 1, sy: 1 });
+    const rot = r() * TAU, cr = Math.cos(rot), sr = Math.sin(rot), P = new Float64Array(D.land.length * 2);
+    for (let i = 0; i < D.land.length; i++) { P[2 * i] = x + D.land[i][0] * cr - D.land[i][1] * sr; P[2 * i + 1] = y + D.land[i][0] * sr + D.land[i][1] * cr; }
+    const I = { hole: -1, piece: 0, kind: 'islet', P, bb: islBB(P), z: D.z, top: tall ? 1.2 + r() * 3 : .3, R, cx: x, cy: y, bar, tall };
+    wd.isl.push(I); n++;
+  }
+}
+
+const ISL_BED0 = -3.4, ISL_SURF = { TEE: 0, FAIR: 1, FIRST: 2, ROUGH: 3, DEEP: 4, FRINGE: 5, GREEN: 6, SAND: 7, WATER: 8 };
+const islBed = cs => ISL_BED0 - .045 * Math.min(cs, 64);
+function islWallD(c, x, y) {
+  let best = 1e9;
+  for (const w of c.wall) {
+    const b = w.bb; if (x < b[0] - 6 || x > b[2] + 6 || y < b[1] - 6 || y > b[3] + 6) continue;
+    const P = w.P; for (let i = 0; i + 3 < P.length; i += 2) {
+      const ax = P[i], ay = P[i + 1], vx = P[i + 2] - ax, vy = P[i + 3] - ay, l2 = vx * vx + vy * vy; let u = l2 ? ((x - ax) * vx + (y - ay) * vy) / l2 : 0; u = u < 0 ? 0 : u > 1 ? 1 : u;
+      const dx = ax + vx * u - x, dy = ay + vy * u - y, d2 = dx * dx + dy * dy; if (d2 < best) best = d2;
+    }
+  }
+  return Math.sqrt(best);
+}
+function islGreenS(g, x, y) { // 1 on the rim of a green
+  const dx = x - g.cx, dy = y - g.cy, a = dx * g.fx + dy * g.fy, b = dx * g.fy - dy * g.fx, nx = a / g.ra, nz = b / g.rc, r = Math.sqrt(nx * nx + nz * nz);
+  if (r > 2.6) return r; const th = Math.atan2(nz, nx); let R = 1; for (let i = 0; i < 3; i++) { const w = g.wob[i]; R += w[1] * Math.cos(w[0] * th + w[2]); } return r / R;
+}
+function islGreenH(g, x, y) {
+  const dx = x - g.cx, dy = y - g.cy, a = dx * g.fx + dy * g.fy, b = dx * g.fy - dy * g.fx;
+  return g.level + g.sx * b + g.sf * a + g.und * Math.sin(a * .23 + g.ph[0]) * Math.cos(b * .19 + g.ph[1]);
+}
+const islTeeD = (t, x, y) => { const dx = x - t.x, dy = y - t.y; return Math.max(Math.abs(dx * t.rx + dy * t.ry) - t.w / 2, Math.abs(dx * t.ux + dy * t.uy) - t.l / 2); };
+// height of a strip's land at a point: the centre line's height, interpolated along the nearest segment (so it never steps)
+function islZAt(I, x, y) {
+  const P = I.cl, n = P.length >> 1; let bd = 1e18, bk = 0;
+  for (let k = 0; k < n; k++) { const dx = P[2 * k] - x, dy = P[2 * k + 1] - y, d2 = dx * dx + dy * dy; if (d2 < bd) { bd = d2; bk = k; } }
+  let z = I.zc[bk], best = bd;
+  for (const a of [bk - 1, bk]) {
+    if (a < 0 || a + 1 >= n) continue; const ax = P[2 * a], ay = P[2 * a + 1], vx = P[2 * a + 2] - ax, vy = P[2 * a + 3] - ay, l2 = vx * vx + vy * vy; if (!l2) continue;
+    const u = clamp(((x - ax) * vx + (y - ay) * vy) / l2, 0, 1), dx = ax + vx * u - x, dy = ay + vy * u - y, d2 = dx * dx + dy * dy;
+    if (d2 <= best + 1e-9) { best = d2; z = I.zc[a] + (I.zc[a + 1] - I.zc[a]) * u; }
+  }
+  return z;
+}
+// everything the ground depends on at a world point (east x, north y), left in E
+function islEval(wd, x, y, E) {
+  const c = wd.cell(x, y) || ISL_EMPTY; let cs = 1e9, I = null;
+  for (let i = 0; i < c.isl.length; i++) { const o = c.isl[i], b = o.bb; const bx = Math.max(b[0] - x, 0, x - b[2]), by = Math.max(b[1] - y, 0, y - b[3]); if (bx * bx + by * by > (cs < 66 ? cs * cs : 4356)) continue; const d = islPolySD(o.P, x, y); if (d < cs) { cs = d; I = o; } }
+  E.c = c; E.I = I; E.cs = cs; E.wm = 0; E.bm = 0; E.bd = 0; E.df = 1e6; E.gs = 9; E.gI = null; E.td = 1e6;
+  if (!I) { E.h = ISL_BED0 - .045 * 64; E.zL = E.h; return E.h; }
+  if (c.wall.length) { const d = islWallD(c, x, y); E.wm = 1 - smooth(1.5, 3.5, d); }
+  if (c.bch.length) for (const b of c.bch) {
+    const dx = x - b.x, dy = y - b.y, sn = Math.sin(b.ang), cc = Math.cos(b.ang), al = dx * sn + dy * cc, ac = dx * cc - dy * sn;
+    const k = (1 - smooth(b.len / 2 - 6, b.len / 2 + 12, Math.abs(al))) * (1 - smooth(b.depth + 4, b.depth + 14, Math.abs(ac))); if (k > E.bm) { E.bm = k; E.bd = b.depth; }
+  }
+  for (let i = 0; i < c.fair.length; i++) { const f = c.fair[i], b = f.bb; if (x < b[0] - 34 || x > b[2] + 34 || y < b[1] - 34 || y > b[3] + 34) continue; const d = islPolySD(f.P, x, y); if (d < E.df) E.df = d; }
+  // height of the land under the point
+  let zL;
+  if (I.kind === 'strip') zL = islZAt(I, x, y);
+  else zL = I.z + (I.top ? I.top * smooth(0, I.R * .7, -cs) : 0);
+  const ja = (.25 + .75 * smooth(1.8, 5, zL)) * (1 - E.wm) * (1 - E.bm) * (I.kind === 'disc' ? .3 : 1);
+  const cj = cs + (ja > .02 ? ja * (1.7 * vnoise(x * .13, y * .13, 61) + .8 * vnoise(x * .45, y * .45, 62)) : 0);
+  E.cj = cj; E.ja = ja;
+  zL += (.22 * vnoise(x * .018, y * .018, 71) + .1 * vnoise(x * .06, y * .06, 72)) * (.4 + .6 * smooth(0, 10, E.df)) * (1 - smooth(-.5, 1.5, cs) * .5);
+  for (const t of c.tee) { const td = islTeeD(t, x, y); if (td < E.td) E.td = td; if (td < 5.2) zL = lerp(t.level, zL, smooth(0, 5, td)); }
+  for (const g of c.gr) { const s = islGreenS(g, x, y); if (s < E.gs) { E.gs = s; E.gI = g; } if (s < 1 + 8 / g.R) zL = lerp(islGreenH(g, x, y), zL, smooth(1, 1 + 7 / g.R, s)); }
+  E.zL = zL;
+  const bed = islBed(cs), w0 = lerp(-1.2, -.15, E.wm), w1 = lerp(3.8, .9, E.wm);
+  let h = lerp(zL, bed, smooth(w0, w1, cj));
+  if (E.bm > .001) {
+    const zb = ISL.sea + .8 + .1 * vnoise(x * .08, y * .08, 81), bd = E.bd;
+    const hB0 = lerp(zb, bed, smooth(-bd * .25, 11, cs)), hB = lerp(zL, hB0, smooth(-bd - 17, -bd + 2, cs));
+    h = lerp(h, hB, E.bm);
+  }
+  E.h = h; return h;
+}
+// the surface at a point (E from islEval, h its height)
+function islSurface(wd, x, y, h, E, out) {
+  out.water = -1; out.waste = false; out.stripe = 0;
+  if (!E.I) { out.surf = ISL_SURF.WATER; out.water = 200; return out; }
+  const cs = E.cs;
+  if (cs > -9 && h < ISL.sea - .02) { out.surf = ISL_SURF.WATER; out.water = 200; return out; }
+  if (cs > -2.5 && E.wm < .5 && E.bm < .5) { out.surf = ISL_SURF.ROUGH; return out; }
+  if (E.bm > .45 && cs > -E.bd) { out.surf = ISL_SURF.SAND; out.waste = true; return out; }
+  const gs = E.gs, g = E.gI;
+  if (g) { if (gs < 1) { out.surf = ISL_SURF.GREEN; return out; } if (gs < 1 + 1.5 / g.R) { out.surf = ISL_SURF.FRINGE; return out; } }
+  if (E.td < 0) { out.surf = ISL_SURF.TEE; return out; }
+  const df = E.df - (.9 * vnoise(x * .035, y * .035, 21) + .3 * vnoise(x * .11, y * .11, 22));
+  if (df < 0) { out.surf = ISL_SURF.FAIR; return out; }
+  if (df < 2.8 || (g && gs < 1 + 6 / g.R) || E.td < 3) { out.surf = ISL_SURF.FIRST; return out; }
+  const deepEdge = 22 + 6 * vnoise(x * .03, y * .03, 5);
+  if (df > deepEdge && cs < -12 && (!g || gs > 1 + 26 / g.R) && E.td > 20) { out.surf = ISL_SURF.DEEP; return out; }
+  out.surf = ISL_SURF.ROUGH; return out;
+}
+
+const islWorld = () => ISL.wd || (ISL.wd = islBuildWorld());
+let ISLES_LIST = null;
+function islesDefs() {
+  if (ISLES_LIST) return ISLES_LIST;
+  const wd = islWorld();
+  return ISLES_LIST = wd.holes.map(h => {
+    const sp = h.spec, gl = h.gl;
+    return {
+      name: sp.name, par: sp.par, hcp: sp.hcp, seed: 300 + sp.n, isles: true, rocky: true, inspo: 'A narrow strip of fairway in open water', hole: h,
+      tee: { x: 0, f: 0, w: 12, l: 14, elev: .3 }, start: { x: 0, f: -3 }, teeMarkers: sp.par === 3 ? T3 : T4,
+      route: sp.route.map(p => p.slice()), fairways: [], fairwayPods: [], roughIslands: [],
+      green: { x: gl[0], f: gl[1], rx: h.green.rc, rz: h.green.ra, rot: 0, elev: .3 }, pin: { x: gl[0], f: gl[1] },
+      bunkers: [], waters: [], creeks: [], paths: [], coast: { sea: ISL.sea, bed: ISL_BED0, land: [] },
+      ob: () => false, obLines: [], treeLines: [], treeClusters: [], landmarks: [], walls: [], hum: 0, shape: () => 0, windMax: 4
+    };
+  });
+}
+function makeIslesCourse(idx, pin) {
+  const wd = islWorld(), h = wd.holes[idx], def = HOLE_DEFS[idx], sn = h.sn, cs = h.cs, tx = h.pl.tx, ty = h.pl.ty, G0 = h.green;
+  const C = { def, idx, isles: true }, E = {}, E2 = {}, info = { surf: 0, stripe: 0, fwAlong: 0, water: -1, waste: false };
+  const wx = (X, Z) => tx + X * cs - Z * sn, wy = (X, Z) => ty - X * sn - Z * cs;
+  C.enu = (X, Z) => [wx(X, Z), wy(X, Z)]; C.loc = (e, n) => { const a = e - tx, b = n - ty; return [a * cs - b * sn, a * sn + b * cs]; };
+  C.frame = { e: tx, n: ty, ux: sn, uy: cs, rx: cs, ry: -sn }; C.wd = wd; C.hole = h;
+  // the world box and the hole's own window, in this hole's frame
+  { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const [px, py] of [[wd.box[0], wd.box[1]], [wd.box[2], wd.box[1]], [wd.box[0], wd.box[3]], [wd.box[2], wd.box[3]]]) { const q = C.loc(px, py); a = Math.min(a, q[0]); c = Math.max(c, q[0]); b = Math.min(b, -q[1]); d = Math.max(d, -q[1]); } C.inner = { minX: a, maxX: c, minZ: b, maxZ: d }; }
+  const lb = h.lbb; C.win = { minX: lb[0] - 55, maxX: lb[2] + 55, minZ: -lb[3] - 55, maxZ: -lb[1] + 40 }; C.planBox = { minX: C.win.minX - 22, maxX: C.win.maxX + 22, minZ: C.win.minZ - 18, maxZ: C.win.maxZ + 12 };
+  C.h = (X, Z) => islEval(wd, wx(X, Z), wy(X, Z), E);
+  C.grad = (X, Z, o) => { const e = .2; o[0] = (C.h(X + e, Z) - C.h(X - e, Z)) / (2 * e); o[1] = (C.h(X, Z + e) - C.h(X, Z - e)) / (2 * e); return o; };
+  C.coast = { sea: ISL.sea, bed: ISL_BED0, poly: [] };
+  C.coastS = (X, Z) => { islEval(wd, wx(X, Z), wy(X, Z), E); return E.cs > 1e8 ? 1e6 : E.cs; };
+  C.wl = (X, Z) => { islEval(wd, wx(X, Z), wy(X, Z), E); return E.I && E.cs > -8 ? ISL.sea : -1e9; };
+  C.surfInfo = (X, Z, hh) => { const x = wx(X, Z), y = wy(X, Z), h0 = islEval(wd, x, y, E); islSurface(wd, x, y, hh != null ? hh : h0, E, info); if (info.surf === S.FAIR) { info.stripe = Math.floor(-Z / 12) & 1; info.fwAlong = -Z; } return info; };
+  C.surf = (X, Z) => C.surfInfo(X, Z).surf;
+  const F = { fw: 0, first: 0, deep: 0, green: 0, sand: 0, waste: 0, tee: 0, path: 0, stripe: 0, wl: -1e9 };
+  C.fields = (X, Z) => {
+    const x = wx(X, Z), y = wy(X, Z); islEval(wd, x, y, E);
+    const dfw = E.df - (.9 * vnoise(x * .035, y * .035, 21) + .3 * vnoise(x * .11, y * .11, 22)), gd = E.gI ? (E.gs - 1) * E.gI.R : 1e6, td = E.td;
+    let fw = dfw, first = Math.min(dfw - 2.8, gd - 6, td - 3), deep = Math.min(dfw - (22 + 6 * vnoise(x * .03, y * .03, 5)), gd - 26, td - 20), grn = gd, tee = td, sand = 1e6;
+    if (E.bm > .001) sand = Math.max((.45 - E.bm) * 18, -(E.cs + E.bd));
+    deep = Math.min(deep, E.I ? -(E.cs + 12) : -9); // (rough beside the water, never the deep stuff)
+    if (E.I && E.wm < .5) { const cb = E.cs + 2.5; if (cb > -10) { fw = Math.max(fw, cb); first = Math.max(first, cb); deep = Math.min(deep, -cb); grn = Math.max(grn, cb); tee = Math.max(tee, cb); if (E.bm < .45) sand = Math.max(sand, cb); } }
+    if (!E.I) { fw = first = grn = tee = sand = 9; deep = -9; }
+    F.fw = fw; F.first = first; F.deep = deep; F.green = grn; F.sand = sand; F.waste = sand; F.tee = tee; F.path = 1e6; F.stripe = Math.sin(Math.PI * -Z / 12);
+    F.wl = E.I && E.cs > -8 ? ISL.sea : -1e9; return F;
+  };
+  C.teeDist = (X, Z) => islTeeD(h.tee, wx(X, Z), wy(X, Z));
+  C.isOB = (X, Z) => { const x = wx(X, Z), y = wy(X, Z), b = wd.box; return x < b[0] + 60 || x > b[2] - 60 || y < b[1] + 60 || y > b[3] - 60; };
+  C.inBounds = (X, Z) => { const x = wx(X, Z), y = wy(X, Z), b = wd.box; return x > b[0] + 20 && x < b[2] - 20 && y > b[1] + 20 && y < b[3] - 20; };
+  // this hole's own land: relief drops come only from here
+  const own = h.isl; C.holeLand = (X, Z, m) => { const x = wx(X, Z), y = wy(X, Z); for (const I of own) { const b = I.bb; if (x < b[0] || x > b[2] || y < b[1] || y > b[3]) continue; if (islPolySD(I.P, x, y) < -(m || 0)) return true; } return false; };
+  // the green, as a blob the rest of the game can use
+  { const ap = def.route[def.route.length - 2], gl = h.gl, ax = gl[0] - ap[0], af = gl[1] - ap[1], al = Math.hypot(ax, af) || 1;
+    C.green = { cx: gl[0], cz: -gl[1], rx: G0.rc, rz: G0.ra, c: af / al, s: ax / al, R: G0.R, wob: G0.wob, level: G0.level, appAng: Math.atan2(ax, af), o: def.green }; }
+  C.greenCenter = { x: gl0(h)[0], z: -gl0(h)[1] };
+  // four pin positions (front / back / left / right of the green as it is approached), pulled in until they sit inside the green on a gentle slope
+  const gr = C.green, pins = [[gr.cx, gr.cz]];
+  { let ax = gr.cx - def.route[def.route.length - 2][0], az = gr.cz + def.route[def.route.length - 2][1]; const al = Math.hypot(ax, az) || 1; ax /= al; az /= al;
+    const g2 = [0, 0], cand = [[-.45, 0], [.45, 0], [0, .42], [0, -.42]].map(([u, v]) => {
+      for (let k = 1; k >= 0; k -= .05) {
+        const x = gr.cx + (ax * u - az * v) * gr.R * k, z = gr.cz + (az * u + ax * v) * gr.R * k;
+        if (k === 0 || (islGreenS(G0, wx(x, z), wy(x, z)) < 1 - 2.6 / gr.R && C.surf(x, z) === S.GREEN && Math.hypot(...C.grad(x, z, g2)) < .035)) return [x, z];
+      }
+    });
+    cand.sort((p, q) => Math.hypot(q[0] - pins[0][0], q[1] - pins[0][1]) - Math.hypot(p[0] - pins[0][0], p[1] - pins[0][1]));
+    pins.push(...cand.slice(0, 3)); }
+  const pp = pins[((pin | 0) % 4 + 4) % 4];
+  C.cup = { x: pp[0], z: pp[1], y: C.h(pp[0], pp[1]) };
+  C.startPos = { x: def.start.x, z: -def.start.f };
+  C.center = mkPoly(def.route, null); C.length = C.center.L;
+  C.fairways = []; C.pods = []; C.bunkers = []; C.waters = []; C.creeks = []; C.paths = []; C.island = null; C.treeHit = null;
+  return C;
+}
+const gl0 = h => h.gl;
+
 // the course in play (setCourse switches it)
 let HOLE_DEFS = LEGACY_DEFS;
 
@@ -3593,7 +3965,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 5 };
+const APP_ITER = { courses: 9, n: 6 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3631,14 +4003,14 @@ const COURSES = {
   pebblebeach: { key: 'pebblebeach', name: 'Pebble Beach Golf Links', short: 'Pebble Beach', defs: PEBBLEBEACH_DEFS, best: 'ssg-best-pebblebeach', board: 'ssg-board-pebblebeach', coll: 'rounds-pebblebeach' },
   mountainvalley: { key: 'mountainvalley', name: 'Mountain Valley Golf Course', short: 'Mountain Valley', defs: MOUNTAINVALLEY_DEFS, best: 'ssg-best-mountainvalley', board: 'ssg-board-mountainvalley', coll: 'rounds-mountainvalley' },
   fourmile: { key: 'fourmile', name: 'Four Mile Ranch Golf Club', short: 'Four Mile Ranch', defs: FOURMILE_DEFS, best: 'ssg-best-fourmile', board: 'ssg-board-fourmile', coll: 'rounds-fourmile' },
-  isles: { key: 'isles', name: 'The Isles', short: 'The Isles', defs: ISLES_DEFS, best: 'ssg-best-isles', board: 'ssg-board-isles', coll: 'rounds-isles', secret: true },
+  isles: { key: 'isles', name: 'The Isles', short: 'The Isles', get defs() { return islesDefs(); }, best: 'ssg-best-isles', board: 'ssg-board-isles', coll: 'rounds-isles', secret: true },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
 };
 document.getElementById('buildNo').textContent = 'Build ' + buildNo();
 const LEGACY_ON = false;
 let COURSE = COURSES.gccb;
 // each round sets a pin (0-3: front, back, left, right) per hole in G.pins
-function courseFor(i) { const pin = G.pins ? G.pins[i] | 0 : 0; return HOLE_DEFS[i].rh ? makeRealCourse(i, pin) : makeCourse(i, pin); }
+function courseFor(i) { const pin = G.pins ? G.pins[i] | 0 : 0; return HOLE_DEFS[i].rh ? makeRealCourse(i, pin) : HOLE_DEFS[i].isles ? makeIslesCourse(i, pin) : makeCourse(i, pin); }
 // switches everything that depends on the course in play; the round in progress is dropped
 // The Isles is only for Florian: it is left out of every course list for anyone else
 const isleOK = () => cleanName(settings.name).toLowerCase() === 'florian';
@@ -4313,6 +4685,7 @@ function buildHole(C) {
   const grp = new THREE.Group(); W.holeGroup = grp; W.scene.add(grp);
   W.treeOcc = null;
   if (C.real) { buildRealHole(C, grp); return; }
+  if (C.isles) { buildIslesHole(C, grp); return; }
   const I = C.inner;
   const xs = axisCoords(I.minX, I.maxX, 2.5, 1100), zs = axisCoords(I.minZ, I.maxZ, 2.5, 1100);
   const nx = xs.length, nz = zs.length;
@@ -4345,9 +4718,166 @@ function buildHole(C) {
   mergeStatic(grp);
   C.plan = renderPlan(C);
 }
+const ISL_CLS = [4, 2, 9, 1, 0, 3, 3, 5, 6]; // surface -> class of the far map (see GCL)
+// the whole archipelago once, on a 5 m lattice: ground height and a class map for everything beyond a hole's own fields
+function islRaster(wd) {
+  if (wd.ras) return wd.ras;
+  const res = 5, b = wd.box, W = Math.ceil((b[2] - b[0]) / res), H = Math.ceil((b[3] - b[1]) / res), hs = new Float32Array(W * H), px = new Uint8Array(W * H * 4), E = {}, inf = {};
+  const farH = ISL_BED0 - .045 * 64, farD = Math.round(clamp((ISL.sea - farH) / 7, 0, 1) * 255);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const x = b[0] + (i + .5) * res, y = b[1] + (j + .5) * res, k = j * W + i, c = wd.cell(x, y);
+    if (!c || !c.isl.length) { hs[k] = farH; px[4 * k] = 6; px[4 * k + 1] = farD; px[4 * k + 3] = 255; continue; }
+    const h = islEval(wd, x, y, E); islSurface(wd, x, y, h, E, inf);
+    hs[k] = h; px[4 * k] = ISL_CLS[inf.surf]; px[4 * k + 1] = Math.round(clamp((ISL.sea - h) / 7, 0, 1) * 255); px[4 * k + 3] = 255;
+  }
+  const tex = new THREE.DataTexture(px, W, H, THREE.RGBAFormat); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
+  return wd.ras = { res, W, H, hs, tex, x0: b[0], y0: b[1] };
+}
+function islHR(wd, x, y) { // height from the raster (bilinear)
+  const r = wd.ras, u = (x - r.x0) / r.res - .5, v = (y - r.y0) / r.res - .5, i = clamp(Math.floor(u), 0, r.W - 2), j = clamp(Math.floor(v), 0, r.H - 2), fu = clamp(u - i, 0, 1), fv = clamp(v - j, 0, 1), k = j * r.W + i, a = r.hs;
+  return (a[k] * (1 - fu) + a[k + 1] * fu) * (1 - fv) + (a[k + r.W] * (1 - fu) + a[k + r.W + 1] * fu) * fv;
+}
+function islAxis(lo, hi, fine, grow, ext) { // fine steps across [lo, hi], widening away from it
+  const a = []; for (let v = lo; v <= hi + 1e-6; v += fine) a.push(v);
+  let v = lo; while (lo - v < ext) { v -= fine + grow * (lo - v); a.unshift(v); }
+  v = a[a.length - 1]; while (v - hi < ext) { v += fine + grow * (v - hi); a.push(v); }
+  return a;
+}
+function islesTerrainMat(C) {
+  const wd = C.wd, I = C.win, res = 1.6, x0 = I.minX, z0 = I.minZ, w = Math.ceil((I.maxX - x0) / res) + 1, h = Math.ceil((I.maxZ - z0) / res) + 1, R = 8, seed = C.def.seed;
+  const A = new Uint8Array(w * h * 4), B = new Uint8Array(w * h * 4), T = new Uint8Array(w * h * 4);
+  const enc = v => { const t = v / R * .5 + .5; return t <= 0 ? 0 : t >= 1 ? 255 : Math.round(t * 255); };
+  const wlo = ISL.sea - 3, whi = ISL.sea + .5;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const x = x0 + i * res, z = z0 + j * res, f = C.fields(x, z), k = (j * w + i) * 4;
+    A[k] = enc(f.fw); A[k + 1] = enc(f.first); A[k + 2] = enc(f.deep); A[k + 3] = enc(f.green);
+    B[k] = enc(f.sand); B[k + 1] = enc(f.waste); B[k + 2] = enc(f.tee); B[k + 3] = enc(f.path);
+    T[k] = Math.round((f.stripe * .5 + .5) * 255);
+    T[k + 1] = f.wl > -1e8 ? 1 + Math.round(clamp((f.wl - wlo) / (whi - wlo), 0, 1) * 254) : 0;
+    T[k + 2] = Math.round(clamp(.5 + .6 * fbm(x * .012, z * .012, seed + 40, 2), 0, 1) * 255);
+    T[k + 3] = Math.round(clamp(.5 + .6 * fbm(x * .05, z * .05, seed + 41, 2), 0, 1) * 255);
+  }
+  const f = C.frame, r = islRaster(wd), far = { tex: r.tex, A: new THREE.Vector4(f.rx / r.res, -f.ux / r.res, f.ry / r.res, -f.uy / r.res), B: new THREE.Vector4((f.e - r.x0) / r.res, (f.n - r.y0) / r.res, r.W, r.H) };
+  return terrainMatFrom({ A, B, T, w, h, x0, z0, res, R, wlo, whi, far, sea: ISL.sea, rocky: true, isles: true });
+}
+function islesSea(C, grp) {
+  const I = C.win, cx = (I.minX + I.maxX) / 2, cz = (I.minZ + I.maxZ) / 2, size = 4800, seg = 120, pg = new THREE.PlaneGeometry(size, size, seg, seg); pg.rotateX(-Math.PI / 2);
+  const sea = new THREE.Mesh(pg, new THREE.MeshPhongMaterial({ color: 0x38b0d6, transparent: true, opacity: .66, shininess: 80, specular: 0xeefcff }));
+  sea.position.set(cx, ISL.sea, cz); sea.userData.keep = true; grp.add(sea); W.sea = { mesh: sea, base: pg.attributes.position.array.slice() }; W.waterMeshes = [];
+}
+function buildIslesHole(C, grp) {
+  const wd = C.wd, I = C.win, t0 = performance.now();
+  const xs = islAxis(I.minX, I.maxX, 3, .02, 1300), zs = islAxis(I.minZ, I.maxZ, 3, .02, 1300), nx = xs.length, nz = zs.length;
+  islRaster(wd);
+  const PX = new Float32Array(nx * nz), PZ = new Float32Array(nx * nz), PY = new Float32Array(nx * nz), f = C.frame;
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const k = j * nx + i; let x = xs[i], z = zs[j];
+    if (i > 0 && i < nx - 1 && j > 0 && j < nz - 1) { const sx = Math.min(xs[i + 1] - x, x - xs[i - 1]), sz = Math.min(zs[j + 1] - z, z - zs[j - 1]); x += (hash2(i, j, 3) - .5) * .55 * sx; z += (hash2(i, j, 4) - .5) * .55 * sz; }
+    PX[k] = x; PZ[k] = z;
+    // inside and near the hole's window the exact ground; beyond it the archipelago's lattice
+    PY[k] = x > I.minX - 30 && x < I.maxX + 30 && z > I.minZ - 30 && z < I.maxZ + 30 ? C.h(x, z) : islHR(wd, f.e + x * f.rx - z * f.ux, f.n + x * f.ry - z * f.uy);
+  }
+  const pos = new Float32Array(nx * nz * 3); for (let k = 0; k < nx * nz; k++) { pos[k * 3] = PX[k]; pos[k * 3 + 1] = PY[k]; pos[k * 3 + 2] = PZ[k]; }
+  const idxOf = (i0, i1, j0, j1) => {
+    const a = new Uint32Array((i1 - i0) * (j1 - j0) * 6); let q = 0;
+    for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) { const p = j * nx + i, b = p + 1, c = p + nx, d = c + 1; if ((i + j) & 1) { a[q++] = p; a[q++] = c; a[q++] = b; a[q++] = b; a[q++] = c; a[q++] = d; } else { a[q++] = p; a[q++] = c; a[q++] = d; a[q++] = p; a[q++] = d; a[q++] = b; } }
+    return a;
+  };
+  W.tgrid = { xs, zs, nx, nz, PX, PZ, PY };
+  const g0 = new THREE.BufferGeometry(), pa = new THREE.BufferAttribute(pos, 3); g0.setAttribute('position', pa); g0.setIndex(new THREE.BufferAttribute(idxOf(0, nx - 1, 0, nz - 1), 1)); g0.computeVertexNormals();
+  const na = g0.attributes.normal, mat = islesTerrainMat(C), TS = 24;
+  for (let tj = 0; tj < nz - 1; tj += TS) for (let ti = 0; ti < nx - 1; ti += TS) {
+    const i1 = Math.min(nx - 1, ti + TS), j1 = Math.min(nz - 1, tj + TS), g = new THREE.BufferGeometry();
+    g.setAttribute('position', pa); g.setAttribute('normal', na); g.setIndex(new THREE.BufferAttribute(idxOf(ti, i1, tj, j1), 1));
+    let a = 1e9, b = 1e9, c = -1e9, d = -1e9, e = 1e9, h2 = -1e9; for (let j = tj; j <= j1; j++) for (let i = ti; i <= i1; i++) { const k = j * nx + i; a = Math.min(a, PX[k]); c = Math.max(c, PX[k]); b = Math.min(b, PZ[k]); d = Math.max(d, PZ[k]); e = Math.min(e, PY[k]); h2 = Math.max(h2, PY[k]); }
+    g.boundingBox = new THREE.Box3(new THREE.Vector3(a, e, b), new THREE.Vector3(c, h2, d)); g.boundingSphere = new THREE.Sphere(); g.boundingBox.getBoundingSphere(g.boundingSphere);
+    const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.userData.keep = true; grp.add(m);
+  }
+  islesSea(C, grp);
+  W.trees = [];
+  buildDecor(C, grp); buildSlopeArrows(C, grp); mergeStatic(grp);
+  islesExtras(C, grp);
+  C.plan = renderPlan(C);
+  C.buildMs = performance.now() - t0;
+}
+// the stone sea walls (a face from below the waterline to a coping on top), boulders at the water's edge, rock stacks, wildflowers
+function islWallTex() {
+  if (W.wallTex) return W.wallTex;
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const g = cv.getContext('2d'), r = mulberry32(5);
+  g.fillStyle = '#b8ad9a'; g.fillRect(0, 0, 256, 128);
+  for (let row = 0; row < 4; row++) { let x = -(row % 2) * 24; while (x < 256) { const w = 44 + r() * 30, l = 66 + r() * 22; g.fillStyle = `hsl(${32 + r() * 14},${10 + r() * 12}%,${66 + r() * 16}%)`; g.fillRect(x + 2, row * 32 + 2, w - 4, 28); x += w; } }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return W.wallTex = t;
+}
+function islesExtras(C, grp) {
+  const wd = C.wd, I = C.win, cx = (I.minX + I.maxX) / 2, cz = (I.minZ + I.maxZ) / 2, f = C.frame, R2 = 1000 * 1000, r = mulberry32(C.def.seed + 4141);
+  const loc = (x, y) => { const q = C.loc(x, y); return [q[0], -q[1]]; };
+  // walls
+  const pos = [], uv = [], idx = [], tex = islWallTex();
+  for (const w of wd.walls) {
+    const P = w.P, n = P.length / 2; const q0 = loc(P[0], P[1]); if ((q0[0] - cx) ** 2 + (q0[1] - cz) ** 2 > R2) continue;
+    let cum = 0, prev = null; const base = pos.length / 3;
+    for (let k = 0; k < n; k++) {
+      const q = loc(P[2 * k], P[2 * k + 1]), a = loc(P[2 * Math.max(0, k - 1)], P[2 * Math.max(0, k - 1) + 1]), b = loc(P[2 * Math.min(n - 1, k + 1)], P[2 * Math.min(n - 1, k + 1) + 1]), tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nxn = -(b[1] - a[1]) / tl, nzn = (b[0] - a[0]) / tl;
+      if (prev) cum += Math.hypot(q[0] - prev[0], q[1] - prev[1]); prev = q;
+      const gy = C.h(q[0], q[1]), top = gy + .9, bot = ISL.sea - .9, u = cum / 3.4;
+      pos.push(q[0], bot, q[1], q[0], top, q[1]); uv.push(u, 0, u, (top - bot) / 2.1);                          // the face (two vertices a point)
+      pos.push(q[0] - nxn * .4, top, q[1] - nzn * .4, q[0] + nxn * .4, top, q[1] + nzn * .4); uv.push(u, .5, u, .62); // the coping
+      if (k > 0) { const a0 = base + (k - 1) * 4, b0 = base + k * 4; idx.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1, a0 + 2, b0 + 2, a0 + 3, a0 + 3, b0 + 2, b0 + 3); }
+    }
+  }
+  if (idx.length) {
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide, color: 0xffffff })); m.userData.keep = true; m.castShadow = true; m.receiveShadow = true; grp.add(m);
+  }
+  // boulders: round the islets, along the cliffs of the high islands and here and there on the low ones
+  const rocks = instancer(grp, new THREE.DodecahedronGeometry(1, 0), 900), RC = [0x8c8478, 0x9a9184, 0x7d766b, 0xa59c8e, 0x6f6a62];
+  const edge = (I2, step, fn) => { const P = I2.P, n = P.length / 2; for (let k = 0; k < n; k++) { const ax = P[2 * k], ay = P[2 * k + 1], bx = P[2 * ((k + 1) % n)], by = P[2 * ((k + 1) % n) + 1], L = Math.hypot(bx - ax, by - ay); for (let s = r() * step; s < L; s += step) fn(ax + (bx - ax) * s / L, ay + (by - ay) * s / L, (bx - ax) / L, (by - ay) / L); } };
+  for (const I2 of wd.isl) {
+    if (I2.central) continue;
+    const q = I2.kind === 'strip' ? loc(I2.cl[0], I2.cl[1]) : loc(I2.cx, I2.cy); if ((q[0] - cx) ** 2 + (q[1] - cz) ** 2 > R2 * 1.4) continue;
+    const high = I2.kind === 'strip' ? Math.max(...I2.zc) > 3 : I2.tall, step = high ? 11 : I2.kind === 'islet' ? 9 : 42;
+    edge(I2, step, (x, y, tx, ty) => {
+      const p = loc(x, y), n = [ty, -tx], o = r() * 3.2 + .8, wxn = loc(x + n[0] * o, y + n[1] * o), sc = high ? 1 + r() * 2.6 : .6 + r() * 1.5; // (n may point in or out: both read as rocks at the edge)
+      rocks.add(wxn[0], ISL.sea - .35 + r() * .6 + (high && r() < .35 ? 1.6 + r() * 3 : 0), wxn[1], sc * 1.2, sc * (.7 + r() * .5), sc, r() * TAU, RC[(r() * RC.length) | 0], r() * 3, r() * 3);
+    });
+  }
+  rocks.done();
+  // rock stacks standing in the water off the high islands' cliffs
+  for (const h of wd.holes) for (const I2 of h.isl) {
+    if (I2.kind !== 'strip' || Math.max(...I2.zc) < 3) continue; const q = loc(I2.cl[0], I2.cl[1]); if ((q[0] - cx) ** 2 + (q[1] - cz) ** 2 > R2 * 1.4) continue;
+    const n = I2.cl.length / 2; for (let k = 3; k < n - 3; k += 9) {
+      if (r() < .45) continue; const a = loc(I2.cl[2 * k], I2.cl[2 * k + 1]), b = loc(I2.cl[2 * k + 2], I2.cl[2 * k + 3]), dl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, sg = r() < .5 ? -1 : 1, off = 30 + r() * 24;
+      const x = a[0] - (b[1] - a[1]) / dl * off * sg, z = a[1] + (b[0] - a[0]) / dl * off * sg; if (C.coastS(x, z) < 16 || C.coastS(x, z) > 60) continue;
+      const rad = 2 + r() * 3.6, hh = 7 + r() * 15, g = new THREE.Group(), bg = new THREE.CylinderGeometry(rad * .6, rad, hh, 7, 3), pa = bg.attributes.position;
+      for (let i = 0; i < pa.count; i++) { const kk = 1 + (hash2(i, k | 0, 7) - .5) * .32; pa.setX(i, pa.getX(i) * kk); pa.setZ(i, pa.getZ(i) * kk); } bg.computeVertexNormals();
+      const body = new THREE.Mesh(bg, lambert(0xb9ad99)); body.position.y = hh / 2 - 1.5; g.add(body);
+      if (r() < .7) { const cap = new THREE.Mesh(new THREE.IcosahedronGeometry(rad * .72, 0), lambert(0x6aa857)); cap.scale.y = .3; cap.position.y = hh - 1.5 + rad * .05; g.add(cap); }
+      g.position.set(x, ISL.sea, z); g.traverse(o => { if (o.isMesh) o.castShadow = true; }); grp.add(g);
+    }
+  }
+  islesFlowers(C, grp, loc, cx, cz);
+}
+const ISL_FLOWERS = [0xff6f91, 0xffd23f, 0xffffff, 0xb28dff, 0xff9f43, 0x6ec6ff, 0xff4d6d, 0xfff3a6];
+function islesFlowers(C, grp, loc, cx, cz) {
+  const wd = C.wd, r = mulberry32(C.def.seed + 777), N = 7000, heads = instancer(grp, new THREE.IcosahedronGeometry(1, 0), N, null, true), stems = instancer(grp, new THREE.CylinderGeometry(.02, .02, 1, 3), N, null, true), R2 = 760 * 760;
+  const tryAt = (x, y) => {
+    const q = loc(x, y); if ((q[0] - cx) ** 2 + (q[1] - cz) ** 2 > R2 || heads.m.count >= N) return;
+    const X = q[0], Z = q[1], sf = C.surf(X, Z); if (sf !== S.ROUGH && sf !== S.DEEP && sf !== S.FIRST) return;
+    const cs = C.coastS(X, Z); if (cs > -1.6 || cs < -26) return;
+    const pn = vnoise(x * .06, y * .06, 91); if (pn < -.15 && r() < .8) return;
+    const col = ISL_FLOWERS[Math.floor(hash2(Math.floor(x / 6), Math.floor(y / 6), 5) * ISL_FLOWERS.length)], gy = C.h(X, Z), hh = .22 + r() * .22, sc = .09 + r() * .07;
+    stems.add(X, gy + hh / 2, Z, 1, hh, 1, 0, 0x5e9d46); heads.add(X, gy + hh, Z, sc, sc * .8, sc, r() * TAU, col);
+  };
+  for (const I of wd.isl) {
+    if (I.kind === 'strip') { const n = I.cl.length / 2; for (let k = 0; k < n; k++) for (let q = 0; q < 14; q++) { const a = (r() - .5) * 2 * 30; const x = I.cl[2 * k] + (r() - .5) * 2 * 28, y = I.cl[2 * k + 1] + (r() - .5) * 2 * 28; tryAt(x, y); } }
+    else { const rr = I.R * 1.2, cnt = Math.ceil(rr * rr * .22); for (let q = 0; q < cnt; q++) tryAt(I.cx + (r() - .5) * 2 * rr, I.cy + (r() - .5) * 2 * rr); }
+  }
+  stems.done(); heads.done();
+}
+
 /* ---------- terrain shading: smooth light, crisp per-pixel surface edges ---------- */
 const TERRAIN_GLSL = `
-uniform sampler2D tFA, tFB, tFC, tFar; uniform vec2 fO, fN; uniform float fInv, fR, wLo, wHi, seaLv, hasCoast, isLinks, isRocky, hasFar, isStraw, isCheck, isMar, isPeb;
+uniform sampler2D tFA, tFB, tFC, tFar; uniform vec2 fO, fN; uniform float fInv, fR, wLo, wHi, seaLv, hasCoast, isLinks, isRocky, hasFar, isStraw, isCheck, isMar, isPeb, isIsle;
 uniform vec4 farA, farB, cupP;
 uniform vec3 cStraw, cRough, cDeep, cFirst, cFairA, cFairB, cGreenA, cGreenB, cFringe, cSand, cWaste, cTee, cPath, cBeach, cPond, cRock, cBed1, cBed2, cDune, cGranite;
 varying vec3 vWPos; varying vec3 vWN;
@@ -4364,17 +4894,22 @@ float lineAt(float d, float hw) { float w = max(fwidth(d), 1e-3) * .75; return 1
 // real courses: beyond the hole's own fields, a course-wide class map (2 m cells) colours the rest of the course
 vec3 farColor() {
   vec2 en = vec2(farA.x * vWPos.x + farA.y * vWPos.z, farA.z * vWPos.x + farA.w * vWPos.z) + farB.xy;
-  float c = texture2D(tFar, en / farB.zw).r * 255.;
+  vec4 tf = texture2D(tFar, en / farB.zw); float c = tf.r * 255.;
   vec3 col = cRough;
   if (c < .5) col = cDeep * 1.02; else if (c < 1.5) col = cRough; else if (c < 2.5) col = cFairA; else if (c < 3.5) col = cGreenA;
   else if (c < 4.5) col = cTee; else if (c < 5.5) col = cSand; else if (c < 6.5) col = cPond; else if (c < 7.5) col = cPath; else if (c < 8.5) col = isStraw > .5 ? cStraw : cDeep * .86; else col = cFirst;
+  if (isIsle > .5 && c > 5.5 && c < 6.5) col = mix(cBed1, cBed2, tf.g);
   return col;
 }
 vec3 surfaceColor() {
   vec2 uv = ((vWPos.xz - fO) * fInv + .5) / fN;
   vec4 a = texture2D(tFA, uv), b = texture2D(tFB, uv), c = texture2D(tFC, uv);
   float inF = step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.);
-  if (hasFar > .5 && inF < .5) return farColor();
+  if (hasFar > .5 && inF < .5) {
+    vec3 fc = farColor();
+    if (isIsle > .5) { float ny0 = normalize(vWN).y; fc = mix(fc, cRock * (vWPos.y < seaLv + 2. ? .84 : 1.), smoothstep(.72, .6, ny0)); fc = mix(fc, vec3(.93, .97, 1.), (1. - smoothstep(.0, .3, abs(vWPos.y - seaLv - .02))) * .5); }
+    return fc;
+  }
   float fw = mix(9., dcF(a.r), inF), first = mix(9., dcF(a.g), inF), deep = mix(9., dcF(a.b), inF), gr = mix(9., dcF(a.a), inF);
   float sand = mix(9., dcF(b.r), inF), waste = mix(9., dcF(b.g), inF), tee = mix(9., dcF(b.b), inF), path = mix(9., dcF(b.a), inF);
   vec3 col = mix(cDeep, cRough, ins(deep));
@@ -4423,6 +4958,7 @@ vec3 surfaceColor() {
   if (hasCoast > .5) {
     col = mix(col, cRock * (vWPos.y < seaLv + 2. ? .84 : 1.), smoothstep(.7, .6, ny));
     col = mix(col, mix(cBed1, cBed2, clamp((seaLv - vWPos.y) / 7., 0., 1.)), ins(vWPos.y - (seaLv - .25)));
+    if (isIsle > .5) col = mix(col, vec3(.93, .97, 1.), (1. - smoothstep(.0, .3, abs(vWPos.y - seaLv - .02))) * .5 * (1. - ins(sand + .5) * .6)); // surf where the sea meets the land
   }
   return col;
 }`;
@@ -4483,7 +5019,7 @@ function terrainMatFrom(o) {
     cPath: { value: o.dry ? v3(hslToRgb(.125, .30, .84)) : pc(S.PATH) }, // links: sandy paths
     cBeach: { value: v3(hslToRgb(BEACH[0], BEACH[1], BEACH[2])) }, cPond: { value: pc(S.WATER, -.16, -.12) },
     cRock: { value: v3(hslToRgb(.085, .16, .68)) }, cGranite: { value: v3(hslToRgb(.08, .07, .6)) }, cBed1: { value: v3(hslToRgb(.13, .35, .7)) }, cBed2: { value: v3(hslToRgb(.5, .3, .5)) }, cDune: { value: v3(hslToRgb(.115, .36, .74)) },
-    isCheck: { value: o.autumn ? 1 : 0 }, isPeb: { value: o.coast ? 1 : 0 }, isMar: { value: o.marram ? 1 : 0 }, isStraw: { value: o.straw ? 1 : 0 }, cStraw: { value: v3(hslToRgb(.068, .52, .43)) } // Augusta's pine straw, rust-brown under the pines
+    isCheck: { value: o.autumn ? 1 : 0 }, isPeb: { value: o.coast ? 1 : 0 }, isIsle: { value: o.isles ? 1 : 0 }, isMar: { value: o.marram ? 1 : 0 }, isStraw: { value: o.straw ? 1 : 0 }, cStraw: { value: v3(hslToRgb(.068, .52, .43)) } // Augusta's pine straw, rust-brown under the pines
   };
   if (o.autumn) {
     const q = (k, dl) => { const f = AUT_OFF[k]; return pc(S[k], (dl || 0) + f[0], f[1], f[2]); };
@@ -4512,9 +5048,12 @@ function terrainMatFrom(o) {
     U.cGreenA.value = q('GREEN', .016); U.cGreenB.value = q('GREEN', -.008); U.cFringe.value = q('FRINGE'); U.cTee.value = q('TEE'); U.cSand.value = q('SAND'); U.cWaste.value = q('SAND', -.07); U.cPath.value = q('PATH');
     U.cGranite.value = v3(hslToRgb(.09, .07, .56));
   }
+  if (o.isles) { // The Isles: pale beach sand, grey-gold rock, a sandy seabed that turns teal with depth
+    U.cSand.value = v3(hslToRgb(.12, .5, .88)); U.cWaste.value = v3(hslToRgb(.12, .48, .84)); U.cBed1.value = v3(hslToRgb(.12, .42, .78)); U.cBed2.value = v3(hslToRgb(.57, .5, .3)); U.cRock.value = v3(hslToRgb(.085, .13, .6)); U.cGranite.value = v3(hslToRgb(.08, .08, .55));
+  }
   const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x000000, shininess: 1 });
   mat.extensions = { derivatives: true };
-  mat.customProgramCacheKey = () => 'terrain-fields-9';
+  mat.customProgramCacheKey = () => 'terrain-fields-10';
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = position; vWN = normal;');
@@ -5010,7 +5549,7 @@ function updateSea(t) {
 // top-down yardage-book image of the hole
 const PLAN_STRAW = hslToRgb(.068, .5, .45);
 function renderPlan(C) {
-  const I = C.inner, x0 = I.minX + 22, x1 = I.maxX - 22, z0 = I.minZ + 18, z1 = I.maxZ - 12, mpp = 1.7;
+  const I = C.planBox || C.inner, x0 = I.minX + 22, x1 = I.maxX - 22, z0 = I.minZ + 18, z1 = I.maxZ - 12, mpp = 1.7;
   const w = Math.ceil((x1 - x0) / mpp), h = Math.ceil((z1 - z0) / mpp);
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const ctx = cv.getContext('2d');
   const img = ctx.createImageData(w, h), d = img.data;
@@ -5452,7 +5991,7 @@ function flowerGeos() {
   return { stem, head: mergeParts(parts) };
 }
 function initGround(L, grp) {
-  const NG = (RDC.autumn || RDC.marram) && !PERF.lite ? 15000 : 7000, NF = 1500, gm = lifeMat(true, 120, 42); // (Rothley's rough is a thicker, shaggier sward)
+  const NG = (RDC.autumn || RDC.marram) && !PERF.lite ? 15000 : 7000, NF = L.C.isles ? 3600 : 1500, gm = lifeMat(true, 120, 42); // (Rothley's rough is a thicker, shaggier sward)
   L.gMesh = new THREE.InstancedMesh(RDC.marram ? fescueGeo() : grassGeo(), gm, NG); L.gMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NG * 3), 3); L.gMesh.count = 0; L.gMesh.frustumCulled = false;
   const fg = flowerGeos(), fm = lifeMat(true, 60, 24), fm2 = lifeMat(true, 60, 24);
   L.sMesh = new THREE.InstancedMesh(fg.stem, fm, NF); L.sMesh.count = 0; L.sMesh.frustumCulled = false;
@@ -5523,7 +6062,7 @@ function* groundJob(L, fx, fz) {
         }
         continue;
       }
-      if (!ring.tag && nf < L.NF - 3 && patch > .5 && hash2(gi, gj, 57) < (deep ? .38 : .24) * (patch - .3) * 2) {
+      if (!ring.tag && nf < L.NF - 3 && patch > (C.isles ? .3 : .5) && hash2(gi, gj, 57) < (deep ? .38 : .24) * (patch - .3) * 2 * (C.isles ? 2.4 : 1)) {
         const k = 2 + ((hash2(gi, gj, 59) * 3) | 0);
         for (let q = 0; q < k && nf < L.NF; q++) {
           const fx2 = x + (hash2(gi, gj, 60 + q) - .5) * 1.3, fz2 = z + (hash2(gi, gj, 70 + q) - .5) * 1.3, fy = groundY(fx2, fz2), fs = (.75 + hash2(gi, gj, 80 + q) * .7) * cl;
@@ -5667,10 +6206,11 @@ function initBirds(L, grp) {
   let id = 0;
   const add = (kind, st, extra) => { const b = Object.assign({ id: id++, st, kind: BIRD_KINDS[kind], x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0, t: 0, T: 1, A: [0, 0, 0], Bp: [0, 0, 0], arc: 0, flap: Math.random() * 6, tmr: 0, vis: 0, speed: 1, hitV: null, wob: Math.random() * 6 }, extra || {}); B.list.push(b); return b; };
   // a few on the ground / in trees
-  for (let i = 0; i < 6; i++) { const b = add(RDC.coast ? 2 : i % 3 === 0 ? 1 : 0, 'gone'); b.pend = i < 3 ? 'ground' : 'perch'; b.tmr = Math.random() * 5; }
+  const sea = RDC.coast || L.C.isles;
+  for (let i = 0; i < 6; i++) { const b = add(sea ? 2 : i % 3 === 0 ? 1 : 0, 'gone'); b.pend = i < 3 ? 'ground' : 'perch'; b.tmr = Math.random() * 5; }
   // two flocks
   L.flocks = [];
-  for (let f = 0; f < 2; f++) { const n = f ? 8 : 11, kind = f && !RDC.coast ? 3 : 2, members = []; for (let i = 0; i < n; i++) members.push(add(kind, 'gone', { flock: f, off: [(Math.random() - .5) * 9, (Math.random() - .5) * 3.4, -Math.random() * 9 - (i === 0 ? 0 : 1)] })); members[0].off = [0, 0, 0]; L.flocks.push({ members, st: 'wait', tmr: 6 + f * 22 + Math.random() * 14, p: [0, 0, 0], dir: [0, 1], speed: 11, t: 0, T: 1, a: [0, 0], b: [0, 0], h: 30 }); }
+  for (let f = 0; f < 2; f++) { const n = f ? 8 : 11, kind = f && !sea ? 3 : 2, members = []; for (let i = 0; i < n; i++) members.push(add(kind, 'gone', { flock: f, off: [(Math.random() - .5) * 9, (Math.random() - .5) * 3.4, -Math.random() * 9 - (i === 0 ? 0 : 1)] })); members[0].off = [0, 0, 0]; L.flocks.push({ members, st: 'wait', tmr: 6 + f * 22 + Math.random() * 14, p: [0, 0, 0], dir: [0, 1], speed: 11, t: 0, T: 1, a: [0, 0], b: [0, 0], h: 30 }); }
   // wheeling high over the hole
   for (let i = 0; i < 4; i++) { add(2, 'circle', { ph: Math.random() * TAU, rad: 30 + Math.random() * 28, h: 34 + Math.random() * 14, sp: .16 + Math.random() * .07, off: [Math.random() * 16 - 8, Math.random() * 16 - 8], vis: 1 }); }
   if (RDC.coast) L.vis = add(2, 'gone'); // the gull that comes to look at the ball
@@ -5900,13 +6440,112 @@ function makeGlider(L) {
   return e;
 }
 
+/* --- The Isles: life in the sea. Dolphins leap in arcs, turtles paddle at the surface, seals haul out on the islets, fish schools show as dark shapes
+   under the water, now and then a whale blows and dives. They appear near the camera and fade in and out like the other animals. --- */
+function seaSpot(L, d0, d1, s0, s1) {
+  const C = L.C, cam = W.cam.position, fa = Math.atan2(G.camLook.z - cam.z, G.camLook.x - cam.x);
+  for (let k = 0; k < 28; k++) {
+    const a = fa + (L.R() - .5) * 2.4, d = d0 + L.R() * (d1 - d0), x = cam.x + Math.cos(a) * d, z = cam.z + Math.sin(a) * d;
+    if (!C.inBounds(x, z) || C.surf(x, z) !== S.WATER) continue; const cs = C.coastS(x, z); if (cs < s0 || cs > s1) continue; return [x, z];
+  }
+  return null;
+}
+function makeDolphins(L) {
+  const mat = LIFE_MAT(), grey = 0x7d93a8, dk = 0x66798d, geo = mergeParts([lsp(.3, .28, 1.2, 0, 0, 0, grey), lsp(.25, .13, .95, 0, -.12, .05, 0xe9eff3), lsp(.13, .11, .4, 0, -.03, 1.12, grey, 5), lbx(.05, .36, .32, 0, .3, -.15, dk, -.55, 0, 0), lsp(.12, .12, .5, 0, 0, -1.05, dk), lbx(.8, .05, .3, 0, 0, -1.45, dk, 0, 0, 0), lbx(.5, .05, .24, .38, -.1, .25, dk, 0, .5, .4), lbx(.5, .05, .24, -.38, -.1, .25, dk, 0, -.5, -.4)]);
+  const g = new THREE.Group(), ds = [0, 1, 2].map(() => { const m = lmesh(geo, mat); m.visible = false; m.scale.setScalar(1.7); g.add(m); return m; }); L.grp.add(g);
+  const e = { kind: 'dolphin', mat, g, st: 'gone', respawn: 3 + L.R() * 6, t: 0 };
+  e.update = dt => {
+    if (e.st === 'gone') {
+      e.respawn -= dt; if (e.respawn > 0) return;
+      const p = seaSpot(L, 45, 190, 10, 200); if (!p) { e.respawn = 4; return; }
+      const a = L.R() * TAU; e.dir = [Math.sin(a), Math.cos(a)]; e.p0 = p; e.T = 1.7; e.sp = 9 + L.R() * 3; e.off = [0, .55 + L.R() * .3, 1.2 + L.R() * .4]; e.h = ds.map(() => 2.2 + L.R() * 1.8); e.lat = [0, 7 + L.R() * 3, -6 - L.R() * 4]; e.sp0 = [0, 0, 0]; e.t = 0; e.st = 'leap'; return;
+    }
+    e.t += dt; let live = false;
+    ds.forEach((m, i) => {
+      const u = (e.t - e.off[i]) / e.T; if (u < 0) { m.visible = false; live = true; return; } if (u > 1) { m.visible = false; return; } live = true;
+      const tt = e.t - e.off[i], x = e.p0[0] + e.dir[0] * e.sp * (tt - .85) - e.dir[1] * e.lat[i], z = e.p0[1] + e.dir[1] * e.sp * (tt - .85) + e.dir[0] * e.lat[i], H = e.h[i], y = ISL.sea - .5 + (H + .5) * 4 * u * (1 - u), dy = (H + .5) * 4 * (1 - 2 * u) / e.T, pitch = Math.atan2(dy, e.sp);
+      m.visible = true; m.position.set(x, y, z); m.rotation.set(-pitch, Math.atan2(e.dir[0], e.dir[1]), 0, 'YXZ');
+      if (!e['in' + i] && u > .1) { e['in' + i] = true; burst(x, ISL.sea + .1, z, e.dir[0], e.dir[1], 0xf4fbff, 7, 2.4, 3.2); }
+      if (!e['out' + i] && u > .9) { e['out' + i] = true; burst(x, ISL.sea + .1, z, -e.dir[0], -e.dir[1], 0xf4fbff, 9, 2.8, 3.8); }
+    });
+    if (!live || e.t > 4) { ds.forEach((m, i) => { m.visible = false; e['in' + i] = e['out' + i] = false; }); e.st = 'gone'; e.respawn = 18 + L.R() * 35; }
+  };
+  return e;
+}
+function makeTurtle(L) {
+  const mat = LIFE_MAT(), geo = mergeParts([lsp(.62, .2, .78, 0, 0, 0, 0x6f8f4e), lsp(.5, .08, .62, 0, .14, 0, 0x8aa65a), lsp(.1, .09, .15, 0, .02, .8, 0xa3b56e), lbx(.5, .04, .22, .62, -.02, .3, 0x93ad66, 0, .5, .12), lbx(.5, .04, .22, -.62, -.02, .3, 0x93ad66, 0, -.5, -.12), lbx(.3, .04, .2, .34, -.03, -.55, 0x93ad66, 0, -.3, 0), lbx(.3, .04, .2, -.34, -.03, -.55, 0x93ad66, 0, .3, 0)]);
+  const g = new THREE.Group(), m = lmesh(geo, mat); g.add(m); g.visible = false; L.grp.add(g);
+  const e = { kind: 'turtle', mat, g, st: 'gone', respawn: 2 + L.R() * 8, t: 0 };
+  e.update = dt => {
+    if (e.st === 'gone') { e.respawn -= dt; if (e.respawn > 0) return; const p = seaSpot(L, 30, 120, 5, 80); if (!p) { e.respawn = 4; return; } e.x = p[0]; e.z = p[1]; e.yaw = L.R() * TAU; e.t = 0; e.st = 'swim'; e.life = 40 + L.R() * 30; return; }
+    e.t += dt; const sp = .75; let nx = e.x + Math.sin(e.yaw) * sp * dt, nz = e.z + Math.cos(e.yaw) * sp * dt;
+    if (L.C.surf(nx, nz) !== S.WATER || L.C.coastS(nx, nz) < 3) { e.yaw += 1.3; nx = e.x; nz = e.z; } else e.yaw += Math.sin(e.t * .4) * dt * .25;
+    e.x = nx; e.z = nz; g.position.set(e.x, ISL.sea - .05 + Math.sin(e.t * 1.1) * .06, e.z); g.rotation.y = e.yaw; m.rotation.z = Math.sin(e.t * 1.6) * .1; m.rotation.x = Math.sin(e.t * 1.1) * .04;
+    if (e.t > e.life) { e.st = 'gone'; e.respawn = 20 + L.R() * 40; }
+  };
+  return e;
+}
+function makeSeal(L) {
+  const mat = LIFE_MAT(), body = mergeParts([lsp(.36, .32, .95, 0, .3, 0, 0x8e8f8a), lsp(.3, .2, .8, 0, .2, .05, 0xc7c6bd), lsp(.17, .16, .2, 0, .5, .78, 0x8e8f8a), lsp(.05, .04, .06, 0, .46, .98, 0x1b1b1b), lbx(.34, .04, .18, 0, .1, -1.05, 0x6d6e6a, 0, 0, 0), lbx(.4, .03, .16, .32, .12, .45, 0x6d6e6a, 0, .6, .5), lbx(.4, .03, .16, -.32, .12, .45, 0x6d6e6a, 0, -.6, -.5)]);
+  const g = new THREE.Group(), m = lmesh(body, mat); g.add(m); g.visible = false; L.grp.add(g);
+  const e = { kind: 'seal', mat, g, st: 'gone', respawn: 1 + L.R() * 3, t: 0 };
+  e.pick = () => {
+    const wd = L.C.wd, T = L.T, cands = [];
+    for (const I of wd.isl) { if (I.kind !== 'islet' || I.R < 2.6 || I.z < .8) continue; const q = L.C.loc(I.cx, I.cy), x = q[0], z = -q[1], d = Math.hypot(x - T.x, z - T.z); if (d > 70 && d < 420 && !(e.last === I)) cands.push([I, x, z, d]); }
+    if (!cands.length) return false; const c = cands[(L.R() * cands.length) | 0]; e.isl = c[0]; e.last = c[0]; e.x = c[1]; e.z = c[2]; e.y = L.C.h(e.x, e.z); e.yaw = L.R() * TAU; e.t = 0; e.st = 'sit'; return true;
+  };
+  e.update = dt => {
+    if (e.st === 'gone') { e.respawn -= dt; if (e.respawn <= 0 && !e.pick()) e.respawn = 8; return; }
+    e.t += dt; const T = L.T, d = Math.hypot(T.x - e.x, T.z - e.z);
+    if (e.st === 'sit') {
+      g.position.set(e.x, e.y + .05, e.z); g.rotation.set(0, e.yaw + Math.sin(e.t * .35) * .5, 0); m.rotation.x = -Math.max(0, Math.sin(e.t * .9)) * .07; m.scale.set(1, 1 + Math.sin(e.t * 1.8) * .02, 1);
+      if ((T.fly ? d < 70 : d < 30) || e.t > 70) { e.st = 'slide'; e.t = 0; let bx = 0, bz = 0, bd = 1e9; for (let a = 0; a < 12; a++) { const x = e.x + Math.cos(a * TAU / 12) * 9, z = e.z + Math.sin(a * TAU / 12) * 9; if (L.C.surf(x, z) === S.WATER) { const dd = Math.hypot(x - T.x, z - T.z); if (dd < bd || bx === 0) { bd = dd; bx = x; bz = z; } } } e.wx = bx || e.x + 6; e.wz = bz || e.z; e.yaw = Math.atan2(e.wx - e.x, e.wz - e.z); }
+    } else if (e.st === 'slide') {
+      const sp = 2.8; e.x += Math.sin(e.yaw) * sp * dt; e.z += Math.cos(e.yaw) * sp * dt; const gy = L.C.h(e.x, e.z), wet = L.C.surf(e.x, e.z) === S.WATER;
+      g.position.set(e.x, wet ? ISL.sea - .15 : gy + .05, e.z); g.rotation.set(0, e.yaw, 0); m.rotation.x = 0;
+      if (wet && L.C.coastS(e.x, e.z) > 1 && burst && e.t > .6 && !e.sp) { e.sp = 1; burst(e.x, ISL.sea + .1, e.z, Math.sin(e.yaw), Math.cos(e.yaw), 0xf4fbff, 6, 1.8, 2.4); }
+      if (e.t > 4.5) { e.st = 'gone'; e.sp = 0; e.respawn = 40 + L.R() * 60; }
+    }
+  };
+  return e;
+}
+function makeFishSchool(L) {
+  const mat = LIFE_MAT(), geo = mergeParts([lsp(.07, .05, .26, 0, 0, 0, 0x1d4f5c), lbx(.01, .12, .08, 0, 0, -.28, 0x1d4f5c)]);
+  const g = new THREE.Group(), fish = []; for (let i = 0; i < 16; i++) { const m = lmesh(geo, mat); g.add(m); fish.push({ m, ph: L.R() * TAU, r: .3 + L.R() * 1, y: -.35 - L.R() * .5, sp: .8 + L.R() * .4 }); } g.visible = false; L.grp.add(g);
+  const e = { kind: 'fish', mat, g, st: 'gone', respawn: .5 + L.R() * 4, t: 0 };
+  e.update = dt => {
+    if (e.st === 'gone') { e.respawn -= dt; if (e.respawn > 0) return; const p = seaSpot(L, 20, 140, 6, 45); if (!p) { e.respawn = 3; return; } e.x = p[0]; e.z = p[1]; e.yaw = L.R() * TAU; e.t = 0; e.life = 30 + L.R() * 30; e.st = 'swim'; return; }
+    e.t += dt; const nx = e.x + Math.sin(e.yaw) * 2.2 * dt, nz = e.z + Math.cos(e.yaw) * 2.2 * dt;
+    if (L.C.surf(nx, nz) !== S.WATER || L.C.coastS(nx, nz) < 2) e.yaw += 1.6 * dt * 3; else { e.x = nx; e.z = nz; e.yaw += Math.sin(e.t * .3) * dt * .5; }
+    for (const f of fish) { const a = e.t * 1.4 * f.sp + f.ph, rr = 3.5 * f.r + Math.sin(e.t * .7 + f.ph) * 1.2, x = e.x + Math.cos(a) * rr, z = e.z + Math.sin(a) * rr; f.m.position.set(x, ISL.sea + f.y, z); f.m.rotation.y = Math.atan2(-Math.sin(a), Math.cos(a)); }
+    if (e.t > e.life) { e.st = 'gone'; e.respawn = 8 + L.R() * 25; }
+  };
+  return e;
+}
+function makeWhale(L) {
+  const mat = LIFE_MAT(), body = mergeParts([lsp(1.7, 1.1, 7.5, 0, 0, 0, 0x4a6074), lsp(1.1, .5, 5, 0, -.35, .6, 0xaec0cc), lbx(.12, 1, 1.2, 0, 1.1, -2.6, 0x405468, -.4, 0, 0)]), tail = mergeParts([lbx(5, .35, 1.7, 0, 0, 0, 0x405468), lsp(.7, .7, 2.6, 0, -1.6, .4, 0x4a6074)]);
+  const g = new THREE.Group(), bm = lmesh(body, mat), tm = lmesh(tail, mat); g.add(bm); g.add(tm); g.visible = false; L.grp.add(g);
+  const e = { kind: 'whale', mat, g, st: 'gone', respawn: 20 + L.R() * 40, t: 0 };
+  e.update = dt => {
+    if (e.st === 'gone') { e.respawn -= dt; if (e.respawn > 0) return; const p = seaSpot(L, 170, 480, 30, 400); if (!p) { e.respawn = 6; return; } e.x = p[0]; e.z = p[1]; e.yaw = L.R() * TAU; e.t = 0; e.st = 'surf'; e.blow = 1.5; return; }
+    e.t += dt; e.x += Math.sin(e.yaw) * 1.6 * dt; e.z += Math.cos(e.yaw) * 1.6 * dt; g.position.set(e.x, ISL.sea, e.z); g.rotation.set(0, e.yaw, 0);
+    if (e.st === 'surf') { const u = clamp(e.t / 11, 0, 1); bm.position.y = -1.55 + 1.35 * Math.sin(Math.min(1, u * 1.4) * Math.PI * .5) * (1 - smooth(.8, 1, u) * .5) + Math.sin(e.t * .8) * .06; bm.rotation.x = Math.sin(e.t * .6) * .02; tm.visible = false; e.blow -= dt; if (e.blow <= 0) { e.blow = 5; const bx = e.x + Math.sin(e.yaw) * 5.2, bz = e.z + Math.cos(e.yaw) * 5.2; burst(bx, ISL.sea + 1.2, bz, 0, 0, 0xeaf6ff, 14, 1.4, 9); } if (e.t > 11) { e.st = 'dive'; e.t = 0; } }
+    else { const u = clamp(e.t / 4.2, 0, 1); bm.position.y = lerp(-.3, -4, smooth(0, .9, u)); bm.rotation.x = lerp(0, .5, u); tm.visible = true; tm.position.set(0, lerp(-3.2, 2.6, Math.sin(Math.min(1, u * 1.6) * Math.PI)) - u * 1.4, -7 + u * 2); tm.rotation.x = lerp(-.1, -1.0, u) ; if (e.t > 4.2) { e.st = 'gone'; e.respawn = 90 + L.R() * 120; } }
+  };
+  return e;
+}
+function initMarine(L) {
+  const ents = [makeDolphins(L), makeTurtle(L), makeTurtle(L), makeSeal(L), makeSeal(L), makeSeal(L), makeFishSchool(L), makeFishSchool(L), makeFishSchool(L), makeWhale(L)];
+  for (const e of ents) L.ents.push(e);
+}
+
 /* --- the whole show --- */
 function buildLife(C, grp) {
   const L = { C, grp, t: 0, R: mulberry32((Math.random() * 1e9) | 0), ents: [], T: { x: 0, y: 0, z: 0, fly: false }, last: { x: 0, z: 0 }, ballMovingAway: false };
   W.life = L; W.birds = null;
   try {
     initGround(L, grp);
-    if (!RDC.coast) L.ents.push(makeDeer(L, true), makeDeer(L, false), makeRabbit(L), makeRabbit(L), makeRabbit(L)); // (Pebble Beach: no deer or rabbits, only gulls)
+    if (C.isles) initMarine(L); else if (!RDC.coast) L.ents.push(makeDeer(L, true), makeDeer(L, false), makeRabbit(L), makeRabbit(L), makeRabbit(L)); // (Pebble Beach: no deer or rabbits, only gulls)
     initBirds(L, grp);
     L.plane = makePlane(L); L.glider = makeGlider(L); L.ents.push(L.plane, L.glider);
   } catch (e) { console.error('life', e); W.life = null; }
@@ -7882,7 +8521,7 @@ const CLUB_LEN = 1.15;
 const treeRad = t => t.r || t.R || 2.2 * (t.s || 1);
 function treesNear(x, z, R) { const o = []; for (const t of W.trees || []) { if (t.far) continue; const dx = t.x - x, dz = t.z - z; if (dx * dx + dz * dz < R * R) o.push(t); } return o; }
 function clearOfTrees(list, x, z, m) { for (const t of list) { const dx = t.x - x, dz = t.z - z, rr = treeRad(t) + m; if (dx * dx + dz * dz < rr * rr) return false; } return true; }
-function dryGround(x, z) { const C = G.C; return C.surf(x, z) !== S.WATER && C.wl(x, z) < C.h(x, z) - .05 && !C.isOB(x, z); }
+function dryGround(x, z) { const C = G.C; return C.surf(x, z) !== S.WATER && C.wl(x, z) < C.h(x, z) - .05 && !C.isOB(x, z) && (!C.isles || C.holeLand(x, z)); } // (The Isles: relief is only ever taken on the hole being played)
 function waterDist(x, z) { for (const rr of [1.5, 3, 5, 8]) for (let a = 0; a < 12; a++) if (G.C.surf(x + Math.cos(a * TAU / 12) * rr, z + Math.sin(a * TAU / 12) * rr) === S.WATER) return rr; return 10; }
 // is the sea within 80 m of here (a probe round the compass)? Used for the shore of Pebble Beach
 function nearSea(C, x, z) {
@@ -7896,12 +8535,12 @@ function waterOptions(r) {
   if (dzn) opts.push({ k: 'zone', t: 'Drop zone', d: `The marked drop area for this hazard · ${toPin(dzn.x, -dzn.f)} m to the pin`, x: dzn.x, z: -dzn.f });
   // lateral relief: the best-lying dry spot within two club lengths of where it crossed the edge, no nearer the hole
   let lat = null, ld = -1, latFw = false;
-  if (RDC.coast) { // Pebble Beach: the lateral drop is always on the fairway, the nearest fairway to where the ball crossed the edge, no nearer the hole
-    for (const [maxR, slack] of [[110, 0], [260, 1e9]]) { // first no nearer the hole; failing that (the carry is over the bay) the nearest fairway at all
+  if (RDC.coast || C.isles) { // Pebble Beach and The Isles: the lateral drop is always on the fairway, the nearest fairway to where the ball crossed the edge, no nearer the hole
+    for (const [maxR, slack] of C.isles ? [[150, 0], [460, 1e9]] : [[110, 0], [260, 1e9]]) { // first no nearer the hole; failing that (the carry is over the bay) the nearest fairway at all
       let bd = 1e9;
       for (let rr = 2; rr <= maxR && bd > rr - 2; rr += 2) for (let a = 0; a < 36; a++) {
         const x = E[0] + Math.cos(a * TAU / 36) * rr, z = E[1] + Math.sin(a * TAU / 36) * rr;
-        if (C.surf(x, z) !== S.FAIR || !dryGround(x, z) || C.isOB(x, z) || Math.hypot(cup.x - x, cup.z - z) < dEnt - .05 - slack) continue;
+        const sfx = C.surf(x, z); if (!(sfx === S.FAIR || (C.isles && (sfx === S.FIRST || sfx === S.TEE))) || !dryGround(x, z) || C.isOB(x, z) || Math.hypot(cup.x - x, cup.z - z) < dEnt - .05 - slack) continue;
         if (rr < bd) { bd = rr; lat = [x, z]; latFw = true; }
       }
       if (lat) break;
