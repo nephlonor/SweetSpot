@@ -1876,6 +1876,10 @@ function isleSpline(c, step) { // Catmull-Rom through c, a point about every `st
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 // ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 const ISL = { sea: .2, z0: 1.6, wd: null, shape: 'tre', A: 375, B: 375, gap: 90, s0: 775, cc: [0, 60], cr: 150, ca: [-40, 110] };
 function islPolySD(P, x, y) { // signed distance (negative inside) to a closed polygon [x0, y0, x1, y1 ...]
   const n = P.length >> 1; let inside = false, best = 1e18;
@@ -1891,6 +1895,7 @@ const islBB = P => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (let i = 0; i
 // piece of a hole: a spline strip with its own fairway, land outline and height profile
 // o: pts (control points), w (fairway half-width), fw [s0, s1] (metres along the strip), bells / pinch [[s, k, sigma]], rim, z [[t, z]], walls [[t0, t1, 'L'|'R'|'B']],
 //    beach [[t, length, 'L'|'R', depth]], a (min land half-width at the start, for 30 m), b (the same at the end), rad (end cap radius at the end)
+const WI = 2; // how far inside the land's edge a wall along a fairway stands
 function islStrip(o) {
   const rim = o.rim != null ? o.rim : 4.5, P = isleSpline(o.pts, 5), N = P.length, cl = [0];
   for (let k = 1; k < N; k++) cl.push(cl[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
@@ -1903,11 +1908,9 @@ function islStrip(o) {
     let p = 0; if (fw) p = smooth(fw[0] - 14, fw[0] + 6, s) * smooth(fw[1] + 14, fw[1] - 6, s);
     let f = o.w || 7.2; for (const b of o.bells || []) f *= 1 + b[1] * bell(s, b[0], b[2]); for (const b of o.pinch || []) f *= 1 - b[1] * bell(s, b[0], b[2]);
     const wl = wallAt(t, 'L'), wr = wallAt(t, 'R'); pres.push(p);
-    fwL.push(f * p + (rim - .9) * wl * p); fwR.push(f * p + (rim - .9) * wr * p);
+    fwL.push(f * p + (rim - WI - .4) * wl * p); fwR.push(f * p + (rim - WI - .4) * wr * p); // (at a wall the fairway runs out to the wall: the wall stands WI inside the land's edge, so the cliff begins beyond it)
     const base = o.base || 5.2;
     hwL.push(lerp(base, f + rim, p)); hwR.push(lerp(base, f + rim, p));
-    // (at a wall the fairway runs out to the wall: land edge = fairway edge + 0.9)
-    if (wl > .01) hwL[k] = lerp(hwL[k], fwL[k] + .9, wl); if (wr > .01) hwR[k] = lerp(hwR[k], fwR[k] + .9, wr);
   }
   // beaches: the land bulges out on that side by the depth of the sand
   const beaches = [];
@@ -1919,7 +1922,7 @@ function islStrip(o) {
   if (o.a) for (let k = 0; k < N; k++) if (cl[k] < 34) { const g = smooth(34, 16, cl[k]); hwL[k] = Math.max(hwL[k], lerp(hwL[k], o.a, g)); hwR[k] = Math.max(hwR[k], lerp(hwR[k], o.a, g)); }
   if (o.b) for (let k = 0; k < N; k++) if (L - cl[k] < o.b + 24) { const g = smooth(o.b + 24, o.b + 4, L - cl[k]); hwL[k] = Math.max(hwL[k], lerp(hwL[k], o.rad, g)); hwR[k] = Math.max(hwR[k], lerp(hwR[k], o.rad, g)); }
   const sm = A => { for (let pass = 0; pass < 2; pass++) { const B = A.slice(); for (let k = 0; k < N; k++) { let s = 0, c = 0; for (let j = -2; j <= 2; j++) if (A[k + j] != null) { s += A[k + j]; c++; } B[k] = s / c; } A = B; } return A; };
-  const hL = sm(hwL), hR = sm(hwR); for (let k = 0; k < N; k++) { if (wallAt(cl[k] / L, 'L') > .5) hL[k] = Math.min(hL[k], hwL[k]); if (wallAt(cl[k] / L, 'R') > .5) hR[k] = Math.min(hR[k], hwR[k]); }
+  const hL = sm(hwL), hR = sm(hwR);
   // heights along the strip, the slope capped
   const zl = o.z || [[0, ISL.z0], [1, ISL.z0]], zc = [];
   for (let k = 0; k < N; k++) { const t = cl[k] / L; let z = zl[0][1]; for (let j = 0; j < zl.length; j++) if (t >= zl[j][0]) z = j + 1 < zl.length ? lerp(zl[j][1], zl[j + 1][1], smooth(zl[j][0], zl[j + 1][0], t)) : zl[j][1]; zc.push(z); }
@@ -1946,7 +1949,7 @@ function islStrip(o) {
   // wall lines (a metre inside the edge)
   const walls = [];
   for (const w of o.walls || []) for (const side of w[2] === 'B' ? ['L', 'R'] : [w[2]]) {
-    const line = []; for (let k = 0; k < N; k++) { const t = cl[k] / L; if (t < w[0] || t > w[1]) continue; const q = nrm(k), h = (side === 'L' ? hL[k] : hR[k]) - .38, sg = side === 'L' ? 1 : -1; line.push([P[k][0] + q[0] * h * sg, P[k][1] + q[1] * h * sg]); }
+    const line = []; for (let k = 0; k < N; k++) { const t = cl[k] / L; if (t < w[0] || t > w[1]) continue; const q = nrm(k), h = (side === 'L' ? hL[k] : hR[k]) - WI, sg = side === 'L' ? 1 : -1; line.push([P[k][0] + q[0] * h * sg, P[k][1] + q[1] * h * sg]); }
     if (line.length > 2) walls.push(line);
   }
   // beach blobs: centred on the coast
@@ -4022,7 +4025,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 15 };
+const APP_ITER = { courses: 9, n: 16 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
