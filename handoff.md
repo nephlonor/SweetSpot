@@ -1,6 +1,6 @@
 # Handoff
 
-**Stand:** Geheimer Kurs „The Isles" (`isles`, nur sichtbar für Spielername „Florian") ist jetzt **eine gemeinsame Inselwelt** (Build 9.6). Alle 18 Löcher liegen auf einer Karte (Kleeblatt-Route, ca. 2,8 × 2,5 km) und sind beim Spielen sichtbar; Löcher kreuzen sich (Loch 5 über 14, Loch 7 über 18). Jedes Loch wird im eigenen, gedrehten Rahmen gespielt (`C.enu`/`C.loc` wie bei den echten Kursen).
+**Stand:** Geheimer Kurs „The Isles" (`isles`, sichtbar für Florian und für alle, die irgendwo eine Runde mit -10 oder besser beendet haben: `isleOK()`, Flag `ssg-isle-q`; Rangliste nur für sie) ist jetzt **eine gemeinsame Inselwelt** (Build 9.6). Alle 18 Löcher liegen auf einer Karte (Kleeblatt-Route, ca. 2,8 × 2,5 km) und sind beim Spielen sichtbar; Löcher kreuzen sich (Loch 5 über 14, Loch 7 über 18). Jedes Loch wird im eigenen, gedrehten Rahmen gespielt (`C.enu`/`C.loc` wie bei den echten Kursen).
 
 **Aufbau in `index.html`** (Blöcke „The Isles"):
 - Welt: `islBuildWorld()` (einmalig, `ISL.wd`), Löcher `islHoleSpec(i)` (lokaler Rahmen: Abschlag bei 0/0, f vorwärts), Platzierung `islLayout()` (Parameter `ISL.shape/A/gap/s0` per Scan gewählt: keine Überlappung), Inselchen `islIslets`, zentraler Strand `islCentral`.

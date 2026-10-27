@@ -698,9 +698,9 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div class="dlText">Put Sweet Spot Golf on your home screen: it opens full screen, with its own icon, and starts at once. It takes ten seconds.</div>
   <div id="installBody"></div>
   <button class="mbtn dark wide" id="installDo" style="display:none;width:100%">Install</button><button class="mbtn wide" id="installOk" style="margin-top:8px;width:100%">Got it</button></div>
-<div class="sheet" id="isleSheet"><div class="grab"></div><div class="sht"><span>The Isles</span></div><div class="dlText" style="white-space:pre-line">Florian, you have qualified for this course by playing a round of -10 or better.
+<div class="sheet" id="isleSheet"><div class="grab"></div><div class="sht"><span>The Isles</span></div><div class="dlText" style="white-space:pre-line"><span id="isleName">You</span> have qualified for this course by playing a round of -10 or better.
 
-Eighteen narrow fairways float in open water: no bunkers, only gentle slopes, and a ball in the water is always dropped on the hole you are playing.
+Eighteen holes on one archipelago: narrow fairways, greens that shrink round after round, island greens, sea walls and cliffs. A ball in the water is always dropped on the hole you are playing.
 
 Good luck!</div><div class="mgrp mlistg"><button class="mbtn dark wide" id="isleGo">Tee off</button></div></div>
 <div class="sheet" id="reliefSheet"><div class="grab"></div><div class="sht"><span id="reliefTitle">Drop</span></div><div id="reliefText" class="dlText"></div><div id="reliefBody" class="mgrp mlistg"></div></div>
@@ -3982,7 +3982,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 8 };
+const APP_ITER = { courses: 9, n: 9 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -4030,10 +4030,24 @@ let COURSE = COURSES.gccb;
 function courseFor(i) { const pin = G.pins ? G.pins[i] | 0 : 0; return HOLE_DEFS[i].rh ? makeRealCourse(i, pin) : HOLE_DEFS[i].isles ? makeIslesCourse(i, pin) : makeCourse(i, pin); }
 // switches everything that depends on the course in play; the round in progress is dropped
 // The Isles is only for Florian: it is left out of every course list for anyone else
-const isleOK = () => cleanName(settings.name).toLowerCase() === 'florian';
+// The Isles is for everyone who has finished a round of -10 or better (on any course); the flag is kept on the device, and a round found on this device's boards or posted
+// to the world boards under this player counts too. Its leaderboard is shown only to those players.
+const ISLE_Q = 'ssg-isle-q';
+function isleMark() { try { localStorage.setItem(ISLE_Q, '1'); } catch (e) { } return true; }
+function isleQual() {
+  try { if (localStorage.getItem(ISLE_Q) === '1') return true; } catch (e) { }
+  const nm = cleanName(settings.name).toLowerCase(), me = dlMe();
+  for (const c of Object.values(COURSES)) {
+    if (c.secret) continue;
+    if (localRounds(c.key).some(r => r.toPar <= -10)) return isleMark();
+    const g = Board.gh[c.key]; if (Array.isArray(g) && g.some(x => x && x.toPar <= -10 && (x.by === me || (nm && String(x.name).toLowerCase() === nm)))) return isleMark();
+  }
+  return false;
+}
+const isleOK = () => cleanName(settings.name).toLowerCase() === 'florian' || isleQual();
 const courseList = () => Object.values(COURSES).filter(c => (c.key !== 'legacy' || LEGACY_ON) && (!c.secret || isleOK()));
 function syncCourseOpts() { const ok = isleOK(); document.querySelectorAll('select.segCourse').forEach(el => { const o = el.querySelector('option[value=isles]'); if (ok && !o) { el.add(new Option('The Isles', 'isles')); el.value = COURSE.key; } else if (!ok && o) o.remove(); }); }
-function isleIntro(go) { $('isleGo').onclick = () => { closeSheets(); go(); }; openSheet('isleSheet'); }
+function isleIntro(go) { $('isleName').textContent = cleanName(settings.name) || 'You'; $('isleGo').onclick = () => { closeSheets(); go(); }; openSheet('isleSheet'); }
 function setCourse(key) {
   if (COURSES[key] && COURSES[key].secret && !isleOK()) key = 'gccb';
   // The Legacy Course stays in the code (LEGACY_DEFS, COURSES.legacy) but is switched off in the app: set LEGACY_ON to bring it back
@@ -7729,6 +7743,8 @@ function finishRound() {
   clearRound(G.daily ? 'daily' : undefined);
   if (G.submitted) return; G.submitted = true;
   const tp = totalToPar();
+  if (tp.d <= -10 && HOLE_DEFS.length === 18 && !isleOK()) { isleMark(); setTimeout(() => readout('<div class="r1 good">The Isles unlocked</div><div class="r3"><span>A round of -10 or better · pick it in the course list</span></div>', 6), 2500); }
+  else if (tp.d <= -10) isleMark();
   if (G.daily) { dailyDone(tp); if (dayId() === G.daily.day) return; } // (a daily round finished after the day closed counts as an ordinary round)
   try { const best = +localStorage.getItem(BEST_KEY) || null; if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { }
   statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1, bs: bestShotsCompact(), h: G.scores.slice(), pt: G.putts.slice() });
@@ -10335,7 +10351,7 @@ function courseWheel(key) {
   return wrap;
 }
 function fillBoard(el, limit, key, pick) {
-  key = key || COURSE.key; const CO = COURSES[key] || COURSE, own = key === COURSE.key;
+  key = key || COURSE.key; if (COURSES[key] && COURSES[key].secret && !isleOK()) key = COURSE.key; const CO = COURSES[key] || COURSE, own = key === COURSE.key; // (The Isles board is for those who may play it)
   el.textContent = '';
   // the leaderboard sheet can show any course's board, without touching the round in play
   if (pick) {
