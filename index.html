@@ -1861,6 +1861,8 @@ function isleSpline(c, step) { // Catmull-Rom through c, a point about every `st
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 // ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 const ISL = { sea: .2, z0: 1.6, wd: null, shape: 'tre', A: 375, B: 375, gap: 90, s0: 775, cc: [0, 60], cr: 150, ca: [-40, 110] };
 function islPolySD(P, x, y) { // signed distance (negative inside) to a closed polygon [x0, y0, x1, y1 ...]
   const n = P.length >> 1; let inside = false, best = 1e18;
@@ -1949,9 +1951,13 @@ function islDisc(x, f, R, z, seed, o) {
   for (let k = 0; k < n; k++) { const q = rad(k); land.push([x + Math.cos(q[1]) * q[0] * (o.sx || 1), f + Math.sin(q[1]) * q[0] * (o.sy || 1)]); }
   const walls = [];
   if (o.wall) { // a wall right round the island at the edge, except across the sandbank
-    const line = [], k0 = sd ? Math.round(((sd[0] + 180) * DEG % TAU + TAU) % TAU / TAU * n) : 0;
-    for (let j = 0; j <= n; j++) { const k = (k0 + j) % n, a = k / n * TAU; if (sd && (Math.abs(angWrap(a - sd[0] * DEG)) / DEG < sd[1] * .5 + 10 || (o.wallSpan && Math.abs(angWrap(a - (sd[0] + 180) * DEG)) / DEG > o.wallSpan / 2))) continue; const p = land[k], d = Math.hypot(p[0] - x, p[1] - f) || 1; line.push([p[0] - (p[0] - x) / d * .4, p[1] - (p[1] - f) / d * .4]); }
-    if (line.length > 2) walls.push(line);
+    let line = [], k0 = sd ? Math.round(((sd[0] + 180) * DEG % TAU + TAU) % TAU / TAU * n) : 0; const flush = () => { if (line.length > 2) walls.push(line); line = []; }; // (a gap in the wall ends a line: no wall is ever drawn across it)
+    for (let j = 0; j <= n; j++) {
+      const k = (k0 + j) % n, a = k / n * TAU;
+      if (sd && (Math.abs(angWrap(a - sd[0] * DEG)) / DEG < sd[1] * .5 + 10 || (o.wallSpan && Math.abs(angWrap(a - (sd[0] + 180) * DEG)) / DEG > o.wallSpan / 2))) { flush(); continue; }
+      const p = land[k], d = Math.hypot(p[0] - x, p[1] - f) || 1; line.push([p[0] - (p[0] - x) / d * .4, p[1] - (p[1] - f) / d * .4]);
+    }
+    flush();
   }
   const bch = [];
   if (sd) { const q = rad(Math.round(((sd[0] * DEG % TAU + TAU) % TAU) / TAU * n) % n), a = sd[0] * DEG, tx = -Math.sin(a), ty = Math.cos(a); bch.push({ x: x + Math.cos(a) * (R + sd[2]), y: f + Math.sin(a) * (R + sd[2]), ang: Math.atan2(tx, ty), len: sd[1] * DEG * (R + sd[2] * .5) * .8, depth: sd[2], cx: x, cy: f, r0: R * (1 - am) }); }
@@ -3986,7 +3992,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 11 };
+const APP_ITER = { courses: 9, n: 12 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
