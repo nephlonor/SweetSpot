@@ -60,7 +60,7 @@ jobs:
             // every score ever posted from these devices (the device id, not the name, is the player) and their profiles take the name; returns the files changed
             const setNames = (devs, nn) => {
               const changed = [], olds = new Set();
-              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
+              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|isles|daily-\d{4}-\d{2}-\d{2})\.json$/.test(f))) {
                 const rows = rdj('leaderboard/' + f, null); if (!Array.isArray(rows)) continue; let hit = false;
                 for (const x of rows) if (x && devs.includes(x.by) && x.name !== nn) { olds.add(x.name); x.name = nn; hit = true; }
                 if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
@@ -103,7 +103,7 @@ jobs:
                 if (!NAMEOK.test(nm) || typeof to !== 'string' || !HX.test(to) || to === who) return finish(false, 'Invalid request.');
                 if (mg.g[who] || mg.g[to]) return finish(false, 'One of the accounts is already merged.');
                 const pl = rdj('leaderboard/players.json', {});
-                let known = !!pl[to]; if (!known) for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile)\.json$/.test(f))) if ((rdj('leaderboard/' + f, []) || []).some(x => x && x.by === to)) { known = true; break; }
+                let known = !!pl[to]; if (!known) for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|isles)\.json$/.test(f))) if ((rdj('leaderboard/' + f, []) || []).some(x => x && x.by === to)) { known = true; break; }
                 if (!known) return finish(false, 'No such player.');
                 if (pl[to] && pl[to].n && pl[to].n.toLowerCase() !== nm.toLowerCase()) return finish(false, 'The names do not match.');
                 mg.q = mg.q.filter(x => x.f !== who).concat({ f: who, t: to, n: (pl[to] && pl[to].n) || nm, at: now }).slice(-300);
@@ -193,7 +193,7 @@ jobs:
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, msg);
             }
-            const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71, pebblebeach: 72, mountainvalley: 72, fourmile: 72 };
+            const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71, pebblebeach: 72, mountainvalley: 72, fourmile: 72, isles: 72 };
             const int = v => Number.isInteger(v);
             const isDaily = issue.title.startsWith('[daily]');
             if (!r || typeof r !== 'object' || !(r.course in COURSES)) return finish(false, 'Unknown course.');

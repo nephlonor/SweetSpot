@@ -16,6 +16,6 @@
 
 **Offen / Ideen:**
 - Auf dem iPhone noch nicht gemessen: Aufbauzeit pro Loch (Desktop ca. 0,2–0,8 s) und Bildrate (Kacheln, 120×120-Meer, ~150 Inselchen).
-- Rundenwerte für `isles` landen im Leaderboard-Workflow nicht; `leaderboard/isles.json` ist leer.
+- `isles` steht seit Build 9.11 im Leaderboard-Workflow (`leaderboard.yml`: Par 72); `leaderboard/isles.json` füllt sich mit den ersten Runden.
 - Testen ohne Beschränkung: `settings.name = 'Florian'; setCourse('isles')` in der Konsole.
 - Der User will PRs in diesem Repo automatisch gemergt haben.
