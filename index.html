@@ -1043,6 +1043,12 @@ function simulateShot(C, o) {
           }
         }
       }
+      // the stone walls of The Isles: a ball below the coping bounces off, losing some pace
+      if (C.wallHit && C.wallHit(x, y, z)) {
+        const n = C.wallN, vn = vx * n[0] + vz * n[1];
+        if (vn < 0) { const s = Math.hypot(vx, vy, vz); vx -= 1.5 * vn * n[0]; vz -= 1.5 * vn * n[1]; vx *= .75; vz *= .75; vy *= .8; wx *= .4; wy *= .4; wz *= .4; if (t - lastTreeT > .25) { lastTreeT = t; ev.push({ t, type: 'tree', x, y, z, s, id: 100001 }); } }
+        x = C.wallP[0] + n[0] * .53; z = C.wallP[1] + n[1] * .53;
+      }
       // down near the hole: the cup takes over (it holds the lower part of the stick as well)
       if (cup) {
         const rx = x - cup.x, rz = z - cup.z;
@@ -1130,6 +1136,11 @@ function simulateShot(C, o) {
         const vn = vx * nx + vz * nz; if (vn < 0) { vx -= 2 * vn * nx; vz -= 2 * vn * nz; } vx *= .85; vz *= .85;
         x = HIT.x + nx * (HIT.r + .03); z = HIT.z + nz * (HIT.r + .03); y = C.h(x, z);
         if (t - lastTreeT > .25) { ev.push({ t, type: 'tree', x, y, z, s: sp, id: -2, trunk: true }); lastTreeT = t; }
+      }
+      if (C.wallHit && C.wallHit(x, y + .05, z)) { // (rolling into a stone wall: it comes back off it)
+        const n = C.wallN, vn = vx * n[0] + vz * n[1];
+        if (vn < 0) { vx -= 1.5 * vn * n[0]; vz -= 1.5 * vn * n[1]; vx *= .8; vz *= .8; if (sp > .4 && t - lastTreeT > .25) { lastTreeT = t; ev.push({ t, type: 'tree', x, y, z, s: sp, id: 100001 }); } }
+        x = C.wallP[0] + n[0] * .53; z = C.wallP[1] + n[1] * .53; y = C.h(x, z);
       }
       sp = Math.hypot(vx, vz);
       if (cup) {
@@ -1863,6 +1874,8 @@ function isleSpline(c, step) { // Catmull-Rom through c, a point about every `st
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 // ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 const ISL = { sea: .2, z0: 1.6, wd: null, shape: 'tre', A: 375, B: 375, gap: 90, s0: 775, cc: [0, 60], cr: 150, ca: [-40, 110] };
 function islPolySD(P, x, y) { // signed distance (negative inside) to a closed polygon [x0, y0, x1, y1 ...]
   const n = P.length >> 1; let inside = false, best = 1e18;
@@ -2268,6 +2281,23 @@ function makeIslesCourse(idx, pin) {
   C.cup = { x: pp[0], z: pp[1], y: C.h(pp[0], pp[1]) };
   C.startPos = { x: def.start.x, z: -def.start.f };
   C.center = mkPoly(def.route, null); C.length = C.center.L;
+  // the stone walls are solid: a ball that meets one below its coping bounces off (C.wallN: the way it is pushed out, C.wallP: the closest point on the wall)
+  C.wallN = [0, 1]; C.wallP = [0, 0]; C.colNames = { 100001: 'Off the sea wall!' };
+  C.wallHit = (X, Y, Z) => {
+    const x = wx(X, Z), y = wy(X, Z), c = wd.cell(x, y); if (!c || !c.wall.length) return false;
+    let best = .52 * .52, qx = 0, qy = 0, found = false;
+    for (const w of c.wall) {
+      const b = w.bb; if (x < b[0] - 1 || x > b[2] + 1 || y < b[1] - 1 || y > b[3] + 1) continue; const P = w.P;
+      for (let i = 0; i + 3 < P.length; i += 2) {
+        const ax = P[i], ay = P[i + 1], vx = P[i + 2] - ax, vy = P[i + 3] - ay, l2 = vx * vx + vy * vy; let u = l2 ? ((x - ax) * vx + (y - ay) * vy) / l2 : 0; u = u < 0 ? 0 : u > 1 ? 1 : u;
+        const dx = ax + vx * u - x, dy = ay + vy * u - y, d2 = dx * dx + dy * dy; if (d2 < best) { best = d2; qx = ax + vx * u; qy = ay + vy * u; found = true; }
+      }
+    }
+    if (!found || Y > islEval(wd, qx, qy, E) + .98) return false;
+    let a = x - qx, b2 = y - qy; const l = Math.hypot(a, b2) || 1; a /= l; b2 /= l;
+    C.wallN[0] = a * cs - b2 * sn; C.wallN[1] = -(a * sn + b2 * cs);
+    const q = C.loc(qx, qy); C.wallP[0] = q[0]; C.wallP[1] = -q[1]; return true;
+  };
   C.fairways = []; C.pods = []; C.bunkers = []; C.waters = []; C.creeks = []; C.paths = []; C.island = null; C.treeHit = null;
   return C;
 }
@@ -3992,7 +4022,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 14 };
+const APP_ITER = { courses: 9, n: 15 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
