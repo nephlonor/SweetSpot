@@ -8,6 +8,8 @@
 - Rendering: `buildIslesHole` (Kacheln, Terrain nur im Lochfenster mit Feldern, sonst Weltraster `islRaster` als „far"-Textur), `islesSea`, `islesExtras` (Mauern, Felsen, Stapel, Blumen), Meerestiere `initMarine`.
 - Shader: `isIsle` in `TERRAIN_GLSL` (Seegrund, Gischt, Fels außerhalb des Fensters).
 
+**Früher behoben (Build 9.4):** Das Einfrieren auf dem iPhone kam vom Multiplayer: `mpState` ruft `G.C.enu()` auf; `makeIslesCourse` hat jetzt `C.enu`/`C.loc`.
+
 **Inhalt:** Fairways halb so schmal an Engstellen; Grüns schrumpfen von Loch 1 bis 18 auf ein Drittel der Fläche (`islGS`); Loch 18 mit Wasser direkt ums Grün; 5 Inselgrüns (3, 7, 12, 13, 16); Risiko-/Belohnungslöcher mit mehreren Fairways (2, 5, 9, 11, 14); Plateaus/Klippen (6, 8, 17, 18, Inseln der Gabellöcher), Steigung max. 4,5 % entlang der Mittellinie; Steinmauern bis ans Fairway (kein Rough an der Mauer); ~150 Inselchen; Strände: 3 kleine (4, 10, 15) und ein großer Halbmond in der Mitte der Karte; Blumen; Delfine, Schildkröten, Robben, Fischschwärme, Wal.
 
 **Spielregeln:** Wasser-Drop nur auf dem gespielten Loch (`C.holeLand`, `dryGround`, `waterOptions` wie Pebble Beach: nächstes Fairway/Abschlag).
