@@ -162,6 +162,7 @@ These come from the canopy model, in `build.py`:
 - An empty `leaderboard/<course>.json` (`[]`).
 - **The build number** on the title screen is the number of courses plus an iteration (`APP_ITER` in `index.html`: 7.1 is seven courses, first iteration). A new course makes it `N.0` by itself; later updates without a new course raise `APP_ITER.n`.
 - The help text "The courses", with data credits and licences.
+- **The "still being built" note** (`#pbNote` in `index.html`, text and button included). It is hidden by default. To show it for a course that is still in progress, set `PBN_SHOW.<course>` to `true` next to `pbNotice` (`const PBN_SHOW = { fourmile: false }`). Remove the entry, or set it to `false`, once the course is finished. Edit the text in `#pbNote` for the new course.
 - Weather, if the course has its own climate: `WX_COURSE`.
 
 `pages.yml` already deploys every `data-*.js`.
