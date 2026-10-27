@@ -1846,7 +1846,7 @@ function isleHole(no, par, len, off, name, hcp) {
   for (let pass = 0; pass < 3; pass++) hw = hw.map((_, k) => { let s = 0, c = 0; for (let j = -3; j <= 3; j++) if (P[k + j]) { s += hw[k + j]; c++; } return s / c; });
   const nt = k => { const a = P[Math.max(k - 1, 0)], b = P[Math.min(k + 1, N - 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, tx = (b[0] - a[0]) / l, ty = (b[1] - a[1]) / l; return [-ty, tx, tx, ty]; };
   const A = [], B = [], land = [];
-  for (let k = 0; k < N; k++) { const q = nt(k); A.push([P[k][0] + q[0] * hw[k], P[k][1] + q[1] * hw[k]]); B.push([P[k][0] - q[0] * hw[k], P[k][1] - q[1] * hw[k]]); }
+  for (let k = 0; k < N; k += k + 2 < N ? 2 : 1) { const q = nt(k); A.push([P[k][0] + q[0] * hw[k], P[k][1] + q[1] * hw[k]]); B.push([P[k][0] - q[0] * hw[k], P[k][1] - q[1] * hw[k]]); }
   land.push(...A);
   { const q = nt(N - 1), r = hw[N - 1]; for (let j = 1; j < 8; j++) { const a = j / 8 * Math.PI; land.push([g[0] + r * (q[0] * Math.cos(a) + q[2] * Math.sin(a)), g[1] + r * (q[1] * Math.cos(a) + q[3] * Math.sin(a))]); } }
   land.push(...B.slice().reverse());
@@ -1929,14 +1929,15 @@ function polyQ(pl, x, z, pad) {
 }
 // signed distance to a closed polygon (negative inside), world coords
 function polySigned(poly, x, z) {
-  let inside = false, best = 1e18;
+  let inside = false, best = 1e18, bd = 1e9;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
     const xi = poly[i][0], zi = poly[i][1], xj = poly[j][0], zj = poly[j][1];
     if (((zi > z) !== (zj > z)) && (x < (xj - xi) * (z - zi) / (zj - zi) + xi)) inside = !inside;
+    if ((xi < x - bd && xj < x - bd) || (xi > x + bd && xj > x + bd) || (zi < z - bd && zj < z - bd) || (zi > z + bd && zj > z + bd)) continue; // this edge cannot beat the nearest so far
     const vx = xj - xi, vz = zj - zi, l2 = vx * vx + vz * vz; let u = ((x - xi) * vx + (z - zi) * vz) / l2; u = u < 0 ? 0 : u > 1 ? 1 : u;
-    const dx = xi + vx * u - x, dz = zi + vz * u - z, d2 = dx * dx + dz * dz; if (d2 < best) best = d2;
+    const dx = xi + vx * u - x, dz = zi + vz * u - z, d2 = dx * dx + dz * dz; if (d2 < best) { best = d2; bd = Math.sqrt(d2); }
   }
-  const d = Math.sqrt(best); return inside ? -d : d;
+  return inside ? -bd : bd;
 }
 
 function makeCourse(idx, pin) {
@@ -3591,7 +3592,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 0 };
+const APP_ITER = { courses: 9, n: 1 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
