@@ -1849,6 +1849,14 @@ function isleSpline(c, step) { // Catmull-Rom through c, a point about every `st
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 // ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
 // world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
+// ---- The Isles: one shared archipelago. Every hole is authored in its own frame (x right, f forward from the tee) and placed in
+// world metres (east, north); the whole map is built once, and each hole is played in its own rotated frame of it ----
 const ISL = { sea: .2, z0: 1.6, wd: null, shape: 'tre', A: 375, B: 375, gap: 90, s0: 775, cc: [0, 60], cr: 150, ca: [-40, 110] };
 function islPolySD(P, x, y) { // signed distance (negative inside) to a closed polygon [x0, y0, x1, y1 ...]
   const n = P.length >> 1; let inside = false, best = 1e18;
@@ -1932,15 +1940,22 @@ function islStrip(o) {
 }
 // a round island (island greens, islets): wobbly outline around (x, f), radius R
 function islDisc(x, f, R, z, seed, o) {
-  o = o || {}; const n = o.n || 28, r = mulberry32(seed), ph = [r() * TAU, r() * TAU, r() * TAU], am = o.wob != null ? o.wob : .1, land = [];
-  for (let k = 0; k < n; k++) { const a = k / n * TAU, W2 = 1 + am * (.6 * Math.cos(2 * a + ph[0]) + .5 * Math.cos(3 * a + ph[1]) + .3 * Math.cos(5 * a + ph[2])); land.push([x + Math.cos(a) * R * W2 * (o.sx || 1), f + Math.sin(a) * R * W2 * (o.sy || 1)]); }
+  o = o || {}; const n = o.n || 40, r = mulberry32(seed), ph = [r() * TAU, r() * TAU, r() * TAU], am = o.wob != null ? o.wob : .1, land = [], sd = o.sand; // sand: [centre angle, span, depth] a sandbank on that side of the island
+  const rad = k => { const a = k / n * TAU; let W2 = 1 + am * (.6 * Math.cos(2 * a + ph[0]) + .5 * Math.cos(3 * a + ph[1]) + .3 * Math.cos(5 * a + ph[2])), ex = 0; if (sd) { const da = Math.abs(angWrap(a - sd[0] * DEG)) / DEG; ex = sd[2] * (1 - smooth(sd[1] * .3, sd[1] * .5, da)); } return [R * W2 + ex, a]; };
+  for (let k = 0; k < n; k++) { const q = rad(k); land.push([x + Math.cos(q[1]) * q[0] * (o.sx || 1), f + Math.sin(q[1]) * q[0] * (o.sy || 1)]); }
   const walls = [];
-  for (const w of o.walls || []) { const line = []; for (let k = 0; k <= n; k++) { const a = (k % n) / n * TAU; if (a < w[0] * DEG || a > w[1] * DEG) continue; const p = land[k % n], d = Math.hypot(p[0] - x, p[1] - f) || 1; line.push([p[0] - (p[0] - x) / d * .4, p[1] - (p[1] - f) / d * .4]); } if (line.length > 2) walls.push(line); }
-  return { land, fair: null, walls, bch: [], P: null, zc: null, z, kind: 'disc', cx: x, cy: f, R, top: o.top || 0 };
+  if (o.wall) { // a wall right round the island at the edge, except across the sandbank
+    const line = [], k0 = sd ? Math.round(((sd[0] + 180) * DEG % TAU + TAU) % TAU / TAU * n) : 0;
+    for (let j = 0; j <= n; j++) { const k = (k0 + j) % n, a = k / n * TAU; if (sd && Math.abs(angWrap(a - sd[0] * DEG)) / DEG < sd[1] * .5 + 10) continue; const p = land[k], d = Math.hypot(p[0] - x, p[1] - f) || 1; line.push([p[0] - (p[0] - x) / d * .4, p[1] - (p[1] - f) / d * .4]); }
+    if (line.length > 2) walls.push(line);
+  }
+  const bch = [];
+  if (sd) { const q = rad(Math.round(((sd[0] * DEG % TAU + TAU) % TAU) / TAU * n) % n), a = sd[0] * DEG, tx = -Math.sin(a), ty = Math.cos(a); bch.push({ x: x + Math.cos(a) * (R + sd[2]), y: f + Math.sin(a) * (R + sd[2]), ang: Math.atan2(tx, ty), len: sd[1] * DEG * (R + sd[2] * .5) * .8, depth: sd[2], cx: x, cy: f, r0: R * (1 - am) }); }
+  return { land, fair: null, walls, bch, P: null, zc: null, z, kind: 'disc', cx: x, cy: f, R, top: o.top || 0 };
 }
 
 // ---- the eighteen holes, each in its own frame: tee at (0, 0), x to the right, f forward ----
-const ISH_LEN = [430, 585, 215, 395, 455, 380, 185, 420, 610, 410, 445, 150, 365, 590, 400, 195, 365, 625];
+const ISH_LEN = [430, 585, 215, 395, 455, 380, 185, 420, 610, 410, 445, 150, 365, 590, 400, 168, 365, 625], ISH_ORIG = [430, 585, 215, 395, 455, 380, 185, 420, 610, 410, 445, 230, 365, 590, 400, 195, 365, 625]; // (ISH_ORIG: the lengths the map was laid out with, so shortening a hole leaves the others where they are)
 const ISH_NAME = ['Shoal', 'Cay', 'Skerry', 'Spit', 'Lagoon', 'Reef', 'Tern', 'Sound', 'Atoll', 'Inlet', 'Strand', 'Mirror', 'Haven', 'Drift', 'Narrows', 'Key', 'Harbour', 'Crown'];
 const ISH_PAR = [4, 5, 3, 4, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5, 4, 3, 4, 5], ISH_HCP = [7, 13, 15, 3, 1, 11, 17, 5, 9, 8, 2, 14, 16, 6, 18, 10, 4, 12];
 const islGS = n => lerp(1, .577, (n - 1) / 17); // the greens shrink round after round: the 18th is a third of the first in area
@@ -1966,29 +1981,29 @@ function islHoleSpec(i) {
   };
   const island3 = (zT, zG, wallsG, o) => { // par 3: a tee island and an island green
     o = o || {}; const gx = o.gx || 0;
-    H.pieces = [teeP(zT), Object.assign(islDisc(gx, L, rad, zG, 500 + n, { walls: wallsG, wob: .06 }), { green: true })];
+    H.pieces = [teeP(zT), Object.assign(islDisc(gx, L, R + 2.2, zG, 500 + n, { wall: true, sand: o.sand, wob: .05 }), { green: true })].concat(o.extra || []);
     H.gp = 1; H.route = [[0, -3], [gx, L]];
   };
   switch (n) {
     case 1: H.pieces = [strip([0, 18, 34, 26, 10], { fw: [58, null], pinch: [[.45 * L, .5, 24]], walls: [[.56, .73, 'R']] })]; break;
     case 2: fork5(1, 5.2, { wallsX: [[0, 1, 'B']] }); break;
-    case 3: island3(3.4, z0, [[20, 200]]); break;
+    case 3: island3(3.4, z0, null, { sand: [250, 110, 8] }); break;
     case 4: H.pieces = [strip([0, -20, -34, -20, -6], { w: 6.8, fw: [58, null], pinch: [[.3 * L, .45, 20], [.62 * L, .5, 22]], walls: [[.1, .26, 'R'], [.78, .92, 'R']], beach: [[.46, 50, 'L', 9]] })]; break;
     case 5: fork4(-1, 4.4, { wallsX: [[0, 1, 'B']] }); break;
     case 6: H.pieces = [strip([0, -14, 6, 22, 30], { w: 7, fw: [58, null], pinch: [[.52 * L, .5, 20]], z: [[0, z0], [.16, z0], [.78, 9.5], [1, 9.5]], walls: [[.82, .96, 'B']] })]; break;
-    case 7: island3(6, z0, [[0, 360]]); break;
+    case 7: island3(6, z0, null, { sand: [305, 110, 8] }); break;
     case 8: H.pieces = [strip([0, 16, 36, 18, 26], { w: 7.4, fw: [58, null], pinch: [[.35 * L, .5, 22], [.8 * L, .45, 18]], z: [[0, 5], [.12, 5], [.56, z0], [1, z0]], walls: [[.3, .52, 'L']] })]; break;
     case 9: fork5(-1, 3, { zT: 2.2 }); break;
     case 10: H.pieces = [strip([0, 26, 12, -14, -26], { w: 7.2, fw: [58, null], pinch: [[.7 * L, .5, 20]], beach: [[.3, 44, 'L', 8]], walls: [[.78, .9, 'R']] })]; break;
     case 11: fork4(1, 4, {}); break;
-    case 12: island3(z0, z0, [[0, 360]], { gx: 10 }); break;
+    case 12: island3(z0, z0, null, { gx: 10, sand: [200, 110, 8] }); break;
     case 13: { // a short par 4 with an island green
       const m = strip([0, -20, -34, -16], { pts: [[0, -14]].concat(islOff(250, [0, -20, -34, -16], 4)), w: 7.4, b: 0, rad: 0, fw: [58, 236], bells: [[150, .45, 50]], pinch: [[90, .4, 18]], walls: [[.5, .8, 'R']] });
-      delete m.b; delete m.rad; H.pieces = [m, Object.assign(islDisc(-30, L, rad, z0, 513, { walls: [[0, 360]], wob: .06 }), { green: true })]; H.gp = 1; H.route = [[0, -3], [-26, 150], [-34, 245], [-30, L]]; break;
+      delete m.b; delete m.rad; H.pieces = [m, Object.assign(islDisc(-30, L, R + 2.2, z0, 513, { wall: true, sand: [270, 110, 8], wob: .05 }), { green: true })]; H.gp = 1; H.route = [[0, -3], [-26, 150], [-34, 245], [-30, L]]; break;
     }
     case 14: fork5(1, 4, { zT: 1.8, wallsX: [[0, 1, 'B']] }); break;
     case 15: H.pieces = [strip([0, -18, 10, 28, 14], { w: 5.4, fw: [58, null], bells: [[.62 * L, .2, 60]], pinch: [[.25 * L, .45, 16], [.5 * L, .4, 14], [.8 * L, .4, 14]], beach: [[.72, 40, 'R', 8]], walls: [[.16, .4, 'L']] })]; break;
-    case 16: island3(z0, z0, [[100, 330]], { gx: -8 }); break;
+    case 16: island3(z0, z0, null, { gx: -8, sand: [225, 110, 8], extra: [{ pts: [[34, L - 72], [38, L - 30], [32, L + 8]], w: 5.8, fw: [4, 0], fe: 6, rim: 4, base: 8, z: [[0, z0], [1, z0]] }] }); break;
     case 17: H.pieces = [strip([0, 22, 32, 12], { w: 6.4, fw: [58, null], pinch: [[.6 * L, .3, 30]], z: [[0, 7], [1, 7]], walls: [[.22, .9, 'B']] })]; break;
     case 18: H.pieces = [strip([0, -20, -34, -8, 18, 6], { w: 6.2, fw: [58, null], z: [[0, z0], [.2, z0], [.86, 12], [1, 12]], bells: [[.3 * L, .3, 60]], pinch: [[.45 * L, .5, 24], [.75 * L, .45, 22]], walls: [[.86, .95, 'B']] })]; break;
   }
@@ -2004,7 +2019,7 @@ function islLayout() { // tee, heading (deg clockwise from north) of every hole:
   const out = []; let s = ISL.s0 != null ? ISL.s0 : 0;
   for (let i = 0; i < 18; i++) {
     const L = ISH_LEN[i], a = at(s), b = at(s + L * .94), hd = Math.atan2(b[0] - a[0], b[1] - a[1]) / DEG + (ISL.hdj ? ISL.hdj[i] || 0 : 0);
-    out.push({ tx: a[0], ty: a[1], hd, s }); s += L * .94 + (ISL.gap || 85) + (i === 11 ? (230 - L) * .94 : 0); // (hole 12 was 230 m: the holes after it keep their places)
+    out.push({ tx: a[0], ty: a[1], hd, s }); s += L * .94 + (ISL.gap || 85) + ((ISH_ORIG[i] || L) - L) * .94; // (a shortened hole leaves the holes after it where they were)
   }
   out.total = total; return out;
 }
@@ -2019,7 +2034,7 @@ function islPlace(spec, pl, wd) {
     else { const c = T(o.cx, o.cy); I.cx = c[0]; I.cy = c[1]; }
     if (o.fair) wd.fair.push({ P: flat(o.fair), hole: spec.n - 1, bb: islBB(flat(o.fair)) });
     for (const w of o.walls) wd.walls.push({ P: flat(w), hole: spec.n - 1 });
-    for (const b of o.bch) { const c = T(b.x, b.y), v = [Math.sin(b.ang), Math.cos(b.ang)], vw = [v[0] * cs + v[1] * sn, -v[0] * sn + v[1] * cs]; wd.bch.push({ x: c[0], y: c[1], ang: Math.atan2(vw[0], vw[1]), len: b.len, depth: b.depth, hole: spec.n - 1 }); }
+    for (const b of o.bch) { const c = T(b.x, b.y), v = [Math.sin(b.ang), Math.cos(b.ang)], vw = [v[0] * cs + v[1] * sn, -v[0] * sn + v[1] * cs]; const cc = b.r0 ? T(b.cx, b.cy) : null; wd.bch.push({ x: c[0], y: c[1], ang: Math.atan2(vw[0], vw[1]), len: b.len, depth: b.depth, hole: spec.n - 1, cx: cc ? cc[0] : 0, cy: cc ? cc[1] : 0, r0: b.r0 || 0 }); }
     for (const p of o.land) { hole.lbb[0] = Math.min(hole.lbb[0], p[0]); hole.lbb[1] = Math.min(hole.lbb[1], p[1]); hole.lbb[2] = Math.max(hole.lbb[2], p[0]); hole.lbb[3] = Math.max(hole.lbb[3], p[1]); }
     hole.isl.push(I); wd.isl.push(I);
     if (pi === spec.gp) hole.gPiece = { o, I };
@@ -2132,7 +2147,7 @@ function islEval(wd, x, y, E) {
   if (c.wall.length) { const d = islWallD(c, x, y); E.wm = 1 - smooth(1.5, 3.5, d); }
   if (c.bch.length) for (const b of c.bch) {
     const dx = x - b.x, dy = y - b.y, sn = Math.sin(b.ang), cc = Math.cos(b.ang), al = dx * sn + dy * cc, ac = dx * cc - dy * sn;
-    const k = (1 - smooth(b.len / 2 - 6, b.len / 2 + 12, Math.abs(al))) * (1 - smooth(b.depth + 4, b.depth + 14, Math.abs(ac))); if (k > E.bm) { E.bm = k; E.bd = b.depth; }
+    let k = (1 - smooth(b.len / 2 - 6, b.len / 2 + 12, Math.abs(al))) * (1 - smooth(b.depth + 4, b.depth + 14, Math.abs(ac))); if (b.r0) k *= smooth(b.r0 - 1, b.r0 + 4, Math.hypot(x - b.cx, y - b.cy)); if (k > E.bm) { E.bm = k; E.bd = b.depth; E.br = b.r0 ? 1 : 0; }
   }
   for (let i = 0; i < c.fair.length; i++) { const f = c.fair[i], b = f.bb; if (x < b[0] - 34 || x > b[2] + 34 || y < b[1] - 34 || y > b[3] + 34) continue; const d = islPolySD(f.P, x, y); if (d < E.df) E.df = d; }
   // height of the land under the point
@@ -2149,7 +2164,7 @@ function islEval(wd, x, y, E) {
   const bed = islBed(cs), w0 = lerp(-1.2, -.15, E.wm), w1 = lerp(3.8, .9, E.wm);
   let h = lerp(zL, bed, smooth(w0, w1, cj));
   if (E.bm > .001) {
-    const zb = ISL.sea + .8 + .1 * vnoise(x * .08, y * .08, 81), bd = E.bd;
+    const zb = ISL.sea + (E.br ? 1.25 : .8) + .1 * vnoise(x * .08, y * .08, 81), bd = E.bd;
     const hB0 = lerp(zb, bed, smooth(-bd * .25, 11, cs)), hB = lerp(zL, hB0, smooth(-bd - 17, -bd + 2, cs));
     h = lerp(h, hB, E.bm);
   }
@@ -2232,9 +2247,9 @@ function makeIslesCourse(idx, pin) {
   const gr = C.green, pins = [[gr.cx, gr.cz]];
   { let ax = gr.cx - def.route[def.route.length - 2][0], az = gr.cz + def.route[def.route.length - 2][1]; const al = Math.hypot(ax, az) || 1; ax /= al; az /= al;
     const g2 = [0, 0], cand = [[-.45, 0], [.45, 0], [0, .42], [0, -.42]].map(([u, v]) => {
-      for (let k = 1; k >= 0; k -= .05) {
+      for (let k = 1; k >= -1e-9; k -= .05) {
         const x = gr.cx + (ax * u - az * v) * gr.R * k, z = gr.cz + (az * u + ax * v) * gr.R * k;
-        if (k === 0 || (islGreenS(G0, wx(x, z), wy(x, z)) < 1 - 2.6 / gr.R && C.surf(x, z) === S.GREEN && Math.hypot(...C.grad(x, z, g2)) < .035)) return [x, z];
+        if (k < 1e-9 || (islGreenS(G0, wx(x, z), wy(x, z)) < 1 - 2.6 / gr.R && C.surf(x, z) === S.GREEN && Math.hypot(...C.grad(x, z, g2)) < .035)) return [x, z];
       }
     });
     cand.sort((p, q) => Math.hypot(q[0] - pins[0][0], q[1] - pins[0][1]) - Math.hypot(p[0] - pins[0][0], p[1] - pins[0][1]));
@@ -3967,7 +3982,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 7 };
+const APP_ITER = { courses: 9, n: 8 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
