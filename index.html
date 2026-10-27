@@ -616,7 +616,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   </div>
 </div>
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
-<div class="layer" id="pbNote" role="dialog" aria-live="polite"><div class="card ncard"><div class="nk">Four Mile Ranch</div><div class="nt">New course &middot; work in progress</div><div class="nb">This course is new and still being built &ndash; but you can already play it.</div><button class="btn" id="pbNoteOk" type="button">Let's play</button></div></div>
+<div class="layer" id="pbNote" role="dialog" aria-live="polite"><div class="card ncard"><div class="nk" id="pbNoteK">New course</div><div class="nt">New course &middot; work in progress</div><div class="nb">This course is new and still being built &ndash; but you can already play it.</div><button class="btn" id="pbNoteOk" type="button">Let's play</button></div></div>
 <div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">Replay</button></div></div>
 <div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
@@ -809,8 +809,8 @@ const WX_NEXT = { dry: [['dry', .25], ['fine', .6], ['damp', .15]], fine: [['dry
 const WX_COURSE = {
   // Mountain Valley: late October on Broad Mountain, Pennsylvania: fronts crossing the ridge, about as many damp spells as fine ones (long-run share about fine .46, damp .34, rain .2)
   mountainvalley: { p: { fine: .46, damp: .34, rain: .2 }, next: { fine: [['fine', .6], ['damp', .33], ['rain', .07]], damp: [['fine', .4], ['damp', .3], ['rain', .3]], rain: [['damp', .6], ['fine', .15], ['rain', .25]], dry: [['fine', .6], ['damp', .4]] } },
-  // Four Mile Ranch: late October on the high desert above Cañon City, Colorado: dry, bright and mostly fine, the odd cold front (long-run share about fine .74, damp .18, rain .08)
-  fourmile: { p: { fine: .74, damp: .18, rain: .08 }, next: { fine: [['fine', .85], ['damp', .11], ['rain', .04]], damp: [['fine', .55], ['damp', .3], ['rain', .15]], rain: [['fine', .4], ['damp', .35], ['rain', .25]], dry: [['fine', .9], ['damp', .1]] } },
+  // Four Mile Ranch: late October on the high desert above Cañon City, Colorado: dry, bright and mostly fine, the odd cold front (long-run share about fine .86, damp .134, rain .006: rain almost never)
+  fourmile: { p: { fine: .86, damp: .134, rain: .006 }, next: { fine: [['fine', .9], ['damp', .095], ['rain', .005]], damp: [['fine', .62], ['damp', .37], ['rain', .01]], rain: [['fine', .5], ['damp', .4], ['rain', .1]], dry: [['fine', .9], ['damp', .1]] } },
   // Pebble Beach: the marine layer. Mornings of fog and drizzle that burn off to a bright, breezy afternoon, rain a rarity (long-run share about fine .62, damp .33, rain .05)
   pebblebeach: { p: { fine: .62, damp: .33, rain: .05 }, next: { fine: [['fine', .72], ['damp', .28]], damp: [['fine', .5], ['damp', .42], ['rain', .08]], rain: [['damp', .7], ['fine', .3]], dry: [['fine', .7], ['damp', .3]] } },
   // St Patrick's: Donegal in October, showers in off the Atlantic (long-run share about rain .38, damp .37, fine .25; never dry)
@@ -7858,6 +7858,7 @@ const PBN = { practice: false };
 function pbNotice(practice) {
   if (!COURSE || !PBN_SHOW[COURSE.key]) return;
   if (practice) { if (PBN.practice) return; PBN.practice = true; }
+  $('pbNoteK').textContent = COURSE.short;
   $('pbNote').classList.add('on');
 }
 $('pbNoteOk').addEventListener('click', () => $('pbNote').classList.remove('on'));
