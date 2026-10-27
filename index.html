@@ -698,6 +698,11 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div class="dlText">Put Sweet Spot Golf on your home screen: it opens full screen, with its own icon, and starts at once. It takes ten seconds.</div>
   <div id="installBody"></div>
   <button class="mbtn dark wide" id="installDo" style="display:none;width:100%">Install</button><button class="mbtn wide" id="installOk" style="margin-top:8px;width:100%">Got it</button></div>
+<div class="sheet" id="isleSheet"><div class="grab"></div><div class="sht"><span>The Isles</span></div><div class="dlText" style="white-space:pre-line">Florian, you have qualified for this course by playing a round of -10 or better.
+
+Eighteen narrow fairways float in open water: no bunkers, only gentle slopes, and a ball in the water is always dropped on the hole you are playing.
+
+Good luck!</div><div class="mgrp mlistg"><button class="mbtn dark wide" id="isleGo">Tee off</button></div></div>
 <div class="sheet" id="reliefSheet"><div class="grab"></div><div class="sht"><span id="reliefTitle">Drop</span></div><div id="reliefText" class="dlText"></div><div id="reliefBody" class="mgrp mlistg"></div></div>
 <div class="sheet" id="reelSheet"><div class="grab"></div><div class="sht"><span>Replay</span></div><div id="reelBody" class="mgrp mlistg"></div></div>
 <div class="sheet" id="dailySheet"><div class="grab"></div><div class="sht"><span id="dailyTitle">Daily challenge</span></div><div id="dailyBody"></div></div>
@@ -1818,6 +1823,57 @@ Object.assign(H_FINALE, { props: [{ kind: 'flagpoles', x: -32, f: 544, rot: 0, n
 // The Legacy Course, in play order: two par-36 nines, out from the clubhouse and back to it
 const LEGACY_DEFS = [HOLE_BASE[0], H_DUNES, HOLE_BASE[1], H_HELL, H_LAKE, H_ISLAND, H_SHORT, HOLE_BASE[2], H_HOME,
   H_OAK, H_REDAN, H_PEWS, H_PRINCIPAL, H_CAULDRON, H_RIVER, H_CYPRESS, H_ROAD, H_FINALE];
+// ---- The Isles: a secret course for "Florian". Eighteen narrow strips of fairway floating in open water: no bunkers, no trees, very gentle slopes.
+// Each hole is its own world, so a ball in the water is only ever dropped on the hole being played ----
+function isleSpline(c, step) { // Catmull-Rom through c, a point about every `step`
+  const out = [], n = c.length;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = c[Math.max(i - 1, 0)], p1 = c[i], p2 = c[i + 1], p3 = c[Math.min(i + 2, n - 1)], m = Math.max(2, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / step));
+    for (let k = 0; k < m; k++) { const t = k / m, t2 = t * t, t3 = t2 * t; out.push([0, 1].map(j => .5 * (2 * p1[j] + (p2[j] - p0[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (3 * p1[j] - p0[j] - 3 * p2[j] + p3[j]) * t3))); }
+  }
+  out.push(c[n - 1].slice()); return out;
+}
+function isleHole(no, par, len, off, name, hcp) {
+  const n = off.length, span = par === 3 ? Math.sqrt(len * len - 2 * off[n - 1] * off[n - 1]) : len, ctl = off.map((x, k) => [x * (par === 3 ? 1.4 : 1.6), span * k / (n - 1)]);
+  const plen = q => { let s = 0; for (let k = 1; k < q.length; k++) s += Math.hypot(q[k][0] - q[k - 1][0], q[k][1] - q[k - 1][1]); return s; };
+  let P = isleSpline(ctl, 6);
+  if (par !== 3) { const s = (len - 3) / plen(P); ctl.forEach(p => { p[0] *= s; p[1] *= s; }); P = isleSpline(ctl, 6); }
+  const N = P.length, cl = [0]; for (let k = 1; k < N; k++) cl.push(cl[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+  const L = cl[N - 1], g = P[N - 1], gR = par === 3 ? 7 : 11.5, a0 = P[Math.max(0, N - 6)], head = Math.atan2(g[0] - a0[0], g[1] - a0[1]) / DEG;
+  const bell = (t, c, w) => Math.exp(-(((t - c) / w) ** 2));
+  const fwHW = t => par === 3 ? (t < .72 ? 0 : 6 + 9 * (t - .72)) : 8.6 + 3.4 * (par === 5 ? bell(t, .3, .09) + bell(t, .68, .1) : bell(t, .6, .11)) - 2.2 * bell(t, 0, .05);
+  let hw = P.map((_, k) => { const t = cl[k] / L, f = fwHW(t); let h = f ? f + 6.5 : 5.5; if (par === 3 && cl[k] < 16) h = 13; if (L - cl[k] < gR + 9) h = Math.max(h, gR + 6.5); return h; });
+  for (let pass = 0; pass < 3; pass++) hw = hw.map((_, k) => { let s = 0, c = 0; for (let j = -3; j <= 3; j++) if (P[k + j]) { s += hw[k + j]; c++; } return s / c; });
+  const nt = k => { const a = P[Math.max(k - 1, 0)], b = P[Math.min(k + 1, N - 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, tx = (b[0] - a[0]) / l, ty = (b[1] - a[1]) / l; return [-ty, tx, tx, ty]; };
+  const A = [], B = [], land = [];
+  for (let k = 0; k < N; k++) { const q = nt(k); A.push([P[k][0] + q[0] * hw[k], P[k][1] + q[1] * hw[k]]); B.push([P[k][0] - q[0] * hw[k], P[k][1] - q[1] * hw[k]]); }
+  land.push(...A);
+  { const q = nt(N - 1), r = hw[N - 1]; for (let j = 1; j < 8; j++) { const a = j / 8 * Math.PI; land.push([g[0] + r * (q[0] * Math.cos(a) + q[2] * Math.sin(a)), g[1] + r * (q[1] * Math.cos(a) + q[3] * Math.sin(a))]); } }
+  land.push(...B.slice().reverse());
+  { const q = nt(0), r = hw[0], c = P[0]; for (let j = 1; j < 8; j++) { const a = j / 8 * Math.PI; land.push([c[0] - r * (q[0] * Math.cos(a) + q[2] * Math.sin(a)), c[1] - r * (q[1] * Math.cos(a) + q[3] * Math.sin(a))]); } }
+  const fp = [], fwid = [], f0 = par === 3 ? L * .72 : 55;
+  for (let k = 0; k < N; k += 2) if (cl[k] >= f0 && L - cl[k] >= gR * .6) { fp.push(P[k]); fwid.push(fwHW(cl[k] / L)); }
+  const sl = ((no * 37) % 7 - 3) * .0013;
+  return {
+    name, par, hcp, seed: 300 + no, inspo: 'A narrow strip of fairway in open water',
+    tee: { x: 0, f: 0, w: 12, l: 14, elev: .3 }, start: { x: 0, f: -3 }, teeMarkers: par === 3 ? T3 : T4,
+    route: [[0, -3]].concat(Array.from({ length: 8 }, (_, j) => P[Math.round((j + 1) * (N - 1) / 8)].slice())),
+    fairways: [{ pts: fp, w: fwid }], fairwayPods: [], roughIslands: [],
+    green: { x: g[0], f: g[1], rx: par === 3 ? 8.5 : 13, rz: par === 3 ? 5.5 : 10, rot: head, wob: par === 3 ? .2 : .08, elev: .3, sx: sl, sf: -sl, und: .03, blend: 5 },
+    pin: { x: g[0], f: g[1] + 1 },
+    bunkers: [], waters: [], creeks: [], paths: [],
+    coast: { sea: .2, bed: -3.5, land },
+    ob: () => false, obLines: [], treeLines: [], treeClusters: [], landmarks: [],
+    hum: .3, shape: () => 2.6, windMax: 4
+  };
+}
+const ISLES_DEFS = [
+  [4, 430, [0, 18, 34, 26, 10], 'Shoal', 7], [5, 585, [0, -16, -30, -14, -34, -20], 'Cay', 13], [3, 215, [0, 8, 16], 'Skerry', 15], [4, 395, [0, -20, -34, -20, -6], 'Spit', 3],
+  [4, 455, [0, 22, 8, -18, -30], 'Lagoon', 1], [4, 380, [0, -14, 6, 22, 30], 'Reef', 11], [3, 185, [0, -9, -18], 'Tern', 17], [4, 420, [0, 16, 36, 18, 26], 'Sound', 5],
+  [5, 610, [0, -22, -4, 20, 32, 16], 'Atoll', 9], [4, 410, [0, 26, 12, -14, -26], 'Inlet', 8], [4, 445, [0, -24, -34, -12, 10], 'Strand', 2], [3, 230, [0, 12, 22], 'Mirror', 14],
+  [4, 365, [0, -20, -34, -16], 'Haven', 16], [5, 590, [0, 20, -4, -28, -10, 12], 'Drift', 6], [4, 400, [0, -18, 10, 28, 14], 'Narrows', 18], [3, 195, [0, -8, 10], 'Key', 10],
+  [4, 365, [0, 22, 32, 12], 'Harbour', 4], [5, 625, [0, -20, -34, -8, 18, 6], 'Crown', 12]
+].map((h, i) => isleHole(i + 1, h[0], h[1], h[2], h[3], h[4]));
 // the course in play (setCourse switches it)
 let HOLE_DEFS = LEGACY_DEFS;
 
@@ -3535,7 +3591,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 8, n: 28 };
+const APP_ITER = { courses: 9, n: 0 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -3573,6 +3629,7 @@ const COURSES = {
   pebblebeach: { key: 'pebblebeach', name: 'Pebble Beach Golf Links', short: 'Pebble Beach', defs: PEBBLEBEACH_DEFS, best: 'ssg-best-pebblebeach', board: 'ssg-board-pebblebeach', coll: 'rounds-pebblebeach' },
   mountainvalley: { key: 'mountainvalley', name: 'Mountain Valley Golf Course', short: 'Mountain Valley', defs: MOUNTAINVALLEY_DEFS, best: 'ssg-best-mountainvalley', board: 'ssg-board-mountainvalley', coll: 'rounds-mountainvalley' },
   fourmile: { key: 'fourmile', name: 'Four Mile Ranch Golf Club', short: 'Four Mile Ranch', defs: FOURMILE_DEFS, best: 'ssg-best-fourmile', board: 'ssg-board-fourmile', coll: 'rounds-fourmile' },
+  isles: { key: 'isles', name: 'The Isles', short: 'The Isles', defs: ISLES_DEFS, best: 'ssg-best-isles', board: 'ssg-board-isles', coll: 'rounds-isles', secret: true },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
 };
 document.getElementById('buildNo').textContent = 'Build ' + buildNo();
@@ -3581,7 +3638,13 @@ let COURSE = COURSES.gccb;
 // each round sets a pin (0-3: front, back, left, right) per hole in G.pins
 function courseFor(i) { const pin = G.pins ? G.pins[i] | 0 : 0; return HOLE_DEFS[i].rh ? makeRealCourse(i, pin) : makeCourse(i, pin); }
 // switches everything that depends on the course in play; the round in progress is dropped
+// The Isles is only for Florian: it is left out of every course list for anyone else
+const isleOK = () => cleanName(settings.name).toLowerCase() === 'florian';
+const courseList = () => Object.values(COURSES).filter(c => (c.key !== 'legacy' || LEGACY_ON) && (!c.secret || isleOK()));
+function syncCourseOpts() { const ok = isleOK(); document.querySelectorAll('select.segCourse').forEach(el => { const o = el.querySelector('option[value=isles]'); if (ok && !o) { el.add(new Option('The Isles', 'isles')); el.value = COURSE.key; } else if (!ok && o) o.remove(); }); }
+function isleIntro(go) { $('isleGo').onclick = () => { closeSheets(); go(); }; openSheet('isleSheet'); }
 function setCourse(key) {
+  if (COURSES[key] && COURSES[key].secret && !isleOK()) key = 'gccb';
   // The Legacy Course stays in the code (LEGACY_DEFS, COURSES.legacy) but is switched off in the app: set LEGACY_ON to bring it back
   endFinale();
   COURSE = key === 'legacy' ? (LEGACY_ON ? COURSES.legacy : COURSES.gccb) : COURSES[key] || COURSES.gccb; HOLE_DEFS = COURSE.defs; useRealData(COURSE.key);
@@ -3593,7 +3656,7 @@ function setCourse(key) {
   if (settings.course !== COURSE.key) { settings.course = COURSE.key; saveSettings(); }
   $('courseLine').textContent = `${COURSE.name}\n${HOLE_DEFS.length} holes · Par ${PAR_TOTAL}`;
   $('boardName').textContent = COURSE.name;
-  document.querySelectorAll('select.segCourse').forEach(el => { el.value = COURSE.key; });
+  syncCourseOpts(); document.querySelectorAll('select.segCourse').forEach(el => { el.value = COURSE.key; });
   showBest(); refreshBoards(); try { loadWorld(); } catch (e) { } refreshResume();
   mpRelobby(); // each course has its own lobby
 }
@@ -9555,7 +9618,7 @@ async function retryUnposted() {
 // the course picker: a horizontal wheel like the iOS pickers. The name in the middle is the course shown. A finger drags it; let go and it spins on with the speed it had,
 // slows down by friction, and comes to rest on a name (a soft ease onto it), which is then selected. A tap on a name rolls to that name.
 function courseWheel(key) {
-  const IW = 112, PX = 82, list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), N = list.length, wrap = document.createElement('div');
+  const IW = 112, PX = 82, list = courseList(), N = list.length, wrap = document.createElement('div');
   wrap.className = 'cwrap'; wrap.setAttribute('role', 'listbox'); wrap.setAttribute('aria-label', 'Course');
   const items = list.map(c => { const d = document.createElement('div'); d.className = 'cwi'; d.textContent = c.short; d.setAttribute('role', 'option'); wrap.appendChild(d); return d; });
   let cur = Math.max(0, list.findIndex(c => c.key === key)), pos = cur, vel = 0, raf = 0, drag = null, lastTick = cur;
@@ -10378,7 +10441,7 @@ function initInput() {
       bb.addEventListener('touchend', e => {
         const q = sw; sw = null; if (!q || !e.changedTouches.length) return; const dx = e.changedTouches[0].clientX - q.x, dy = e.changedTouches[0].clientY - q.y;
         if (Math.abs(dx) < 60 || Math.abs(dx) < 1.8 * Math.abs(dy) || performance.now() - q.t > 800) return;
-        const cw = bb.querySelector('.cwrap'), list = Object.values(COURSES).filter(c => c.key !== 'legacy' || LEGACY_ON), i = cw && cw._target ? cw._target() : list.findIndex(c => c.key === (Board.view || COURSE.key)), j = clamp(i + (dx < 0 ? 1 : -1), 0, list.length - 1);
+        const cw = bb.querySelector('.cwrap'), list = courseList(), i = cw && cw._target ? cw._target() : list.findIndex(c => c.key === (Board.view || COURSE.key)), j = clamp(i + (dx < 0 ? 1 : -1), 0, list.length - 1);
         if (j === i) return;
         if (cw && cw._roll) cw._roll(j, 260); else { Board.view = list[j].key; refreshBoards(); } // (the wheel rolls to the next name in 260 ms, as for a tap, and the board follows when it has slotted in)
       }, { passive: true });
@@ -10432,16 +10495,20 @@ function initInput() {
   $('mDaily').onclick = dailyTap; $('dailyCard').onclick = dailyTap; $('dlPanel').onclick = () => openDaily();
   // course: on the title it just switches the course shown; in the menu it starts a new round on it
   $('segCourse').onchange = e => {
-    const k = e.target.value; e.target.value = COURSE.key; if (k === COURSE.key) return; SFX.blip(); needData(k, () => { setCourse(k); showTitleHole(); }); // (the picker shows the new course once it is in)
+    const k = e.target.value; e.target.value = COURSE.key; if (k === COURSE.key) return; SFX.blip(); const go = () => needData(k, () => { setCourse(k); showTitleHole(); }); COURSES[k] && COURSES[k].secret ? isleIntro(go) : go(); // (the picker shows the new course once it is in)
   };
   // (in the menu the round in progress is kept for when you come back to its course; a course with a round waiting resumes it, else a new one starts)
   $('segCourseM').onchange = e => {
     if (MP.spec) mpResume(true);
     const k = e.target.value; e.target.value = COURSE.key; if (k === COURSE.key) return; SFX.blip(); closeSheets(); // (the picker shows the new course once it is in)
-    if ($('title').classList.contains('on')) { needData(k, () => { setCourse(k); showTitleHole(); }); return; }
-    saveRound();
-    needData(k, () => { if (!resumeRound(k)) { setCourse(k); startRound(); } });
+    const go = () => {
+      if ($('title').classList.contains('on')) { needData(k, () => { setCourse(k); showTitleHole(); }); return; }
+      saveRound();
+      needData(k, () => { if (!resumeRound(k)) { setCourse(k); startRound(); } });
+    };
+    COURSES[k] && COURSES[k].secret ? isleIntro(go) : go();
   };
+  document.querySelectorAll('select.segCourse').forEach(el => ['pointerdown', 'focus'].forEach(ev => el.addEventListener(ev, syncCourseOpts)));
 }
 
 let lastT = performance.now();
