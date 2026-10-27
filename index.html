@@ -3592,7 +3592,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 2 };
+const APP_ITER = { courses: 9, n: 3 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10513,6 +10513,15 @@ function initInput() {
 }
 
 let lastT = performance.now();
+// The Isles only: a red banner with uncaught errors, a lost WebGL context and long stalls, to find the iPhone freeze without a console
+(function () {
+  const on = () => typeof COURSE !== 'undefined' && COURSE && COURSE.secret;
+  const show = t => { if (!on()) return; let b = document.getElementById('errBan'); if (!b) { b = document.createElement('div'); b.id = 'errBan'; b.style.cssText = 'position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 8px);z-index:99999;background:#b3261e;color:#fff;font:11px/1.35 monospace;padding:8px;border-radius:8px;white-space:pre-wrap;word-break:break-all;pointer-events:none'; document.body.appendChild(b); } b.textContent = (b.textContent + '\n' + t).trim().slice(-1200); };
+  addEventListener('error', e => show('Error: ' + e.message + ' @' + e.lineno + ':' + e.colno + (e.error && e.error.stack ? '\n' + String(e.error.stack).split('\n').slice(0, 5).join('\n') : '')));
+  addEventListener('unhandledrejection', e => show('Promise: ' + String(e.reason && (e.reason.stack || e.reason.message) || e.reason).slice(0, 300)));
+  addEventListener('webglcontextlost', () => show('WebGL context lost'), true);
+  let last = 0; const tick = t => { if (last && t - last > 2000) show('Stall ' + ((t - last) / 1000).toFixed(1) + ' s (state ' + (typeof G !== 'undefined' ? G.state : '?') + ')'); last = t; requestAnimationFrame(tick); }; requestAnimationFrame(tick);
+})();
 function frame(now) {
   requestAnimationFrame(frame);
   if (PERF.lite && now - lastT < 29) return; // 30 fps cap in Saver
