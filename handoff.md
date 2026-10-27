@@ -14,6 +14,8 @@
 
 **Spielregeln:** Wasser-Drop nur auf dem gespielten Loch (`C.holeLand`, `dryGround`, `waterOptions` wie Pebble Beach: nächstes Fairway/Abschlag).
 
+**Leaderboard-Workflow (Build 9.17):** `gitCommit` überspringt den Commit, wenn nichts geändert ist (doppelte Stimme `[vote]` ließ den Lauf mit „nothing to commit" scheitern).
+
 **Offen / Ideen:**
 - Auf dem iPhone noch nicht gemessen: Aufbauzeit pro Loch (Desktop ca. 0,2–0,8 s) und Bildrate (Kacheln, 120×120-Meer, ~150 Inselchen).
 - `isles` steht seit Build 9.11 im Leaderboard-Workflow (`leaderboard.yml`: Par 72); `leaderboard/isles.json` füllt sich mit den ersten Runden.
