@@ -46,6 +46,8 @@ jobs:
               await github.rest.issues.createComment({ ...context.repo, issue_number: issue.number, body: (ok ? '✅ ' : '❌ ') + msg });
               await github.rest.issues.update({ ...context.repo, issue_number: issue.number, state: 'closed', state_reason: ok ? 'completed' : 'not_planned' });
             };
+            // a repeated vote or an unchanged file leaves nothing staged: skip the commit (it would fail the run) and the push
+            const gitCommit = async msg => { if ((await exec.exec('git', ['diff', '--cached', '--quiet'], { ignoreReturnCode: true })) !== 0) await exec.exec('git', ['commit', '-m', msg]); };
             const m = /```json\s*([\s\S]*?)```/.exec(issue.body || '');
             let r; try { r = JSON.parse(m[1]); } catch (e) { return finish(false, 'No valid score JSON found in this issue.'); }
             // ---- helpers shared by the name change and the account merge
@@ -54,7 +56,7 @@ jobs:
             const NAMEOK = /^[\p{L}\p{N} ._'-]{1,14}$/u;
             const gitPush = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
-              await exec.exec('git', ['add', ...files]); await exec.exec('git', ['commit', '-m', msg]);
+              await exec.exec('git', ['add', ...files]); await gitCommit(msg);
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
             };
             // every score ever posted from these devices (the device id, not the name, is the player) and their profiles take the name; returns the files changed
@@ -135,7 +137,7 @@ jobs:
               const dirty = (await exec.getExecOutput('git', ['status', '--porcelain', ...sf])).stdout.trim();
               if (!dirty) return finish(true, 'The archive and the standings are up to date.');
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
-              await exec.exec('git', ['add', ...sf]); await exec.exec('git', ['commit', '-m', 'Daily archive and standings rebuilt']);
+              await exec.exec('git', ['add', ...sf]); await gitCommit('Daily archive and standings rebuilt');
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, 'The archive and the standings were rebuilt.');
             }
@@ -161,7 +163,7 @@ jobs:
               hf[who] = { c: hc, r: hr, n: nm, at: Date.now() };
               fs.writeFileSync('leaderboard/homecourses.json', JSON.stringify(hf) + '\n');
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
-              await exec.exec('git', ['add', 'leaderboard/homecourses.json']); await exec.exec('git', ['commit', '-m', 'Home course noted']);
+              await exec.exec('git', ['add', 'leaderboard/homecourses.json']); await gitCommit('Home course noted');
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, 'Thanks! Your home course is noted.');
             }
@@ -189,7 +191,7 @@ jobs:
               }
               fs.writeFileSync('leaderboard/features.json', JSON.stringify(ff) + '\n');
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
-              await exec.exec('git', ['add', 'leaderboard/features.json']); await exec.exec('git', ['commit', '-m', 'Feature requests updated']);
+              await exec.exec('git', ['add', 'leaderboard/features.json']); await gitCommit('Feature requests updated');
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, msg);
             }
@@ -215,7 +217,7 @@ jobs:
             const putts = ints(r.pt, 0, 9) ? r.pt : null;
             const save = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
-              await exec.exec('git', ['add', ...files]); await exec.exec('git', ['commit', '-m', msg]);
+              await exec.exec('git', ['add', ...files]); await gitCommit(msg);
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
             };
             const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
