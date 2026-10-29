@@ -4025,7 +4025,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 17 };
+const APP_ITER = { courses: 9, n: 19 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7000,6 +7000,14 @@ function mpUpdate(dt) {
   for (const [id, o] of MP.objs) if (!seen.has(id)) { o.ball.visible = false; o.tr.geometry.setDrawRange(0, 0); o.tag.style.opacity = 0; }
   if ((MP.panelT -= dt) <= 0) { MP.panelT = 1; mpPanel(); if ($('menuSheet').classList.contains('on')) mpList(); }
 }
+// my best round on this course from the scorecards, as the live score it would have shown on my current hole (through the holes it has finished by now)
+function mpPB() {
+  if (MP.spec || G.practice || !G.scores || !G.C) return null;
+  const n = HOLE_DEFS.length, nm = playerName().toLowerCase(), b = sortRounds(localRounds(COURSE.key).filter(r => Array.isArray(r.h) && r.h.length === n && r.h.every(v => v > 0) && String(r.name).toLowerCase() === nm))[0];
+  if (!b) return null;
+  const k = Math.min(n, G.hole + (G.scores[G.hole] != null ? 1 : 0)); let d = 0; for (let i = 0; i < k; i++) d += b.h[i] - HOLE_DEFS[i].par;
+  return { id: 'pb', n: playerName() + ' · personal best', tp: d, h: G.hole, c: COURSE.key, th: k, col: '#9aa3ad', pbr: true };
+}
 // the room's scores, by score to par: name, to par, the hole they are on (F when they have finished)
 function mpPanel() {
   const el = $('mpPanel');
@@ -7007,9 +7015,11 @@ function mpPanel() {
   const near = pr => (pr.c === COURSE.key ? 0 : 2) + (pr.c === COURSE.key && pr.h === G.hole ? 0 : 1);
   const others = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 6 * 36e5 && !pr.clip && (pr.room === MP.room || pr.id === MP.follow)).sort((a, b) => near(a) - near(b) || b.at - a.at).slice(0, 7);
   // the public lobby's box only shows once someone else is in it with me (a private room always shows)
-  const on = !!MP.room && G.state !== 'title' && G.state !== 'intro' && (!mpIsLobby(MP.room) || others.length > 0 || !!MP.spec);
+  const pbr = mpPB(); // my personal best round on this course plays along as a ghost (no ball, no flight), so the box is always there
+  const on = !!MP.room && G.state !== 'title' && G.state !== 'intro' && (!mpIsLobby(MP.room) || others.length > 0 || !!MP.spec || !!pbr);
   el.classList.toggle('on', on); if (!on) return;
   const sp = MP.spec, rows = [{ id: MP.id, n: playerName(), tp: sp ? sp.tp : totalToPar().d, h: G.hole, c: sp ? sp.course : COURSE.key, th: sp ? sp.th : G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
+  if (pbr) rows.push(pbr);
   rows.push(...others); rows.sort((a, b) => a.tp - b.tp || b.th - a.th);
   // rebuilt only when something in it changed, so a tap on a name is never lost to a refresh
   const sig = MP.room + MP.st + (MP.follow || '') + COURSE.key + rows.slice(0, 8).map(r => [r.id, r.n, r.tp, r.th, r.h, r.c, r.fo === MP.id].join(',')).join('|');
@@ -7018,8 +7028,8 @@ function mpPanel() {
   const hd = document.createElement('div'); hd.className = 'mph'; hd.textContent = (MP.room === 'LDAILY' ? 'Daily lobby' : mpIsLobby(MP.room) ? 'Public lobby · ' + COURSE.short + (MP.peers.size > 7 ? ' · ' + (MP.peers.size + 1) + ' playing' : '') : 'Room ' + MP.room) + (MP.st === 'on' ? '' : ' · ' + (MP.st === 'error' ? 'offline' : 'connecting…')); el.appendChild(hd);
   for (const r of rows.slice(0, 8)) {
     // tap a name to follow that player; a golden glow: they are following me
-    const row = document.createElement(r.me ? 'div' : 'button'); row.className = 'mpr' + (r.me ? ' me' : '') + (!r.me && r.fo === MP.id ? ' fol' : '') + (r.id === MP.follow ? ' on' : '');
-    if (!r.me) row.onclick = e => { e.stopPropagation(); if (MP.follow === r.id) mpResume(); else mpFollow(r.id); };
+    const row = document.createElement(r.me || r.pbr ? 'div' : 'button'); row.className = 'mpr' + (r.me ? ' me' : '') + (!r.me && !r.pbr && r.fo === MP.id ? ' fol' : '') + (r.id === MP.follow ? ' on' : '');
+    if (!r.me && !r.pbr) row.onclick = e => { e.stopPropagation(); if (MP.follow === r.id) mpResume(); else mpFollow(r.id); };
     const dot = document.createElement('i'); dot.style.background = r.col;
     const nm = document.createElement('span'); nm.className = 'n'; nm.textContent = r.n;
     const tp = document.createElement('span'); tp.className = 't'; tp.textContent = r.th ? fmtToPar(r.tp) : 'E';
