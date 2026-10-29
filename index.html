@@ -4025,7 +4025,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 17 };
+const APP_ITER = { courses: 9, n: 18 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7010,6 +7010,10 @@ function mpPanel() {
   const on = !!MP.room && G.state !== 'title' && G.state !== 'intro' && (!mpIsLobby(MP.room) || others.length > 0 || !!MP.spec);
   el.classList.toggle('on', on); if (!on) return;
   const sp = MP.spec, rows = [{ id: MP.id, n: playerName(), tp: sp ? sp.tp : totalToPar().d, h: G.hole, c: sp ? sp.course : COURSE.key, th: sp ? sp.th : G.scores.filter(v => v != null).length, col: '#ffffff', me: true }];
+  { // my own personal best on this hole as a player on it (no ball, no flight): my earlier holes this round, then the best I ever scored here
+    const pb = !sp && !G.practice && G.scores ? hpbGet(COURSE.key, G.hole) : 0;
+    if (pb) { let d = 0, n = 0; G.scores.forEach((v, i) => { if (v != null && i !== G.hole) { d += v - HOLE_DEFS[i].par; n++; } }); rows.push({ id: 'pb', n: playerName() + ' · personal best', tp: d + pb - G.C.def.par, h: G.hole, c: COURSE.key, th: n + 1, col: '#9aa3ad', pbr: true }); }
+  }
   rows.push(...others); rows.sort((a, b) => a.tp - b.tp || b.th - a.th);
   // rebuilt only when something in it changed, so a tap on a name is never lost to a refresh
   const sig = MP.room + MP.st + (MP.follow || '') + COURSE.key + rows.slice(0, 8).map(r => [r.id, r.n, r.tp, r.th, r.h, r.c, r.fo === MP.id].join(',')).join('|');
@@ -7018,8 +7022,8 @@ function mpPanel() {
   const hd = document.createElement('div'); hd.className = 'mph'; hd.textContent = (MP.room === 'LDAILY' ? 'Daily lobby' : mpIsLobby(MP.room) ? 'Public lobby · ' + COURSE.short + (MP.peers.size > 7 ? ' · ' + (MP.peers.size + 1) + ' playing' : '') : 'Room ' + MP.room) + (MP.st === 'on' ? '' : ' · ' + (MP.st === 'error' ? 'offline' : 'connecting…')); el.appendChild(hd);
   for (const r of rows.slice(0, 8)) {
     // tap a name to follow that player; a golden glow: they are following me
-    const row = document.createElement(r.me ? 'div' : 'button'); row.className = 'mpr' + (r.me ? ' me' : '') + (!r.me && r.fo === MP.id ? ' fol' : '') + (r.id === MP.follow ? ' on' : '');
-    if (!r.me) row.onclick = e => { e.stopPropagation(); if (MP.follow === r.id) mpResume(); else mpFollow(r.id); };
+    const row = document.createElement(r.me || r.pbr ? 'div' : 'button'); row.className = 'mpr' + (r.me ? ' me' : '') + (!r.me && !r.pbr && r.fo === MP.id ? ' fol' : '') + (r.id === MP.follow ? ' on' : '');
+    if (!r.me && !r.pbr) row.onclick = e => { e.stopPropagation(); if (MP.follow === r.id) mpResume(); else mpFollow(r.id); };
     const dot = document.createElement('i'); dot.style.background = r.col;
     const nm = document.createElement('span'); nm.className = 'n'; nm.textContent = r.n;
     const tp = document.createElement('span'); tp.className = 't'; tp.textContent = r.th ? fmtToPar(r.tp) : 'E';
@@ -9696,6 +9700,11 @@ function defStats() {
     rec: { holed: { v: 10 }, putt: { v: 3 }, drive: { v: 200 }, girStreak: { v: 2 }, fwStreak: { v: 3 }, birdStreak: { v: 1 }, round: { v: 10 }, roundPutts: { v: 40 } } };
 }
 let ST = (() => { try { const s = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); if (s && s.v === 1) { if (s.xp === undefined) s.xp = (s.holes || 0) * 10 + (s.rounds || 0) * 30; const d = defStats(); for (const k in d) if (s[k] === undefined) s[k] = d[k]; for (const k in d.rec) if (!s.rec[k]) s.rec[k] = d.rec[k]; return s; } } catch (e) { } return defStats(); })();
+// my best score on each hole of each course (strokes), shown as a ghost player in the lobby box
+const HPB_KEY = 'ssg-holepb';
+const hpbAll = () => { try { return JSON.parse(localStorage.getItem(HPB_KEY) || '{}') || {}; } catch (e) { return {}; } };
+function hpbGet(course, h) { const a = hpbAll()[course]; return a && a[h] > 0 ? a[h] : 0; }
+function hpbSet(course, h, sc) { try { const all = hpbAll(), a = all[course] || (all[course] = []); if (!(a[h] > 0) || sc < a[h]) { a[h] = sc; localStorage.setItem(HPB_KEY, JSON.stringify(all)); } } catch (e) { } }
 function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(ST)); } catch (e) { } }
 const REC = {
   holed: { c: ['#ffe85a', '#ffab1f', '#ff5d3a', '#2b1200'], t: 'Longest shot holed', e: 'target', u: 'm', f: v => v.toFixed(1) + ' m' },
@@ -9745,7 +9754,7 @@ function statsShot(sh, r) {
 // a hole finished in a real round
 function statsHole(h) {
   if (G.practice) return; const par = G.C.def.par, sc = G.scores[h], d = sc - par, S = ST;
-  S.holes++; S.xp += 10; S.strokes += sc; S.putts += G.putts[h] || 0; if (G.weather && G.weather.id === 'rain') S.rainHoles++;
+  hpbSet(COURSE.key, h, sc); S.holes++; S.xp += 10; S.strokes += sc; S.putts += G.putts[h] || 0; if (G.weather && G.weather.id === 'rain') S.rainHoles++;
   if (sc === 1 && par > 1) { /* counted as an ace in statsShot */ } else if (d <= -2) S.eagles++; else if (d === -1) S.birdies++; else if (d === 0) S.pars++; else if (d === 1) S.bogeys++; else S.doubles++;
   S.girTry++; if (G.gir[h] === true) { S.gir++; S.cur.gir++; beat('girStreak', S.cur.gir, 'Streak running'); } else S.cur.gir = 0;
   if (par >= 4) { S.fwTry++; if (G.fir[h] === true) { S.fwHit++; S.cur.fw++; beat('fwStreak', S.cur.fw, 'Streak running'); } else S.cur.fw = 0; }
