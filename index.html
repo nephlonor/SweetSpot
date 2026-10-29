@@ -569,8 +569,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   <div class="glass topbar" id="topbar">
     <button class="tb-map" id="mapBtn" aria-label="Open hole map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></button>
     <div class="tb-seg tb-hole"><div class="hl1" id="hl1">Hole 1 · Par 4</div><div class="hl2" id="hl2">Stroke 1</div></div>
-    <div class="tb-seg" id="windCard"><div class="sv"><svg id="windArrow" viewBox="0 0 24 24"><path d="M12 2.5l6.5 9.5h-4.3v9.5h-4.4V12H5.5z" fill="#fff"/></svg><span id="windTxt">0</span></div><div class="sl">km/h</div></div>
-    <div class="tb-seg r" id="pinCard"><div class="sv"><span id="dNum">0</span><small>m</small></div><div class="sl" id="dSub">To pin</div></div>
+    <div class="tb-seg" id="windCard"><div class="sv"><svg id="windArrow" viewBox="0 0 24 24"><path d="M12 2.5l6.5 9.5h-4.3v9.5h-4.4V12H5.5z" fill="#fff"/></svg><span id="windTxt">0</span></div><div class="sl" id="windU">km/h</div></div>
+    <div class="tb-seg r" id="pinCard"><div class="sv"><span id="dNum">0</span><small id="dU">m</small></div><div class="sl" id="dSub">To pin</div></div>
     <button class="tb-seg tb-player" id="btnMenu" aria-label="Menu, player and score"><span class="pb-t"><span class="pb-n" id="pName">Player</span><span class="pb-s" id="pScore">E</span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
   <div id="coach" class="glass"></div>
@@ -596,7 +596,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div id="pinTag" class="gtag">0 m</div>
 <div id="dlPanel" class="glass"></div><div id="mpPanel" class="glass"></div><div id="mpTags"></div>
 <div id="specBar" class="glass"><span id="specInfo">Following</span><button class="btn alt" id="specAgain">Again</button><button class="btn alt" id="specNext">Next</button><button class="btn" id="specResume">Resume play</button></div>
-<div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small>M</small></div><div class="bt2" id="btC"></div></div>
+<div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small id="btU">M</small></div><div class="bt2" id="btC"></div></div>
 <div class="layer on" id="title">
   <button class="glass titleMenu" id="titleMenu" aria-label="Menu" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <div class="card logoCard"><h1>Sweet <span>Spot</span><br>Golf</h1><p id="courseLine">Golf &amp; Country Club Basel
@@ -645,8 +645,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     </div>
     <div class="mgrp mlistg">
       <button class="mli" data-go="player"><i class="ic" data-ic="user"></i><span>Player &amp; golfer<small id="mvPlayer"></small></span><i class="ic chev" data-ic="chev"></i></button>
-      <button class="mli" data-go="audio"><i class="ic" data-ic="sound"></i><span>Sound &amp; music<small id="mvAudio"></small></span><i class="ic chev" data-ic="chev"></i></button>
-      <button class="mli" data-go="gfx"><i class="ic" data-ic="chart"></i><span>Graphics<small id="mvGfx"></small></span><i class="ic chev" data-ic="chev"></i></button>
+      <button class="mli" data-go="settings"><i class="ic" data-ic="sliders"></i><span>Settings<small id="mvSet"></small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="live"><i class="ic" data-ic="users"></i><span>Live play<small id="mvLive"></small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="practice"><i class="ic" data-ic="target"></i><span>Practice<small>Any hole, nothing scored</small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="feature"><i class="ic" data-ic="bulb"></i><span>Request a feature<small>Vote on ideas, send your own</small></span><i class="ic chev" data-ic="chev"></i></button>
@@ -666,13 +665,16 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mnote">Standard: tempo (power) with the left thumb, club face with the right. Swapped puts the club face on the left and the power on the right.</div>
     <div class="mnote">Your name shows on the leaderboards and to the players you meet live.</div>
   </section>
-  <section class="mpg" data-pg="audio">
+  <section class="mpg" data-pg="settings">
+    <div class="sub"><span>Units</span></div>
+    <div class="mgrp"><div class="mrow">Distances<div class="seg" id="segUnits"><button data-v="m">Metric</button><button data-v="imp">Imperial</button></div></div></div>
+    <div class="mnote">Metric: metres and km/h. Imperial: yards, putts in feet, and mph.</div>
+    <div class="sub"><span>Sound &amp; music</span></div>
     <div class="mgrp"><div class="mrow">Sound effects<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
     <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div></div>
     <div class="mnote">Each course has its own music: guitar and piano at Augusta, slow ambient pieces at Basel and Alsace, a folk air on the flute at Rothley Park, an Irish slow air on the tin whistle over the sea at St Patrick's.</div>
-  </section>
-  <section class="mpg" data-pg="gfx">
-    <div class="mgrp"><div class="mrow">Graphics<div class="seg" id="segGfx"><button data-v="auto">Auto</button><button data-v="high">High</button><button data-v="saver">Saver</button></div></div></div>
+    <div class="sub"><span>Graphics</span></div>
+    <div class="mgrp"><div class="mrow">Quality<div class="seg" id="segGfx"><button data-v="auto">Auto</button><button data-v="high">High</button><button data-v="saver">Saver</button></div></div></div>
     <div class="mnote">Auto picks Saver on slower phones, on low battery, or if the game stutters. Saver drops shadows and the depth blur, renders at a lower resolution and caps the frame rate at 30.</div>
   </section>
   <section class="mpg" data-pg="live">
@@ -714,9 +716,9 @@ Good luck!</div><div class="mgrp mlistg"><button class="mbtn dark wide" id="isle
   <div><b>Tempo · <span class="thTl">left</span> thumb</b>Touch anywhere on the <span class="thTl">left</span> and slide down for the backswing. The scale shows the carry for your club. Slide back up past where you started to strike. The upstroke must take under 0.35 s for full power; every 0.2 s slower takes a further 20 % off the ball speed. Keep the upstroke straight: the sideways drift of your thumb on the way up (traced in yellow on the tempo scale, fading after the strike) sets the starting line, so drifting right sends the ball right of your aim line and drifting left sends it left. Backswing three times as long as the downswing gives the full smash factor; anywhere from 2:1 to 4:1 still strikes well. Putts want 2:1.</div>
   <div><b>Strike · <span class="thSl">right</span> thumb</b>Hold your thumb on the dial: the ball sits up-left of your thumb so it never hides, and where it lies on the club face is where the club will hit it. It wobbles, wilder the faster you swing. Keep it on the sweet spot. With no thumb on the dial the ball slips loose round the edge of the face and the strike is always a mishit. Toe hooks, heel slices. High on the face spins less and flies further, low spins more.</div>
   <div><b>Flagstick</b>The flag stays in for every shot but a putt. A firm ball running at the stick can't hop the hole: square on it drops in, a glancing hit ricochets away. Only a ball right on the edge of the cup can lip in or out.</div>
-  <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, about 3 m back from the water where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. A ball that vanishes in the deep rough more than 10 m from the fairway and green at St Patrick's (and any ball in the deep rough from a shot played inside 200 m of the hole there), or more than 50 m deep in the woods (not at Augusta), is searched for: tap where it lies, within 5 m (you have three tries), and you play it as it is; three misses are a lost ball, with one stroke and replay. Max score is par + 5.</div>
+  <div><b>Rules</b>Water costs a penalty stroke, and you choose the drop: the marked drop zone where there is one, about <span data-m="3">3 m</span> back from the water where the ball went in (no nearer the hole), back on the line from the hole, or play it again. Boxed in by trees, or deep in the woods, an Unplayable lie? button appears: one penalty stroke to retake the shot, or to drop at the nearest edge of the rough. White stakes are out of bounds: one stroke and replay. A ball that vanishes in the deep rough more than <span data-m="10">10 m</span> from the fairway and green at St Patrick's (and any ball in the deep rough from a shot played inside <span data-m="200">200 m</span> of the hole there), or more than <span data-m="50">50 m</span> deep in the woods (not at Augusta), is searched for: tap where it lies, within <span data-m="5">5 m</span> (you have three tries), and you play it as it is; three misses are a lost ball, with one stroke and replay. Max score is par + 5.</div>
   <div><b>Keyboard</b>Hold Space to swing back, release, press again to strike. Rest the mouse low on the right side to hold and steer the dot. Arrows aim and change clubs.</div>
-  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Music in the menu. Rothley Park in Leicestershire: hole lines, paths, buildings, the brook and the railway from © OpenStreetMap contributors (ODbL); the ground, the trees and the field ditches from the Environment Agency's 1 m LiDAR (Open Government Licence); greens, fairways, bunkers and tees traced from the aerial photograph; the mowing, flags and tee furniture after the club's own course photographs. It is played in October, and it rains on about half the holes. St Patrick's Links at Rosapenna, Co. Donegal (Tom Doak, 2021), is played from the Sandstone tees: no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, Esri and its partners); the routing after the club's course plan, and the greens, fairways, bunkers, sandy blowouts and Tramore beach traced from the aerial photographs (Esri World Imagery). Tramore beach and the sea beyond it are out of bounds; the wind off the Atlantic is stronger than inland, and showers come through on about four holes in ten. Pebble Beach Golf Links in California is played from the Blue tees: hole lines, tees, greens, fairways, bunkers, buildings and the coastline from © OpenStreetMap contributors (ODbL); the ground and the trees (Monterey cypress and pine) from the USGS 3DEP LiDAR point cloud; the beach and the cliff-top ice plant after the aerial photograph (Esri World Imagery). The Pacific is a penalty area; beyond the course's edge it is out of bounds. Mountain Valley Golf Course in Barnesville, Pennsylvania, is played on The Mountain from the Gold tees: hole lines, tees, greens, fairways, bunkers, ponds and cart paths from © OpenStreetMap contributors (ODbL); the ground and the trees (hemlock, white pine and the hardwoods of Broad Mountain, in late-October colour) from the USGS 3DEP LiDAR point cloud; the yardages from the club's scorecard. Its music is an original piece, and the woods are deep: a ball far in them can be lost. Four Mile Ranch Golf Club in Cañon City, Colorado (Jim Engh, 2008), is played from the Black tees: hole lines, tees, greens, fairways, bunkers and water from © OpenStreetMap contributors (ODbL), the greens, tees and fairways checked against the aerial photograph; the ground, the piñon and juniper scrub and the houses from the USGS 3DEP LiDAR point cloud; the yardages from the club's scorecard. It has hardly any sand: the hazards are shale hogbacks, sage and desert scrub, and what you cannot see from the tee. Its music is an original piece.</div>
+  <div><b>The courses</b>Golf &amp; Country Club Basel is played from the white tees. Its fairways, greens, tees, bunkers, ponds and every tree come from the club's hole maps; hole lines, woods, buildings and the out-of-bounds line from © OpenStreetMap contributors (ODbL); the ground from the IGN RGE ALTI® terrain model. Alsace Golf Club in Rouffach: hole lines, tees, fairways, greens, bunkers, water, woods and buildings from © OpenStreetMap contributors (ODbL), the ground from the IGN RGE ALTI® terrain model, the trees from the IGN LiDAR HD canopy model. Augusta National: hole lines, tees, fairways, greens, bunkers, water and bridges from © OpenStreetMap contributors (ODbL), the ground and the trees from the USGS 3DEP LiDAR point cloud, played from the Masters tees. Around Amen Corner (11, 12 and 13) the wind swirls: it shifts while you stand over the ball, and above the pines it blows from another direction than down low. Its music is an original piece (fingerpicked guitar and piano, synthesised in the game); switch it off under Settings in the menu. Rothley Park in Leicestershire: hole lines, paths, buildings, the brook and the railway from © OpenStreetMap contributors (ODbL); the ground, the trees and the field ditches from the Environment Agency's 1 m LiDAR (Open Government Licence); greens, fairways, bunkers and tees traced from the aerial photograph; the mowing, flags and tee furniture after the club's own course photographs. It is played in October, and it rains on about half the holes. St Patrick's Links at Rosapenna, Co. Donegal (Tom Doak, 2021), is played from the Sandstone tees: no LiDAR covers it, so the ground is Esri's World Elevation (Terrain 3D, Esri and its partners); the routing after the club's course plan, and the greens, fairways, bunkers, sandy blowouts and Tramore beach traced from the aerial photographs (Esri World Imagery). Tramore beach and the sea beyond it are out of bounds; the wind off the Atlantic is stronger than inland, and showers come through on about four holes in ten. Pebble Beach Golf Links in California is played from the Blue tees: hole lines, tees, greens, fairways, bunkers, buildings and the coastline from © OpenStreetMap contributors (ODbL); the ground and the trees (Monterey cypress and pine) from the USGS 3DEP LiDAR point cloud; the beach and the cliff-top ice plant after the aerial photograph (Esri World Imagery). The Pacific is a penalty area; beyond the course's edge it is out of bounds. Mountain Valley Golf Course in Barnesville, Pennsylvania, is played on The Mountain from the Gold tees: hole lines, tees, greens, fairways, bunkers, ponds and cart paths from © OpenStreetMap contributors (ODbL); the ground and the trees (hemlock, white pine and the hardwoods of Broad Mountain, in late-October colour) from the USGS 3DEP LiDAR point cloud; the yardages from the club's scorecard. Its music is an original piece, and the woods are deep: a ball far in them can be lost. Four Mile Ranch Golf Club in Cañon City, Colorado (Jim Engh, 2008), is played from the Black tees: hole lines, tees, greens, fairways, bunkers and water from © OpenStreetMap contributors (ODbL), the greens, tees and fairways checked against the aerial photograph; the ground, the piñon and juniper scrub and the houses from the USGS 3DEP LiDAR point cloud; the yardages from the club's scorecard. It has hardly any sand: the hazards are shale hogbacks, sage and desert scrub, and what you cannot see from the tee. Its music is an original piece.</div>
 </div></div>
 <div id="recCard"></div>
 <div id="confetti"></div>
@@ -761,7 +763,19 @@ function hslToRgb(h, s, l) {
   const f = t => { t = ((t % 1) + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)];
 }
-function fmtDistShort(m) { return m < 10 ? m.toFixed(1) + ' m' : Math.round(m) + ' m'; }
+// Units (Settings): metric (the default) or imperial (settings.units === 'imp'): feet on the green (putt: true), yards everywhere else, mph.
+// Everything inside the game stays in metres; only what is shown is converted.
+const M_YD = 1.0936133, M_FT = 3.2808399, MS_MPH = 2.2369363;
+const isImp = () => settings.units === 'imp';
+const uUnit = putt => !isImp() ? 'm' : putt ? 'ft' : 'yd';
+const uDist = (m, putt) => !isImp() ? m : m * (putt ? M_FT : M_YD);
+const fmtDist = (m, putt) => Math.round(uDist(m, putt)) + ' ' + uUnit(putt);
+const fmtDist1 = (m, putt) => uDist(m, putt).toFixed(1) + ' ' + uUnit(putt);
+function fmtDistShort(m, putt) { const v = uDist(m, putt); return (v < 10 ? v.toFixed(1) : Math.round(v)) + ' ' + uUnit(putt); }
+const uSpeed = ms => ms * (isImp() ? MS_MPH : 3.6), uSpeedUnit = () => isImp() ? 'mph' : 'km/h';
+const fmtSpeed = ms => Math.round(uSpeed(ms)) + ' ' + uSpeedUnit();
+// distances written into text ("Plays 10 m downhill") follow the units too
+const uText = s => !isImp() || !s ? s : String(s).replace(/(\d+(?:\.\d+)?) m\b/g, (_, n) => fmtDist(+n)).replace(/\ba hundred metres\b/g, 'over a hundred yards');
 
 /* ================= PHYSICS ================= */
 const GRAV = 9.81, BALL_R = 0.02135, BALL_M = 0.04593, AIR_RHO = 1.2;
@@ -3630,7 +3644,7 @@ function buildRealDecor(C, grp) {
   // tee sign beside the white tee
   const sc = document.createElement('canvas'); sc.width = 256; sc.height = 160; const sx = sc.getContext('2d');
   sx.fillStyle = '#fdf8ee'; sx.fillRect(0, 0, 256, 160); sx.fillStyle = '#2f5d4a'; sx.font = '700 44px Fredoka, sans-serif'; sx.textAlign = 'center'; sx.fillText('Nr. ' + (C.idx + 1), 128, 58);
-  sx.font = '30px Fredoka, sans-serif'; sx.fillText('Par ' + def.par + ' · ' + def.len + ' m', 128, 100); sx.font = '22px Fredoka, sans-serif'; sx.fillText(H0.nm ? H0.nm : 'Hcp ' + def.hcp + ' · ' + COURSE.short, 128, 138);
+  sx.font = '30px Fredoka, sans-serif'; sx.fillText('Par ' + def.par + ' · ' + fmtDist(def.len), 128, 100); sx.font = '22px Fredoka, sans-serif'; sx.fillText(H0.nm ? H0.nm : 'Hcp ' + def.hcp + ' · ' + COURSE.short, 128, 138);
   const side = spotBeside(C, C.startPos.x, C.startPos.z, 6.5, 2);
   if (side) {
     const sign = new THREE.Mesh(new THREE.BoxGeometry(2, 1.25, .08), [0, 0, 0, 0, 1, 1].map(i => i ? new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(sc) }) : lambert(0xd9b99b)));
@@ -4025,7 +4039,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 17 };
+const APP_ITER = { courses: 9, n: 18 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -5408,7 +5422,7 @@ function buildDecor(C, grp) {
   // tee sign
   const sc = document.createElement('canvas'); sc.width = 256; sc.height = 160; const sxx = sc.getContext('2d');
   sxx.fillStyle = '#fdf8ee'; sxx.fillRect(0, 0, 256, 160); sxx.fillStyle = '#2f5d4a'; sxx.font = '700 44px Fredoka, sans-serif'; sxx.textAlign = 'center'; sxx.fillText('Hole ' + (C.idx + 1), 128, 58);
-  sxx.font = '30px Fredoka, sans-serif'; sxx.fillText('Par ' + def.par + ' · ' + Math.round(C.length) + ' m', 128, 100); sxx.fillText(def.name, 128, 138);
+  sxx.font = '30px Fredoka, sans-serif'; sxx.fillText('Par ' + def.par + ' · ' + fmtDist(C.length), 128, 100); sxx.fillText(def.name, 128, 138);
   const sign = new THREE.Mesh(new THREE.BoxGeometry(2, 1.25, .08), [0, 0, 0, 0, 1, 1].map(i => i ? new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(sc) }) : lambert(0xd9b99b)));
   const sgx = def.tee.x - def.tee.w / 2 - 3, sgz = -(def.tee.f - def.tee.l / 2 + 2); sign.position.set(sgx, C.h(sgx, sgz) + 1.4, sgz); sign.rotation.y = .5; sign.castShadow = true; grp.add(sign);
   const post = new THREE.Mesh(new THREE.BoxGeometry(.15, 1.2, .15), lambert(0xc4a48d)); post.position.set(sgx, C.h(sgx, sgz) + .5, sgz); grp.add(post);
@@ -7951,6 +7965,14 @@ function placeBall(x, z, teed) {
 function distToPin() { return Math.hypot(G.C.cup.x - G.ball.x, G.C.cup.z - G.ball.z); }
 function onGreenish() { return G.surf === S.GREEN || (G.surf === S.FRINGE && distToPin() < 14); }
 function isPutt() { return CLUBS[G.club].type === 'putter'; }
+// distances from the ball to the hole read in feet on the green (imperial units), in yards from anywhere else
+function puttLie() { return !!G.C && (G.surf === S.GREEN || isPutt()); }
+// after the units change in Settings: the labels that are only written now and then
+function applyUnits() {
+  document.querySelectorAll('[data-m]').forEach(e => { e.textContent = fmtDist(+e.dataset.m); });
+  $('windU').textContent = uSpeedUnit(); UI.btD = -1;
+  if (G.C) updateHUD();
+}
 // the nearest tree within maxD metres that a ball struck from the ball's lie along yaw would run into (crown radius plus 1.5 m)
 function treeOnLine(yaw, maxD) {
   const bx = G.ball.x, bz = G.ball.z, ux = Math.sin(yaw), uz = -Math.cos(yaw); let best = null;
@@ -8259,8 +8281,8 @@ function impact(tImp) {
   coachFeedback(L);
   const qq = ['good', 'good', 'ok', 'bad'][L.qualityLevel], tq = L.tempoGrade;
   const chips = L.putt
-    ? [`Tempo <b class="${tq}">${L.ratio.toFixed(1)}:1</b>`, `Speed <b>${L.ballSpeed.toFixed(1)} m/s</b>`]
-    : [`Tempo <b class="${tq}">${L.ratio.toFixed(1)}:1</b>`, `Down <b class="${L.downF >= .995 ? 'good' : 'ok'}">${L.Td.toFixed(2)}s</b>`, `Smash <b>${L.smash.toFixed(2)}</b>`, `<b>${Math.round(L.ballSpeed * 3.6)}</b> km/h`, `<b>${(L.spin / 1000).toFixed(1)}k</b> rpm`];
+    ? [`Tempo <b class="${tq}">${L.ratio.toFixed(1)}:1</b>`, `Speed <b>${isImp() ? (L.ballSpeed * MS_MPH).toFixed(1) + ' mph' : L.ballSpeed.toFixed(1) + ' m/s'}</b>`]
+    : [`Tempo <b class="${tq}">${L.ratio.toFixed(1)}:1</b>`, `Down <b class="${L.downF >= .995 ? 'good' : 'ok'}">${L.Td.toFixed(2)}s</b>`, `Smash <b>${L.smash.toFixed(2)}</b>`, `<b>${Math.round(uSpeed(L.ballSpeed))}</b> ${uSpeedUnit()}`, `<b>${(L.spin / 1000).toFixed(1)}k</b> rpm`];
   if (!L.putt && L.downF < .995) chips.push(`Slow <b class="ok">\u2212${Math.round((1 - L.downF) * 100)}%</b>`);
   if (!L.putt && L.lieF != null) { const lp = Math.round((L.lieF - 1) * 100); chips.push(`Lie <b class="${lp >= 0 ? 'good' : 'ok'}">${lp >= 0 ? '+' : '\u2212'}${Math.abs(lp)}%</b>`); }
   if (L.loose) chips.unshift(`${thumbS()} thumb <b class="bad">not on the dial</b>`);
@@ -8502,7 +8524,7 @@ function finishShot() {
     placeBall(G.prev.x, G.prev.z, G.prev.teed); big = `<span class="bad">${r.lost ? 'Ball not found' : 'Out of bounds'}</span>`; sub = 'Stroke and distance';
   } else {
     placeBall(r.final.x, r.final.z, false);
-    big = (sh.searchDone === 'found' ? 'Found it · ' : '') + SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${Math.round(r.total)} m · carry ${Math.round(r.carry)} m`;
+    big = (sh.searchDone === 'found' ? 'Found it · ' : '') + SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total, true) + ' putt' : `Total ${fmtDist(r.total)} · carry ${fmtDist(r.carry)}`;
     if (first && par >= 4) G.fir[h] = G.surf === S.FAIR || G.surf === S.GREEN || G.surf === S.FRINGE; // a tee shot that finds the green or its fringe (a driveable par 4) counts as hitting the fairway
   }
   finishTail(sh, r, big, sub, first);
@@ -8517,7 +8539,7 @@ function startSearch(sh, r) {
   // the view is centred a little away from the ball (up to 14 m along the line of play, 6 m across it), so the middle of the screen is no hint
   const ox = (Math.random() * 2 - 1) * 14, oz = (Math.random() * 2 - 1) * 6, ux = dx / dl, uz = dz / dl;
   G.search = { sh, r, t0: performance.now(), from: W.cam.position.clone(), fromLook: G.camLook.clone(), P: { x: P.x + ux * ox - uz * oz, z: P.z + uz * ox + ux * oz }, dx: ux, dz: uz, done: false, tries: 0, tapT: 0 };
-  $('searchHint').querySelector('span').textContent = 'Tap where it is, within 5 m · three tries';
+  $('searchHint').querySelector('span').textContent = 'Tap where it is, within ' + fmtDist(5) + ' · three tries';
   G.search.grass = searchGrass(G.search.P.x, G.search.P.z);
   $('searchHint').classList.add('on'); SFX.blip();
 }
@@ -8612,8 +8634,8 @@ function nearSea(C, x, z) {
 function waterOptions(r) {
   const C = G.C, E = r.lastDry, cup = C.cup, prev = G.prev, opts = [], dEnt = Math.hypot(cup.x - E[0], cup.z - E[1]) || 1;
   const wi = C.surfInfo(r.final.x, r.final.z).water, dzn = wi >= 0 && wi < 100 && C.waters[wi] ? C.waters[wi].o.dropZone : wi === 200 && C.def.coast ? C.def.coast.dropZone || null : null;
-  const toPin = (x, z) => Math.round(Math.hypot(cup.x - x, cup.z - z));
-  if (dzn) opts.push({ k: 'zone', t: 'Drop zone', d: `The marked drop area for this hazard · ${toPin(dzn.x, -dzn.f)} m to the pin`, x: dzn.x, z: -dzn.f });
+  const toPin = (x, z) => fmtDist(Math.hypot(cup.x - x, cup.z - z));
+  if (dzn) opts.push({ k: 'zone', t: 'Drop zone', d: `The marked drop area for this hazard · ${toPin(dzn.x, -dzn.f)} to the pin`, x: dzn.x, z: -dzn.f });
   // lateral relief: the best-lying dry spot within two club lengths of where it crossed the edge, no nearer the hole
   let lat = null, ld = -1, latFw = false;
   if (RDC.coast || C.isles) { // Pebble Beach and The Isles: the lateral drop is always on the fairway, the nearest fairway to where the ball crossed the edge, no nearer the hole
@@ -8638,20 +8660,20 @@ function waterOptions(r) {
     const x = E[0] + Math.cos(a * TAU / 24) * rr, z = E[1] + Math.sin(a * TAU / 24) * rr; if (!dryGround(x, z) || C.surf(x, z) === S.SAND) continue;
     if (Math.hypot(cup.x - x, cup.z - z) < dEnt - .05) continue; const wd = waterDist(x, z); if (wd > ld) { ld = wd; lat = [x, z]; }
   }
-  if (lat) opts.push({ k: 'lateral', t: 'Lateral relief', d: (latFw ? 'On the nearest fairway, no nearer the hole' : 'About 3 m back from the water, no nearer the hole') + ` · ${toPin(lat[0], lat[1])} m to the pin`, x: lat[0], z: lat[1] });
+  if (lat) opts.push({ k: 'lateral', t: 'Lateral relief', d: (latFw ? 'On the nearest fairway, no nearer the hole' : `About ${fmtDist(3)} back from the water, no nearer the hole`) + ` · ${toPin(lat[0], lat[1])} to the pin`, x: lat[0], z: lat[1] });
   // back on the line: from the hole through the entry point and back from there, on dry, level ground with room to swing
   const ux = (E[0] - cup.x) / dEnt, uz = (E[1] - cup.z) / dEnt; let back = null; const g3 = [0, 0];
   for (let t = 4; t <= 150 && !back; t += 2) {
     const x = E[0] + ux * t, z = E[1] + uz * t; if (!dryGround(x, z) || waterDist(x, z) < 3) continue;
     const sf = C.surf(x, z); if (sf === S.SAND || sf === S.DEEP) continue; C.grad(x, z, g3); if (Math.hypot(g3[0], g3[1]) > .3) continue; back = [x, z, t];
   }
-  if (back) opts.push({ k: 'back', t: 'Back on the line', d: `${Math.round(back[2])} m back from where it went in, in line with the hole · ${toPin(back[0], back[1])} m to the pin`, x: back[0], z: back[1] });
-  opts.push({ k: 'replay', t: 'Play it again', d: `From where you hit it (stroke and distance) · ${toPin(prev.x, prev.z)} m to the pin`, x: prev.x, z: prev.z, teed: prev.teed });
+  if (back) opts.push({ k: 'back', t: 'Back on the line', d: `${fmtDist(back[2])} back from where it went in, in line with the hole · ${toPin(back[0], back[1])} to the pin`, x: back[0], z: back[1] });
+  opts.push({ k: 'replay', t: 'Play it again', d: `From where you hit it (stroke and distance) · ${toPin(prev.x, prev.z)} to the pin`, x: prev.x, z: prev.z, teed: prev.teed });
   return opts;
 }
 function waterRelief(sh, r, first, found) {
   const opts = waterOptions(r);
-  if (found) opts.unshift({ k: 'play', t: 'Play it as it lies', d: `No penalty · from where you found it · ${Math.round(Math.hypot(G.C.cup.x - r.final.x, G.C.cup.z - r.final.z))} m to the pin`, x: r.final.x, z: r.final.z });
+  if (found) opts.unshift({ k: 'play', t: 'Play it as it lies', d: `No penalty · from where you found it · ${fmtDist(Math.hypot(G.C.cup.x - r.final.x, G.C.cup.z - r.final.z))} to the pin`, x: r.final.x, z: r.final.z });
   G.relief = { kind: 'water', opts, forced: true, sh, r, first, pend: !!found }; // (pend: the penalty stroke is taken only if relief is chosen)
   openRelief(r.shore ? 'Ball in the penalty area' : 'Ball in the water', found ? 'Found it. Play it as it lies, or take relief for one penalty stroke.' : 'One penalty stroke. Where do you drop?', opts, 0);
 }
@@ -8726,10 +8748,10 @@ function unplayCheck() {
 }
 function openUnplay() {
   const U = G.unplay; if (!U || G.state !== 'address') return;
-  const opts = [{ k: 'retake', ic: 'play', t: 'Retake the shot', d: `Back to where you hit it from · one penalty stroke (stroke and distance) · ${Math.round(Math.hypot(G.C.cup.x - G.prev.x, G.C.cup.z - G.prev.z))} m to the pin` }];
-  if (U.spot) opts.push({ k: 'drop', ic: 'flag', t: 'Unplayable lie', d: `Drop at the nearest edge of the rough, clear of the trees · one penalty stroke · ${Math.round(Math.hypot(G.C.cup.x - U.spot.x, G.C.cup.z - U.spot.z))} m to the pin`, x: U.spot.x, z: U.spot.z, dist: U.spot.dist });
+  const opts = [{ k: 'retake', ic: 'play', t: 'Retake the shot', d: `Back to where you hit it from · one penalty stroke (stroke and distance) · ${fmtDist(Math.hypot(G.C.cup.x - G.prev.x, G.C.cup.z - G.prev.z))} to the pin` }];
+  if (U.spot) opts.push({ k: 'drop', ic: 'flag', t: 'Unplayable lie', d: `Drop at the nearest edge of the rough, clear of the trees · one penalty stroke · ${fmtDist(Math.hypot(G.C.cup.x - U.spot.x, G.C.cup.z - U.spot.z))} to the pin`, x: U.spot.x, z: U.spot.z, dist: U.spot.dist });
   G.relief = { kind: 'unplay', opts, forced: false };
-  openRelief('Unplayable?', U.why === 'forest' ? 'Deep in the woods. Take a penalty stroke and go on from somewhere better.' : 'No club gets 100 m away from here. Take a penalty stroke and go on from somewhere better.', opts, U.spot ? 1 : 0);
+  openRelief('Unplayable?', U.why === 'forest' ? 'Deep in the woods. Take a penalty stroke and go on from somewhere better.' : `No club gets ${fmtDist(100)} away from here. Take a penalty stroke and go on from somewhere better.`, opts, U.spot ? 1 : 0);
 }
 function updateUnplayBtn() {
   const b = $('unplayBtn'), want = !!(G.unplay && G.state === 'address' && SW.phase === 'idle' && !sheetOpen() && !G.rbow && !MP.spec);
@@ -8969,7 +8991,7 @@ function drawTempo(now) {
   x.textBaseline = 'middle';
   for (const p of [.25, .5, .75, 1]) {
     const y = top + H * p;
-    const lab = putt ? (G.puttRange * p).toFixed(G.puttRange * p < 10 ? 1 : 0) + ' M' : Math.round(carryForPower(c, p)) + ' M';
+    const lab = putt ? (v => v.toFixed(v < 10 ? 1 : 0))(uDist(G.puttRange * p, true)) + ' ' + uUnit(true).toUpperCase() : Math.round(uDist(carryForPower(c, p))) + ' ' + uUnit().toUpperCase();
     x.save(); x.shadowColor = 'rgba(0,30,12,.45)'; x.shadowBlur = 2; x.shadowOffsetY = 1;
     x.fillStyle = '#fff'; x.font = FONT(600, 13); x.textAlign = 'right'; x.fillText(lab, tx - 21, y); x.restore();
     x.fillStyle = 'rgba(255,255,255,.6)'; x.fillRect(tx - 18, y - 1, 4, 2);
@@ -9055,8 +9077,8 @@ function drawTempo(now) {
     t1 = 'Back ' + tb.toFixed(2) + ' s'; t2 = SW.phase === 'down' ? 'Down ' + ((now - SW.tTop) / 1000).toFixed(2) + ' s' : 'Target ' + R + ':1';
   } else if (SW.last && (G.state === 'flight' || G.state === 'settle' || G.state === 'holed' || (G.state === 'address' && now - SW.resultT < 9000))) {
     const L = SW.last; cls = L.tempoGrade;
-    t1 = 'Your tempo: ' + L.ratio.toFixed(1) + ':1'; t2 = L.putt ? 'Speed: ' + L.ballSpeed.toFixed(1) + ' m/s' : 'Smash factor: ' + L.smash.toFixed(2);
-  } else { t1 = 'Ideal tempo: ' + R + ':1'; t2 = putt ? 'Range: ' + G.puttRange + ' m' : 'Smash factor: ' + c.smash.toFixed(2); }
+    t1 = 'Your tempo: ' + L.ratio.toFixed(1) + ':1'; t2 = L.putt ? 'Speed: ' + (isImp() ? (L.ballSpeed * MS_MPH).toFixed(1) + ' mph' : L.ballSpeed.toFixed(1) + ' m/s') : 'Smash factor: ' + L.smash.toFixed(2);
+  } else { t1 = 'Ideal tempo: ' + R + ':1'; t2 = putt ? 'Range: ' + fmtDist(G.puttRange, true) : 'Smash factor: ' + c.smash.toFixed(2); }
   if (f1.textContent !== t1) f1.textContent = t1; if (f2.textContent !== t2) f2.textContent = t2;
   if (f1.className !== cls) f1.className = cls;
 }
@@ -9257,12 +9279,12 @@ function updateHUD() {
   // while the ball is moving it's still the stroke being played (and the holing stroke once it drops); at rest, the next one
   const sn = G.state === 'flight' || G.state === 'holed' ? Math.max(1, G.strokes) : G.strokes + 1;
   $('hl2').innerHTML = `Stroke ${Math.min(sn, def.par + 5)} <span class="lie" data-s="${G.surf}">${lieTxt}</span>`;
-  const d = distToPin(); $('dNum').textContent = d < 10 ? d.toFixed(1) : Math.round(d);
+  const d = distToPin(), pl = puttLie(), du = uDist(d, pl); $('dNum').textContent = du < 10 ? du.toFixed(1) : Math.round(du); $('dU').textContent = uUnit(pl);
   const dh = G.C.cup.y - G.ball.y;
-  $('dSub').textContent = c.type === 'putter' && Math.abs(puttEquiv() - d) > .4 ? `Plays ${puttEquiv().toFixed(1)} m` : Math.abs(dh) > .5 ? `${dh > 0 ? '↑' : '↓'} ${Math.abs(dh).toFixed(1)} m` : 'To pin';
-  $('windTxt').textContent = Math.round(Math.hypot(G.wind[0], G.wind[1]) * 3.6);
+  $('dSub').textContent = c.type === 'putter' && Math.abs(puttEquiv() - d) > .4 ? `Plays ${fmtDist1(puttEquiv(), true)}` : Math.abs(dh) > .5 ? `${dh > 0 ? '↑' : '↓'} ${fmtDist1(Math.abs(dh), pl)}` : 'To pin';
+  $('windTxt').textContent = Math.round(uSpeed(Math.hypot(G.wind[0], G.wind[1]))); $('windU').textContent = uSpeedUnit();
   $('clubName').textContent = c.type === 'putter' ? 'Putter' : c.name.replace('Pitching wedge', 'P-wedge').replace('Sand wedge', 'S-wedge').replace('Lob wedge', 'L-wedge').replace('Gap wedge', 'G-wedge');
-  $('clubSub').textContent = c.type === 'putter' ? `↻ ${G.puttRange} m` : `${Math.round(G.carry || c.carry)} m`;
+  $('clubSub').textContent = c.type === 'putter' ? `↻ ${fmtDist(G.puttRange, true)}` : fmtDist(G.carry || c.carry);
   $('tTitle').textContent = c.type === 'putter' ? 'Tempo (2:1)' : 'Tempo (3:1)';
   const tp = totalToPar(), ps = $('pScore'), pn = playerName();
   if ($('pName').textContent !== pn) $('pName').textContent = pn;
@@ -9273,7 +9295,7 @@ function swirlWind(dt) {
   sw.t += dt; const t = sw.t;
   const a = sw.a + 1.1 * Math.sin(t * .47 + sw.ph) + .55 * Math.sin(t * 1.21 + 2 * sw.ph), ws = sw.s * clamp(.6 + .32 * Math.sin(t * .73 + 3 * sw.ph) + .16 * Math.sin(t * 2.3 + sw.ph), .15, 1.15);
   G.wind[0] = Math.sin(a) * ws; G.wind[1] = -Math.cos(a) * ws;
-  const kmh = String(Math.round(ws * 3.6)); if ($('windTxt').textContent !== kmh) $('windTxt').textContent = kmh;
+  const kmh = String(Math.round(uSpeed(ws))); if ($('windTxt').textContent !== kmh) $('windTxt').textContent = kmh;
 }
 // pine needles and azalea petals whirling round the player on the swirling holes
 function buildSwirlFx(C, grp) {
@@ -9315,7 +9337,7 @@ function updatePinTag() {
   const clash = !!rr && tx + hw > rr.left && tx - hw < rr.right && ty + 6 > rr.top && ty - tag.offsetHeight - 4 < rr.bottom;
   tag.style.opacity = vis && !clash && ty > hudBottom && distToPin() > 8 && G.state !== 'holed' ? 1 : 0;
   tag.style.transform = `translate(${tx}px, ${ty}px) translate(-50%,-100%)`;
-  const t = Math.round(distToPin()) + ' M'; if (tag.textContent !== t) tag.textContent = t;
+  const t = fmtDist(distToPin(), puttLie()).toUpperCase(); if (tag.textContent !== t) tag.textContent = t;
 }
 // in motion, any panel the ball passes behind turns see-through, so the ball never disappears under the HUD
 const _sb = new THREE.Vector3(); let _seeEls = null;
@@ -9345,9 +9367,9 @@ function updateBallTag() {
   const r = sh.res, b = W.ball.position;
   if (UI.btShot !== sh) { UI.btShot = sh; UI.btD = -1; UI.btFlip = false; tag.classList.remove('landed', 'flip'); }
   // horizontal distance from the strike point, same measure as res.carry / res.total
-  const d = Math.round(Math.hypot(b.x - G.prev.x, b.z - G.prev.z));
-  if (d !== UI.btD) { UI.btD = d; $('btD').textContent = d; }
-  if (r.land && G.playT >= r.land.t && !tag.classList.contains('landed')) { $('btC').textContent = `Carry ${Math.round(r.carry)} m`; tag.classList.add('landed'); }
+  const d = Math.round(uDist(Math.hypot(b.x - G.prev.x, b.z - G.prev.z)));
+  if (d !== UI.btD) { UI.btD = d; $('btD').textContent = d; const bu = uUnit().toUpperCase(); if ($('btU').textContent !== bu) $('btU').textContent = bu; }
+  if (r.land && G.playT >= r.land.t && !tag.classList.contains('landed')) { $('btC').textContent = `Carry ${fmtDist(r.carry)}`; tag.classList.add('landed'); }
   W.cam.updateMatrixWorld();
   _bt.copy(b).project(W.cam);
   if (_bt.z > 1) { UI.btOn = false; tag.classList.remove('on'); return; }
@@ -9383,10 +9405,10 @@ function closeSheets(keepScrim) { lbPause(); if (G.relief && !keepScrim) reliefC
 function openBag() {
   if (G.state !== 'address' && G.state !== 'settle') return;
   const b = $('bag'); b.innerHTML = '';
-  $('bagLie').textContent = 'From the ' + (G.teed ? 'tee' : SURF[G.surf].name.toLowerCase()) + ' · ' + Math.round(distToPin()) + ' m to pin';
+  $('bagLie').textContent = 'From the ' + (G.teed ? 'tee' : SURF[G.surf].name.toLowerCase()) + ' · ' + fmtDist(distToPin(), G.surf === S.GREEN) + ' to pin';
   CLUBS.forEach((c, i) => {
     const bt = document.createElement('button'); if (i === G.club) bt.className = 'sel';
-    bt.innerHTML = `<div class="bi">${({ Dr: 'DR', Pt: 'PUTT' })[c.id] || c.id}</div><div class="bn">${c.name}</div><div class="bd">${c.type === 'putter' ? 'On the green' : Math.round(c.carry) + ' m'}</div>${i === G.suggested ? '<span class="tip">TIP</span>' : ''}`;
+    bt.innerHTML = `<div class="bi">${({ Dr: 'DR', Pt: 'PUTT' })[c.id] || c.id}</div><div class="bn">${c.name}</div><div class="bd">${c.type === 'putter' ? 'On the green' : fmtDist(c.carry)}</div>${i === G.suggested ? '<span class="tip">TIP</span>' : ''}`;
     bt.onclick = () => { G.club = i; if (c.type === 'putter') pickPuttRange(); G.carryKey = ''; updateAim(true); closeSheets(); SFX.blip(); if (W.slope) W.slope.mesh.visible = c.type === 'putter' && (G.surf === S.GREEN || G.surf === S.FRINGE); if (W.flag) { W.flag.visible = W.pole.visible = c.type !== 'putter'; } };
     b.appendChild(bt);
   });
@@ -9408,7 +9430,8 @@ function syncMenu() {
   document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
   document.querySelectorAll('#segSwap button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.swap ? 1 : 0)));
   document.querySelectorAll('#segGfx button').forEach(b => b.classList.toggle('sel', b.dataset.v === (settings.gfx || 'auto')));
-  { const g = $('mvGfx'); if (g) g.textContent = ({ auto: 'Auto', high: 'High', saver: 'Battery saver' })[settings.gfx || 'auto'] + (settings.gfx !== 'saver' && settings.gfx !== 'high' && PERF.lite ? ' · Saver on' : ''); }
+  document.querySelectorAll('#segUnits button').forEach(b => b.classList.toggle('sel', b.dataset.v === (isImp() ? 'imp' : 'm')));
+  { const g = $('mvSet'); if (g) g.textContent = (isImp() ? 'Imperial' : 'Metric') + ' · Sound ' + (settings.sound ? 'on' : 'off') + ' · Music ' + (settings.music !== false ? 'on' : 'off') + ' · Graphics ' + ({ auto: 'auto', high: 'high', saver: 'saver' })[settings.gfx || 'auto'] + (settings.gfx !== 'saver' && settings.gfx !== 'high' && PERF.lite ? ' (saver on)' : ''); }
   mpSync();
   { const mi = $('mRoundInfo'); if (mi) {
     const lv = levelOf(ST.xp);
@@ -9417,7 +9440,7 @@ function syncMenu() {
     $('mLvl').textContent = lv.name + ' · level ' + lv.n;
     if ($('menuSheet').querySelector('.mpg.on[data-pg="home"]')) $('mSub').textContent = playerName() + ' · ' + lv.name;
     else $('mSub').textContent = '';
-    $('mvPlayer').textContent = playerName() + ' · ' + hand; $('mvAudio').textContent = 'Sound ' + (settings.sound ? 'on' : 'off') + ' · Music ' + (settings.music !== false ? 'on' : 'off');
+    $('mvPlayer').textContent = playerName() + ' · ' + hand;
     const n = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 3 * 36e5).length;
     $('mvLive').textContent = MP.st === 'on' ? (MP.room === 'LDAILY' ? 'Daily lobby' : mpIsLobby(MP.room) ? 'Public lobby' : 'Room ' + MP.room) + ' · ' + n + ' online' : MP.st === 'error' ? 'Offline' : 'Connecting…';
   } }
@@ -9452,8 +9475,8 @@ function roundFacts() {
   if (bir) out.push(`<b>${bir}</b> birdie${bir === 1 ? '' : 's'}, <b>${par}</b> par${par === 1 ? '' : 's'}, <b>${bog}</b> over par`);
   else out.push(`<b>${par}</b> par${par === 1 ? '' : 's'}, <b>${bog}</b> over par`);
   const drive = log.filter(x => x.k === 0 && !x.o).sort((a, b) => b.t - a.t)[0], putt = log.filter(x => x.o && x.k === 3).sort((a, b) => b.d - a.d)[0];
-  if (drive && drive.t >= 150) out.push(`Longest drive <b>${drive.t} m</b> (hole ${drive.h + 1})`);
-  if (putt && putt.d >= 4) out.push(`Longest putt holed <b>${putt.d.toFixed(1)} m</b> (hole ${putt.h + 1})`);
+  if (drive && drive.t >= 150) out.push(`Longest drive <b>${fmtDist(drive.t)}</b> (hole ${drive.h + 1})`);
+  if (putt && putt.d >= 4) out.push(`Longest putt holed <b>${fmtDist1(putt.d, true)}</b> (hole ${putt.h + 1})`);
   const one = sc.filter((v, i) => v != null && G.putts[i] <= 1).length; if (one >= 5) out.push(`<b>${one}</b> holes with one putt or fewer`);
   const best = bestShots(log, 1)[0]; if (best && out.length < 4) out.push('Shot of the round: <b>' + shotWords(best).t + '</b>');
   return out.slice(0, 4);
@@ -9489,17 +9512,18 @@ async function shareRecap() {
 function showScorecard(final) {
   const tp = totalToPar();
   // one row per hole: reads naturally in portrait, however many holes
-  let rows = '<tr><th>Hole</th><th>M</th><th>Par</th><th>Hcp</th><th>Score</th><th>Putts</th></tr>';
+  let rows = `<tr><th>Hole</th><th>${isImp() ? 'Yds' : 'M'}</th><th>Par</th><th>Hcp</th><th>Score</th><th>Putts</th></tr>`;
+  const len = HOLE_LEN.map(v => Math.round(uDist(v)));
   // a subtotal row for holes a..b-1 (Out, In) and the round total
   const sub = (label, a, b, cls) => {
     let m = 0, par = 0, sc = 0, pu = 0, n = 0;
-    for (let i = a; i < b; i++) { m += HOLE_LEN[i]; par += HOLE_DEFS[i].par; if (G.scores[i] != null) { sc += G.scores[i]; pu += G.putts[i]; n++; } }
+    for (let i = a; i < b; i++) { m += len[i]; par += HOLE_DEFS[i].par; if (G.scores[i] != null) { sc += G.scores[i]; pu += G.putts[i]; n++; } }
     return `<tr class="${cls}"><td>${label}</td><td>${m}</td><td>${par}</td><td></td><td><b>${n ? sc : '–'}</b></td><td>${n ? pu : '–'}</td></tr>`;
   };
   HOLE_DEFS.forEach((d, i) => {
     const s = G.scores[i], dd = s == null ? 0 : s - d.par;
     const sc = s == null ? '–' : `<span class="sc ${dd < 0 ? 'u' : dd > 0 ? 'o' : ''}${dd <= -2 ? ' u2' : ''}">${s}</span>`;
-    rows += `<tr${i === G.hole && !final ? ' class="cur"' : ''}><td><b>${i + 1}</b>${d.rh ? '' : d.name}</td><td>${HOLE_LEN[i]}</td><td>${d.par}</td><td>${d.hcp}</td><td>${sc}</td><td>${s != null ? G.putts[i] : '–'}</td></tr>`;
+    rows += `<tr${i === G.hole && !final ? ' class="cur"' : ''}><td><b>${i + 1}</b>${d.rh ? '' : d.name}</td><td>${len[i]}</td><td>${d.par}</td><td>${d.hcp}</td><td>${sc}</td><td>${s != null ? G.putts[i] : '–'}</td></tr>`;
     if (HOLE_DEFS.length === 18 && i === 8) rows += sub('Out', 0, 9, 'subt');
     if (HOLE_DEFS.length === 18 && i === 17) rows += sub('In', 9, 18, 'subt');
   });
@@ -9520,8 +9544,8 @@ function showBest() { const ni = $('nameIn'); if (ni && document.activeElement !
 /* ---------- intro & hole done ---------- */
 function showIntro() {
   const C = G.C, d = C.def;
-  $('icK').textContent = `Hole ${G.hole + 1} of ${HOLE_DEFS.length} · HCP ${d.hcp}`; $('icN').textContent = d.name; $('icI').textContent = d.inspo || '';
-  $('icPar').textContent = d.par; $('icLen').textContent = Math.round(C.length) + ' m'; $('icWind').textContent = Math.round(Math.hypot(G.wind[0], G.wind[1]) * 3.6) + ' km/h'; $('icWx').textContent = WX.name; $('icWx').title = WX.note;
+  $('icK').textContent = `Hole ${G.hole + 1} of ${HOLE_DEFS.length} · HCP ${d.hcp}`; $('icN').textContent = d.name; $('icI').textContent = uText(d.inspo || '');
+  $('icPar').textContent = d.par; $('icLen').textContent = fmtDist(C.length); $('icWind').textContent = fmtSpeed(Math.hypot(G.wind[0], G.wind[1])); $('icWx').textContent = WX.name; $('icWx').title = WX.note;
   drawPlan($('introMap'), { line: true });
   $('intro').classList.add('on');
 }
@@ -9616,8 +9640,8 @@ function drawPlan(cv, opt) {
     x.fillStyle = 'rgba(255,255,255,.3)'; x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(tm[0], tm[1], 9, 0, TAU); x.fill(); x.stroke(); x.restore();
     const d1 = Math.hypot(t[0] - G.ball.x, t[1] - G.ball.z), d2 = Math.hypot(C.cup.x - t[0], C.cup.z - t[1]);
     const tag = (txt, mx, my) => { x.font = FONT(600, 13); const w = x.measureText(txt).width + 12; x.fillStyle = '#fff'; x.beginPath(); x.roundRect ? x.roundRect(mx - w / 2, my - 10, w, 20, 6) : x.rect(mx - w / 2, my - 10, w, 20); x.fill(); x.fillStyle = '#16211c'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, mx, my + .5); };
-    tag(Math.round(d1) + ' M', (b[0] + tm[0]) / 2 - 26, (b[1] + tm[1]) / 2);
-    if (d2 > 3 && Math.hypot(tm[0] - p[0], tm[1] - p[1]) > 34) tag(Math.round(d2) + ' M', (tm[0] + p[0]) / 2 + 26, (tm[1] + p[1]) / 2);
+    tag(fmtDist(d1, isPutt()).toUpperCase(), (b[0] + tm[0]) / 2 - 26, (b[1] + tm[1]) / 2);
+    if (d2 > 3 && Math.hypot(tm[0] - p[0], tm[1] - p[1]) > 34) tag(fmtDist(d2, isPutt()).toUpperCase(), (tm[0] + p[0]) / 2 + 26, (tm[1] + p[1]) / 2);
   }
   // pin flag
   x.strokeStyle = '#16211c'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(p[0], p[1]); x.lineTo(p[0], p[1] - (opt.small ? 8 : 14)); x.stroke();
@@ -9632,7 +9656,7 @@ let mapFit = null;
 function mapOpts() { const live = G.state === 'flight' || G.state === 'settle' || G.state === 'holed'; return live ? { pad: 10, ball: { x: W.ball.position.x, z: W.ball.position.z } } : { aim: true, pad: 10 }; }
 function openMap() {
   if (!G.C || !G.C.plan || (G.state !== 'address' && G.state !== 'flight' && G.state !== 'settle' && G.state !== 'holed')) return;
-  $('mapTitle').textContent = `Hole ${G.hole + 1} · ${G.C.def.name}`; $('mapInfo').textContent = `Par ${G.C.def.par} · ${Math.round(Math.hypot(G.C.cup.x - W.ball.position.x, G.C.cup.z - W.ball.position.z))} m to pin`;
+  $('mapTitle').textContent = `Hole ${G.hole + 1} · ${G.C.def.name}`; $('mapInfo').textContent = `Par ${G.C.def.par} · ${fmtDist(Math.hypot(G.C.cup.x - W.ball.position.x, G.C.cup.z - W.ball.position.z), puttLie())} to pin`;
   openSheet('mapSheet');
   // draw once the sheet is laid out (on a slow phone the first frame can come before it has a size)
   let tries = 0; const go = () => { const r = $('mapCv').getBoundingClientRect(); if ((!r.width || !r.height) && tries++ < 30) { requestAnimationFrame(go); return; } mapFit = drawPlan($('mapCv'), mapOpts()); mapLast = performance.now(); mapMode = mapOpts().aim ? 'aim' : 'live'; };
@@ -9698,9 +9722,9 @@ function defStats() {
 let ST = (() => { try { const s = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); if (s && s.v === 1) { if (s.xp === undefined) s.xp = (s.holes || 0) * 10 + (s.rounds || 0) * 30; const d = defStats(); for (const k in d) if (s[k] === undefined) s[k] = d[k]; for (const k in d.rec) if (!s.rec[k]) s.rec[k] = d.rec[k]; return s; } } catch (e) { } return defStats(); })();
 function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(ST)); } catch (e) { } }
 const REC = {
-  holed: { c: ['#ffe85a', '#ffab1f', '#ff5d3a', '#2b1200'], t: 'Longest shot holed', e: 'target', u: 'm', f: v => v.toFixed(1) + ' m' },
-  putt: { c: ['#c6ff7a', '#3ecf5a', '#0f9d6b', '#052a12'], t: 'Longest putt holed', e: 'flag', u: 'm', f: v => v.toFixed(1) + ' m' },
-  drive: { c: ['#8be9ff', '#2f9bff', '#5a4bff', '#06123a'], t: 'Longest drive', e: 'rocket', f: v => Math.round(v) + ' m' },
+  holed: { c: ['#ffe85a', '#ffab1f', '#ff5d3a', '#2b1200'], t: 'Longest shot holed', e: 'target', f: v => fmtDist1(v) },
+  putt: { c: ['#c6ff7a', '#3ecf5a', '#0f9d6b', '#052a12'], t: 'Longest putt holed', e: 'flag', f: v => fmtDist1(v, true) },
+  drive: { c: ['#8be9ff', '#2f9bff', '#5a4bff', '#06123a'], t: 'Longest drive', e: 'rocket', f: v => fmtDist(v) },
   girStreak: { c: ['#7dffc8', '#1fd1a1', '#0a8f7a', '#032a22'], t: 'Greens in a row', e: 'dot', f: v => v + ' in a row' },
   fwStreak: { c: ['#f4ff7a', '#b6e63a', '#4fa81f', '#1b2a05'], t: 'Fairways in a row', e: 'road', f: v => v + ' in a row' },
   birdStreak: { c: ['#ffb3f0', '#ff5fd0', '#b13cff', '#2a0536'], t: 'Birdie streak', e: 'feather', f: v => v + ' in a row' },
@@ -9738,7 +9762,7 @@ function statsShot(sh, r) {
     const d = Math.hypot(C.cup.x - pv.x, C.cup.z - pv.z); ST.holedShots++; if (!putt && G.strokes > 1) ST.chipins++;
     const big = beat('holed', d, where + ' · ' + club);
     if (putt) beat('putt', d, where, big); // a putt that is also the longest holed shot only shows one card
-    if (G.strokes === 1) setTimeout(() => recordCard('Unreal!', 'Hole in one', Math.round(d) + ' m', where, ['#ffffff', '#ffd166', '#ef476f', '#2b0a1a']), big ? 4300 : 500), ST.aces++;
+    if (G.strokes === 1) setTimeout(() => recordCard('Unreal!', 'Hole in one', fmtDist(d), where, ['#ffffff', '#ffd166', '#ef476f', '#2b0a1a']), big ? 4300 : 500), ST.aces++;
   }
   saveStats();
 }
@@ -9805,7 +9829,7 @@ function openStats() {
   const rc = k => { const R = S.rec[k], d = REC[k], h = card(d.t, d.e, R.at != null ? d.f(R.v) : '—', R.at != null ? (R.info || '') : 'Beat ' + d.f(R.v) + ' to set it', false); return R.at != null && REC_PF[k] ? h.replace(/<\/div>$/, `<div class="n rk" data-rk="${REC_PF[k][0]}"></div></div>`) : h; };
   const pace = S.holes ? (S.strokes / S.holes).toFixed(2) : '–';
   const fun = [];
-  if (S.dist > 0) fun.push(`Your shots have flown <b>${km >= 1 ? (km >= 100 ? Math.round(km).toLocaleString() : km.toFixed(2)) + ' km' : Math.round(S.dist) + ' m'}</b>, ${distFun(S.dist)}`);
+  if (S.dist > 0) fun.push(`Your shots have flown <b>${isImp() ? (S.dist >= 1609.344 ? (v => v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(2))(S.dist / 1609.344) + ' mi' : fmtDist(S.dist)) : km >= 1 ? (km >= 100 ? Math.round(km).toLocaleString() : km.toFixed(2)) + ' km' : Math.round(S.dist) + ' m'}</b>, ${distFun(S.dist)}`);
   if (S.water) fun.push(`<b>${S.water}</b> ball${S.water > 1 ? 's' : ''} fed the fish`);
   if (S.trees) fun.push(`You clipped the timber <b>${S.trees}</b> time${S.trees > 1 ? 's' : ''}`);
   if (S.ob + S.lost) fun.push(`<b>${S.ob}</b> out of bounds, <b>${S.lost}</b> lost in the woods`);
@@ -9959,20 +9983,20 @@ function openReel() {
 }
 function shotWords(x) {
   const cl = CLUBS[x.c] ? CLUBS[x.c].name : '', lie = x.f ? 'the tee' : x.l === S.SAND ? 'the bunker' : x.l === S.ROUGH ? 'the rough' : x.l === S.DEEP ? 'deep rough' : x.l === S.FRINGE ? 'the fringe' : x.l === S.FIRST ? 'the first cut' : x.l === S.GREEN ? 'the green' : 'the fairway';
-  const m = v => v < 10 ? v.toFixed(1) + ' m' : Math.round(v) + ' m';
+  const m = (v, p) => fmtDistShort(v, p), pe = x.k === 3 || x.s === S.GREEN; // (putts in feet, and where a shot finished on the green; yards else)
   // what the shot was for: the score a holing would have made on this hole (par from the hole's own course)
   const co = COURSES[x.cl ? CLIP_COURSES[x.cl[0]] : COURSE.key] || COURSE, par = co.defs[x.h] ? co.defs[x.h].par : 4, rel = x.n - par;
   const fo = rel <= -3 ? 'albatross' : rel === -2 ? 'eagle' : rel === -1 ? 'birdie' : rel === 0 ? 'par' : rel === 1 ? 'bogey' : 'double bogey';
   const hole = 'Hole ' + (x.h + 1) + ' · ';
   let t;
-  if (x.o && x.k === 3) t = 'Putt for ' + fo + ' holed, ' + m(x.d) + (x.b >= .3 ? ' with ' + m(x.b).replace(' m', '') + ' m of break' : '');
+  if (x.o && x.k === 3) t = 'Putt for ' + fo + ' holed, ' + m(x.d, true) + (x.b >= .3 ? ' with ' + m(x.b, true) + ' of break' : '');
   else if (x.o) t = x.n === 1 ? 'Hole in one' : x.f ? 'Holed from the tee' : (x.k === 2 || x.k === 4 ? (x.k === 4 ? 'Bunker shot' : 'Chip') + ' holed for ' + fo + ', ' + m(x.d) : 'Holed out for ' + fo + ' from ' + m(x.d) + (x.l === S.SAND ? ' in the sand' : x.l === S.GREEN ? '' : ' off the green'));
-  else if (x.lp) t = (x.k === 3 ? 'Putt for ' + fo + ', ' + m(x.d) : x.k === 0 ? 'Drive ' + x.t + ' m' : (x.k === 1 || x.k === 6 ? 'Approach' : cl) + ' from ' + m(x.d)) + ', lipped out';
-  else if (x.k === 0) t = 'Drive ' + x.t + ' m' + (x.fw ? ', in the fairway' : '');
-  else if (x.k === 3) t = 'Putt for ' + fo + ', ' + m(x.d) + ' to ' + m(x.e);
-  else if (x.k === 1 || x.k === 6) t = 'Approach ' + m(x.d) + ' to ' + m(x.e);
-  else if ((x.s === S.GREEN || x.s === S.FRINGE)) t = (x.k === 4 ? 'Bunker shot' : x.k === 2 ? 'Chip' : cl) + ' to ' + m(x.e);
-  else t = cl + ' ' + x.t + ' m';
+  else if (x.lp) t = (x.k === 3 ? 'Putt for ' + fo + ', ' + m(x.d, true) : x.k === 0 ? 'Drive ' + fmtDist(x.t) : (x.k === 1 || x.k === 6 ? 'Approach' : cl) + ' from ' + m(x.d)) + ', lipped out';
+  else if (x.k === 0) t = 'Drive ' + fmtDist(x.t) + (x.fw ? ', in the fairway' : '');
+  else if (x.k === 3) t = 'Putt for ' + fo + ', ' + m(x.d, true) + ' to ' + m(x.e, true);
+  else if (x.k === 1 || x.k === 6) t = 'Approach ' + m(x.d) + ' to ' + m(x.e, pe);
+  else if ((x.s === S.GREEN || x.s === S.FRINGE)) t = (x.k === 4 ? 'Bunker shot' : x.k === 2 ? 'Chip' : cl) + ' to ' + m(x.e, pe);
+  else t = cl + ' ' + fmtDist(x.t);
   return { t: hole + t, d: `Stroke ${x.n} · ${x.k === 3 ? 'putter' : cl} from ${lie}${x.k !== 3 && !x.o ? ', ' + m(x.d) + ' to the pin' : ''}` };
 }
 const chrono = a => a.slice().sort((p, q) => p.h - q.h || p.n - q.n); // a round's highlights play in the order they happened, hole 1 to 18
@@ -10497,6 +10521,7 @@ const ICONS = {
   chart: '<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>', card: '<svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 9h8M8 13h8M8 17h5"/></svg>',
   play: '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>', user: '<svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
   sound: '<svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4zM16.5 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10"/></svg>',
+  sliders: '<svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5"/></svg>',
   users: '<svg viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 19a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 13.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>',
   target: '<svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM12 12h.01"/></svg>',
   rocket: '<svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>', dot: '<svg viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 12h.01"/></svg>',
@@ -10592,7 +10617,7 @@ async function frSend() {
   FR.sent.push({ t, d, at: Date.now() }); $('frT').value = ''; $('frD').value = ''; $('frNote').textContent = 'Thanks! Your request is on its way.'; frRender();
   setTimeout(() => loadFeatures(true).then(frRender), 30000); setTimeout(() => loadFeatures(true).then(frRender), 75000);
 }
-const MENU_PAGES = { player: 'Player & golfer', audio: 'Sound & music', gfx: 'Graphics', live: 'Live play', practice: 'Practice', feature: 'Feature requests' };
+const MENU_PAGES = { player: 'Player & golfer', settings: 'Settings', live: 'Live play', practice: 'Practice', feature: 'Feature requests' };
 function menuPage(n) {
   n = MENU_PAGES[n] ? n : 'home';
   document.querySelectorAll('#menuSheet .mpg').forEach(x => x.classList.toggle('on', x.dataset.pg === n));
@@ -10949,9 +10974,9 @@ function openDaily(tab) {
 function cardHtml(c) {
   if (!c || !COURSES[c.course] || !Array.isArray(c.h)) return '';
   const CO = COURSES[c.course], defs = CO.defs, n = defs.length; if (c.h.length !== n || !c.h.some(v => v > 0)) return '';
-  const len = defs.map(d => Math.round(holeLength(d))), pt = Array.isArray(c.pt) && c.pt.length === n ? c.pt : null, has = i => c.h[i] > 0;
+  const len = defs.map(d => Math.round(uDist(Math.round(holeLength(d))))), pt = Array.isArray(c.pt) && c.pt.length === n ? c.pt : null, has = i => c.h[i] > 0;
   const sub = (label, a, b, cls) => { let m = 0, par = 0, sc = 0, pu = 0, k = 0; for (let i = a; i < b; i++) { m += len[i]; par += defs[i].par; if (has(i)) { sc += c.h[i]; if (pt) pu += pt[i]; k++; } } return `<tr class="${cls}"><td>${label}</td><td>${m}</td><td>${par}</td><td></td><td><b>${k ? sc : '–'}</b></td><td>${k && pt ? pu : '–'}</td></tr>`; };
-  let rows = '<tr><th>Hole</th><th>M</th><th>Par</th><th>Hcp</th><th>Score</th><th>Putts</th></tr>';
+  let rows = `<tr><th>Hole</th><th>${isImp() ? 'Yds' : 'M'}</th><th>Par</th><th>Hcp</th><th>Score</th><th>Putts</th></tr>`;
   defs.forEach((d, i) => {
     const sc = has(i) ? c.h[i] : null, dd = sc == null ? 0 : sc - d.par;
     rows += `<tr><td><b>${i + 1}</b>${d.rh ? '' : d.name}</td><td>${len[i]}</td><td>${d.par}</td><td>${d.hcp}</td><td>${sc == null ? '–' : `<span class="sc ${dd < 0 ? 'u' : dd > 0 ? 'o' : ''}${dd <= -2 ? ' u2' : ''}">${sc}</span>`}</td><td>${sc != null && pt ? pt[i] : '–'}</td></tr>`;
@@ -10990,7 +11015,7 @@ function openPlayer(o) {
       + (home && home.c ? `<div class="stRow"><span>Home course</span><span>${escH(home.c)}${home.r ? ', ' + escH(home.r) : ''}</span></div>` : '')
       + (cardHtml(o.card) || (o.card ? '<div class="lbnote" style="margin:8px 0">The scorecard of this round was not filed.</div>' : ''))
       + bestShotsHtml(rs, 'Best shots of the round', 'a')
-      + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? S.dr + ' m' : '–', '', 'dr')}${card('Longest shot holed', 'target', S.ho > 10 ? S.ho.toFixed(1) + ' m' : '–', '', 'ho')}${card('Longest putt holed', 'flag', S.pt > 3 ? S.pt.toFixed(1) + ' m' : '–', '', 'pt')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–', '', 'br')}${card('Greens in a row', 'dot', S.gs || 0, '', 'gs')}${card('Fairways in a row', 'road', S.fs || 0, '', 'fs')}</div>
+      + (pf ? `<div class="sub"><span>Records</span></div><div class="stGrid">${card('Longest drive', 'rocket', S.dr ? fmtDist(S.dr) : '–', '', 'dr')}${card('Longest shot holed', 'target', S.ho > 10 ? fmtDist1(S.ho) : '–', '', 'ho')}${card('Longest putt holed', 'flag', S.pt > 3 ? fmtDist1(S.pt, true) : '–', '', 'pt')}${card('Best round', 'trophy', S.br != null ? fmtToPar(S.br) : '–', '', 'br')}${card('Greens in a row', 'dot', S.gs || 0, '', 'gs')}${card('Fairways in a row', 'road', S.fs || 0, '', 'fs')}</div>
       ${bestShotsHtml(bs, 'Player highlights', 'b')}
       <div class="sub"><span>Scoring</span></div>
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
@@ -11189,6 +11214,8 @@ function initInput() {
   document.querySelectorAll('#segSwap button').forEach(b => b.onclick = () => { settings.swap = b.dataset.v === '1'; saveSettings(); applySwap(); syncMenu(); });
   document.querySelectorAll('#segGfx button').forEach(b => b.onclick = () => { settings.gfx = b.dataset.v; if (b.dataset.v === 'auto') PERF.slow = false; saveSettings(); PERF.did = false; applyPerf(); syncMenu(); });
   document.querySelectorAll('#segMus button').forEach(b => b.onclick = () => { settings.music = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
+  document.querySelectorAll('#segUnits button').forEach(b => b.onclick = () => { if (b.dataset.v === 'imp') settings.units = 'imp'; else delete settings.units; saveSettings(); applyUnits(); syncMenu(); });
+  applyUnits();
   $('skipBtn').onclick = e => { e.stopPropagation(); skipShot(); };
   $('unplayBtn').onclick = e => { e.stopPropagation(); SFX.blip(); openUnplay(); };
   $('specResume').onclick = e => { e.stopPropagation(); const af = MP.clip && MP.clip.after; mpResume(); if (af) setTimeout(af, 80); }; // (after a player's clips: back to that player's card)

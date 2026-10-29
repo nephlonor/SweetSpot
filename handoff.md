@@ -16,6 +16,8 @@
 
 **Leaderboard-Workflow (Build 9.17):** `gitCommit` überspringt den Commit, wenn nichts geändert ist (doppelte Stimme `[vote]` ließ den Lauf mit „nothing to commit" scheitern).
 
+**Einheiten (Build 9.18, Feature-Request 679 erledigt):** Menü hat jetzt eine Seite „Settings" (`data-pg="settings"`) mit Einheiten, Sound & Musik und Grafik (ersetzt die Seiten `audio`/`gfx`). `settings.units === 'imp'` schaltet auf Yards, Putts/Grün in Fuß und mph; Standard bleibt metrisch (`units` fehlt). Intern bleibt alles in Metern; angezeigt wird über `fmtDist(m, putt)`, `fmtDist1`, `fmtDistShort`, `uDist`/`uUnit`, `fmtSpeed`/`uSpeed`, `uText` (wandelt „10 m" in Lochbeschreibungen). Fuß gilt, wenn `puttLie()` (Ball auf dem Grün oder Putter gewählt) bzw. bei Putts; statischer Hilfetext über `<span data-m="…">`, aktualisiert in `applyUnits()`. Neue Distanzanzeigen immer über diese Helfer schreiben.
+
 **Offen / Ideen:**
 - Auf dem iPhone noch nicht gemessen: Aufbauzeit pro Loch (Desktop ca. 0,2–0,8 s) und Bildrate (Kacheln, 120×120-Meer, ~150 Inselchen).
 - `isles` steht seit Build 9.11 im Leaderboard-Workflow (`leaderboard.yml`: Par 72); `leaderboard/isles.json` füllt sich mit den ersten Runden.
