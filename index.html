@@ -4025,7 +4025,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 19 };
+const APP_ITER = { courses: 9, n: 20 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7006,7 +7006,7 @@ function mpPB() {
   const n = HOLE_DEFS.length, nm = playerName().toLowerCase(), b = sortRounds(localRounds(COURSE.key).filter(r => Array.isArray(r.h) && r.h.length === n && r.h.every(v => v > 0) && String(r.name).toLowerCase() === nm))[0];
   if (!b) return null;
   const k = Math.min(n, G.hole + (G.scores[G.hole] != null ? 1 : 0)); let d = 0; for (let i = 0; i < k; i++) d += b.h[i] - HOLE_DEFS[i].par;
-  return { id: 'pb', n: playerName() + ' · personal best', tp: d, h: G.hole, c: COURSE.key, th: k, col: '#9aa3ad', pbr: true };
+  return { id: 'pb', n: playerName() + ' · PB', tp: d, h: G.hole, c: COURSE.key, th: k, col: '#9aa3ad', pbr: true };
 }
 // the room's scores, by score to par: name, to par, the hole they are on (F when they have finished)
 function mpPanel() {
