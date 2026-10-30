@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -140,6 +140,19 @@ jobs:
               await exec.exec('git', ['add', ...sf]); await gitCommit('Daily archive and standings rebuilt');
               for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
               return finish(true, 'The archive and the standings were rebuilt.');
+            }
+            if (issue.title.startsWith('[device]')) {
+              // a computer: the scores this device posted before rounds were tagged move to the computer boards (the daily boards stay one)
+              if (!r || r.pc !== 1) return finish(false, 'Invalid device type.');
+              const who = sha8(r.dev), changed = [];
+              for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|isles)\.json$/.test(f))) {
+                const rows = rdj('leaderboard/' + f, null); if (!Array.isArray(rows)) continue; let hit = false;
+                for (const x of rows) if (x && x.by === who && !x.pc) { x.pc = 1; hit = true; }
+                if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
+              }
+              if (!changed.length) return finish(true, 'No scores from this device to move.');
+              await gitPush(changed, 'Leaderboard: a computer\'s scores move to the computer boards');
+              return finish(true, 'Your scores are now on the computer boards.');
             }
             if (issue.title.startsWith('[rename]')) {
               // a name change: every score ever posted from this device (and from the device it is merged with) takes the new name
@@ -255,8 +268,8 @@ jobs:
             }
             const file = `leaderboard/${r.course}.json`; let rows = readJson(file, []);
             if (rows.some(x => x.name === name && x.at === r.at)) return finish(true, 'This round is already on the board.');
-            // one player, one entry per course: their best score. A player is a name (any case) or a device id; a round that doesn't beat it is not listed.
-            const sameP = x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && !x.pc === !r.pc, // (mobile and computer have separate boards) better = (p, q) => p.toPar < q.toPar || (p.toPar === q.toPar && p.strokes < q.strokes);
+            // one player, one entry per course and platform (mobile and computer have separate boards): their best score. A player is a name (any case) or a device id; a round that doesn't beat it is not listed.
+            const sameP = x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && !x.pc === !r.pc, better = (p, q) => p.toPar < q.toPar || (p.toPar === q.toPar && p.strokes < q.strokes);
             const old = rows.filter(sameP), best = old.reduce((m, x) => !m || better(x, m) ? x : m, null);
             if (best && !better(r, best)) return finish(true, `Your best on the ${r.course} board stays ${best.toPar >= 0 ? '+' : ''}${best.toPar} (${best.strokes}): this round didn't beat it.`);
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
