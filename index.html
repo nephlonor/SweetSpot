@@ -667,7 +667,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mnote">Your name shows on the leaderboards and to the players you meet live.</div>
   </section>
   <section class="mpg" data-pg="audio">
-    <div class="mgrp"><div class="mrow">Sound effects<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+    <div class="mgrp"><div class="mrow">Sound effects<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div><div class="mrow">Distances<div class="seg" id="segUnit"><button data-v="0">Metres</button><button data-v="1">Yards · feet</button></div></div>
     <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div></div>
     <div class="mnote">Each course has its own music: guitar and piano at Augusta, slow ambient pieces at Basel and Alsace, a folk air on the flute at Rothley Park, an Irish slow air on the tin whistle over the sea at St Patrick's.</div>
   </section>
@@ -761,7 +761,10 @@ function hslToRgb(h, s, l) {
   const f = t => { t = ((t % 1) + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)];
 }
-function fmtDistShort(m) { return m < 10 ? m.toFixed(1) + ' m' : Math.round(m) + ' m'; }
+// distances are metres inside; settings.yd shows yards, and feet for putt-length distances
+const YD = 1.09361, FT = 3.28084;
+function fmtLong(m) { return settings.yd ? Math.round(m * YD) + ' yd' : Math.round(m) + ' m'; }
+function fmtDistShort(m) { return settings.yd ? (m < 15 ? Math.round(m * FT) + ' ft' : Math.round(m * YD) + ' yd') : m < 10 ? m.toFixed(1) + ' m' : Math.round(m) + ' m'; }
 
 /* ================= PHYSICS ================= */
 const GRAV = 9.81, BALL_R = 0.02135, BALL_M = 0.04593, AIR_RHO = 1.2;
@@ -4025,7 +4028,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 20 };
+const APP_ITER = { courses: 9, n: 21 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7800,7 +7803,7 @@ function finishRound() {
   else if (tp.d <= -10) isleMark();
   if (G.daily) { dailyDone(tp); if (dayId() === G.daily.day) return; } // (a daily round finished after the day closed counts as an ordinary round)
   try { const best = +localStorage.getItem(BEST_KEY) || null; if (!best || tp.s < best) localStorage.setItem(BEST_KEY, tp.s); } catch (e) { }
-  statsRound(tp); submitRound({ name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1, bs: bestShotsCompact(), h: G.scores.slice(), pt: G.putts.slice() });
+  statsRound(tp); submitRound({ pc: isPC() ? 1 : 0, name: playerName(), strokes: tp.s, toPar: tp.d, holes: HOLE_DEFS.length, course: COURSE.key, at: Date.now(), v: 1, bs: bestShotsCompact(), h: G.scores.slice(), pt: G.putts.slice() });
 }
 function saveRound() {
   if (G.practice || !G.C || !G.scores || G.state === 'title') return;
@@ -8512,7 +8515,7 @@ function finishShot() {
     placeBall(G.prev.x, G.prev.z, G.prev.teed); big = `<span class="bad">${r.lost ? 'Ball not found' : 'Out of bounds'}</span>`; sub = 'Stroke and distance';
   } else {
     placeBall(r.final.x, r.final.z, false);
-    big = (sh.searchDone === 'found' ? 'Found it · ' : '') + SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${Math.round(r.total)} m · carry ${Math.round(r.carry)} m`;
+    big = (sh.searchDone === 'found' ? 'Found it · ' : '') + SURF[G.surf].name; sub = sh.L.putt ? fmtDistShort(r.total) + ' putt' : `Total ${fmtLong(r.total)} · carry ${fmtLong(r.carry)}`;
     if (first && par >= 4) G.fir[h] = G.surf === S.FAIR || G.surf === S.GREEN || G.surf === S.FRINGE; // a tee shot that finds the green or its fringe (a driveable par 4) counts as hitting the fairway
   }
   finishTail(sh, r, big, sub, first);
@@ -8623,7 +8626,7 @@ function waterOptions(r) {
   const C = G.C, E = r.lastDry, cup = C.cup, prev = G.prev, opts = [], dEnt = Math.hypot(cup.x - E[0], cup.z - E[1]) || 1;
   const wi = C.surfInfo(r.final.x, r.final.z).water, dzn = wi >= 0 && wi < 100 && C.waters[wi] ? C.waters[wi].o.dropZone : wi === 200 && C.def.coast ? C.def.coast.dropZone || null : null;
   const toPin = (x, z) => Math.round(Math.hypot(cup.x - x, cup.z - z));
-  if (dzn) opts.push({ k: 'zone', t: 'Drop zone', d: `The marked drop area for this hazard · ${toPin(dzn.x, -dzn.f)} m to the pin`, x: dzn.x, z: -dzn.f });
+  if (dzn) opts.push({ k: 'zone', t: 'Drop zone', d: `The marked drop area for this hazard · ${fmtLong(toPin(dzn.x, -dzn.f))} to the pin`, x: dzn.x, z: -dzn.f });
   // lateral relief: the best-lying dry spot within two club lengths of where it crossed the edge, no nearer the hole
   let lat = null, ld = -1, latFw = false;
   if (RDC.coast || C.isles) { // Pebble Beach and The Isles: the lateral drop is always on the fairway, the nearest fairway to where the ball crossed the edge, no nearer the hole
@@ -8648,20 +8651,20 @@ function waterOptions(r) {
     const x = E[0] + Math.cos(a * TAU / 24) * rr, z = E[1] + Math.sin(a * TAU / 24) * rr; if (!dryGround(x, z) || C.surf(x, z) === S.SAND) continue;
     if (Math.hypot(cup.x - x, cup.z - z) < dEnt - .05) continue; const wd = waterDist(x, z); if (wd > ld) { ld = wd; lat = [x, z]; }
   }
-  if (lat) opts.push({ k: 'lateral', t: 'Lateral relief', d: (latFw ? 'On the nearest fairway, no nearer the hole' : 'About 3 m back from the water, no nearer the hole') + ` · ${toPin(lat[0], lat[1])} m to the pin`, x: lat[0], z: lat[1] });
+  if (lat) opts.push({ k: 'lateral', t: 'Lateral relief', d: (latFw ? 'On the nearest fairway, no nearer the hole' : 'About 3 m back from the water, no nearer the hole') + ` · ${fmtLong(toPin(lat[0], lat[1]))} to the pin`, x: lat[0], z: lat[1] });
   // back on the line: from the hole through the entry point and back from there, on dry, level ground with room to swing
   const ux = (E[0] - cup.x) / dEnt, uz = (E[1] - cup.z) / dEnt; let back = null; const g3 = [0, 0];
   for (let t = 4; t <= 150 && !back; t += 2) {
     const x = E[0] + ux * t, z = E[1] + uz * t; if (!dryGround(x, z) || waterDist(x, z) < 3) continue;
     const sf = C.surf(x, z); if (sf === S.SAND || sf === S.DEEP) continue; C.grad(x, z, g3); if (Math.hypot(g3[0], g3[1]) > .3) continue; back = [x, z, t];
   }
-  if (back) opts.push({ k: 'back', t: 'Back on the line', d: `${Math.round(back[2])} m back from where it went in, in line with the hole · ${toPin(back[0], back[1])} m to the pin`, x: back[0], z: back[1] });
-  opts.push({ k: 'replay', t: 'Play it again', d: `From where you hit it (stroke and distance) · ${toPin(prev.x, prev.z)} m to the pin`, x: prev.x, z: prev.z, teed: prev.teed });
+  if (back) opts.push({ k: 'back', t: 'Back on the line', d: `${fmtLong(back[2])} back from where it went in, in line with the hole · ${fmtLong(toPin(back[0], back[1]))} to the pin`, x: back[0], z: back[1] });
+  opts.push({ k: 'replay', t: 'Play it again', d: `From where you hit it (stroke and distance) · ${fmtLong(toPin(prev.x, prev.z))} to the pin`, x: prev.x, z: prev.z, teed: prev.teed });
   return opts;
 }
 function waterRelief(sh, r, first, found) {
   const opts = waterOptions(r);
-  if (found) opts.unshift({ k: 'play', t: 'Play it as it lies', d: `No penalty · from where you found it · ${Math.round(Math.hypot(G.C.cup.x - r.final.x, G.C.cup.z - r.final.z))} m to the pin`, x: r.final.x, z: r.final.z });
+  if (found) opts.unshift({ k: 'play', t: 'Play it as it lies', d: `No penalty · from where you found it · ${fmtLong(Math.hypot(G.C.cup.x - r.final.x, G.C.cup.z - r.final.z))} to the pin`, x: r.final.x, z: r.final.z });
   G.relief = { kind: 'water', opts, forced: true, sh, r, first, pend: !!found }; // (pend: the penalty stroke is taken only if relief is chosen)
   openRelief(r.shore ? 'Ball in the penalty area' : 'Ball in the water', found ? 'Found it. Play it as it lies, or take relief for one penalty stroke.' : 'One penalty stroke. Where do you drop?', opts, 0);
 }
@@ -8736,8 +8739,8 @@ function unplayCheck() {
 }
 function openUnplay() {
   const U = G.unplay; if (!U || G.state !== 'address') return;
-  const opts = [{ k: 'retake', ic: 'play', t: 'Retake the shot', d: `Back to where you hit it from · one penalty stroke (stroke and distance) · ${Math.round(Math.hypot(G.C.cup.x - G.prev.x, G.C.cup.z - G.prev.z))} m to the pin` }];
-  if (U.spot) opts.push({ k: 'drop', ic: 'flag', t: 'Unplayable lie', d: `Drop at the nearest edge of the rough, clear of the trees · one penalty stroke · ${Math.round(Math.hypot(G.C.cup.x - U.spot.x, G.C.cup.z - U.spot.z))} m to the pin`, x: U.spot.x, z: U.spot.z, dist: U.spot.dist });
+  const opts = [{ k: 'retake', ic: 'play', t: 'Retake the shot', d: `Back to where you hit it from · one penalty stroke (stroke and distance) · ${fmtLong(Math.hypot(G.C.cup.x - G.prev.x, G.C.cup.z - G.prev.z))} to the pin` }];
+  if (U.spot) opts.push({ k: 'drop', ic: 'flag', t: 'Unplayable lie', d: `Drop at the nearest edge of the rough, clear of the trees · one penalty stroke · ${fmtLong(Math.hypot(G.C.cup.x - U.spot.x, G.C.cup.z - U.spot.z))} to the pin`, x: U.spot.x, z: U.spot.z, dist: U.spot.dist });
   G.relief = { kind: 'unplay', opts, forced: false };
   openRelief('Unplayable?', U.why === 'forest' ? 'Deep in the woods. Take a penalty stroke and go on from somewhere better.' : 'No club gets 100 m away from here. Take a penalty stroke and go on from somewhere better.', opts, U.spot ? 1 : 0);
 }
@@ -9066,7 +9069,7 @@ function drawTempo(now) {
   } else if (SW.last && (G.state === 'flight' || G.state === 'settle' || G.state === 'holed' || (G.state === 'address' && now - SW.resultT < 9000))) {
     const L = SW.last; cls = L.tempoGrade;
     t1 = 'Your tempo: ' + L.ratio.toFixed(1) + ':1'; t2 = L.putt ? 'Speed: ' + L.ballSpeed.toFixed(1) + ' m/s' : 'Smash factor: ' + L.smash.toFixed(2);
-  } else { t1 = 'Ideal tempo: ' + R + ':1'; t2 = putt ? 'Range: ' + G.puttRange + ' m' : 'Smash factor: ' + c.smash.toFixed(2); }
+  } else { t1 = 'Ideal tempo: ' + R + ':1'; t2 = putt ? 'Range: ' + fmtDistShort(G.puttRange) : 'Smash factor: ' + c.smash.toFixed(2); }
   if (f1.textContent !== t1) f1.textContent = t1; if (f2.textContent !== t2) f2.textContent = t2;
   if (f1.className !== cls) f1.className = cls;
 }
@@ -9267,12 +9270,12 @@ function updateHUD() {
   // while the ball is moving it's still the stroke being played (and the holing stroke once it drops); at rest, the next one
   const sn = G.state === 'flight' || G.state === 'holed' ? Math.max(1, G.strokes) : G.strokes + 1;
   $('hl2').innerHTML = `Stroke ${Math.min(sn, def.par + 5)} <span class="lie" data-s="${G.surf}">${lieTxt}</span>`;
-  const d = distToPin(); $('dNum').textContent = d < 10 ? d.toFixed(1) : Math.round(d);
+  const d = distToPin(), du = fmtDistShort(d).split(' '); $('dNum').textContent = settings.yd ? du[0] : d < 10 ? d.toFixed(1) : Math.round(d); $('pinCard').querySelector('small').textContent = settings.yd ? du[1] : 'm';
   const dh = G.C.cup.y - G.ball.y;
-  $('dSub').textContent = c.type === 'putter' && Math.abs(puttEquiv() - d) > .4 ? `Plays ${puttEquiv().toFixed(1)} m` : Math.abs(dh) > .5 ? `${dh > 0 ? '↑' : '↓'} ${Math.abs(dh).toFixed(1)} m` : 'To pin';
+  $('dSub').textContent = c.type === 'putter' && Math.abs(puttEquiv() - d) > .4 ? `Plays ${fmtDistShort(puttEquiv())}` : Math.abs(dh) > .5 ? `${dh > 0 ? '↑' : '↓'} ${fmtDistShort(Math.abs(dh))}` : 'To pin';
   $('windTxt').textContent = Math.round(Math.hypot(G.wind[0], G.wind[1]) * 3.6);
   $('clubName').textContent = c.type === 'putter' ? 'Putter' : c.name.replace('Pitching wedge', 'P-wedge').replace('Sand wedge', 'S-wedge').replace('Lob wedge', 'L-wedge').replace('Gap wedge', 'G-wedge');
-  $('clubSub').textContent = c.type === 'putter' ? `↻ ${G.puttRange} m` : `${Math.round(G.carry || c.carry)} m`;
+  $('clubSub').textContent = c.type === 'putter' ? `↻ ${fmtDistShort(G.puttRange)}` : `${fmtLong(G.carry || c.carry)}`;
   $('tTitle').textContent = c.type === 'putter' ? 'Tempo (2:1)' : 'Tempo (3:1)';
   const tp = totalToPar(), ps = $('pScore'), pn = playerName();
   if ($('pName').textContent !== pn) $('pName').textContent = pn;
@@ -9325,7 +9328,7 @@ function updatePinTag() {
   const clash = !!rr && tx + hw > rr.left && tx - hw < rr.right && ty + 6 > rr.top && ty - tag.offsetHeight - 4 < rr.bottom;
   tag.style.opacity = vis && !clash && ty > hudBottom && distToPin() > 8 && G.state !== 'holed' ? 1 : 0;
   tag.style.transform = `translate(${tx}px, ${ty}px) translate(-50%,-100%)`;
-  const t = Math.round(distToPin()) + ' M'; if (tag.textContent !== t) tag.textContent = t;
+  const t = fmtLong(distToPin()).toUpperCase(); if (tag.textContent !== t) tag.textContent = t;
 }
 // in motion, any panel the ball passes behind turns see-through, so the ball never disappears under the HUD
 const _sb = new THREE.Vector3(); let _seeEls = null;
@@ -9357,7 +9360,7 @@ function updateBallTag() {
   // horizontal distance from the strike point, same measure as res.carry / res.total
   const d = Math.round(Math.hypot(b.x - G.prev.x, b.z - G.prev.z));
   if (d !== UI.btD) { UI.btD = d; $('btD').textContent = d; }
-  if (r.land && G.playT >= r.land.t && !tag.classList.contains('landed')) { $('btC').textContent = `Carry ${Math.round(r.carry)} m`; tag.classList.add('landed'); }
+  if (r.land && G.playT >= r.land.t && !tag.classList.contains('landed')) { $('btC').textContent = `Carry ${fmtLong(r.carry)}`; tag.classList.add('landed'); }
   W.cam.updateMatrixWorld();
   _bt.copy(b).project(W.cam);
   if (_bt.z > 1) { UI.btOn = false; tag.classList.remove('on'); return; }
@@ -9396,7 +9399,7 @@ function openBag() {
   $('bagLie').textContent = 'From the ' + (G.teed ? 'tee' : SURF[G.surf].name.toLowerCase()) + ' · ' + Math.round(distToPin()) + ' m to pin';
   CLUBS.forEach((c, i) => {
     const bt = document.createElement('button'); if (i === G.club) bt.className = 'sel';
-    bt.innerHTML = `<div class="bi">${({ Dr: 'DR', Pt: 'PUTT' })[c.id] || c.id}</div><div class="bn">${c.name}</div><div class="bd">${c.type === 'putter' ? 'On the green' : Math.round(c.carry) + ' m'}</div>${i === G.suggested ? '<span class="tip">TIP</span>' : ''}`;
+    bt.innerHTML = `<div class="bi">${({ Dr: 'DR', Pt: 'PUTT' })[c.id] || c.id}</div><div class="bn">${c.name}</div><div class="bd">${c.type === 'putter' ? 'On the green' : fmtLong(c.carry)}</div>${i === G.suggested ? '<span class="tip">TIP</span>' : ''}`;
     bt.onclick = () => { G.club = i; if (c.type === 'putter') pickPuttRange(); G.carryKey = ''; updateAim(true); closeSheets(); SFX.blip(); if (W.slope) W.slope.mesh.visible = c.type === 'putter' && (G.surf === S.GREEN || G.surf === S.FRINGE); if (W.flag) { W.flag.visible = W.pole.visible = c.type !== 'putter'; } };
     b.appendChild(bt);
   });
@@ -9415,6 +9418,7 @@ function syncMenu() {
   { const hc = $('mHomeC'), hr = $('mHomeR'); if (hc && document.activeElement !== hc) hc.value = settings.homeC || ''; if (hr && document.activeElement !== hr) hr.value = settings.homeR || ''; }
   document.querySelectorAll('#segHand button').forEach(b => b.classList.toggle('sel', +b.dataset.v === settings.hand));
   document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.sound ? 1 : 0)));
+  document.querySelectorAll('#segUnit button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.yd ? 1 : 0)));
   document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
   document.querySelectorAll('#segSwap button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.swap ? 1 : 0)));
   document.querySelectorAll('#segGfx button').forEach(b => b.classList.toggle('sel', b.dataset.v === (settings.gfx || 'auto')));
@@ -9531,7 +9535,7 @@ function showBest() { const ni = $('nameIn'); if (ni && document.activeElement !
 function showIntro() {
   const C = G.C, d = C.def;
   $('icK').textContent = `Hole ${G.hole + 1} of ${HOLE_DEFS.length} · HCP ${d.hcp}`; $('icN').textContent = d.name; $('icI').textContent = d.inspo || '';
-  $('icPar').textContent = d.par; $('icLen').textContent = Math.round(C.length) + ' m'; $('icWind').textContent = Math.round(Math.hypot(G.wind[0], G.wind[1]) * 3.6) + ' km/h'; $('icWx').textContent = WX.name; $('icWx').title = WX.note;
+  $('icPar').textContent = d.par; $('icLen').textContent = fmtLong(C.length); $('icWind').textContent = Math.round(Math.hypot(G.wind[0], G.wind[1]) * 3.6) + ' km/h'; $('icWx').textContent = WX.name; $('icWx').title = WX.note;
   drawPlan($('introMap'), { line: true });
   $('intro').classList.add('on');
 }
@@ -9642,7 +9646,7 @@ let mapFit = null;
 function mapOpts() { const live = G.state === 'flight' || G.state === 'settle' || G.state === 'holed'; return live ? { pad: 10, ball: { x: W.ball.position.x, z: W.ball.position.z } } : { aim: true, pad: 10 }; }
 function openMap() {
   if (!G.C || !G.C.plan || (G.state !== 'address' && G.state !== 'flight' && G.state !== 'settle' && G.state !== 'holed')) return;
-  $('mapTitle').textContent = `Hole ${G.hole + 1} · ${G.C.def.name}`; $('mapInfo').textContent = `Par ${G.C.def.par} · ${Math.round(Math.hypot(G.C.cup.x - W.ball.position.x, G.C.cup.z - W.ball.position.z))} m to pin`;
+  $('mapTitle').textContent = `Hole ${G.hole + 1} · ${G.C.def.name}`; $('mapInfo').textContent = `Par ${G.C.def.par} · ${fmtLong(Math.hypot(G.C.cup.x - W.ball.position.x, G.C.cup.z - W.ball.position.z))} to pin`;
   openSheet('mapSheet');
   // draw once the sheet is laid out (on a slow phone the first frame can come before it has a size)
   let tries = 0; const go = () => { const r = $('mapCv').getBoundingClientRect(); if ((!r.width || !r.height) && tries++ < 30) { requestAnimationFrame(go); return; } mapFit = drawPlan($('mapCv'), mapOpts()); mapLast = performance.now(); mapMode = mapOpts().aim ? 'aim' : 'live'; };
@@ -10014,14 +10018,14 @@ const GH_REPO = 'nephlonor/SweetSpot';
 const GH_POST_KEY = ['Nnpt', 'VTZZcUtENzI0TVZGRWY4RmQw', 'QVBmeDF4R0ljTXVvM0VSa2RG', 'ODY0OUsyWmVaSlZ6SXJ0c2FL', 'SEEwcjVtdHN4NFdqQUNnX25L', 'Z2l0aHViX3BhdF8xMUEyNU1J']; // e.g. the base64 of the token, reversed, in a few strings
 const ghKey = () => { try { return GH_POST_KEY.length ? atob(GH_POST_KEY.slice().reverse().join('')) : ''; } catch (e) { return ''; } };
 function deviceId() { try { let d = localStorage.getItem('ssg-dev'); if (!d) { d = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('ssg-dev', d); } return d; } catch (e) { return 'x'; } }
-function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId(), pf: profileCompact(true), bs: r.bs || [], h: r.h || null, pt: r.pt || null }; }
+function roundPayload(r) { return { v: 1, course: COURSES[r.course] ? r.course : COURSE.key, name: r.name, strokes: r.strokes, toPar: r.toPar, holes: r.holes || HOLE_DEFS.length, at: r.at, dev: deviceId(), pc: r.pc ? 1 : 0, pf: profileCompact(true), bs: r.bs || [], h: r.h || null, pt: r.pt || null }; }
 // returns true when the round was filed (no account needed)
 async function postAuto(r) {
   const k = ghKey(); if (!k) return false;
   const CO = COURSES[r.course] || COURSE; // the round's own course (a retry may run while another course is in play)
   const markPosted = () => { const loc = localRounds(CO.key), q = loc.find(x => x.at === r.at && x.name === r.name); if (q) { q.posted = true; try { localStorage.setItem(CO.board, JSON.stringify(sortRounds(loc).slice(0, 60))); } catch (e) { } } };
   // one player, one entry per course (the best): a round that doesn't beat the player's score on the world board is not posted
-  const wb = Board.gh[CO.key]; if (wb && wb.some(x => (x.by === dlMe() || x.name.toLowerCase() === String(r.name).toLowerCase()) && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes)))) { markPosted(); refreshBoards(); return true; }
+  const wb = Board.gh[CO.key]; if (wb && wb.some(x => !x.pc === !r.pc && (x.by === dlMe() || x.name.toLowerCase() === String(r.name).toLowerCase()) && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes)))) { markPosted(); refreshBoards(); return true; }
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_REPO}/issues`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + k, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: `[score] ${r.name} ${fmtToPar(r.toPar)} (${r.strokes}) ${CO.short}`, body: 'Posted from Sweet Spot Golf.\n\n```json\n' + JSON.stringify(roundPayload(r)) + '\n```\n' }) });
@@ -10073,21 +10077,22 @@ async function loadWorld(force, key) {
   key = key || COURSE.key; if (!force && Board.ghAt[key] && Date.now() - Board.ghAt[key] < 60000) return; Board.ghAt[key] = Date.now();
   try {
     const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${key}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); if (!r.ok) throw new Error('http');
-    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18, n: Number.isFinite(x.n) && x.n > 1 ? Math.min(999, x.n | 0) : 1, by: typeof x.by === 'string' ? x.by : '', bs: Array.isArray(x.bs) ? x.bs : [], h: Array.isArray(x.h) && x.h.length === 18 ? x.h : null, pt: Array.isArray(x.pt) && x.pt.length === 18 ? x.pt : null })) : [];
+    const a = await r.json(); Board.gh[key] = Array.isArray(a) ? a.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.strokes) && Number.isFinite(x.toPar) && Number.isFinite(x.at) && x.holes === 18).map(x => ({ name: String(x.name).slice(0, 14), strokes: x.strokes, toPar: x.toPar, at: x.at, holes: 18, n: Number.isFinite(x.n) && x.n > 1 ? Math.min(999, x.n | 0) : 1, by: typeof x.by === 'string' ? x.by : '', bs: Array.isArray(x.bs) ? x.bs : [], h: Array.isArray(x.h) && x.h.length === 18 ? x.h : null, pt: Array.isArray(x.pt) && x.pt.length === 18 ? x.pt : null, pc: x.pc ? 1 : 0 })) : [];
   } catch (e) { if (!Board.gh[key]) Board.gh[key] = null; }
   refreshBoards();
 }
 const roundKey = r => r.name + '|' + r.at;
 // the world rows: the file's, plus my own rounds I have just posted that the workflow has not added yet
+const boardPC = () => Board.pc == null ? isPC() : Board.pc; // which world board is shown: mobile or computer
 function worldRows(key) {
-  key = key || COURSE.key; const raw = Board.gh[key]; if (!raw) return null; const me = dlMe(), nm = cleanName(settings.name);
+  key = key || COURSE.key; const pc = boardPC(); const raw = Board.gh[key] && Board.gh[key].filter(x => !x.pc === !pc); if (!raw) return null; const me = dlMe(), nm = cleanName(settings.name);
   // my own rows carry my current name at once, before the bot has renamed them in the file
   const g = nm ? raw.map(x => x.by === me && x.name !== nm ? Object.assign({}, x, { name: nm }) : x) : raw;
   const have = new Set(g.map(roundKey)), mineAt = new Set(g.filter(x => x.by === me).map(x => x.at));
   // only a player's best is listed: a round that doesn't beat their entry is not waiting to appear
   const same = r => g.some(x => (x.by === me || String(x.name).toLowerCase() === String(r.name).toLowerCase()) && (x.toPar < r.toPar || (x.toPar === r.toPar && x.strokes <= r.strokes)));
   const mine = new Set(), out = [];
-  for (const r of localRounds(key).filter(r => r.posted && !have.has(roundKey(r)) && !mineAt.has(r.at) && !same(r))) { const k = String(r.name).toLowerCase() + '|' + r.strokes; if (mine.has(k)) continue; mine.add(k); out.push(Object.assign({}, r, { pending: true, by: me })); }
+  for (const r of localRounds(key).filter(r => !r.pc === !pc && r.posted && !have.has(roundKey(r)) && !mineAt.has(r.at) && !same(r))) { const k = String(r.name).toLowerCase() + '|' + r.strokes; if (mine.has(k)) continue; mine.add(k); out.push(Object.assign({}, r, { pending: true, by: me })); }
   return g.concat(out);
 }
 function postUrl(r) {
@@ -10425,6 +10430,11 @@ function fillBoard(el, limit, key, pick) {
     head.appendChild(tabs);
   }
   el.appendChild(head);
+  if (tab === 'world') {
+    const pt = document.createElement('div'); pt.className = 'tabs'; pt.style.margin = '0 0 8px';
+    for (const [k, t] of [[0, 'Mobile'], [1, 'Computer']]) { const b = document.createElement('button'); b.textContent = t; if (k === +boardPC()) b.className = 'sel'; b.onclick = () => { Board.pc = !!k; refreshBoards(); }; pt.appendChild(b); }
+    el.appendChild(pt);
+  }
   if (own && Board.post && tab !== 'all') {
     const ps = document.createElement('div'); ps.className = 'lbnote'; ps.style.margin = '0 0 8px';
     ps.textContent = Board.post.st === 'posting' ? 'Posting your round to the world board…' : Board.post.st === 'posted' ? 'Your round is posted · it shows on the world board within a minute' : "Your round couldn't be posted yet · it is kept on this device";
@@ -10648,6 +10658,7 @@ function fmtLeft(sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec % 3
 const DL = { rows: {}, files: {}, fileAt: {}, me: null, pub: null, tab: 'today', t: 0, day: dayId(), subs: '', players: null, playersAt: 0 };
 // my hash, the same one the workflow files my results under
 (async () => { try { const d = new TextEncoder().encode(String(deviceId()).toLowerCase()), h = await crypto.subtle.digest('SHA-1', d); DL.me = [...new Uint8Array(h)].slice(0, 4).map(b => b.toString(16).padStart(2, '0')).join(''); } catch (e) { DL.me = 'x' + String(deviceId()).slice(0, 7); } })();
+const isPC = () => !(window.matchMedia && matchMedia('(pointer: coarse)').matches); // a computer: mouse or trackpad, its own world boards
 const dlMe = () => DL.me || 'x' + String(deviceId()).slice(0, 7);
 // this device's results (the last few days)
 function dlRecs() { try { const a = JSON.parse(localStorage.getItem('ssg-daily') || '{}'); return a && typeof a === 'object' ? a : {}; } catch (e) { return {}; } }
@@ -10802,6 +10813,8 @@ function dlTrophyCheck() {
     const st = dlStanding(day, 18, r.course).filter(x => x.fin); r.trophyChecked = true; dlSet(r);
     if (st.length && st[0].e.mine && !ST.trophies.some(t => t.day === day)) { ST.trophies.push({ day, course: r.course, tp: r.tp, s: r.strokes, n: st.length }); saveStats(); got = r; }
   }
+  // a merged account: a day won on the partner device is a trophy here too (the closed days' winners come with daily-index.json)
+  for (const x of DL.index || []) if (x && x.wb && x.d < today && (x.wb === dlMe() || x.wb === settings.mgP) && COURSES[x.c] && !ST.trophies.some(t => t.day === x.d)) { ST.trophies.push({ day: x.d, course: x.c, tp: x.t, s: x.t + (COURSES[x.c].defs || []).reduce((a, d) => a + d.par, 0), n: x.n }); ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1); saveStats(); }
   if (got && G.state === 'title') recordCard('Daily champion', 'You won the daily challenge', fmtToPar(got.tp), COURSES[got.course].name, ['#fff3b0', '#ffd36a', '#e8a317', '#3a1d00']);
 }
 // results of the last day and a half that never reached the repository (no network): tried again at start
@@ -10930,7 +10943,7 @@ function fillArchive(el, add) {
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = fmt(x.d).split(' ').slice(1).join(' ');
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (COURSES[x.c] ? COURSES[x.c].short : x.c); const sm = document.createElement('small'); sm.textContent = `${fmt(x.d).split(' ')[0]} · ${x.n} player${x.n === 1 ? '' : 's'}${mine[x.d] && mine[x.d].status === 'done' ? ' · played' : ''}`; nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.t); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.w;
-    if (x.wb ? x.wb === dlMe() : String(x.w).toLowerCase() === cleanName(settings.name).toLowerCase()) sc.classList.add('ownName'); // my own win: the winner's name in gold
+    if (x.wb ? x.wb === dlMe() || (settings.mgP && x.wb === settings.mgP) : String(x.w).toLowerCase() === cleanName(settings.name).toLowerCase()) sc.classList.add('ownName'); // my own win: the winner's name in gold
     row.append(rk, nm, tp, sc); row.onclick = () => { DL.tab = 'day'; DL.arch = x.d; loadDailyFile(x.d); fillDaily(el); }; list.appendChild(row);
   });
 }
@@ -11195,6 +11208,7 @@ function initInput() {
   };
   $('mBoard').onclick = () => { closeSheets(true); openBoard(); };
   document.querySelectorAll('#segHand button').forEach(b => b.onclick = () => { settings.hand = +b.dataset.v; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
+  document.querySelectorAll('#segUnit button').forEach(b => b.onclick = () => { settings.yd = b.dataset.v === '1'; saveSettings(); syncMenu(); if (G.C) { G.carryKey = ''; updateAim(true); } });
   document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => { settings.sound = b.dataset.v === '1'; saveSettings(); syncMenu(); musicTick(); });
   document.querySelectorAll('#segSwap button').forEach(b => b.onclick = () => { settings.swap = b.dataset.v === '1'; saveSettings(); applySwap(); syncMenu(); });
   document.querySelectorAll('#segGfx button').forEach(b => b.onclick = () => { settings.gfx = b.dataset.v; if (b.dataset.v === 'auto') PERF.slow = false; saveSettings(); PERF.did = false; applyPerf(); syncMenu(); });
