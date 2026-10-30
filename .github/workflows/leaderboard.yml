@@ -256,14 +256,14 @@ jobs:
             const file = `leaderboard/${r.course}.json`; let rows = readJson(file, []);
             if (rows.some(x => x.name === name && x.at === r.at)) return finish(true, 'This round is already on the board.');
             // one player, one entry per course: their best score. A player is a name (any case) or a device id; a round that doesn't beat it is not listed.
-            const sameP = x => x.name.toLowerCase() === name.toLowerCase() || x.by === by, better = (p, q) => p.toPar < q.toPar || (p.toPar === q.toPar && p.strokes < q.strokes);
+            const sameP = x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && !x.pc === !r.pc, // (mobile and computer have separate boards) better = (p, q) => p.toPar < q.toPar || (p.toPar === q.toPar && p.strokes < q.strokes);
             const old = rows.filter(sameP), best = old.reduce((m, x) => !m || better(x, m) ? x : m, null);
             if (best && !better(r, best)) return finish(true, `Your best on the ${r.course} board stays ${best.toPar >= 0 ? '+' : ''}${best.toPar} (${best.strokes}): this round didn't beat it.`);
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
             if (rows.filter(x => x.at > Date.now() - 36e5).length >= 120) return finish(false, 'The board is busy; try again later.');
             const holes = ints(r.h, 1, 16) && r.h.reduce((a, b) => a + b, 0) === r.strokes ? r.h : null;
             rows = rows.filter(x => !sameP(x));
-            rows.push(Object.assign({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by }, holes ? { h: holes } : {}, holes && putts ? { pt: putts } : {}));
+            rows.push(Object.assign({ name, strokes: r.strokes, toPar: r.toPar, holes: 18, at: r.at, by }, r.pc ? { pc: 1 } : {}, holes ? { h: holes } : {}, holes && putts ? { pt: putts } : {}));
             rows.sort((a, b) => a.toPar - b.toPar || a.strokes - b.strokes || a.at - b.at); rows = rows.slice(0, 500);
             fs.writeFileSync(file, JSON.stringify(rows) + '\n');
             const rank = rows.findIndex(x => x.name === name && x.at === r.at) + 1;
