@@ -645,8 +645,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     </div>
     <div class="mgrp mlistg">
       <button class="mli" data-go="player"><i class="ic" data-ic="user"></i><span>Player &amp; golfer<small id="mvPlayer"></small></span><i class="ic chev" data-ic="chev"></i></button>
-      <button class="mli" data-go="audio"><i class="ic" data-ic="sound"></i><span>Sound &amp; music<small id="mvAudio"></small></span><i class="ic chev" data-ic="chev"></i></button>
-      <button class="mli" data-go="gfx"><i class="ic" data-ic="chart"></i><span>Graphics<small id="mvGfx"></small></span><i class="ic chev" data-ic="chev"></i></button>
+      <button class="mli" data-go="settings"><i class="ic" data-ic="sound"></i><span>Settings<small id="mvSettings"></small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="live"><i class="ic" data-ic="users"></i><span>Live play<small id="mvLive"></small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="practice"><i class="ic" data-ic="target"></i><span>Practice<small>Any hole, nothing scored</small></span><i class="ic chev" data-ic="chev"></i></button>
       <button class="mli" data-go="feature"><i class="ic" data-ic="bulb"></i><span>Request a feature<small>Vote on ideas, send your own</small></span><i class="ic chev" data-ic="chev"></i></button>
@@ -666,12 +665,10 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
     <div class="mnote">Standard: tempo (power) with the left thumb, club face with the right. Swapped puts the club face on the left and the power on the right.</div>
     <div class="mnote">Your name shows on the leaderboards and to the players you meet live.</div>
   </section>
-  <section class="mpg" data-pg="audio">
+  <section class="mpg" data-pg="settings">
     <div class="mgrp"><div class="mrow">Sound effects<div class="seg" id="segSnd"><button data-v="1">On</button><button data-v="0">Off</button></div></div><div class="mrow">Distances<div class="seg" id="segUnit"><button data-v="0">Metres</button><button data-v="1">Yards · feet</button></div></div>
     <div class="mrow">Music<div class="seg" id="segMus"><button data-v="1">On</button><button data-v="0">Off</button></div></div></div>
     <div class="mnote">Each course has its own music: guitar and piano at Augusta, slow ambient pieces at Basel and Alsace, a folk air on the flute at Rothley Park, an Irish slow air on the tin whistle over the sea at St Patrick's.</div>
-  </section>
-  <section class="mpg" data-pg="gfx">
     <div class="mgrp"><div class="mrow">Graphics<div class="seg" id="segGfx"><button data-v="auto">Auto</button><button data-v="high">High</button><button data-v="saver">Saver</button></div></div></div>
     <div class="mnote">Auto picks Saver on slower phones, on low battery, or if the game stutters. Saver drops shadows and the depth blur, renders at a lower resolution and caps the frame rate at 30.</div>
   </section>
@@ -4028,7 +4025,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 22 };
+const APP_ITER = { courses: 9, n: 23 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -9422,7 +9419,6 @@ function syncMenu() {
   document.querySelectorAll('#segMus button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.music !== false ? 1 : 0)));
   document.querySelectorAll('#segSwap button').forEach(b => b.classList.toggle('sel', +b.dataset.v === (settings.swap ? 1 : 0)));
   document.querySelectorAll('#segGfx button').forEach(b => b.classList.toggle('sel', b.dataset.v === (settings.gfx || 'auto')));
-  { const g = $('mvGfx'); if (g) g.textContent = ({ auto: 'Auto', high: 'High', saver: 'Battery saver' })[settings.gfx || 'auto'] + (settings.gfx !== 'saver' && settings.gfx !== 'high' && PERF.lite ? ' · Saver on' : ''); }
   mpSync();
   { const mi = $('mRoundInfo'); if (mi) {
     const lv = levelOf(ST.xp);
@@ -9431,7 +9427,7 @@ function syncMenu() {
     $('mLvl').textContent = lv.name + ' · level ' + lv.n;
     if ($('menuSheet').querySelector('.mpg.on[data-pg="home"]')) $('mSub').textContent = playerName() + ' · ' + lv.name;
     else $('mSub').textContent = '';
-    $('mvPlayer').textContent = playerName() + ' · ' + hand; $('mvAudio').textContent = 'Sound ' + (settings.sound ? 'on' : 'off') + ' · Music ' + (settings.music !== false ? 'on' : 'off');
+    $('mvPlayer').textContent = playerName() + ' · ' + hand; $('mvSettings').textContent = 'Sound ' + (settings.sound ? 'on' : 'off') + ' · Music ' + (settings.music !== false ? 'on' : 'off') + ' · Graphics ' + ({ auto: 'Auto', high: 'High', saver: 'Battery saver' })[settings.gfx || 'auto'] + (settings.gfx !== 'saver' && settings.gfx !== 'high' && PERF.lite ? ' · Saver on' : '');
     const n = [...MP.peers.values()].filter(pr => Date.now() - pr.at < 3 * 36e5).length;
     $('mvLive').textContent = MP.st === 'on' ? (MP.room === 'LDAILY' ? 'Daily lobby' : mpIsLobby(MP.room) ? 'Public lobby' : 'Room ' + MP.room) + ' · ' + n + ' online' : MP.st === 'error' ? 'Offline' : 'Connecting…';
   } }
@@ -10616,7 +10612,7 @@ async function frSend() {
   FR.sent.push({ t, d, at: Date.now() }); $('frT').value = ''; $('frD').value = ''; $('frNote').textContent = 'Thanks! Your request is on its way.'; frRender();
   setTimeout(() => loadFeatures(true).then(frRender), 30000); setTimeout(() => loadFeatures(true).then(frRender), 75000);
 }
-const MENU_PAGES = { player: 'Player & golfer', audio: 'Sound & music', gfx: 'Graphics', live: 'Live play', practice: 'Practice', feature: 'Feature requests' };
+const MENU_PAGES = { player: 'Player & golfer', settings: 'Settings', live: 'Live play', practice: 'Practice', feature: 'Feature requests' };
 function menuPage(n) {
   n = MENU_PAGES[n] ? n : 'home';
   document.querySelectorAll('#menuSheet .mpg').forEach(x => x.classList.toggle('on', x.dataset.pg === n));
