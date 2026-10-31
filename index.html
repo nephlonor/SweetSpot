@@ -8,9 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="Sweet Spot">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head><body>
-<style>#splash{position:fixed;inset:0;z-index:100;background:#e01c1e;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
-#splash>img{display:block;width:min(90vw,620px);height:auto;max-width:none}
-#splash>p{margin:0;font:italic 800 clamp(15px,4.4vw,22px)/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #14361c}
+<style>#splash{position:fixed;inset:0;z-index:100;background:#526e24;overflow:hidden;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
+#splash>img{position:absolute;left:0;top:0;width:100%;height:auto;max-width:none}
+@media (min-aspect-ratio:1440/2580){#splash>img{height:100%;object-fit:cover;object-position:50% 0}}
+#splash>p{position:absolute;left:0;right:0;bottom:calc(18vh + env(safe-area-inset-bottom));margin:0;text-align:center;font:italic 800 clamp(15px,4.4vw,22px)/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #14361c,0 0 10px rgba(0,0,0,.35)}
 #splash>p span{animation:splDot 1.2s infinite both}#splash>p span:nth-child(2){animation-delay:.2s}#splash>p span:nth-child(3){animation-delay:.4s}
 @keyframes splDot{0%,20%{opacity:0}40%,100%{opacity:1}}
 </style>
@@ -4025,7 +4026,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 31 };
+const APP_ITER = { courses: 9, n: 32 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
