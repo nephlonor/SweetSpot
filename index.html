@@ -8,15 +8,15 @@
 <meta name="apple-mobile-web-app-title" content="Sweet Spot">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head><body>
-<style>#splash{position:fixed;inset:0;z-index:100;background:#526e24;overflow:hidden;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
-#splash>img{position:absolute;left:0;top:0;width:100%;height:auto;max-width:none}
-@media (min-aspect-ratio:1440/2580){#splash>img{height:100%;object-fit:cover;object-position:50% 0}}
-#splash>p{position:absolute;left:0;right:0;bottom:calc(18vh + env(safe-area-inset-bottom));margin:0;text-align:center;font:italic 800 clamp(15px,4.4vw,22px)/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #14361c,0 0 10px rgba(0,0,0,.35)}
+<style>#splash{position:fixed;inset:0;z-index:100;background:#55802e;overflow:hidden;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
+#splash>.bg{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:50% 30%}
+#splash>.lg{position:absolute;left:50%;top:calc(10vh + env(safe-area-inset-top));width:min(88vw,50vh,540px);height:auto;max-width:none;transform:translateX(-50%);filter:drop-shadow(0 8px 18px rgba(0,0,0,.35))}
+#splash>p{position:absolute;left:0;right:0;bottom:calc(10vh + env(safe-area-inset-bottom));margin:0;text-align:center;font:italic 800 clamp(15px,4.4vw,22px)/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 #14361c,0 0 10px rgba(0,0,0,.35)}
 #splash>p span{animation:splDot 1.2s infinite both}#splash>p span:nth-child(2){animation-delay:.2s}#splash>p span:nth-child(3){animation-delay:.4s}
 @keyframes splDot{0%,20%{opacity:0}40%,100%{opacity:1}}
 </style>
-<div id="splash"><img src="splash.jpg" alt="Sweet Spot Golf"><p>Loading<span>.</span><span>.</span><span>.</span></p></div>
-<script>window.__splashT0=Date.now();setTimeout(function(){var e=document.getElementById('splash');if(e){e.classList.add('off');setTimeout(function(){e.remove()},900)}},12000)</script>
+<div id="splash"><img class="bg" src="splash.jpg" alt=""><img class="lg" src="splash-logo.webp" alt="Sweet Spot Golf"><p>Loading<span>.</span><span>.</span><span>.</span></p></div>
+<script>window.__splashT0=Date.now();window.__splashCb=[];window.__splashOff=function(){var e=document.getElementById('splash'),c=window.__splashCb;if(!c)return;window.__splashCb=null;if(e){e.classList.add('off');setTimeout(function(){e.remove()},900)}c.forEach(function(f){try{f()}catch(x){}})};setTimeout(window.__splashOff,12000)</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@500;600;700&display=swap">
@@ -537,11 +537,8 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 .howVid{display:flex;justify-content:center;margin:0 0 10px}
 .howVid video{max-height:52vh;max-width:100%;border-radius:4px;background:#0b1f12;display:block}
 #vidIntro{z-index:60;background:#0b1f12;transition:opacity .5s var(--ease)}
-#vidIntro #vidLogo{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;border-radius:30px;box-shadow:0 10px 40px rgba(0,0,0,.45);opacity:0;transition:opacity .6s ease}
-#vidIntro.logo #vidLogo{opacity:1}
 #vidIntro video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0b1f12;opacity:0;transition:opacity .7s ease}
 #vidIntro.play video{opacity:1}
-#vidIntro.play #vidLogo{opacity:0}
 #vidSkip,#vidSnd{position:absolute;z-index:2;border:0;border-radius:4px;padding:9px 16px;font:600 14px var(--cond);letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,var(--wk));background:rgba(14,40,22,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.3*var(--wk)))}
 #vidSkip{top:calc(env(safe-area-inset-top,0px) + 14px);right:14px}
 #vidSnd{bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:50%;transform:translateX(-50%);display:none}
@@ -619,7 +616,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="layer" id="intro"><div class="card icard"><canvas id="introMap" width="172" height="288"></canvas><div class="ic-b"><div><div class="ic-k" id="icK">Hole 1 of 3</div><div class="ic-n" id="icN">Headland</div><div class="ic-i" id="icI"></div><div class="ic-f"><div>Par<b id="icPar">4</b></div><div>Length<b id="icLen">357 m</b></div><div>Wind<b id="icWind">8 km/h</b></div><div>Fairway<b id="icWx">Fine</b></div></div></div><button class="btn ic-go" id="icGo">Play hole</button></div></div></div>
 <div class="layer" id="pbNote" role="dialog" aria-live="polite"><div class="card ncard"><div class="nk" id="pbNoteK">New course</div><div class="nt">New course &middot; work in progress</div><div class="nb">This course is new and still being built &ndash; but you can already play it.</div><button class="btn" id="pbNoteOk" type="button">Let's play</button></div></div>
 <div class="layer" id="done"><div class="card dcard"><div class="d1" id="d1">Birdie</div><div class="d2" id="d2">Hole 1 · 3 strokes · Par 4</div><div class="dstats" id="dstats"></div><button class="btn" id="dNext" style="width:100%">Next hole</button><button class="mbtn dark" id="dReplay" style="width:100%;margin-top:8px">Replay</button></div></div>
-<div class="layer" id="vidIntro" aria-label="Intro video"><img id="vidLogo" src="icon-192.png" alt="Sweet Spot Golf"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
+<div class="layer" id="vidIntro" aria-label="Intro video"><video id="introVid" src="swing-explainer.mp4" poster="swing-poster.jpg" playsinline webkit-playsinline preload="auto"></video><button id="vidSkip" type="button">Skip</button><button id="vidSnd" type="button">Tap for sound</button></div>
 <script>try{if(localStorage.getItem('ssg-intro-seen')!=='1')document.getElementById('vidIntro').classList.add('on')}catch(e){}</script>
 <div class="layer" id="featAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Shape the game</div><div class="ht">Request a feature</div><div class="hb">Missing something? Send in your ideas and vote on the ones from other players with a thumbs up or down. The most wanted ones get built, and finished requests move to the archive.</div><div class="hbtns"><button class="btn alt" id="faNo" type="button">Not now</button><button class="btn" id="faOk" type="button">See requests</button></div></div></div>
 <div class="layer" id="neonAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Night round</div><div class="ht">Pick your neon ball</div><div class="hb">The floodlights are on. Choose the colour your ball glows before you take the first shot.</div><div class="neonOpts"><button class="neonO" type="button" data-i="0" style="--nc:#ff2fa0"><i></i>Pink</button><button class="neonO" type="button" data-i="1" style="--nc:#6dff2e"><i></i>Lime</button><button class="neonO" type="button" data-i="2" style="--nc:#2ef2ff"><i></i>Cyan</button><button class="neonO" type="button" data-i="3" style="--nc:#ffb020"><i></i>Amber</button></div></div></div>
@@ -4026,7 +4023,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 32 };
+const APP_ITER = { courses: 9, n: 33 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -11316,23 +11313,22 @@ function showTitleHole() {
   G.state = 'title'; W.aim.visible = W.ring.visible = false; W.peg.visible = false;
   HOLE_LEN[0] = Math.round(G.C.length);
 }
-// first launch: the logo fades in, then the how-to-play video fills the screen; afterwards the start screen shows. (Played once per device.)
+// first launch: once the loading page fades out, the how-to-play video fills the screen; afterwards the start screen shows. (Played once per device.)
 function initIntroVideo() {
   const L = $('vidIntro'), V = $('introVid'); if (!L || !L.classList.contains('on')) return;
   let done = false, started = false;
   const mark = () => { try { localStorage.setItem('ssg-intro-seen', '1'); } catch (e) { } };
-  const finish = () => { if (done) return; done = true; mark(); try { V.pause(); } catch (e) { } L.classList.remove('on', 'play', 'logo'); $('vidSnd').style.display = 'none'; setTimeout(() => { try { V.removeAttribute('src'); V.load(); } catch (e) { } }, 700); };
+  const finish = () => { if (done) return; done = true; mark(); try { V.pause(); } catch (e) { } L.classList.remove('on', 'play'); $('vidSnd').style.display = 'none'; setTimeout(() => { try { V.removeAttribute('src'); V.load(); } catch (e) { } }, 700); };
   $('vidSkip').onclick = finish; V.addEventListener('ended', finish); V.addEventListener('error', finish);
   $('vidSnd').onclick = () => { V.muted = false; $('vidSnd').style.display = 'none'; };
   V.addEventListener('playing', () => { if (!started) { started = true; mark(); L.classList.add('play'); } });
-  requestAnimationFrame(() => L.classList.add('logo'));
-  setTimeout(() => {
+  afterSplash(() => {
     if (done) return;
     V.muted = false;
     const pr = V.play();
     // browsers block sound before a first tap: play muted instead and offer the sound
     if (pr && pr.catch) pr.catch(() => { if (done) return; V.muted = true; const p2 = V.play(); if (p2 && p2.catch) p2.catch(finish); $('vidSnd').style.display = 'block'; });
-  }, 1500);
+  });
 }
 function boot(data) {
   calibrateClubs();
@@ -11351,10 +11347,9 @@ function boot(data) {
   const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]) : Promise.resolve();
   fonts.then(() => requestAnimationFrame(() => requestAnimationFrame(splashHide)));
 }
-function splashHide() {
-  const el = document.getElementById('splash'); if (!el || el._going) return; el._going = true;
-  setTimeout(() => { el.classList.add('off'); setTimeout(() => el.remove(), 900); }, Math.max(0, 1000 - (Date.now() - (window.__splashT0 || 0))));
-}
+function splashHide() { setTimeout(() => window.__splashOff && window.__splashOff(), Math.max(0, 1000 - (Date.now() - (window.__splashT0 || 0)))); }
+// runs fn once the loading page starts fading out (right away if it is already gone)
+function afterSplash(fn) { if (window.__splashCb) window.__splashCb.push(fn); else fn(); }
 // Updates: GitHub Pages lets browsers keep the page for 10 minutes, and a home-screen app much longer. The deploy stamps BUILD and
 // writes version.txt; when the two differ the page reloads itself through a fresh URL.
 const BUILD = '__BUILD__';

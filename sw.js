@@ -1,6 +1,6 @@
 // Offline cache. __BUILD__ is stamped at deploy time.
 const V = '__BUILD__', SHELL = 'ssg-shell-' + V, LIB = 'ssg-lib';
-const PRE = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'swing-poster.jpg', 'splash.jpg', 'splash-hero.webp', 'logo.png'];
+const PRE = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'swing-poster.jpg', 'splash.jpg', 'splash-logo.webp', 'logo.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(PRE)).then(() => self.skipWaiting()));
 });
