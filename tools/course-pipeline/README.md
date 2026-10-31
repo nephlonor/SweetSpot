@@ -18,6 +18,7 @@ The method, its checks and its pitfalls are in **[docs/NEW_COURSE_GUIDE.md](../.
   - **Fetch:** `dl.sh` (the LAZ tiles; rockyweb throttles with HTTP 429 and wants a browser User-Agent, so it resumes with retries), `parse.py` (OSM), `gm.py` / `gme.py` (imagery).
   - **Ground and canopy:** `lidar.py` (LAZ tiles into 1 m grids), `mkgrids.py` (ground from class 2, canopy = surface minus ground), `bld2.py` (houses: flat-roofed, compact canopy blobs fitted with minimum rectangles).
   - **Select and build:** `prep.py`, `build.py` (the tee goes back along the first leg to the card's length; a 9 m pad is mown where the Black tee is on no traced tee box). The desert palette, the piñon and juniper, the soundscape and the 8-course daily rotation are in `index.html`.
+- `westminster/` and `landmand/` share one set of scripts; only `cfg.py` differs (origin, grid, 3DEP project, scorecard). Order: `parse.py` (OSM, env `LAT0 LON0 CNAME`), `ept.py`, `chm.py`, `gnd.py`, `mkgrids.py`, `gme.py`, `prep.py` (features, tees to the card, the boundary as the playing corridor), `build.py`.
 - `check.sh` runs the checks every edit to `index.html` needs.
 - `augusta-build.py`, `ept.py`, `chm.py`, `dem.py` are the US LiDAR route (USGS 3DEP).
 - `tests/` holds the headless Playwright checks:
