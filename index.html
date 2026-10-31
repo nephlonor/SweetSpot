@@ -9,9 +9,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head><body>
 <style>#splash{position:fixed;inset:0;z-index:100;background:#1d3a22;overflow:hidden;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
-#splash>img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:50% 0}
+#splash{--bw:max(100vw,55.8vh);--bh:max(100vh,179.1vw);--w:min(94vw,calc(var(--bw)*.917),72vh,600px)}
+#splash>img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:50% 0;filter:blur(2px);transform:scale(1.02)}
+#splash .hero{position:absolute;z-index:1;left:50%;width:var(--w);top:max(calc(env(safe-area-inset-top,0px) + 12px),min(calc(var(--bh)*.116),calc(50vh - var(--w)*.452 - 4vh)));transform:translateX(-50%)}
+#splash .hero:before{content:"";position:absolute;left:-12%;right:-12%;top:48%;bottom:-18%;background:radial-gradient(closest-side,rgba(165,235,95,.5),rgba(165,235,95,0))}
+#splash .hero img{position:relative;display:block;width:100%;height:auto;filter:drop-shadow(0 12px 18px rgba(10,30,10,.35))}
+#splash i{position:absolute;z-index:1;left:0;right:0;bottom:calc(8% + env(safe-area-inset-bottom,0px));text-align:center;font:600 13px/1 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.75);font-style:normal;animation:spl 1.4s ease-in-out infinite}@keyframes spl{50%{opacity:.35}}
 </style>
-<div id="splash"><img src="splash.jpg" alt="Sweet Spot Golf"></div>
+<div id="splash"><img src="splash.jpg" alt=""><div class="hero"><img src="splash-hero.webp" alt="Sweet Spot Golf"></div><i>Loading</i></div>
 <script>window.__splashT0=Date.now();setTimeout(function(){var e=document.getElementById('splash');if(e){e.classList.add('off');setTimeout(function(){e.remove()},900)}},12000)</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4022,7 +4027,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 28 };
+const APP_ITER = { courses: 9, n: 29 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
