@@ -66,7 +66,7 @@ for ref, L in HL.items():
         sh = [p_ for p_ in opts if hl(p_) <= tgt]
         if sh: tee = max(sh, key=hl)
     short = tgt - hl(tee)
-    if short > 1.5:
+    if short > 1.5 and ref not in TEE_BOX:   # (a tee placed by hand stays where it was put)
         ux, uy = tee[0]-nxp[0], tee[1]-nxp[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul; tee = (tee[0] + ux*short, tee[1] + uy*short)
     L[0] = [tee[0], tee[1]]
     print(ref, 'par', CARD[ref][0], 'tee', [round(v) for v in tee], 'length', round(plen(L)), 'card', round(tgt), 'extended %d m' % round(short) if short > 1.5 else '')
