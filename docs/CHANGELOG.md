@@ -2,6 +2,8 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 9.30: Neues Titel-Logo (`logo.png`, roter Hintergrund freigestellt, 1200×451 RGBA).
+
 ## Stand bis Build 9.17 (aus handoff.md)
 
 
