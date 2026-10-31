@@ -4076,7 +4076,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 36 };
+const APP_ITER = { courses: 9, n: 37 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7524,13 +7524,43 @@ function ambFiddle(a, m, t, dur, v) { // a fiddle, played softly: a bowed string
   o.connect(g); o2.connect(g); g.connect(lp).connect(pk).connect(MUS.bus);
   for (const x of [o, o2, vib]) { x.start(t); x.stop(t + L + .2); }
 }
-function ambHarmonica(a, m, t, dur, v) { // a harmonica: a reedy square-ish tone, a breathy onset, a slow wide waver
+function ambHarmonica(a, m, t, dur, v, bend) { // a harmonica: a reedy square-ish tone, a breathy onset, a slow wide waver; bend: the note drawn up into from a semitone flat, the plains-blues way
   const f = mHz(m), o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(), bp = a.createBiquadFilter(), vib = a.createOscillator(), vg = a.createGain();
   o.type = 'square'; o.frequency.value = f; o2.type = 'triangle'; o2.frequency.value = f * 2.003; bp.type = 'lowpass'; bp.frequency.value = 1800; bp.Q.value = 1.6;
+  if (bend) for (const [x, k] of [[o, 1], [o2, 2.003]]) { x.frequency.setValueAtTime(f * k * .944, t); x.frequency.linearRampToValueAtTime(f * k * .985, t + .12); x.frequency.linearRampToValueAtTime(f * k, t + .26); }
   vib.frequency.value = 4.2 + Math.random() * .5; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * .011, t + Math.min(1, dur * .6)); vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
   const L = Math.max(.25, dur); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .06); g.gain.setValueAtTime(v * .8, t + L * .8); g.gain.linearRampToValueAtTime(0, t + L + .2);
   o.connect(g); o2.connect(g); g.connect(bp).connect(MUS.bus);
   for (const x of [o, o2, vib]) { x.start(t); x.stop(t + L + .25); }
+}
+function ambBanjo(a, m, t, v) { // a clawhammer banjo string: a Karplus-Strong pluck made bright and short (the drum head rings, then chokes), a twangy peak near 1.4 kHz
+  const s = a.createBufferSource(), g = a.createGain(), hp = a.createBiquadFilter(), pk = a.createBiquadFilter(); s.buffer = musKS(a, m);
+  hp.type = 'highpass'; hp.frequency.value = 220; pk.type = 'peaking'; pk.frequency.value = 1400; pk.Q.value = 1.4; pk.gain.value = 7;
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(v * .25, t + .18); g.gain.exponentialRampToValueAtTime(.0001, t + .9);
+  s.connect(hp).connect(pk).connect(g).connect(MUS.bus); s.start(t); s.stop(t + .95);
+}
+function ambGuitar(a, m, t, v, len) { // a flat-top acoustic guitar string: the Karplus-Strong pluck, warm and long, a little body boom
+  const s = a.createBufferSource(), g = a.createGain(), lp = a.createBiquadFilter(), pk = a.createBiquadFilter(); s.buffer = musKS(a, m);
+  lp.type = 'lowpass'; lp.frequency.value = 2600; pk.type = 'peaking'; pk.frequency.value = 110; pk.Q.value = .9; pk.gain.value = 4; const L = len || 2.4;
+  g.gain.setValueAtTime(v, t); g.gain.setValueAtTime(v, t + L * .6); g.gain.exponentialRampToValueAtTime(.0001, t + L);
+  s.connect(lp).connect(pk).connect(g).connect(MUS.bus); s.start(t); s.stop(t + L + .05);
+}
+function ambBass(a, m, t, v) { // an upright bass, plucked: a round low thump that dies in under a second
+  const o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = mHz(m); o2.type = 'sine'; o2.frequency.value = mHz(m) * 2;
+  lp.type = 'lowpass'; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(200, t + .5);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + .85);
+  const g2 = a.createGain(); g2.gain.value = .25; o.connect(lp); o2.connect(g2).connect(lp); lp.connect(g).connect(MUS.bus); for (const x of [o, o2]) { x.start(t); x.stop(t + .9); }
+}
+function ambTrainHorn(a, t) { // a freight train down in the Missouri valley, miles off: the five-chime air horn blowing for a crossing (long, long, short, long), dulled by the distance
+  const notes = [63, 66, 68, 71, 75], lp = a.createBiquadFilter(), out = a.createGain(); lp.type = 'lowpass'; lp.frequency.value = 1100; out.gain.value = .5; lp.connect(out).connect(MUS.bus);
+  let tt = t;
+  for (const d of [2.2, 2.2, .8, 3.4]) {
+    for (const m of notes) {
+      const o = a.createOscillator(), g = a.createGain(); o.type = 'sawtooth'; o.frequency.value = mHz(m) * (1 + (Math.random() - .5) * .004);
+      g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(.0065, tt + .25); g.gain.setValueAtTime(.0065, tt + d - .3); g.gain.linearRampToValueAtTime(0, tt + d); o.connect(g).connect(lp); o.start(tt); o.stop(tt + d + .05);
+    }
+    tt += d + .45;
+  }
 }
 function ambCardinal(a, t) { // a northern cardinal in the hedge: a run of loud, clear, down-slurred 'cheer' whistles, then a few quick 'birdy' notes
   const n = 3 + ((Math.random() * 3) | 0); let tt = t;
@@ -7631,28 +7661,35 @@ const AMB = {
       [[0, 81, 2], [2, 85, 2], [4, 88, 4]], [[0, 85, 3], [3, 81, 1], [4, 76, 4]], [[0, 78, 2], [2, 81, 2], [4, 86, 2], [6, 81, 2]], [[0, 74, 8]]],
     pat: [[0, 2, 4, 3, 5, 3, 4, 2], [0, 3, 5, 4, 2, 4, 5, 3], [0, 2, 3, 5, 4, 3, 2, 1], [0, 1, 2, 4, 5, 4, 2, 1]],
     vars: ['plain', 'wind', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] },
-  // Westminster National: a lilting 4/4 in A, a fiddle over a plucked harp, an old-time Piedmont air: A D A E F#m D E A, two bars each; chord = [bass, pad, harp notes]
-  westminster: { per: .38, echo: .85, level: .3,
-    ch: [[45, [57, 61, 64, 69], [45, 52, 57, 61, 64, 69]], [50, [54, 57, 62, 66], [50, 57, 62, 66, 69, 74]], [45, [57, 61, 64, 69], [45, 52, 57, 61, 64, 69]], [40, [52, 56, 59, 64], [40, 52, 56, 59, 64, 68]],
-      [42, [54, 57, 61, 66], [42, 54, 57, 61, 66, 69]], [50, [54, 57, 62, 66], [50, 57, 62, 66, 69, 74]], [40, [52, 56, 59, 64], [40, 52, 56, 59, 64, 68]], [45, [57, 61, 64, 69], [45, 52, 57, 61, 64, 69]]],
-    // the fiddle's tune, bar by bar: [eighth, note, length in eighths]
-    mel: [[[0, 76, 2], [2, 81, 2], [4, 85, 3], [7, 83, 1]], [[0, 81, 4], [4, 76, 4]], [[0, 78, 2], [2, 81, 2], [4, 86, 4]], [[0, 85, 2], [2, 83, 2], [4, 81, 4]],
-      [[0, 76, 2], [2, 81, 2], [4, 85, 4]], [[0, 88, 3], [3, 85, 1], [4, 81, 4]], [[0, 83, 2], [2, 80, 2], [4, 76, 4]], [[0, 80, 2], [2, 83, 2], [4, 88, 4]],
-      [[0, 85, 2], [2, 81, 2], [4, 78, 4]], [[0, 81, 3], [3, 85, 1], [4, 90, 4]], [[0, 86, 2], [2, 85, 2], [4, 83, 2], [6, 81, 2]], [[0, 78, 4], [4, 81, 4]],
-      [[0, 83, 2], [2, 88, 2], [4, 86, 2], [6, 83, 2]], [[0, 80, 4], [4, 76, 4]], [[0, 81, 2], [2, 85, 2], [4, 88, 2], [6, 85, 2]], [[0, 81, 8]]],
-    pat: [[0, 2, 4, 3, 5, 3, 4, 2], [0, 3, 5, 4, 2, 4, 5, 3], [0, 2, 3, 5, 4, 3, 2, 1], [0, 1, 2, 4, 5, 4, 2, 1]],
-    vars: ['plain', 'fields', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] },
-  // Landmand: a slow, open 4/4 in D minor, a harmonica over a plucked harp and long fifths, wide as the hills: Dm F C Dm Bb F Am Dm, two bars each
-  landmand: { per: .5, echo: 1.1, level: .3,
-    ch: [[38, [50, 53, 57, 62], [38, 50, 57, 62, 65, 69]], [41, [53, 57, 60, 65], [41, 53, 57, 60, 65, 69]], [36, [52, 55, 60, 64], [36, 48, 55, 60, 64, 67]], [38, [50, 53, 57, 62], [38, 50, 57, 62, 65, 69]],
-      [46, [50, 53, 58, 62], [46, 53, 58, 62, 65, 70]], [41, [53, 57, 60, 65], [41, 53, 57, 60, 65, 69]], [45, [52, 57, 60, 64], [45, 52, 57, 60, 64, 69]], [38, [50, 53, 57, 62], [38, 50, 57, 62, 65, 69]]],
+  // Westminster National: 'Bear Branch', an old-time reel of the Maryland and Pennsylvania hill country, in A mixolydian (the flat seventh, G, is the fiddle tunes' own):
+  // a clawhammer banjo (the melody note, a brushed chord, the high drone string: 'bum-ditty'), the fiddle with an open-string drone under it, an upright bass. AABB form, sixteen bars;
+  // a step is a sixteenth. chords: [bass, the banjo's brush], one per bar
+  westminster: { per: .135, echo: .62, level: .6,
+    ch: { A: [45, [57, 61, 64]], G: [43, [55, 59, 62]], D: [38, [57, 62, 66]], E: [40, [56, 59, 64]] },
+    prog: ['A', 'A', 'G', 'E', 'A', 'A', 'G', 'A', 'A', 'D', 'G', 'A', 'A', 'D', 'G', 'A'],
+    // the tune, bar by bar: [sixteenth, note, length in sixteenths]
+    mel: [[[0, 76, 4], [4, 73, 2], [6, 76, 2], [8, 81, 4], [12, 78, 2], [14, 76, 2]], [[0, 73, 4], [4, 71, 2], [6, 69, 2], [8, 71, 4], [12, 73, 4]],
+      [[0, 74, 4], [4, 71, 2], [6, 74, 2], [8, 79, 4], [12, 78, 2], [14, 76, 2]], [[0, 74, 2], [2, 73, 2], [4, 71, 4], [8, 68, 8]],
+      [[0, 76, 4], [4, 73, 2], [6, 76, 2], [8, 81, 4], [12, 78, 2], [14, 76, 2]], [[0, 73, 4], [4, 71, 2], [6, 69, 2], [8, 71, 4], [12, 73, 4]],
+      [[0, 74, 2], [2, 76, 2], [4, 79, 4], [8, 78, 2], [10, 76, 2], [12, 74, 4]], [[0, 73, 4], [4, 71, 4], [8, 69, 8]],
+      [[0, 81, 4], [4, 81, 2], [6, 83, 2], [8, 85, 4], [12, 83, 2], [14, 81, 2]], [[0, 78, 4], [4, 81, 4], [8, 86, 4], [12, 85, 2], [14, 83, 2]],
+      [[0, 79, 4], [4, 83, 2], [6, 79, 2], [8, 74, 4], [12, 79, 4]], [[0, 81, 4], [4, 76, 4], [8, 73, 4], [12, 76, 4]],
+      [[0, 81, 4], [4, 81, 2], [6, 83, 2], [8, 85, 4], [12, 83, 2], [14, 81, 2]], [[0, 78, 2], [2, 81, 2], [4, 86, 4], [8, 85, 4], [12, 83, 4]],
+      [[0, 79, 2], [2, 78, 2], [4, 76, 4], [8, 74, 2], [10, 73, 2], [12, 71, 4]], [[0, 73, 4], [4, 71, 4], [8, 69, 8]]],
+    // each time round: the banjo alone, the whole band, the creek and the birds (no tune), the fiddle slow and alone
+    vars: ['banjo', 'band', 'band', 'creek', 'banjo', 'band', 'slow', 'band'] },
+  // Landmand: 'Loess Hills Waltz', a slow cowboy waltz of the plains in D, the tune on the major pentatonic: a harmonica that bends up into its long notes over a
+  // flat-top guitar (bass note, strum, strum), and now and then a freight train blowing for a crossing down in the Missouri valley. A step is an eighth, six to a bar
+  landmand: { per: .32, echo: 1.25, level: .55,
+    ch: { D: [38, [50, 54, 57, 62]], G: [43, [50, 55, 59, 62]], A: [45, [52, 57, 61, 64]], Bm: [47, [50, 54, 59, 62]] },
+    prog: ['D', 'G', 'D', 'A', 'D', 'G', 'A', 'D', 'G', 'D', 'Bm', 'A', 'G', 'D', 'A', 'D'],
     // the harmonica's tune, bar by bar: [eighth, note, length in eighths]
-    mel: [[[0, 74, 3], [3, 77, 1], [4, 81, 4]], [[0, 81, 2], [2, 79, 2], [4, 77, 4]], [[0, 77, 2], [2, 81, 2], [4, 84, 4]], [[0, 84, 3], [3, 81, 1], [4, 77, 4]],
-      [[0, 76, 2], [2, 79, 2], [4, 84, 4]], [[0, 83, 2], [2, 81, 2], [4, 79, 4]], [[0, 77, 2], [2, 74, 2], [4, 69, 4]], [[0, 74, 8]],
-      [[0, 74, 2], [2, 77, 2], [4, 82, 4]], [[0, 81, 3], [3, 79, 1], [4, 77, 4]], [[0, 77, 2], [2, 81, 2], [4, 84, 2], [6, 86, 2]], [[0, 84, 4], [4, 81, 4]],
-      [[0, 81, 2], [2, 84, 2], [4, 88, 4]], [[0, 86, 3], [3, 84, 1], [4, 81, 4]], [[0, 77, 2], [2, 81, 2], [4, 79, 2], [6, 77, 2]], [[0, 74, 8]]],
-    pat: [[0, 2, 4, 3, 5, 3, 4, 2], [0, 3, 5, 4, 2, 4, 5, 3], [0, 2, 3, 5, 4, 3, 2, 1], [0, 1, 2, 4, 5, 4, 2, 1]],
-    vars: ['plain', 'prairie', 'plain', 'low', 'echo', 'sparse', 'plain', 'up'] },
+    mel: [[[0, 74, 4], [4, 78, 2]], [[0, 81, 2], [2, 83, 4]], [[0, 81, 4], [4, 78, 2]], [[0, 76, 6]],
+      [[0, 74, 2], [2, 76, 2], [4, 78, 2]], [[0, 83, 4], [4, 81, 2]], [[0, 78, 2], [2, 76, 4]], [[0, 74, 6]],
+      [[0, 83, 4], [4, 86, 2]], [[0, 86, 2], [2, 83, 2], [4, 81, 2]], [[0, 78, 4], [4, 81, 2]], [[0, 76, 6]],
+      [[0, 79, 2], [2, 81, 2], [4, 83, 2]], [[0, 81, 4], [4, 78, 2]], [[0, 76, 2], [2, 74, 2], [4, 71, 2]], [[0, 74, 6]]],
+    // each time round: the full waltz, the guitar alone under the wind and the birds, the tune an octave down, sparse, the tune up high
+    vars: ['plain', 'plain', 'prairie', 'low', 'plain', 'sparse', 'prairie', 'up'] },
   mountainvalley: { per: .4, echo: .9, level: .3,
     // a slow 4/4 in G, a dulcimer and a banjo-like harp over open fifths: G C G D Em C D G, two bars each; chord = [bass, pad, harp notes]
     ch: [[43, [55, 59, 62, 67], [43, 50, 55, 59, 62, 67]], [48, [52, 55, 60, 64], [48, 55, 60, 64, 67, 72]], [43, [55, 59, 62, 67], [43, 50, 55, 59, 62, 67]], [38, [50, 54, 57, 62], [50, 57, 62, 66, 69, 74]],
@@ -7729,25 +7766,40 @@ function ambStep(a, kind, st, t) {
     if (e === 4 && Math.random() < (v === 'woods' ? .08 : .012)) ambWoodpecker(a, t + Math.random());
     return;
   }
-  if (kind === 'westminster' || kind === 'landmand') {
-    // 4/4 in eighths, sixteen bars to a cycle; on 'fields' / 'prairie' cycles the tune rests and the place has the piece: Westminster's cardinals and crows, Landmand's meadowlarks and a pheasant
-    const W_ = kind === 'westminster', cyc = Math.floor(st / 128), bar = Math.floor(st / 8) % 16, e = st % 8, ch = K.ch[Math.floor(bar / 2)], v = K.vars[cyc % 8], intro = cyc === 0 ? Math.min(1, bar / 6) : 1, rest = v === 'fields' || v === 'prairie';
-    if (st % 128 === 0) { ambTone(a, W_ ? 45 : 38, t, 66, .05, 'triangle'); ambTone(a, W_ ? 52 : 45, t, 66, .022, 'triangle'); } // open fifths, a low drone under the tune
-    if (bar % 2 === 0 && e === 0) { ambPad(a, ch[1], t, W_ ? 6.2 : 8.4, .07, W_ ? 1200 : 900); ambTone(a, ch[0], t, W_ ? 5.6 : 7.6, .08); }
-    const pat = K.pat[(cyc + Math.floor(bar / 4)) % 4], hn = ch[2][pat[e]];
-    if ((v !== 'sparse' && (W_ || e % 2 === 0)) || e % 4 === 0) ambHarp(a, hn - (v === 'low' ? 12 : 0), t + hum(), (e === 0 ? .13 : .08) * intro);
-    if (!rest && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of K.mel[bar]) {
+  if (kind === 'westminster') {
+    // sixteen steps (sixteenths) to a bar, sixteen bars to a time round
+    const cyc = Math.floor(st / 256), bar = Math.floor(st / 16) % 16, e = st % 16, v = K.vars[cyc % 8], [bass, brush] = K.ch[K.prog[bar]], intro = cyc === 0 ? Math.min(1, (bar + 1) / 4) : 1; // (never 0: an exponential ramp can't start from silence)
+    const bj = v === 'banjo' || v === 'band', fid = v === 'band' || v === 'slow';
+    let at = null; for (const n of K.mel[bar]) if (n[0] <= (e & ~3) && (e & ~3) < n[0] + n[2]) at = n; // the tune's note sounding on this beat
+    if (bj && e % 4 === 0 && at) ambBanjo(a, at[1] - 12, t + hum() * .3, .2 * intro);                        // bum: the melody note, picked
+    if (bj && e % 4 === 2) brush.forEach((m, k) => ambBanjo(a, m, t + k * .012, .06 * intro));                  // di: the brush across the chord
+    if (bj && e % 4 === 3) ambBanjo(a, 69, t, .07 * intro);                                                      // tty: the thumb on the high drone string
+    if (v === 'band' && (e === 0 || e === 8)) ambBass(a, e ? bass + 7 : bass, t, .13 * intro);
+    if (fid) for (const [pos, m, len] of K.mel[bar]) {
+      if (pos !== e || (v === 'slow' && pos % 8)) continue;
+      const L = (v === 'slow' ? Math.max(len, 8) : len) * K.per;
+      ambFiddle(a, m - 12, t + hum() * .3, L * .95, (v === 'slow' ? .03 : .026) * intro);
+      if (len >= 4) ambFiddle(a, m - 12 >= 61 ? 57 : 52, t, L * .9, .011 * intro);                             // the open string droning under the long notes
+    }
+    if (v === 'creek' && e === 0 && bar % 4 === 0) ambPad(a, [45, 52, 57], t, 9, .045, 900);                   // (the creek round: just a soft open fifth under the birds)
+    if (e === 0 && Math.random() < (v === 'creek' ? .2 : .025)) ambCardinal(a, t + Math.random() * 1.5);
+    if (e === 8 && Math.random() < (v === 'creek' ? .1 : .012)) ambCrow(a, t + Math.random());
+    if (e === 4 && Math.random() < (v === 'creek' ? .04 : 0)) ambWoodpecker(a, t + Math.random());
+    return;
+  }
+  if (kind === 'landmand') {
+    // six steps (eighths) to a bar of 3/4, sixteen bars to a time round
+    const cyc = Math.floor(st / 96), bar = Math.floor(st / 6) % 16, e = st % 6, v = K.vars[cyc % 8], [bass, chord] = K.ch[K.prog[bar]], intro = cyc === 0 ? Math.min(1, (bar + 1) / 4) : 1; // (never 0: an exponential ramp can't start from silence)
+    if (e === 0) ambGuitar(a, bar % 2 ? bass + 7 : bass, t, .16 * intro, 2.2);                                  // the waltz: a bass note on one, alternating root and fifth
+    if (e === 2 || e === 4) chord.forEach((m, k) => ambGuitar(a, m, t + k * .018 + hum() * .2, (e === 2 ? .055 : .045) * intro, 1.1)); // and a strum on two and three
+    if (v !== 'prairie' && (cyc > 0 || bar >= 2)) for (const [pos, m, len] of K.mel[bar]) {
       if (pos !== e || (v === 'sparse' && bar % 2 === 1)) continue; const mm = m - 12 + (v === 'up' && bar >= 8 ? 12 : 0) - (v === 'low' ? 12 : 0);
-      if (W_) ambFiddle(a, mm, t + hum(), len * K.per * .92, .032 * intro); else ambHarmonica(a, mm, t + hum(), len * K.per * .92, .026 * intro);
-      if (v === 'echo' && len >= 3) { if (W_) ambFiddle(a, mm - 12, t + 3 * K.per, len * K.per * .6, .012); else ambHarmonica(a, mm - 12, t + 3 * K.per, len * K.per * .6, .01); }
+      ambHarmonica(a, mm, t + hum() * .4, len * K.per * .95, .026 * intro, len >= 4);
     }
-    if (W_) {
-      if (e === 0 && Math.random() < (rest ? .14 : .03)) ambCardinal(a, t + Math.random() * 1.5);
-      if (e === 4 && Math.random() < (rest ? .09 : .015)) ambCrow(a, t + Math.random());
-    } else {
-      if (e === 0 && Math.random() < (rest ? .15 : .03)) ambMeadowlark(a, t + Math.random() * 1.5);
-      if (e === 4 && Math.random() < (rest ? .05 : .008)) ambPheasant(a, t + Math.random());
-    }
+    if (v === 'prairie' && e === 0 && bar % 4 === 0) ambPad(a, chord.map(m => m + 12), t, 8, .035, 800);
+    if (e === 0 && Math.random() < (v === 'prairie' ? .16 : .025)) ambMeadowlark(a, t + Math.random() * 1.5);
+    if (e === 3 && Math.random() < (v === 'prairie' ? .05 : .006)) ambPheasant(a, t + Math.random());
+    if (st % 96 === 48 && cyc % 3 === 2) ambTrainHorn(a, t);                                                    // the freight train, about every third time round
     return;
   }
   if (kind === 'fourmile') {
