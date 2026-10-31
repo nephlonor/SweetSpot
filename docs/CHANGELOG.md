@@ -2,6 +2,7 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 9.36: Zwei neue Plätze im Test (nur für den Spieler „Florian“ sichtbar, `beta: true` in `COURSES`, zählen noch nicht zur Build-Nummer; „im Bau“-Hinweis): **Westminster National** (Maryland, Blue tees, 5945 yd, Par 71) und **Landmand** (Nebraska, Red tees, 7200 yd, Par 73). Pipeline in `tools/course-pipeline/westminster|landmand` (OSM + USGS-3DEP-LiDAR, Abschläge auf Kartenlänge). Eigene Identität aus den Club-Fotos: Westminster gelbliches Olivgrün statt Herbstlaub, blaue Fahnen, Bach (Bear Branch), Kardinal/Blauhäher/Gänse/Truthahngeier, Fiddle-Stück; Landmand gelbgrüne Fairways, strohgoldene Prärie, Truthahn/Fasan/Rotschulterstärling/Bussard, Wiesenstärling und Präriewind, Mundharmonika-Stück. Nicht in der Daily-Rotation.
 - Build 9.30: Neues Titel-Logo (`logo.png`, roter Hintergrund freigestellt, 1200×451 RGBA).
 - Build 9.31: Ladebildschirm = rotes Logo-Bild (`splash.jpg`) mit „Loading…“, mindestens 1 s sichtbar.
 - Build 9.32: Ladebildschirm = Golfplatz-Bild mit App-Icon und Logo (`splash.jpg`, unten in Grün ausgeblendet), „Loading…“ darunter.
