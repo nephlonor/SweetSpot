@@ -247,6 +247,7 @@ jobs:
               fs.writeFileSync(f, JSON.stringify(out) + '\n'); return f;
             };
             if (isDaily) {
+              if (r.pc) return finish(false, 'The daily challenge is played on a phone or tablet only.');
               // the daily challenge: one chance per player and day, on the course of the day, finished within that day (US Eastern time)
               const zday = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
               const day = r.daily;
