@@ -7,6 +7,7 @@ Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Lea
 - Build 9.32: Ladebildschirm = Golfplatz-Bild mit App-Icon und Logo (`splash.jpg`, unten in Grün ausgeblendet), „Loading…“ darunter.
 - Build 9.33: Ladebildschirm = Pebble-Beach-Screenshot + freigestelltes Icon+Logo (`splash-logo.webp`), passt sich jedem Seitenverhältnis an. Erststart: Icon-Zwischenbild im Intro-Video entfernt, Video startet erst, wenn der Ladebildschirm ausblendet (`afterSplash`). sw.js: fehlendes `splash-hero.webp` aus dem Precache entfernt.
 - Build 9.34: `pages.yml` kopiert jetzt auch `*.webp` (Splash-Logo fehlte live), Splash-Bilder ohne Alt-Text/Fehler-Icon, Ausblenden 0,5 s.
+- Build 9.35: Ladebildschirm mind. 2 s. Startmenü aufgeräumt: Logo frei ohne Karte, Platzname als kleines Label, Kurs+Spieler in einem Panel, Daily-Untertitel kürzer („… left“, einzeilig), Anleitungskarten im Querformat ausgeblendet.
 
 ## Stand bis Build 9.17 (aus handoff.md)
 

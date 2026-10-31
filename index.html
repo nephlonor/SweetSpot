@@ -162,9 +162,13 @@ body.rbow #unplayBtn,body.spec #unplayBtn{opacity:0!important;pointer-events:non
 .layer{position:fixed;inset:0;z-index:6;opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
 .layer.on{opacity:1;pointer-events:auto}
 #title{display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 26px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);background:linear-gradient(180deg,rgba(10,40,20,0) 45%,rgba(10,40,20,.32) 100%)}
-.logoCard{align-self:center;text-align:center;padding:14px 22px 15px;border-radius:4px}
-.logoCard img{display:block;width:min(72vw,340px);height:auto;margin:0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
-.logoCard p{margin:11px 0 0;font:600 13px/1.45 var(--cond);text-transform:uppercase;letter-spacing:.14em;color:var(--w2);white-space:pre-line}
+.logoHead{align-self:center;text-align:center;padding:4px 0 0}
+.logoHead img{display:block;width:min(84vw,420px);height:auto;margin:0 auto;filter:drop-shadow(0 6px 14px rgba(0,25,10,.45))}
+.logoHead p{display:table;margin:10px auto 0;padding:6px 16px;border-radius:4px;background:rgba(8,30,14,.42);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:600 12px/1.45 var(--cond);text-transform:uppercase;letter-spacing:.16em;color:var(--w1);text-shadow:0 1px 2px rgba(0,0,0,.5);white-space:pre-line}
+.setPanel{padding:0;display:flex;flex-direction:column}
+.setPanel .nameRow{background:none;border:0;box-shadow:none}
+.setPanel .nameRow+.nameRow{border-top:1px solid rgba(255,255,255,calc(.18*var(--wk)))}
+.setPanel .nameRow span{width:62px}
 .tb{display:flex;flex-direction:column;gap:10px}
 .how{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .how .card{padding:13px}
@@ -175,6 +179,7 @@ body.replay #hud,body.replay #fx,body.replay #pinTag,body.replay #ballTag,body.r
 .how svg.tut{width:100%;max-width:120px;height:auto;margin:0 auto 2px}
 @media (max-width:700px){.how svg.tut{width:auto;max-width:100%;height:clamp(0px,calc(100vh - 775px),110px)}.how .card{padding:10px 12px}.how b{margin:4px 0 3px;font-size:16px}.how p{font-size:12.5px;line-height:1.3}}
 @media (max-height:730px) and (max-width:700px){.how{display:none}}
+@media (max-height:520px){.how{display:none}}
 body.taught .how{display:none}
 .tThumb{animation:tUp 4.2s infinite;transform-box:view-box}
 .tDown{stroke-dasharray:62;animation:tTrace 4.2s infinite}
@@ -346,7 +351,8 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .dlCard.dl-done{background:linear-gradient(135deg,rgba(120,230,150,.42),rgba(40,150,80,.30));box-shadow:0 8px 22px rgba(8,34,16,.25),inset 0 0 0 1px rgba(170,255,190,.55),inset 0 1px 0 rgba(255,255,255,calc(.55*var(--wk)))}
 .dlCard.dl-done>.ic{background:linear-gradient(135deg,#9bf0b0,#2fb25a);color:#06351a;box-shadow:0 2px 8px rgba(40,200,100,.45)}
 @keyframes dlPulse{50%{box-shadow:0 8px 26px rgba(255,170,40,.55),inset 0 0 0 1px rgba(255,232,150,.9),inset 0 1px 0 rgba(255,255,255,calc(.6*var(--wk)))}}
-.dailyCard{margin:0 0 8px;border:0}
+.dailyCard{margin:0;border:0}
+.dailyCard small{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mgrp{background:rgba(255,255,255,calc(.10*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.22*var(--wk))),inset 0 1px 0 rgba(255,255,255,calc(.28*var(--wk)));border-radius:4px;padding:6px;margin-bottom:10px}
 .mgrp .mrow{background:none;box-shadow:none;border-radius:4px}
 .mgrp .mrow+.mrow{border-top:1px solid rgba(255,255,255,calc(.16*var(--wk)));border-radius:0 0 4px 4px}
@@ -557,7 +563,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
   body.swap #strike{right:auto;left:calc(var(--sl) + 60px)}
   .icard{max-width:600px}
   #title{flex-direction:row;align-items:flex-end;gap:20px}
-  .logoCard{align-self:flex-start}
+  .logoHead{align-self:flex-start}
   .tb{width:min(440px,55%)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -597,7 +603,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small>M</small></div><div class="bt2" id="btC"></div></div>
 <div class="layer on" id="title">
   <button class="glass titleMenu" id="titleMenu" aria-label="Menu" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  <div class="card logoCard"><img src="logo.png" alt="Sweet Spot Golf"><p id="courseLine">Golf &amp; Country Club Basel
+  <div class="logoHead"><img src="logo.png" alt="Sweet Spot Golf"><p id="courseLine">Golf &amp; Country Club Basel
 18 holes · Par 72</p></div>
   <div class="tb">
     <div class="how">
@@ -605,8 +611,10 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
       <div class="card"><svg class="tut" viewBox="0 0 90 100" aria-hidden="true"><circle cx="45" cy="50" r="40" fill="#bfe2a0"/><rect x="12" y="34" width="66" height="32" rx="14" fill="#dfe5ea" stroke="#7f93a6" stroke-width="2"/><circle cx="45" cy="50" r="9" fill="none" stroke="#2f6b35" stroke-width="1.6" stroke-dasharray="3 3"/><g class="tBall"><circle r="7.5" fill="#fff" stroke="#8d9aa4" stroke-width="1.2"/><circle cx="-2" cy="-2" r="1" fill="#cfd8de"/><circle cx="2.4" cy="1.5" r="1" fill="#cfd8de"/></g><circle class="tFinger" r="12" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/></svg><b><span class="thS">Right</span> thumb · strike</b><p>Keep the ball on the sweet spot during impact.</p></div>
     </div>
     <button class="card dailyCard dlCard" id="dailyCard"><i class="ic" data-ic="flag"></i><span><b>Daily challenge</b><small></small></span><em></em></button>
-    <div class="card nameRow courseRow"><span>Course</span><label class="csel"><select class="segCourse" id="segCourse" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option><option value="mountainvalley">Mountain Valley</option><option value="fourmile">Four Mile Ranch</option></select></label></div>
-    <label class="card nameRow" id="nameRow"><span>Player</span><input id="nameIn" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="go"></label>
+    <div class="card setPanel">
+    <div class="nameRow courseRow"><span>Course</span><label class="csel"><select class="segCourse" id="segCourse" aria-label="Course"><option value="gccb">GCC Basel</option><option value="alsace">Alsace</option><option value="augusta">Augusta National</option><option value="rothley">Rothley Park</option><option value="stpatricks">St Patrick's Links</option><option value="pebblebeach">Pebble Beach</option><option value="mountainvalley">Mountain Valley</option><option value="fourmile">Four Mile Ranch</option></select></label></div>
+    <label class="nameRow" id="nameRow"><span>Player</span><input id="nameIn" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Your name" enterkeyhint="go"></label>
+    </div>
     <div class="nameHint" id="nameHintT" hidden></div>
     <div class="playRow"><button class="btn alt" id="btnResume" style="display:none">Resume<small id="resumeInfo"></small></button><button class="btn" id="btnPlay">Tee off</button></div>
     <div class="best" id="best"></div>
@@ -4023,7 +4031,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 34 };
+const APP_ITER = { courses: 9, n: 35 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10833,8 +10841,8 @@ async function dlRetry() { dlFix(); const a = dlRecs(); for (const k of Object.k
 function dlStatus() {
   const day = dayId(), rec = dlRec(day), c = COURSES[dailyCourse(day)], left = dayLeftSec();
   if (rec && rec.status === 'done') { const st = dlStanding(day, 18, rec.course), i = st.findIndex(x => x.e.mine); return { k: 'done', big: `Daily challenge · ${fmtToPar(rec.tp)}`, sub: `${i >= 0 ? '#' + (i + 1) + ' of ' + st.length + ' · ' : ''}${c.short} · see the board`, tag: 'Done' }; }
-  if (rec && rec.status === 'playing') { const k = rec.h.filter(v => v > 0).length; return { k: 'playing', big: 'Daily challenge · resume', sub: `${c.short} · hole ${Math.min(18, k + 1)} · closes in ${fmtLeft(left)}`, tag: 'Live' }; }
-  return { k: 'new', big: 'Daily challenge', sub: `${c.short} · one chance · closes in ${fmtLeft(left)}`, tag: '1 chance' };
+  if (rec && rec.status === 'playing') { const k = rec.h.filter(v => v > 0).length; return { k: 'playing', big: 'Daily challenge · resume', sub: `${c.short} · hole ${Math.min(18, k + 1)} · ${fmtLeft(left)} left`, tag: 'Live' }; }
+  return { k: 'new', big: 'Daily challenge', sub: `${c.short} · ${fmtLeft(left)} left`, tag: '1 chance' };
 }
 function dlNeedName() {
   const ni = $('nameIn'), nr = $('nameRow');
@@ -11343,11 +11351,11 @@ function boot(data) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { sizeCanvases(); });
   requestAnimationFrame(frame);
   setTimeout(onResize, 300);
-  // the loading page (see the top of the body) stays up until the start screen is built and drawn, and for at least a second, then fades out
+  // the loading page (see the top of the body) stays up until the start screen is built and drawn, and for at least two seconds, then fades out
   const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]) : Promise.resolve();
   fonts.then(() => requestAnimationFrame(() => requestAnimationFrame(splashHide)));
 }
-function splashHide() { setTimeout(() => window.__splashOff && window.__splashOff(), Math.max(0, 1000 - (Date.now() - (window.__splashT0 || 0)))); }
+function splashHide() { setTimeout(() => window.__splashOff && window.__splashOff(), Math.max(0, 2000 - (Date.now() - (window.__splashT0 || 0)))); }
 // runs fn once the loading page starts fading out (right away if it is already gone)
 function afterSplash(fn) { if (window.__splashCb) window.__splashCb.push(fn); else fn(); }
 // Updates: GitHub Pages lets browsers keep the page for 10 minutes, and a home-screen app much longer. The deploy stamps BUILD and
