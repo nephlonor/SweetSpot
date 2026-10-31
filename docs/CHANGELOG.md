@@ -4,6 +4,7 @@ Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Lea
 
 - Build 9.30: Neues Titel-Logo (`logo.png`, roter Hintergrund freigestellt, 1200×451 RGBA).
 - Build 9.31: Ladebildschirm = rotes Logo-Bild (`splash.jpg`) mit „Loading…“, mindestens 1 s sichtbar.
+- Build 9.32: Ladebildschirm = Golfplatz-Bild mit App-Icon und Logo (`splash.jpg`, unten in Grün ausgeblendet), „Loading…“ darunter.
 
 ## Stand bis Build 9.17 (aus handoff.md)
 
