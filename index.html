@@ -4337,7 +4337,8 @@ function updateWeatherVisuals(dt) {
 // Started only one way: on the first tee of an ordinary round, before the first stroke, turn the aim to the clubhouse and hold it
 // there for about a second. The floodlights come on, the sky goes dark and a pop-up asks for the neon colour of the ball.
 const NEON = [{ c: 0xff2fa0, n: 'Pink' }, { c: 0x6dff2e, n: 'Lime' }, { c: 0x2ef2ff, n: 'Cyan' }, { c: 0xffb020, n: 'Amber' }];
-const NIGHT = { bg: new THREE.Color(0x060b18), hem: new THREE.Color(0x4a64a2), gnd: new THREE.Color(0x0e1626), cloud: new THREE.Color(0x141b2e) };
+const NIGHT_LIGHT = .3; // the night's overall brightness: 30% of the earlier look, so the players hardly make out the surroundings
+const NIGHT = { bg: new THREE.Color(0x060b18).multiplyScalar(NIGHT_LIGHT), hem: new THREE.Color(0x4a64a2), gnd: new THREE.Color(0x0e1626), cloud: new THREE.Color(0x141b2e).multiplyScalar(NIGHT_LIGHT) };
 const NIGHT_LOOK = .9; // seconds the aim has to stay on the clubhouse
 let _glowTex = null;
 function glowTex() { // a soft white dot, tinted by the material that uses it
@@ -4401,7 +4402,7 @@ function nightTick(dt) {
 // the sky, the light and the clouds go from day to night in step with G.nightU
 function nightDress(u) {
   W.scene.background.lerp(NIGHT.bg, u); W.scene.fog.color.lerp(NIGHT.bg, u);
-  W.sun.intensity *= 1 - u; W.hemi.intensity = W.hemi.intensity * (1 - u) + .5 * u;
+  W.sun.intensity *= 1 - u; W.hemi.intensity = W.hemi.intensity * (1 - u) + .5 * NIGHT_LIGHT * u;
   W.hemi.color.lerp(NIGHT.hem, u); W.hemi.groundColor.lerp(NIGHT.gnd, u);
   W.sky.material.color.lerp(NIGHT.bg, u); W.cloudMat.color.lerp(NIGHT.cloud, u);
 }
