@@ -11,9 +11,8 @@
 <style>#splash{position:fixed;inset:0;z-index:100;background:#1d3a22;overflow:hidden;transition:opacity .8s ease}#splash.off{opacity:0;pointer-events:none}
 #splash img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #splash:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,22,12,.55) 0,rgba(8,22,12,.12) 42%,rgba(8,22,12,.5) 100%)}
-#splash h1{position:absolute;z-index:1;left:0;right:0;top:10%;margin:0;text-align:center;color:#fff;text-transform:uppercase;font:700 clamp(40px,13vw,66px)/.95 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.015em;text-shadow:0 3px 22px rgba(0,0,0,.45)}
-#splash h1 span{color:#c6f2a9}#splash i{position:absolute;z-index:1;left:0;right:0;bottom:calc(9% + env(safe-area-inset-bottom));text-align:center;font:600 13px/1 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.78);font-style:normal;animation:spl 1.4s ease-in-out infinite}@keyframes spl{50%{opacity:.35}}</style>
-<div id="splash"><img src="splash.jpg" alt=""><h1>Sweet <span>Spot</span><br>Golf</h1><i>Loading</i></div>
+#splash img.lg{position:absolute;z-index:1;left:50%;top:10%;width:min(82vw,420px);height:auto;object-fit:contain;transform:translateX(-50%);filter:drop-shadow(0 4px 18px rgba(0,0,0,.45))}#splash i{position:absolute;z-index:1;left:0;right:0;bottom:calc(9% + env(safe-area-inset-bottom));text-align:center;font:600 13px/1 'Oswald','Arial Narrow',system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.78);font-style:normal;animation:spl 1.4s ease-in-out infinite}@keyframes spl{50%{opacity:.35}}</style>
+<div id="splash"><img src="splash.jpg" alt=""><img class="lg" src="logo.png" alt="Sweet Spot Golf"><i>Loading</i></div>
 <script>window.__splashT0=Date.now();setTimeout(function(){var e=document.getElementById('splash');if(e){e.classList.add('off');setTimeout(function(){e.remove()},900)}},12000)</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,7 +78,7 @@ body.finale #tempo,body.finale #strike,body.finale #coach,body.finale #aimHint,b
 #windArrow{width:15px;height:15px;align-self:center;transition:transform .5s var(--ease);flex:none;filter:drop-shadow(0 1px 1px rgba(0,30,12,.35))}
 .tb-player{flex:none;flex-direction:row;align-items:center;gap:6px;padding:0 7px 0 8px;text-align:right;color:rgba(255,255,255,var(--wk))}
 .tb-player svg{width:15px;height:15px;flex:none;opacity:.9}
-.titleMenu{position:absolute;top:calc(var(--st) + 8px);right:calc(var(--sr) + 12px);width:46px;height:46px;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:0;color:rgba(255,255,255,var(--wk));cursor:pointer;z-index:3}
+.titleMenu{position:absolute;top:calc(var(--st) + 8px);right:calc(var(--sr) + 12px);width:46px;height:46px;border-radius:4px;display:flex;align-items:center;justify-content:center;padding:0;color:rgba(255,255,255,var(--wk));cursor:pointer;z-index:3}
 .titleMenu[hidden]{display:none}
 #title.hasMenu{padding-top:calc(var(--st) + 66px)}
 .titleMenu svg{width:20px;height:20px}
@@ -160,10 +159,9 @@ body.rbow #unplayBtn,body.spec #unplayBtn{opacity:0!important;pointer-events:non
 .layer{position:fixed;inset:0;z-index:6;opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
 .layer.on{opacity:1;pointer-events:auto}
 #title{display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 26px) calc(var(--sr) + 16px) calc(var(--sb) + 16px) calc(var(--sl) + 16px);background:linear-gradient(180deg,rgba(10,40,20,0) 45%,rgba(10,40,20,.32) 100%)}
-.logoCard{align-self:center;text-align:center;padding:16px 28px 15px;border-radius:28px}
-.logoCard h1{margin:0;font:700 46px/.95 var(--cond);text-transform:uppercase;letter-spacing:.01em}
-.logoCard h1 span{color:#c6f2a9}
-.logoCard p{margin:9px 0 0;font:600 13px/1.45 var(--cond);text-transform:uppercase;letter-spacing:.14em;color:var(--w2);white-space:pre-line}
+.logoCard{align-self:center;text-align:center;padding:14px 22px 15px;border-radius:4px}
+.logoCard img{display:block;width:min(72vw,340px);height:auto;margin:0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+.logoCard p{margin:11px 0 0;font:600 13px/1.45 var(--cond);text-transform:uppercase;letter-spacing:.14em;color:var(--w2);white-space:pre-line}
 .tb{display:flex;flex-direction:column;gap:10px}
 .how{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .how .card{padding:13px}
@@ -184,20 +182,20 @@ body.taught .how{display:none}
 @keyframes tJit{0%{transform:translate(45px,50px)}12%{transform:translate(50px,45px)}25%{transform:translate(41px,47px)}38%{transform:translate(47px,56px)}50%{transform:translate(39px,53px)}63%{transform:translate(48px,50px)}75%{transform:translate(52px,54px)}88%{transform:translate(43px,44px)}100%{transform:translate(45px,50px)}}
 @keyframes tFing{0%{transform:translate(61px,66px)}12%{transform:translate(66px,61px)}25%{transform:translate(57px,63px)}38%{transform:translate(63px,72px)}50%{transform:translate(55px,69px)}63%{transform:translate(64px,66px)}75%{transform:translate(68px,70px)}88%{transform:translate(59px,60px)}100%{transform:translate(61px,66px)}}
 @media (prefers-reduced-motion:reduce){.tThumb,.tDown,.tBall,.tFinger{animation:none}}
-.nameRow{display:flex;align-items:center;gap:12px;padding:6px 8px 6px 16px;border-radius:20px}
+.nameRow{display:flex;align-items:center;gap:12px;padding:6px 8px 6px 16px;border-radius:4px}
 .nameHint{font:600 12px/1.35 var(--cond);letter-spacing:.04em;color:#ffe3a0;text-shadow:0 1px 3px rgba(0,0,0,.45);padding:5px 18px 0}
 .nameHint[hidden]{display:none}
 #nameHintM{color:#9a6a00;text-shadow:none;padding:4px 6px 0}
 .nameRow span{font:600 12px var(--cond);letter-spacing:.14em;text-transform:uppercase;color:var(--w2);flex:none}
-.nameRow input,.mrow input{flex:1;min-width:0;height:44px;border:0;outline:0;border-radius:14px;padding:0 14px;font:600 20px var(--cond);text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,var(--wk));background:rgba(255,255,255,calc(.16*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.3*var(--wk)));text-shadow:var(--tsh)}
+.nameRow input,.mrow input{flex:1;min-width:0;height:44px;border:0;outline:0;border-radius:4px;padding:0 14px;font:600 20px var(--cond);text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,var(--wk));background:rgba(255,255,255,calc(.16*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.3*var(--wk)));text-shadow:var(--tsh)}
 .nameRow input::placeholder{color:rgba(255,255,255,calc(.55*var(--wk)))}
 .nameRow.need{animation:shake .4s}.nameRow.need input{box-shadow:inset 0 0 0 2px var(--yel)}
 .courseRow{padding:6px 6px 6px 16px}
-.courseRow .seg{flex:1;background:rgba(255,255,255,calc(.14*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.26*var(--wk)));border-radius:14px}
-.courseRow .seg button{flex:1;height:38px;padding:0 6px;font-size:15px;color:var(--w1);text-shadow:var(--tsh);border-radius:11px;white-space:nowrap}
+.courseRow .seg{flex:1;background:rgba(255,255,255,calc(.14*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.26*var(--wk)));border-radius:4px}
+.courseRow .seg button{flex:1;height:38px;padding:0 6px;font-size:15px;color:var(--w1);text-shadow:var(--tsh);border-radius:3px;white-space:nowrap}
 .courseRow .seg button.sel{background:rgba(255,255,255,var(--wk));color:var(--ink);text-shadow:none}
 @keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
-.btn{height:58px;border-radius:20px;background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:rgba(255,255,255,var(--wk));font:600 22px var(--cond);text-transform:uppercase;letter-spacing:.06em;box-shadow:0 10px 24px rgba(20,70,30,.35),inset 0 1px 0 rgba(255,255,255,calc(.35*var(--wk)));transition:transform .15s;text-shadow:0 1px 2px rgba(0,30,12,.3)}
+.btn{height:58px;border-radius:4px;background:linear-gradient(180deg,#4a9a4c,#2f6b35);color:rgba(255,255,255,var(--wk));font:600 22px var(--cond);text-transform:uppercase;letter-spacing:.06em;box-shadow:0 10px 24px rgba(20,70,30,.35),inset 0 1px 0 rgba(255,255,255,calc(.35*var(--wk)));transition:transform .15s;text-shadow:0 1px 2px rgba(0,30,12,.3)}
 .btn:active{transform:scale(.97)}
 .playRow{display:flex;gap:10px}.playRow .btn{flex:1;min-width:0}.playRow .btn.alt{flex:1.35}
 .btn.alt{background:rgba(255,255,255,calc(.92*var(--wk)));color:#2f6b35;text-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
@@ -332,14 +330,14 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 #frForm input,#frForm textarea{display:block;width:100%;box-sizing:border-box;border:0;outline:0;border-radius:14px;padding:10px 14px;margin-bottom:6px;font:600 16px var(--cond);color:rgba(255,255,255,var(--wk));background:rgba(255,255,255,calc(.16*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.3*var(--wk)));resize:none}#frForm textarea{font-weight:500;font-size:14px}#frForm .mbtn{width:100%;margin-top:2px}#frForm ::placeholder{color:rgba(255,255,255,calc(.55*var(--wk)))}
 .mpg{display:none}.mpg.on{display:block;animation:pgIn .3s var(--ease)}
 @keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.dlCard{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px 12px 12px;border-radius:22px;text-align:left;color:rgba(255,255,255,var(--wk));text-shadow:var(--tsh);margin-bottom:10px;
+.dlCard{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px 12px 12px;border-radius:4px;text-align:left;color:rgba(255,255,255,var(--wk));text-shadow:var(--tsh);margin-bottom:10px;
   background:linear-gradient(135deg,rgba(255,222,110,.46),rgba(255,150,50,.30));box-shadow:0 8px 22px rgba(8,34,16,.25),inset 0 0 0 1px rgba(255,232,150,.62),inset 0 1px 0 rgba(255,255,255,calc(.6*var(--wk)));-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5)}
 .dlMini{margin:8px 0 6px;padding:9px 12px 9px 10px}.dlMini>.ic{width:34px!important;height:34px!important}.dlMini b{font-size:16px}
 .dlCard>.ic{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#ffe85a,#ffab1f);color:#3a1d00;text-shadow:none;box-shadow:0 2px 8px rgba(255,160,30,.5)}.dlCard>.ic svg{width:22px;height:22px}
 .dlCard span{flex:1;min-width:0;display:flex;flex-direction:column}
 .dlCard b{font:700 19px/1.1 var(--cond);text-transform:uppercase;letter-spacing:.03em}
 .dlCard small{font:500 13px var(--sans,system-ui);opacity:.92;margin-top:2px}
-.dlCard em{flex:none;font:700 12px var(--cond);font-style:normal;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.22*var(--wk)))}
+.dlCard em{flex:none;font:700 12px var(--cond);font-style:normal;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:4px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.22*var(--wk)))}
 .dlCard.dl-playing{animation:dlPulse 2.4s ease-in-out infinite}
 .dlCard.dl-playing em{background:#e0392b;color:rgba(255,255,255,var(--wk))}
 .dlCard.dl-done{background:linear-gradient(135deg,rgba(120,230,150,.42),rgba(40,150,80,.30));box-shadow:0 8px 22px rgba(8,34,16,.25),inset 0 0 0 1px rgba(170,255,190,.55),inset 0 1px 0 rgba(255,255,255,calc(.55*var(--wk)))}
@@ -352,10 +350,10 @@ body:has(.sheet.on:not(#mapSheet)) #tempo,body:has(.sheet.on:not(#mapSheet)) #st
 .mround{padding:12px}.mrl{display:flex;flex-direction:column;margin-bottom:10px}
 .mrl .mk{font:600 11px var(--cond);letter-spacing:.16em;text-transform:uppercase;opacity:.75}
 .mrl b{font:700 21px/1.1 var(--cond);text-transform:uppercase;letter-spacing:.02em}.mrl small{font:600 13px var(--cond);letter-spacing:.06em;text-transform:uppercase;opacity:.85;margin-top:1px}
-/* the course picker: a pill-shaped dropdown (the phone's own picker opens on tap) */
+/* the course picker: a square-cornered dropdown (the phone's own picker opens on tap) */
 .csel{position:relative;display:block;flex:1;min-width:0}
 .csel::after{content:"";position:absolute;right:15px;top:50%;width:8px;height:8px;margin-top:-6px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg);pointer-events:none;color:var(--w1);opacity:.9}
-.csel select{-webkit-appearance:none;appearance:none;width:100%;height:40px;padding:0 38px 0 14px;border:0;border-radius:14px;background:rgba(255,255,255,calc(.14*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.26*var(--wk)));color:var(--w1);text-shadow:var(--tsh);font:600 15px var(--cond);letter-spacing:.02em;text-overflow:ellipsis;cursor:pointer;outline:none}
+.csel select{-webkit-appearance:none;appearance:none;width:100%;height:40px;padding:0 38px 0 14px;border:0;border-radius:4px;background:rgba(255,255,255,calc(.14*var(--wk)));box-shadow:inset 0 0 0 1px rgba(255,255,255,calc(.26*var(--wk)));color:var(--w1);text-shadow:var(--tsh);font:600 15px var(--cond);letter-spacing:.02em;text-overflow:ellipsis;cursor:pointer;outline:none}
 .csel select:focus-visible{box-shadow:inset 0 0 0 2px rgba(255,255,255,var(--wk))}
 .csel option{color:#16211c;background:rgba(255,255,255,var(--wk));text-shadow:none}
 #menuSheet .csel{width:100%}
@@ -599,7 +597,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div id="ballTag" class="gtag"><div class="bt1"><span id="btD">0</span><small>M</small></div><div class="bt2" id="btC"></div></div>
 <div class="layer on" id="title">
   <button class="glass titleMenu" id="titleMenu" aria-label="Menu" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  <div class="card logoCard"><h1>Sweet <span>Spot</span><br>Golf</h1><p id="courseLine">Golf &amp; Country Club Basel
+  <div class="card logoCard"><img src="logo.png" alt="Sweet Spot Golf"><p id="courseLine">Golf &amp; Country Club Basel
 18 holes · Par 72</p></div>
   <div class="tb">
     <div class="how">
@@ -4025,7 +4023,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 9, n: 24 };
+const APP_ITER = { courses: 9, n: 25 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy').length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
