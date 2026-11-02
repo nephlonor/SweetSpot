@@ -4111,7 +4111,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 9 };
+const APP_ITER = { courses: 11, n: 10 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10306,9 +10306,9 @@ function postWorld(r) {
 // is this name already used by another player? The name is still allowed, the player is told. Every board's names and the player profiles are checked.
 function nameTakenBy(nm) {
   const n = String(nm || '').trim().toLowerCase(), me = dlMe(); if (!n) return false;
-  for (const rows of Object.values(Board.gh)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && x.by !== settings.mgP && String(x.name).toLowerCase() === n)) return true;
-  for (const rows of Object.values(DL.files)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && x.by !== settings.mgP && String(x.name).toLowerCase() === n)) return true;
-  const pl = DL.players || {}; return Object.keys(pl).some(k => k !== me && k !== settings.mgP && pl[k] && String(pl[k].n).toLowerCase() === n);
+  for (const rows of Object.values(Board.gh)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && !mgPs().includes(x.by) && String(x.name).toLowerCase() === n)) return true;
+  for (const rows of Object.values(DL.files)) if (Array.isArray(rows) && rows.some(x => x && x.by !== me && !mgPs().includes(x.by) && String(x.name).toLowerCase() === n)) return true;
+  const pl = DL.players || {}; return Object.keys(pl).some(k => k !== me && !mgPs().includes(k) && pl[k] && String(pl[k].n).toLowerCase() === n);
 }
 function nameHint() {
   const nm = cleanName(settings.name), t = nm && nameTakenBy(nm) ? `"${nm}" is already used by another player. You can keep it, but the leaderboards show only one of you.` : '';
@@ -10326,6 +10326,8 @@ function loadNames() { // the boards of every course and the profiles, once a mi
 // out is only its own share (ST.mgAbs is the partner's share already added), so the boards and profiles, which add up the devices of one name, never count anything twice.
 // The name follows: the server stamps every name change (nat) and each device takes the newer name at its launch.
 const MG = { merges: null, at: 0, busy: false, dlg: null, fast: 0 };
+// the other devices of this account (an account can have more than two: settings.mgPs; mgP is the first partner)
+const mgPs = () => Array.isArray(settings.mgPs) && settings.mgPs.length ? settings.mgPs : settings.mgP ? [settings.mgP] : [];
 const MG_MAP = { xp: 'xp', r: 'rounds', h: 'holes', st: 'strokes', pu: 'putts', ac: 'aces', ea: 'eagles', bi: 'birdies', pa: 'pars', bo: 'bogeys', dd: 'doubles', fh: 'fwHit', ft: 'fwTry', gh: 'gir', gt: 'girTry', sh: 'shots', di: 'dist', wa: 'water', ob: 'ob', tr: 'trees', rb: 'rainbows', ch: 'chipins', fd: 'found', lo: 'lost' };
 const MG_SUM = Object.keys(MG_MAP), MG_REC = { dr: 'drive', ho: 'holed', pt: 'putt', gs: 'girStreak', fs: 'fwStreak', bk: 'birdStreak' };
 async function ghIssue(title, payload, text) {
@@ -10335,13 +10337,13 @@ async function ghIssue(title, payload, text) {
 async function loadMerges(force) {
   if (!force && MG.merges && Date.now() - MG.at < 60000) return MG.merges; MG.at = Date.now();
   MG.ok = false; // (a fetch that failed decides nothing: the old copy may be out of date)
-  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/merges.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); if (r.status === 404) { MG.merges = { q: [], g: {} }; MG.ok = true; } else if (r.ok) { const j = await r.json(); if (j && typeof j === 'object') { MG.merges = { q: Array.isArray(j.q) ? j.q : [], g: j.g && typeof j.g === 'object' ? j.g : {} }; MG.ok = true; } } } catch (e) { }
+  try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/merges.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); if (r.status === 404) { MG.merges = { q: [], g: {} }; MG.ok = true; } else if (r.ok) { const j = await r.json(); if (j && typeof j === 'object') { MG.merges = { q: Array.isArray(j.q) ? j.q : [], g: j.g && typeof j.g === 'object' ? j.g : {}, x: j.x && typeof j.x === 'object' ? j.x : {} }; MG.ok = true; } } } catch (e) { }
   if (!MG.merges) MG.merges = { q: [], g: {} };
   return MG.merges;
 }
 // the other devices that carry this name (boards, profiles)
 function nameOwners(nm) {
-  const n = String(nm || '').trim().toLowerCase(), me = dlMe(), ids = new Set(), add = (id, name) => { if (typeof id === 'string' && id !== me && id !== settings.mgP && String(name).toLowerCase() === n) ids.add(id); };
+  const n = String(nm || '').trim().toLowerCase(), me = dlMe(), ids = new Set(), add = (id, name) => { if (typeof id === 'string' && id !== me && !mgPs().includes(id) && String(name).toLowerCase() === n) ids.add(id); };
   for (const rows of Object.values(Board.gh)) if (Array.isArray(rows)) for (const x of rows) if (x) add(x.by, x.name);
   for (const rows of Object.values(DL.files)) if (Array.isArray(rows)) for (const x of rows) if (x) add(x.by, x.name);
   const pl = DL.players || {}; for (const k of Object.keys(pl)) if (pl[k]) add(k, pl[k].n);
@@ -10364,13 +10366,15 @@ function mgDialog(kind, o) {
 function mgClose() { MG.dlg = null; $('mgAsk').classList.remove('on'); mgUI(); }
 function mgUI() {
   const el = $('mgNote'); if (!el) return;
-  const inc = !settings.mgP && !MG.dlg && MG.inc, t = settings.mgP ? 'Merged: this account is shared with another device.' : inc ? 'A merge request is waiting for you. Tap to answer.' : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
+  const inc = !settings.mgP && !MG.dlg && MG.inc, t = settings.mgP ? (mgPs().length > 1 ? 'Merged: this account is shared with ' + mgPs().length + ' other devices.' : 'Merged: this account is shared with another device.') : inc ? 'A merge request is waiting for you. Tap to answer.' : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
   el.textContent = t; el.hidden = !t; el.style.cursor = inc ? 'pointer' : ''; el.onclick = inc ? () => mgDialog('accept', { from: inc.f, name: inc.n }) : null;
 }
 // a note from the developer to one player (by device hash), shown once, with a reply field; the reply goes to the developer's devices ([reply] issue -> leaderboard/replies.json), shown there once
 const DEV_TO = ['702a2e69', '3cf5ef77']; // the developer's devices (Florian)
 const DEV_MSGS = [{ id: 'zain1', to: ['753ff0b4', '6c3f623c'], k: 'From the developer', t: 'A note for you',
   b: "Hi ZainB, thanks for playing with us! It's so cool to see this little community growing. I'm the developer of SweetSpot and I'm just letting you know that your recent daily challenge rounds have been flagged as non-mobile. Future rounds on computer devices are not eligible for daily challenges. We've implemented some changes to the play mechanics for keyboard and mouse users. We hope to see you on the daily challenges (with your mobile device) defending your #1 spot in the new Tournament mode.\n\nAll the best!\nNephlonor" }];
+DEV_MSGS.push({ id: 'zain2', grp: '753ff0b4', not: ['753ff0b4', '6c3f623c'], k: 'From the developer', t: 'Merged',
+  b: "Hey ZainB, no worries! I merged the three devices now, let me know if it worked. Great playing! See you out there!" }); // (shown on the device that joined ZainB's account)
 const DM = { cur: null };
 function devFree() { return !document.querySelector('.layer.on:not(#title)') && !sheetOpen() && (G.state === 'title' || G.state === 'address'); }
 function devShow(o) {
@@ -10381,7 +10385,7 @@ function devSeen(key) { const a = Array.isArray(settings.devSeen) ? settings.dev
 const devWas = key => Array.isArray(settings.devSeen) && settings.devSeen.includes(key);
 async function devCheck() {
   if (DM.cur || !DL.me || !devFree()) return;
-  const m = DEV_MSGS.find(x => x.to.includes(DL.me) && !devWas(x.id));
+  const m = DEV_MSGS.find(x => ((x.to || []).includes(DL.me) || (x.grp && settings.mgP && mgPs().includes(x.grp) && !(x.not || []).includes(DL.me))) && !devWas(x.id));
   if (m) { devShow(Object.assign({ reply: true }, m)); return; }
   if (!DEV_TO.includes(DL.me)) return;
   try {
@@ -10412,13 +10416,20 @@ async function mgNameCheck() {
   if (free.length) mgDialog('ask', { to: free[0], name: nm });
 }
 // add the other device's share to this one's stats (counters add, records take the best); what was added last time is remembered, so only the change is added now
-function mgAbsorb(entry) {
+// with more than one partner each one's share is kept apart (ST.mgAbsBy) and ST.mgAbs is their sum
+function mgAbsOf(id) {
+  if (!ST.mgAbsBy || typeof ST.mgAbsBy !== 'object') ST.mgAbsBy = {};
+  if (!Object.keys(ST.mgAbsBy).length && ST.mgAbs && settings.mgP) ST.mgAbsBy[settings.mgP] = Object.assign({}, ST.mgAbs); // (from before: all of it was the first partner's)
+  return ST.mgAbsBy[id] || (ST.mgAbsBy[id] = {});
+}
+function mgAbsSum() { const t = {}; for (const a of Object.values(ST.mgAbsBy || {})) for (const [k, v] of Object.entries(a || {})) if (Number.isFinite(v)) t[k] = (t[k] || 0) + v; ST.mgAbs = t; }
+function mgAbsorb(entry, id) {
   const pf = cleanPf(entry && entry.pf); if (!pf) return;
-  const abs = ST.mgAbs || {}; let ch = false;
+  const abs = mgAbsOf(id || settings.mgP); let ch = false;
   for (const k of MG_SUM) { if (!Number.isFinite(pf[k])) continue; const d = pf[k] - (abs[k] || 0); if (!d) continue; const f = MG_MAP[k]; ST[f] = Math.max(0, (ST[f] || 0) + d); abs[k] = pf[k]; ch = true; }
   for (const [k, f] of Object.entries(MG_REC)) if (Number.isFinite(pf[k]) && pf[k] > ST.rec[f].v) { ST.rec[f].v = pf[k]; if (ST.rec[f].at == null) ST.rec[f].at = 1; ch = true; }
   if (Number.isFinite(pf.br) && (ST.rec.round.at == null || pf.br < ST.rec.round.v)) { ST.rec.round = Object.assign({}, ST.rec.round, { v: pf.br, at: ST.rec.round.at || 1 }); ch = true; }
-  if (ch) { ST.mgAbs = abs; saveStats(); if ($('statsSheet') && $('statsSheet').classList.contains('on')) try { openStats(); } catch (e) { } }
+  if (ch) { mgAbsSum(); saveStats(); if ($('statsSheet') && $('statsSheet').classList.contains('on')) try { openStats(); } catch (e) { } }
 }
 // the rest of the account, as this device holds it: scorecard history per course, best scores, shot clips, trophies, daily results, the home course, and the
 // counters the profile does not carry (holes in one shot, holes played in rain: only this device's own share, like the stats)
@@ -10443,7 +10454,7 @@ async function loadAcct(id) {
   try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/acct/${id}.json?t=${Math.floor(Date.now() / 20000)}`, { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch (e) { return null; }
 }
 // take over what the other device holds (union: nothing is ever taken away)
-function mgAbsorbEx(ex) {
+function mgAbsorbEx(ex, id) {
   if (!ex || typeof ex !== 'object') return;
   let ch = false; const nm = cleanName(settings.name);
   for (const [key, rs] of Object.entries(ex.rounds || {})) {
@@ -10456,9 +10467,9 @@ function mgAbsorbEx(ex) {
   if (Array.isArray(ex.reel)) for (const x of ex.reel) { const e = cleanShot(x); if (e && Array.isArray(x.cl) && x.cl.length === 18 && x.cl.every(Number.isFinite)) { const before = reelList().length; reelAdd(Object.assign({}, x, { cl: x.cl })); if (reelList().length !== before) ch = true; } }
   if (Array.isArray(ex.trophies)) for (const t of ex.trophies) if (t && /^\d{4}-\d{2}-\d{2}$/.test(t.day) && !ST.trophies.some(q => q.day === t.day)) { ST.trophies.push({ day: t.day, course: COURSES[t.course] ? t.course : 'gccb', tp: t.tp | 0, s: t.s | 0, n: t.n | 0 }); ch = true; }
   ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1);
-  const abs = ST.mgAbs || {};
+  const abs = mgAbsOf(id || settings.mgP);
   for (const [k, f] of [['hs', 'holedShots'], ['rh', 'rainHoles']]) if (Number.isFinite(ex[k]) && ex[k] >= 0) { const d = ex[k] - (abs[k] || 0); if (d) { ST[f] = Math.max(0, (ST[f] || 0) + d); abs[k] = ex[k]; ch = true; } }
-  ST.mgAbs = abs;
+  mgAbsSum();
   const dl = dlRecs(); let dch = false;
   for (const [d, r] of Object.entries(ex.dl || {})) { if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !r || r.day !== d || (r.status !== 'done' && r.status !== 'missed')) continue; const o = dl[d]; if (!o || (o.status !== 'done' && r.status === 'done') || (!o.status) || (o.status === 'playing')) { dl[d] = r; dch = true; } }
   if (dch) { for (const k of Object.keys(dl).sort().slice(0, -5)) delete dl[k]; try { localStorage.setItem('ssg-daily', JSON.stringify(dl)); } catch (e) { } ch = true; }
@@ -10473,7 +10484,7 @@ async function mgCheck() {
     if (mine && Date.now() - (MG.pAt || 0) > 100000) { MG.pAt = Date.now(); await loadPlayers(true); }
     if (mine) {
       const wasPending = !!(settings.mgReq || settings.mgAcc);
-      settings.mgP = mine.p; delete settings.mgReq; delete settings.mgAcc; if (!settings.nameSent && cleanName(settings.name)) settings.nameSent = cleanName(settings.name); saveSettings(); // (a later name change is then filed)
+      const auto = settings.mgReq && settings.mgReq.auto; settings.mgP = mine.p; settings.mgPs = [...new Set([mine.p, ...(Array.isArray(mine.ps) ? mine.ps : [])])].filter(x => typeof x === 'string' && x !== me); delete settings.mgReq; delete settings.mgAcc; if (!settings.nameSent && cleanName(settings.name)) settings.nameSent = cleanName(settings.name); saveSettings(); // (a later name change is then filed)
       MG.inc = null;
       // the name follows: the newer change wins (the server stamps each one)
       if (mine.n && mine.n !== settings.name && (mine.nat || 0) > (settings.nameAt || 0)) {
@@ -10482,8 +10493,9 @@ async function mgCheck() {
         for (const c of Object.values(COURSES)) { try { const a = JSON.parse(localStorage.getItem(c.board) || '[]'); if (Array.isArray(a)) localStorage.setItem(c.board, JSON.stringify(a.map(x => Object.assign(x, { name: mine.n })))); } catch (e) { } }
         updateHUD(); titleMenuSync(); nameHint(); refreshBoards();
       } else if (mine.nat && (settings.nameAt || 0) < mine.nat && mine.n === settings.name) { settings.nameAt = mine.nat; saveSettings(); }
-      mgAbsorb((DL.players || {})[mine.p]); loadAcct(mine.p).then(ex => { mgAbsorbEx(ex); if (!settings.mgSigAt) mgSyncSend(); }); loadDailyFile(dayId());
-      if (wasPending && !MG.dlg) mgDialog('done'); else if (wasPending && MG.dlg && (MG.dlg.kind === 'waiting' || MG.dlg.kind === 'wait')) mgDialog('done');
+      for (const p of mgPs()) { mgAbsorb((DL.players || {})[p], p); loadAcct(p).then(ex => { mgAbsorbEx(ex, p); if (!settings.mgSigAt) mgSyncSend(); }); } loadDailyFile(dayId());
+      if (auto) { if (MG.dlg && MG.dlg.kind === 'waiting') mgClose(); } // (joined an account the developer opened: the developer's note says so)
+      else if (wasPending && !MG.dlg) mgDialog('done'); else if (wasPending && MG.dlg && (MG.dlg.kind === 'waiting' || MG.dlg.kind === 'wait')) mgDialog('done');
     } else {
       for (const key of ['mgReq', 'mgAcc']) {
         const q = settings[key]; if (!q) continue;
@@ -10491,7 +10503,13 @@ async function mgCheck() {
         if (open) { if (!q.seen) { q.seen = true; saveSettings(); } continue; }
         // gone from the list: if it was there before, the other device has declined it (or it has been replaced); if it never showed up, it did not get through
         if (q.seen && Date.now() - q.at > 30000) { delete settings[key]; saveSettings(); if (key === 'mgReq' && !MG.dlg) mgDialog('declined'); }
-        else if (!q.seen && Date.now() - q.at > 360000) { delete settings[key]; saveSettings(); if (key === 'mgReq' && !MG.dlg) mgDialog('fail'); }
+        else if (!q.seen && Date.now() - q.at > 360000) { delete settings[key]; saveSettings(); if (key === 'mgReq' && !MG.dlg && !q.auto) mgDialog('fail'); }
+      }
+      // a merged account the developer has opened for one more device (mg.x): a phone or tablet that carries the name joins it by itself
+      const nx = cleanName(settings.name).toLowerCase(), ox = nx && mg.x && mg.x[nx];
+      if (ox && ox.u > Date.now() && !settings.mgReq && !settings.mgAcc && !pcSeen()) {
+        const to = Object.keys(mg.g).find(id => id !== me && mg.g[id] && String(mg.g[id].n).toLowerCase() === nx);
+        if (to && await ghIssue(`[merge] ${cleanName(settings.name)} asks`, { v: 1, merge: true, act: 'ask', to, name: cleanName(settings.name), dev: deviceId() }, 'Account merge request from Sweet Spot Golf.')) { settings.mgReq = { to, n: cleanName(settings.name), at: Date.now(), auto: 1 }; saveSettings(); mgSyncSend(true); mgFast(); }
       }
       // a request for this device: addressed to it, or to a player of the same name (the other device may have another id than the one the request was sent to)
       const nm = cleanName(settings.name).toLowerCase(), inc = mg.q.find(x => x.f !== me && (x.t === me || (nm && String(x.n).toLowerCase() === nm)));
@@ -11056,7 +11074,7 @@ function dlTrophyCheck() {
     if (st.length && st[0].e.mine && !ST.trophies.some(t => t.day === day)) { ST.trophies.push({ day, course: r.course, tp: r.tp, s: r.strokes, n: st.length }); saveStats(); got = r; }
   }
   // a merged account: a day won on the partner device is a trophy here too (the closed days' winners come with daily-index.json)
-  for (const x of DL.index || []) if (x && x.wb && x.d < today && (x.wb === dlMe() || x.wb === settings.mgP) && COURSES[x.c] && !ST.trophies.some(t => t.day === x.d)) { ST.trophies.push({ day: x.d, course: x.c, tp: x.t, s: x.t + (COURSES[x.c].defs || []).reduce((a, d) => a + d.par, 0), n: x.n }); ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1); saveStats(); }
+  for (const x of DL.index || []) if (x && x.wb && x.d < today && (x.wb === dlMe() || mgPs().includes(x.wb)) && COURSES[x.c] && !ST.trophies.some(t => t.day === x.d)) { ST.trophies.push({ day: x.d, course: x.c, tp: x.t, s: x.t + (COURSES[x.c].defs || []).reduce((a, d) => a + d.par, 0), n: x.n }); ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1); saveStats(); }
   if (got && G.state === 'title') recordCard('Daily champion', 'You won the daily challenge', fmtToPar(got.tp), COURSES[got.course].name, ['#fff3b0', '#ffd36a', '#e8a317', '#3a1d00']);
 }
 // results of the last day and a half that never reached the repository (no network): tried again at start
@@ -11090,7 +11108,7 @@ function startDaily() {
   if (!cleanName(settings.name)) { dlNeedName(); return; }
   if (isPC() && !rec) { mgDialog('pcDaily'); return; } // the daily challenge is played on a phone or tablet only
   if (pcSeen() && (!rec || rec.status === 'playing')) { mgDialog('pcDevice'); return; } // a device that has run as a computer: never (not even a round begun before)
-  if (settings.mgP && !rec && (DL.files[day] || []).some(e => e.id === settings.mgP && e.done)) { const el = $('dataLoad'); el.textContent = 'Your other device has already played today'; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 3400); openDaily(); return; } // (one account, one chance)
+  if (settings.mgP && !rec && (DL.files[day] || []).some(e => mgPs().includes(e.id) && e.done)) { const el = $('dataLoad'); el.textContent = 'Your other device has already played today'; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 3400); openDaily(); return; } // (one account, one chance)
   audio();
   if (G.state !== 'title' && G.C && !G.practice) saveRound(); // the round in play waits where it is
   if (MP.spec) mpResume(true);
@@ -11187,7 +11205,7 @@ function fillArchive(el, add) {
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = fmt(x.d).split(' ').slice(1).join(' ');
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (COURSES[x.c] ? COURSES[x.c].short : x.c); const sm = document.createElement('small'); sm.textContent = `${fmt(x.d).split(' ')[0]} · ${x.n} player${x.n === 1 ? '' : 's'}${mine[x.d] && mine[x.d].status === 'done' ? ' · played' : ''}`; nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.t); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.w;
-    if (x.wb ? x.wb === dlMe() || (settings.mgP && x.wb === settings.mgP) : String(x.w).toLowerCase() === cleanName(settings.name).toLowerCase()) sc.classList.add('ownName'); // my own win: the winner's name in gold
+    if (x.wb ? x.wb === dlMe() || mgPs().includes(x.wb) : String(x.w).toLowerCase() === cleanName(settings.name).toLowerCase()) sc.classList.add('ownName'); // my own win: the winner's name in gold
     row.append(rk, nm, tp, sc); row.onclick = () => { DL.tab = 'day'; DL.arch = x.d; loadDailyFile(x.d); fillDaily(el); }; list.appendChild(row);
   });
 }

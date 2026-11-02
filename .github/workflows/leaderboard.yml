@@ -78,8 +78,10 @@ jobs:
               if (pch) { fs.writeFileSync('leaderboard/players.json', JSON.stringify(pf0) + '\n'); changed.push('leaderboard/players.json'); }
               return changed;
             };
+            // the other devices of a merged account: p (the first partner) and ps (all of them, when an account has more than two devices)
+            const mgPeers = (mg, id) => { const e = mg && mg.g && mg.g[id]; return e ? [...new Set([e.p, ...(Array.isArray(e.ps) ? e.ps : [])])].filter(x => typeof x === 'string' && x !== id) : []; };
             if (issue.title.startsWith('[merge]') || issue.title.startsWith('[sync]')) {
-              // Two devices, one account. leaderboard/merges.json: { q: [{ f, t, n, at }] (open requests: device f asks device t), g: { device: { p: partner, n: name, nat: when the name last changed, at: merged } } }.
+              // Two devices, one account. leaderboard/merges.json: { q: [{ f, t, n, at }] (open requests: device f asks device t), g: { device: { p: partner, ps: [all partners, if more than one], n: name, nat: when the name last changed, at: merged } }, x: { name: { u } } (merged accounts opened for one more device until u) }.
               // A request is made by the new device, the merge happens only when the device that is asked accepts it; it cannot be undone.
               // A merged pair (or a pair about to merge) also files its own stats here ([sync]) so each device can add the other's to its own.
               const who = sha8(r.dev), HX = /^[0-9a-f]{8}$/, mf = 'leaderboard/merges.json';
@@ -103,6 +105,18 @@ jobs:
               if (act === 'ask') {
                 const to = r.to, nm = typeof r.name === 'string' ? r.name.trim() : '';
                 if (!NAMEOK.test(nm) || typeof to !== 'string' || !HX.test(to) || to === who) return finish(false, 'Invalid request.');
+                // a merged account the developer has opened for one more device (mg.x: { name: { u: open until } }): the device joins at once, nobody has to accept it
+                const ox = mg.x && mg.g[to] && !mg.g[who] && String(mg.g[to].n).toLowerCase() === nm.toLowerCase() ? mg.x[nm.toLowerCase()] : null;
+                if (ox && ox.u > now) {
+                  const mem = [to, ...mgPeers(mg, to)], all = [...mem, who], n0 = mg.g[to].n;
+                  for (const id of mem) mg.g[id] = Object.assign({}, mg.g[id] || {}, { p: (mg.g[id] && mg.g[id].p) || to, ps: all.filter(x => x !== id) });
+                  mg.g[who] = { p: to, ps: all.filter(x => x !== who), n: n0, nat: mg.g[to].nat || now, at: now };
+                  delete mg.x[nm.toLowerCase()]; mg.q = mg.q.filter(x => x.f !== who && x.t !== who);
+                  fs.writeFileSync(mf, JSON.stringify(mg) + '\n');
+                  files.push(...setNames(all, n0));
+                  try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); files.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (err) { core.warning('overall: ' + err.message); }
+                  await gitPush(files, `Accounts merged: ${n0} (device ${all.length})`); return finish(true, 'This device has joined the account.');
+                }
                 if (mg.g[who] || mg.g[to]) return finish(false, 'One of the accounts is already merged.');
                 const pl = rdj('leaderboard/players.json', {});
                 let known = !!pl[to]; if (!known) for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|westminster|landmand|isles)\.json$/.test(f))) if ((rdj('leaderboard/' + f, []) || []).some(x => x && x.by === to)) { known = true; break; }
@@ -172,9 +186,9 @@ jobs:
             if (issue.title.startsWith('[rename]')) {
               // a name change: every score ever posted from this device (and from the device it is merged with) takes the new name
               if (!r || typeof r.name !== 'string' || !NAMEOK.test(r.name.trim())) return finish(false, 'Invalid name.');
-              const nn = r.name.trim(), who = sha8(r.dev), mg = rdj('leaderboard/merges.json', {}), pr = mg.g && mg.g[who] ? mg.g[who].p : null;
-              const changed = setNames(pr ? [who, pr] : [who], nn);
-              if (pr && mg.g[pr]) { mg.g[who].n = mg.g[pr].n = nn; mg.g[who].nat = mg.g[pr].nat = Date.now(); fs.writeFileSync('leaderboard/merges.json', JSON.stringify(mg) + '\n'); changed.push('leaderboard/merges.json'); } // (the other device picks the new name up at its next launch)
+              const nn = r.name.trim(), who = sha8(r.dev), mg = rdj('leaderboard/merges.json', {}), prs = mgPeers(mg, who).filter(x => mg.g[x]);
+              const changed = setNames([who, ...prs], nn);
+              if (prs.length) { const t = Date.now(); for (const id of [who, ...prs]) { mg.g[id].n = nn; mg.g[id].nat = t; } fs.writeFileSync('leaderboard/merges.json', JSON.stringify(mg) + '\n'); changed.push('leaderboard/merges.json'); } // (the other device picks the new name up at its next launch)
               if (!changed.length) return finish(true, 'No scores from this device to rename.');
               try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); changed.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (e) { core.warning('overall: ' + e.message); }
               await gitPush(changed, `Leaderboard: a player is now ${nn}`);
