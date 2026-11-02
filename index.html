@@ -215,9 +215,9 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #intro{background:linear-gradient(180deg,rgba(10,40,20,0) 55%,rgba(10,40,20,.28))}
 .icard{width:100%;max-width:520px;padding:16px;display:flex;gap:14px;transform:translateY(30px);transition:transform .5s var(--spring);border-radius:4px}
 #intro.on .icard,#done.on .dcard{transform:none}
-#featAsk,#homeAsk,#mgAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#featAsk,#homeAsk,#mgAsk,#devAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(10,30,24,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .hcard{width:100%;max-width:420px;padding:22px 20px 18px;background:rgba(250,252,249,.93);text-align:center;transform:translateY(24px);transition:transform .5s var(--spring);border-radius:4px;--ink:#16211c;--ink2:rgba(22,33,28,.7)}
-#featAsk.on .hcard,#homeAsk.on .hcard,#mgAsk.on .hcard{transform:none}
+#featAsk.on .hcard,#homeAsk.on .hcard,#mgAsk.on .hcard,#devAsk.on .hcard{transform:none}
 #neonAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(4,8,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #neonAsk.on .hcard{transform:none}
 body.night{--wk:.5;--w1:rgba(255,255,255,.5);--w2:rgba(255,255,255,.42);--w3:rgba(255,255,255,.34);--gl-tint:rgba(5,6,8,.80);--gl-bg:linear-gradient(180deg,rgba(255,255,255,calc(.07*var(--wk))),rgba(255,255,255,calc(0*var(--wk))));--gl-line:rgba(255,255,255,calc(.16*var(--wk)))}
@@ -626,6 +626,7 @@ td:first-child,th:first-child{text-align:left;font:600 11px var(--cond);letter-s
 <div class="layer" id="featAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Shape the game</div><div class="ht">Request a feature</div><div class="hb">Missing something? Send in your ideas and vote on the ones from other players with a thumbs up or down. The most wanted ones get built, and finished requests move to the archive.</div><div class="hbtns"><button class="btn alt" id="faNo" type="button">Not now</button><button class="btn" id="faOk" type="button">See requests</button></div></div></div>
 <div class="layer" id="neonAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Night round</div><div class="ht">Pick your neon ball</div><div class="hb">The floodlights are on. Choose the colour your ball glows before you take the first shot.</div><div class="neonOpts"><button class="neonO" type="button" data-i="0" style="--nc:#ff2fa0"><i></i>Pink</button><button class="neonO" type="button" data-i="1" style="--nc:#6dff2e"><i></i>Lime</button><button class="neonO" type="button" data-i="2" style="--nc:#2ef2ff"><i></i>Cyan</button><button class="neonO" type="button" data-i="3" style="--nc:#ffb020"><i></i>Amber</button></div></div></div>
 <div class="layer" id="mgAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk" id="mgK"></div><div class="ht" id="mgT"></div><div class="hb" id="mgB"></div><div class="hbtns"><button class="btn alt" id="mgNo" type="button"></button><button class="btn" id="mgOk" type="button"></button></div></div></div>
+<div class="layer" id="devAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk" id="devK"></div><div class="ht" id="devT"></div><div class="hb" id="devB" style="white-space:pre-line;max-height:58vh;overflow:auto"></div><textarea id="devR" maxlength="1000" rows="3" placeholder="Your reply (optional)" style="width:100%;box-sizing:border-box;margin-top:10px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:inherit;font:inherit;padding:8px;resize:vertical"></textarea><div class="hb" id="devE" hidden></div><div class="hbtns"><button class="btn alt" id="devNo" type="button">Close</button><button class="btn" id="devOk" type="button">Send reply</button></div></div></div>
 <div class="layer" id="homeAsk" role="dialog" aria-live="polite"><div class="card hcard"><div class="hk">Thanks for playing</div><div class="ht">Add your home course</div><div class="hb">Tell us your home course: new courses are added often, and the home courses of our active players come first. Good luck, and thanks for playing!</div><input id="haC" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Course name" enterkeyhint="next"><input id="haR" maxlength="30" autocomplete="off" spellcheck="false" placeholder="State or country" enterkeyhint="done"><div class="hn" id="haN">You can change it later under Menu, Player &amp; golfer.</div><div class="hbtns"><button class="btn alt" id="haNo" type="button">Not now</button><button class="btn" id="haOk" type="button">Save</button></div></div></div>
 <div id="scrim"></div>
 <div id="dataLoad" class="glass"></div>
@@ -857,7 +858,8 @@ const PUTTER = CLUBS.length - 1;
 const POW_EXP = .78;
 const DOWN_FULL = .35; // seconds
 const DOWN_STEP = .2, DOWN_STEP_LOSS = .2; // each 0.2 s the downswing is slower than DOWN_FULL cuts the ball speed by a further 20 % (compounding)
-const PC_SIDE_DEG = 6; // a computer: the start line in degrees with the dot at the edge of the face (left or right), before the hand
+// a computer: the start line in degrees, as far as a phone swing can start it (the thumb's path at its limit plus the strike), reached with the dot halfway out to the edge of the face (further out stays there)
+const PC_SIDE_DEG = 9 + 1.6; // (PATH_MAX + the strike's 1.6 deg per face half-width)
 const TEMPO_K = -Math.log((1.4 / 1.5 - .85) / .15); // tempo multiplier .85 + .15 * exp(-K * (R - 3)^2) hits 1.4/1.5 at 2:1 and 4:1
 const PUTT_RANGES = [3, 6, 10, 15, 22, 30];
 // part swings make less spin: a short chip leaves the face with a fraction of a full swing's backspin
@@ -1225,7 +1227,7 @@ function computeLaunch(ci, sw, st, surf, yaw, hand, teed, lieRoll) {
     if (v > 1) { extra = extra || 'sky'; sm *= .62; launchAdd += 16; spinMul *= 1.5; }
     else if (v < -1) { extra = extra || 'top'; sm *= .55; launchAdd = -c.launch + 2.5; spinMul *= .35; }
     // on a computer the start line comes from the dot as well: right of centre on the face (as seen on screen) starts the ball right, and it curves on to the right (left the same)
-    if (sw.pc && extra !== 'shank') start = -PC_SIDE_DEG * clamp(h, -1.2, 1.2);
+    if (sw.pc && extra !== 'shank') start = -PC_SIDE_DEG * clamp(h / .5, -1, 1);
     sm = Math.max(sm, .3);
     const tempoMult = .85 + .15 * q;
     let lieSpeed = lie.speed;
@@ -4083,7 +4085,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 7 };
+const APP_ITER = { courses: 11, n: 8 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10326,6 +10328,42 @@ function mgUI() {
   const inc = !settings.mgP && !MG.dlg && MG.inc, t = settings.mgP ? 'Merged: this account is shared with another device.' : inc ? 'A merge request is waiting for you. Tap to answer.' : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
   el.textContent = t; el.hidden = !t; el.style.cursor = inc ? 'pointer' : ''; el.onclick = inc ? () => mgDialog('accept', { from: inc.f, name: inc.n }) : null;
 }
+// a note from the developer to one player (by device hash), shown once, with a reply field; the reply goes to the developer's devices ([reply] issue -> leaderboard/replies.json), shown there once
+const DEV_TO = ['702a2e69', '3cf5ef77']; // the developer's devices (Florian)
+const DEV_MSGS = [{ id: 'zain1', to: ['753ff0b4', '6c3f623c'], k: 'From the developer', t: 'A note for you',
+  b: "Hi ZainB, thanks for playing with us! It's so cool to see this little community growing. I'm the developer of SweetSpot and I'm just letting you know that your recent daily challenge rounds have been flagged as non-mobile. Future rounds on computer devices are not eligible for daily challenges. We've implemented some changes to the play mechanics for keyboard and mouse users. We hope to see you on the daily challenges (with your mobile device) defending your #1 spot in the new Tournament mode.\n\nAll the best!\nNephlonor" }];
+const DM = { cur: null };
+function devFree() { return !document.querySelector('.layer.on:not(#title)') && !sheetOpen() && (G.state === 'title' || G.state === 'address'); }
+function devShow(o) {
+  DM.cur = o; $('devK').textContent = o.k; $('devT').textContent = o.t; $('devB').textContent = o.b;
+  $('devR').hidden = $('devOk').hidden = !o.reply; $('devR').value = ''; $('devE').hidden = true; $('devNo').textContent = o.reply ? 'Close' : 'OK'; $('devAsk').classList.add('on');
+}
+function devSeen(key) { const a = Array.isArray(settings.devSeen) ? settings.devSeen : []; if (!a.includes(key)) a.push(key); settings.devSeen = a.slice(-50); saveSettings(); }
+const devWas = key => Array.isArray(settings.devSeen) && settings.devSeen.includes(key);
+async function devCheck() {
+  if (DM.cur || !DL.me || !devFree()) return;
+  const m = DEV_MSGS.find(x => x.to.includes(DL.me) && !devWas(x.id));
+  if (m) { devShow(Object.assign({ reply: true }, m)); return; }
+  if (!DEV_TO.includes(DL.me)) return;
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/replies.json?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); if (!r.ok) return;
+    const a = await r.json(); if (!Array.isArray(a) || DM.cur || !devFree()) return;
+    const x = a.find(x => x && typeof x.t === 'string' && !devWas('r:' + x.id + ':' + x.at));
+    if (x) devShow({ key: 'r:' + x.id + ':' + x.at, k: 'Reply · ' + x.id, t: 'From ' + String(x.name || 'a player'), b: x.t });
+  } catch (e) { }
+}
+$('devNo').addEventListener('click', () => { const o = DM.cur; if (o) devSeen(o.key || o.id); DM.cur = null; $('devAsk').classList.remove('on'); });
+$('devOk').addEventListener('click', async () => {
+  const o = DM.cur, txt = $('devR').value.trim(); if (!o) return;
+  if (!txt) { $('devE').textContent = 'Write a reply first, or close.'; $('devE').hidden = false; return; }
+  $('devOk').disabled = true;
+  const ok = await ghIssue('[reply] ' + o.id, { v: 1, dev: deviceId(), id: o.id, name: playerName(), t: txt }, 'A reply from Sweet Spot Golf.');
+  $('devOk').disabled = false;
+  if (!ok) { $('devE').textContent = 'Not sent. Check your connection and try again.'; $('devE').hidden = false; return; }
+  devSeen(o.id); DM.cur = null; $('devAsk').classList.remove('on');
+  const el = $('dataLoad'); el.textContent = 'Reply sent. Thank you!'; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 3000);
+});
+setInterval(devCheck, 8000);
 // the name has just been entered: is it somebody else's?
 async function mgNameCheck() {
   const nm = cleanName(settings.name); if (!nm || settings.mgP || settings.mgReq || settings.mgAcc || MG.dlg || !ghKey()) return;
