@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[reply]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[reply]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]') || startsWith(github.event.issue.title, '[devmsg]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -171,6 +171,17 @@ jobs:
               await gitPush(changed, 'Leaderboard: a computer\'s scores move to the computer boards');
               return finish(true, 'Your scores are now on the computer boards.');
             }
+            if (issue.title.startsWith('[devmsg]')) {
+              // a message to the developer (menu, Feature requests, Message): kept in leaderboard/messages.json, shown in the inbox of the player called Florian
+              const who = sha8(r && r.dev), t = r && typeof r.t === 'string' ? r.t.trim() : '';
+              if (!t || t.length > 1000) return finish(false, 'Empty or too long.');
+              const f = 'leaderboard/messages.json'; let a = rdj(f, []); if (!Array.isArray(a)) a = [];
+              if (a.filter(x => x.by === who && Date.now() - x.at < 864e5).length >= 5) return finish(false, 'Enough messages for today. Try again tomorrow.');
+              a.push({ id: Date.now().toString(36) + who.slice(0, 3), by: who, name: typeof r.name === 'string' && NAMEOK.test(r.name.trim()) ? r.name.trim() : 'Player', t, at: Date.now() });
+              fs.writeFileSync(f, JSON.stringify(a.slice(-300)) + '\n');
+              await gitPush([f], 'A message to the developer');
+              return finish(true, 'Thanks, your message has been delivered.');
+            }
             if (issue.title.startsWith('[reply]')) {
               // a player's reply to a note from the developer (only the player the note went to can answer it): kept in leaderboard/replies.json, the developer's devices show it once
               const FROM = { zain1: ['753ff0b4', '6c3f623c'] }, who = sha8(r && r.dev);
@@ -262,7 +273,7 @@ jobs:
             // the devices that have ever run as a computer (their [device] report, or a computer round): the daily challenge is closed to them
             const PCF = 'leaderboard/pcdev.json';
             const pcDevs = () => { let a = []; try { a = JSON.parse(fs.readFileSync(PCF, 'utf8')); } catch (e) { } return Array.isArray(a) ? a : []; };
-            const isPcDev = id => pcDevs().includes(id) || fs.readdirSync('leaderboard').filter(f => /^[a-z]+\.json$/.test(f) && !/^(players|merges|features|homecourses|pcdev)\.json$/.test(f) && !f.startsWith('daily')).some(f => { try { const a = JSON.parse(fs.readFileSync('leaderboard/' + f, 'utf8')); return Array.isArray(a) && a.some(x => x && x.by === id && x.pc); } catch (e) { return false; } });
+            const isPcDev = id => pcDevs().includes(id) || fs.readdirSync('leaderboard').filter(f => /^[a-z]+\.json$/.test(f) && !/^(players|merges|features|homecourses|pcdev|messages|replies)\.json$/.test(f) && !f.startsWith('daily')).some(f => { try { const a = JSON.parse(fs.readFileSync('leaderboard/' + f, 'utf8')); return Array.isArray(a) && a.some(x => x && x.by === id && x.pc); } catch (e) { return false; } });
             const notePc = () => { const a = pcDevs(); if (a.includes(by)) return null; a.push(by); fs.writeFileSync(PCF, JSON.stringify(a) + '\n'); return PCF; };
             const save = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
