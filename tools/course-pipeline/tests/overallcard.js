@@ -7,7 +7,8 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright');
   await p.route('**/three.min.js', r => r.fulfill({ path: '' + (process.env.THREE || __dirname + '/three.min.js') + '', contentType: 'application/javascript' }));
   await p.route('**/fonts.googleapis.com/**', r => r.abort());
   const pf = { xp: 4200, r: 31, h: 540, st: 2300, pu: 900, ac: 1, ea: 4, bi: 60, pa: 200, bo: 150, dd: 40, fh: 200, ft: 400, gh: 180, gt: 540, sh: 2300, di: 300000, wa: 12, ob: 8, tr: 30, rb: 2, ch: 7, fd: 3, lo: 2, dr: 281, ho: 74.2, pt: 18.4, br: -3, gs: 5, fs: 7, bk: 3, tw: [20750, 20751] };
-  const files = { 'daily-index.json': [], 'daily-overall.json': [{ by: 'abc12345', n: 'Rory', p: 120, d: 9, w: 3, pod: 5, best: -5 }, { by: 'def67890', n: 'Sam', p: 80, d: 7, w: 1, pod: 2, best: -2 }], 'players.json': { abc12345: { n: 'Rory', pf, bs: [], at: Date.now() } } };
+  const yd = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Date.now() - 864e5)); // (the Tournament counts the last 4 finished days)
+  const files = { 'daily-index.json': [], 'daily-overall.json': [{ by: 'abc12345', n: 'Rory', p: 25, d: 1, w: 1, pod: 1, best: -5, r: { [yd]: [1, -5] } }, { by: 'def67890', n: 'Sam', p: 18, d: 1, w: 0, pod: 1, best: -2, r: { [yd]: [2, -2] } }], 'players.json': { abc12345: { n: 'Rory', pf, bs: [], at: Date.now() } } };
   await p.route('**/raw.githubusercontent.com/**', r => { const f = r.request().url().split('/leaderboard/')[1].split('?')[0]; files[f] ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(files[f]) }) : r.fulfill({ status: 404, body: '' }); });
   await p.goto('file:///home/user/SweetSpot/index.html'); await p.waitForTimeout(3000);
   await p.evaluate(() => openDaily('overall'));
