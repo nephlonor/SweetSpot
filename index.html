@@ -220,9 +220,6 @@ body:has(.sheet.on) .titleFoot{opacity:0}
 #featAsk.on .hcard,#homeAsk.on .hcard,#mgAsk.on .hcard{transform:none}
 #neonAsk{bottom:var(--kb,0px);z-index:9;display:flex;align-items:center;justify-content:center;padding:0 calc(var(--sr) + 18px) 0 calc(var(--sl) + 18px);background:rgba(4,8,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #neonAsk.on .hcard{transform:none}
-#spider{position:fixed;left:0;top:0;width:54px;height:54px;z-index:12;pointer-events:none;opacity:0;filter:drop-shadow(0 0 3px rgba(255,255,255,calc(.75*var(--wk)))) drop-shadow(0 0 9px rgba(255,255,255,calc(.25*var(--wk))))}#spider.on{opacity:1}
-#spider path{fill:none;stroke:#0b0c0e;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}#spider ellipse{fill:#0b0c0e;stroke:rgba(255,255,255,calc(.4*var(--wk)));stroke-width:.7}#spider .eye{fill:#ff3b3b}
-#spider g{transform-origin:24px 24px}#spider .lgA{animation:spLeg .26s ease-in-out infinite}#spider .lgB{animation:spLeg .26s ease-in-out -.13s infinite}@keyframes spLeg{0%,100%{transform:rotate(-13deg)}50%{transform:rotate(13deg)}}
 body.night{--wk:.5;--w1:rgba(255,255,255,.5);--w2:rgba(255,255,255,.42);--w3:rgba(255,255,255,.34);--gl-tint:rgba(5,6,8,.80);--gl-bg:linear-gradient(180deg,rgba(255,255,255,calc(.07*var(--wk))),rgba(255,255,255,calc(0*var(--wk))));--gl-line:rgba(255,255,255,calc(.16*var(--wk)))}
 body.night .btn,body.night .btn.alt{background:linear-gradient(180deg,#1b1d20,#050607);color:rgba(255,255,255,var(--wk));border:1px solid rgba(255,255,255,calc(.2*var(--wk)));box-shadow:0 10px 24px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,calc(.14*var(--wk)))}
 body.night .mbtn,body.night .mbtn.dark{background:linear-gradient(180deg,#1b1d20,#050607)!important;color:rgba(255,255,255,var(--wk))!important;border:1px solid rgba(255,255,255,calc(.2*var(--wk)));box-shadow:0 8px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,calc(.14*var(--wk)))!important}
@@ -4083,7 +4080,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 1 };
+const APP_ITER = { courses: 11, n: 3 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -4404,12 +4401,13 @@ function updateWeatherVisuals(dt) {
   if (G.nightU > .001) nightDress(G.nightU);
 }
 /* ---------- night at GCC Basel ---------- */
-// Started only one way: on the first tee of an ordinary round, before the first stroke, turn the aim to the clubhouse and hold it
-// there for about a second. The floodlights come on, the sky goes dark and a pop-up asks for the neon colour of the ball.
+// Night under the floodlights is the standard look at GCC Basel: every round starts in it and a pop-up asks for the neon colour of the
+// ball. On the first tee, before the first stroke, turning the aim to the clubhouse and holding it there for about a second switches to
+// the day (and holding it there again, after looking away, back to the night).
 const NEON = [{ c: 0xff2fa0, n: 'Pink' }, { c: 0x6dff2e, n: 'Lime' }, { c: 0x2ef2ff, n: 'Cyan' }, { c: 0xffb020, n: 'Amber' }];
 const TOUR = 4; // the daily Tournament: the last 4 finished daily challenges, rolling (one in, the oldest out each day; the same in daily-overall.js)
 const NIGHT_LIGHT = .3; // the night's overall brightness: 30% of the earlier look, so the players hardly make out the surroundings
-const NIGHT = { bg: new THREE.Color(0x060b18).multiplyScalar(NIGHT_LIGHT), hem: new THREE.Color(0x4a64a2), gnd: new THREE.Color(0x0e1626), cloud: new THREE.Color(0x141b2e).multiplyScalar(NIGHT_LIGHT) };
+const NIGHT = { bg: new THREE.Color(0x0a1c3c).multiplyScalar(NIGHT_LIGHT), sky: new THREE.Color(0x12305e).multiplyScalar(.55), hem: new THREE.Color(0x4a64a2), gnd: new THREE.Color(0x0e1626), cloud: new THREE.Color(0x141b2e).multiplyScalar(NIGHT_LIGHT) };
 const NIGHT_LOOK = .9; // seconds the aim has to stay on the clubhouse
 let _glowTex = null;
 function glowTex() { // a soft white dot, tinted by the material that uses it
@@ -4430,9 +4428,10 @@ function clubhouseOf(C) {
   return C._club = best;
 }
 function todLabel() { return G.night ? 'Night' : TOD_NAMES[G.tod] || 'Golden light'; }
-function nightStart() {
-  G.night = true; G.nightLook = 0; try { saveRound(); } catch (e) { }
-  readout('<div class="r1">Night falls over the club</div><div class="r3"><span>Pick your neon ball before the first shot</span></div>', 2.6);
+function nightToggle() {
+  G.night = !G.night; try { saveRound(); } catch (e) { }
+  if (G.night) readout('<div class="r1">Night falls over the club</div><div class="r3"><span>Pick your neon ball before the first shot</span></div>', 2.6);
+  else { $('neonAsk').classList.remove('on'); readout('<div class="r1">Daylight at the club</div><div class="r3"><span>Look at the clubhouse again for the floodlights</span></div>', 2.6); }
 }
 // the ball's neon follows the round's state (G.night, G.neon): it comes back with a resumed round and goes with a new one
 function syncNeon() {
@@ -4443,23 +4442,21 @@ function syncNeon() {
   else { m.emissive.setHex(0xffffff); m.emissiveIntensity = .17; }
 }
 function setNeon(c) { G.neon = c; syncNeon(); try { saveRound(); } catch (e) { } }
-// each frame: hold the aim on the clubhouse from the first tee to start the night, ease the lights, show the colour pop-up
+// each frame: hold the aim on the clubhouse from the first tee to switch between night and day, ease the lights, show the colour pop-up
 function nightTick(dt) {
   const C = G.C, onGccb = COURSE.key === 'gccb'; syncNeon();
-  if (!G.night && C && onGccb && !G.daily && G.hole === 0 && G.strokes === 0 && G.state === 'address') {
-    const cl = clubhouseOf(C);
-    G.nightLook = cl && Math.abs(angWrap(G.yaw - cl.yaw)) < cl.tol ? (G.nightLook || 0) + dt : 0;
-    if (G.nightLook >= NIGHT_LOOK) nightStart();
+  if (C && onGccb && G.hole === 0 && G.strokes === 0 && G.state === 'address') {
+    const cl = clubhouseOf(C), on = cl && Math.abs(angWrap(G.yaw - cl.yaw)) < cl.tol;
+    if (!on) G.nightLook = 0; else if (G.nightLook >= 0) { G.nightLook = (G.nightLook || 0) + dt; if (G.nightLook >= NIGHT_LOOK) { nightToggle(); G.nightLook = -1; } } // (-1: switched; the aim has to leave the clubhouse first)
   } else G.nightLook = 0;
   const want = G.night && onGccb ? 1 : 0;
   G.nightU = (G.nightU || 0) + (want - (G.nightU || 0)) * (1 - Math.exp(-dt / 1.6));
   if (G.night && onGccb && !G.neon && G.state === 'address' && !$('neonAsk').classList.contains('on')) $('neonAsk').classList.add('on');
   const lit = G.nightU > .02, nightOn = G.nightU > .5 && onGccb;
-  batTick(dt, nightOn); wormTick(dt, nightOn); ballLightTick(nightOn, dt);
+  floodTick(nightOn); wormTick(dt, nightOn); ballLightTick(nightOn, dt);
   if (nightOn && G.state !== 'title' && !document.hidden) { // (the owl comes and goes on its own)
     G.owlT = (G.owlT == null ? 12 + Math.random() * 18 : G.owlT) - dt; if (G.owlT <= 0) { owlHoot(); G.owlT = 45 + Math.random() * 60; } // (rarely)
-    G.howlT = (G.howlT == null ? 40 + Math.random() * 40 : G.howlT) - dt; if (G.howlT <= 0) { howl(); G.howlT = 80 + Math.random() * 90; }
-  } else if (!nightOn) G.owlT = G.howlT = null;
+  } else if (!nightOn) G.owlT = null;
   if (W.ballGlow) {
     W.ballGlow.visible = lit && !!W.ball.visible;
     if (W.ballGlow.visible) { // a constant size on screen (56 px out from the ball), so it reads far away and does not swamp the ball close up
@@ -4475,36 +4472,47 @@ function nightDress(u) {
   W.scene.background.lerp(NIGHT.bg, u); W.scene.fog.color.lerp(NIGHT.bg, u);
   W.sun.intensity *= 1 - u; W.hemi.intensity = W.hemi.intensity * (1 - u) + .5 * NIGHT_LIGHT * u;
   W.hemi.color.lerp(NIGHT.hem, u); W.hemi.groundColor.lerp(NIGHT.gnd, u);
-  W.sky.material.color.lerp(NIGHT.bg, u); W.cloudMat.color.lerp(NIGHT.cloud, u);
+  W.sky.material.color.lerp(NIGHT.sky, u); W.cloudMat.color.lerp(NIGHT.cloud, u);
+  // what the floodlights do not reach sinks into the dark: the fog closes in, so the woods and the far holes fade to night
+  W.scene.fog.near += (40 - W.scene.fog.near) * u; W.scene.fog.far += (520 - W.scene.fog.far) * u;
 }
-// bats: a few black silhouettes that flap and swerve over the course after dark, round a point ahead of the camera
-const BAT_N = 7;
-function batInit() {
-  const mat = new THREE.MeshBasicMaterial({ color: 0x050608, side: THREE.DoubleSide, fog: false });
-  const P = [[0, 0, .15], [.45, .02, .28], [.85, 0, .05], [.55, -.01, -.18], [.3, -.02, -.2], [0, 0, -.18]], pos = [];
-  for (let k = 1; k < 5; k++) pos.push(...P[0], ...P[k], ...P[k + 1]);
-  const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  const bg = new THREE.SphereGeometry(.12, 7, 5); bg.scale(1, .8, 1.9);
-  W.bats = [];
-  for (let n = 0; n < BAT_N; n++) {
-    const g = new THREE.Group(), wr = new THREE.Mesh(wg, mat), wl = new THREE.Mesh(wg, mat); wl.scale.x = -1;
-    g.add(new THREE.Mesh(bg, mat), wr, wl); g.scale.setScalar(3); g.rotation.order = 'YXZ'; g.visible = false; W.scene.add(g);
-    W.bats.push({ g, wr, wl, sx: .35 + Math.random() * .4, sy: .5 + Math.random() * .6, sz: .3 + Math.random() * .4, rx: 12 + Math.random() * 10, ry: 2.5 + Math.random() * 3, rz: 6 + Math.random() * 6, p1: Math.random() * TAU, p2: Math.random() * TAU, p3: Math.random() * TAU, p4: Math.random() * TAU });
+// floodlights: masts along both sides of the hole, each with a lamp that glows and a real light that pours down on the fairway, so the
+// playing lanes stand out bright green against the dark woods. The lights are made once, the first time night falls (that one time the
+// shaders compile again, hidden by the fade), and stay at no strength after that; the masts are built anew for each hole
+const FLOOD_N = 7, FLOOD_H = 20, FLOOD_C = 0xf6ffe6;
+function floodSpots(C) { // where the masts stand: every 70-90 m down the hole, sides taking turns, just off the edge of the short grass
+  const L = C.center.L, n = clamp(Math.round(L / 80) + 1, 3, FLOOD_N - 1), out = [];
+  for (let i = 0; i < n; i++) {
+    const s = clamp(8 + (L - 8) * i / (n - 1), 0, L), f = fairHalfWidth(C, Math.min(s, L - 1)), side = i % 2 ? 1 : -1, off = f.hw + 9;
+    out.push({ x: f.p[0] + f.nx * off * side, z: f.p[1] + f.nz * off * side, ax: f.p[0], az: f.p[1] });
   }
+  const e = polyAt(C.center, L), g = fairHalfWidth(C, Math.max(0, L - 12)), cx = C.cup ? C.cup.x : e[0], cz = C.cup ? C.cup.z : e[1]; // one behind the green
+  out.push({ x: cx + g.tx * 30, z: cz + g.tz * 30, ax: cx, az: cz });
+  return out;
 }
-function batTick(dt, on) {
-  if (!on) { if (W.bats) for (const b of W.bats) b.g.visible = false; return; }
-  if (!W.bats) batInit();
-  const cam = W.cam.position, fx = G.camLook.x - cam.x, fz = G.camLook.z - cam.z, fl = Math.hypot(fx, fz) || 1, tx = cam.x + fx / fl * 22, ty = cam.y + 5, tz = cam.z + fz / fl * 22;
-  if (!W.batA) W.batA = new THREE.Vector3(tx, ty, tz);
-  const k = 1 - Math.exp(-dt * 1.5), A = W.batA; A.x += (tx - A.x) * k; A.y += (ty - A.y) * k; A.z += (tz - A.z) * k;
-  const t = W.batT = (W.batT || 0) + dt;
-  for (const b of W.bats) {
-    const x = A.x + Math.sin(t * b.sx + b.p1) * b.rx + Math.sin(t * b.sx * 2.7 + b.p2) * 2.5, y = A.y + 2 + Math.sin(t * b.sy + b.p3) * b.ry, z = A.z + Math.cos(t * b.sz + b.p4) * b.rz;
-    const dx = x - b.g.position.x, dz = z - b.g.position.z; if (dx * dx + dz * dz > 1e-6) b.g.rotation.y = Math.atan2(dx, dz);
-    b.g.position.set(x, y, z); b.g.rotation.z = Math.sin(t * 2 + b.p2) * .3; b.g.visible = true;
-    const f = Math.sin(t * 17 + b.p1) * .85; b.wr.rotation.z = f; b.wl.rotation.z = -f;
+function floodTick(on) {
+  const C = G.C;
+  if (!on || !C || !C.center) { if (W.flood) { W.flood.grp.visible = false; for (const l of W.flood.lights) l.intensity = 0; } return; }
+  if (!W.flood) {
+    const lights = []; for (let i = 0; i < FLOOD_N; i++) { const l = new THREE.PointLight(FLOOD_C, 0, 105, 2); W.scene.add(l); lights.push(l); }
+    W.flood = { lights, grp: new THREE.Group(), C: null, pole: new THREE.MeshLambertMaterial({ color: 0x3a3f46 }), lamp: new THREE.MeshBasicMaterial({ color: 0xfbfff0, fog: false }),
+      glow: new THREE.SpriteMaterial({ map: glowTex(), color: 0xeefad8, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }) };
+    W.scene.add(W.flood.grp);
   }
+  const F = W.flood; F.grp.visible = true;
+  if (F.C !== C) {
+    F.C = C; for (const m of F.grp.children.slice()) { F.grp.remove(m); if (m.geometry) m.geometry.dispose(); }
+    const pg = new THREE.CylinderGeometry(.18, .3, FLOOD_H, 6); pg.translate(0, FLOOD_H / 2, 0); const hg = new THREE.BoxGeometry(2.4, .5, 1.2);
+    floodSpots(C).forEach((p, i) => {
+      const y = C.h(p.x, p.z), pole = new THREE.Mesh(pg, F.pole); pole.position.set(p.x, y, p.z); F.grp.add(pole);
+      const head = new THREE.Mesh(hg, F.lamp); head.position.set(p.x, y + FLOOD_H, p.z); head.rotation.y = Math.atan2(p.ax - p.x, p.az - p.z); head.rotation.x = .35; F.grp.add(head);
+      const gl = new THREE.Sprite(F.glow); gl.position.copy(head.position); gl.scale.setScalar(9); F.grp.add(gl);
+      const l = F.lights[i]; if (l) { const k = .35; l.position.set(p.x + (p.ax - p.x) * k, y + FLOOD_H - 2, p.z + (p.az - p.z) * k); }
+    });
+    F.n = Math.min(FLOOD_N, F.grp.children.length / 3);
+  }
+  const u = clamp((G.nightU - .5) * 2, 0, 1);
+  F.lights.forEach((l, i) => { l.intensity = i < F.n ? 1.6 * u : 0; });
 }
 // glow worms: small yellow-green lights that drift about low over the grass, each pulsing at its own pace. They live in the world, not
 // round the camera: most on and around the green, the rest scattered along the hole
@@ -4544,24 +4552,6 @@ function ballLightTick(on, dt) {
   L.intensity = .3 * k; if (k < .01) return;
   const b = W.ball.position; L.position.set(b.x, b.y + 4, b.z); L.color.setHex(W.neonOn).lerp(_nwhite, .8); // (mostly white, with a tint of the ball's colour)
 }
-// a spider crawls over the screen after a bogey or worse (a pick-up too): across from one side to the other along a wobbling line, its legs going
-const SPIDER_SVG = '<svg id="spider" viewBox="0 0 48 48" aria-hidden="true"><g class="lgA"><path d="M26 20L36 12L42 8M22 23L10 20L3 20M26 26L38 30L44 34M23 29L14 38L10 45"/></g><g class="lgB"><path d="M22 20L12 12L6 8M26 23L38 20L45 20M22 26L10 30L4 34M25 29L34 38L38 45"/></g><ellipse cx="24" cy="31" rx="6.5" ry="8.5"/><ellipse cx="24" cy="20" rx="4" ry="4.5"/><circle class="eye" cx="22" cy="18" r="1.1"/><circle class="eye" cx="26" cy="18" r="1.1"/></svg>';
-function spiderCrawl() {
-  let el = $('spider'); if (!el) { document.body.insertAdjacentHTML('beforeend', SPIDER_SVG); el = $('spider'); }
-  if (el.classList.contains('on')) return;
-  const w = innerWidth, h = innerHeight, side = Math.floor(Math.random() * 4), m = 50;
-  const pt = (sd) => sd === 0 ? [-m, Math.random() * h] : sd === 1 ? [w + m, Math.random() * h] : sd === 2 ? [Math.random() * w, -m] : [Math.random() * w, h + m];
-  const a = pt(side), b = pt(side ^ 1), c = [(a[0] + b[0]) / 2 + (Math.random() - .5) * w * .8, (a[1] + b[1]) / 2 + (Math.random() - .5) * h * .5];
-  let u = 0, t = 0, last = performance.now(); el.classList.add('on');
-  const step = now => {
-    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; u += dt / 8 * (.35 + .9 * (.5 + .5 * Math.sin(t * 2.3)));
-    if (u >= 1) { el.classList.remove('on'); return; }
-    const v = 1 - u, x = v * v * a[0] + 2 * v * u * c[0] + u * u * b[0], y = v * v * a[1] + 2 * v * u * c[1] + u * u * b[1];
-    const dx = 2 * v * (c[0] - a[0]) + 2 * u * (b[0] - c[0]), dy = 2 * v * (c[1] - a[1]) + 2 * u * (b[1] - c[1]);
-    el.style.transform = `translate(${x - 27}px,${y - 27}px) rotate(${Math.atan2(dy, dx) * 180 / Math.PI + 90}deg)`; requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
 // owls on the course: one of several calls each time - a tawny's 'hoo, hoo-hoo-hooo', a great horned's low five notes, a double hoot, a trill,
 // a single long note, a barn owl's screech - and often a far one answering, lower and quieter
 function owlNotes(list, vol, mul, delay) { for (const [d, du, f1, f2] of list) { tone(f1 * mul, du, 'sine', vol, f2 * mul, delay + d); tone(f1 * mul * 2, du * .8, 'sine', vol * .16, f2 * mul * 2, delay + d); } }
@@ -4578,24 +4568,6 @@ function owlHoot() {
   const call = OWL_CALLS[(Math.random() * OWL_CALLS.length) | 0], mul = .92 + Math.random() * .16;
   owlNotes(call(), .2, mul, 0);
   if (Math.random() < .55) owlNotes(OWL_CALLS[(Math.random() * OWL_CALLS.length) | 0](), .07, mul * .8, 2.6 + Math.random() * 2); // a far one answers
-}
-// a howl far off: a voice rising, held with a wobble, and sinking away; one of three shapes, now and then answered from further still
-function howl() {
-  if (!settings.sound) return; const a = audio(); if (!a) return;
-  const shapes = [[[0, 1], [.3, 1.9], [.65, 1.85], [1, 1.2]], [[0, 1], [.2, 1.6], [.32, 1.45], [.52, 2], [1, 1.1]], [[0, 1.2], [.45, 2.1], [1, 1.5]]];
-  const one = (t0, f0, dur, vol) => {
-    const sh = shapes[(Math.random() * shapes.length) | 0], o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(), lf = a.createOscillator(), lg = a.createGain();
-    o.type = 'sine'; o2.type = 'triangle'; lp.type = 'lowpass'; lp.frequency.value = 1100;
-    for (const [u, m] of sh) { o.frequency.linearRampToValueAtTime(f0 * m, t0 + u * dur); o2.frequency.linearRampToValueAtTime(f0 * m * 2, t0 + u * dur); }
-    o.frequency.setValueAtTime(f0 * sh[0][1], t0); o2.frequency.setValueAtTime(f0 * sh[0][1] * 2, t0);
-    lf.frequency.value = 5.2; lg.gain.setValueAtTime(0, t0); lg.gain.linearRampToValueAtTime(f0 * .035, t0 + dur * .6); lf.connect(lg); lg.connect(o.frequency);
-    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + dur * .22); g.gain.setValueAtTime(vol, t0 + dur * .7); g.gain.linearRampToValueAtTime(0, t0 + dur);
-    const g2 = a.createGain(); g2.gain.value = .25; o.connect(g); o2.connect(g2).connect(g); g.connect(lp).connect(a.destination);
-    for (const n of [o, o2, lf]) { n.start(t0); n.stop(t0 + dur + .05); }
-  };
-  const t = a.currentTime + .05, f0 = 250 + Math.random() * 90, dur = 3.4 + Math.random() * 2.2;
-  one(t, f0, dur, .1);
-  if (Math.random() < .5) one(t + dur * .55 + 1.2, f0 * .8, dur * .9, .045); // a second voice, further away
 }
 // sparkles instead of confetti: glowing points fall twinkling, and some pop into two or more on the way down
 function burstSparkles() {
@@ -7901,77 +7873,7 @@ function fileMusic(want) {
   if (want && el.paused && AC.state === 'running') { const pr = el.play(); if (pr && pr.catch) pr.catch(() => { }); }
   if (!want && F.vol < .002 && !el.paused) el.pause();
 }
-// Halloween at night: a safe, spooky soundscape. A soft wind that comes and goes, a warm low drone, a far bell now and then, and a faint
-// organ that plays a slow, gentle tune in long notes with quiet organ chords under it, and then falls silent for a while before the next
-// tune. Six short tunes, in A, D and E minor, round about seven minutes before it starts over. Nothing sudden, nothing loud.
-const HW_PER = 1.4, HW_SCENE = 24, HW_TOTAL = HW_SCENE * 12; // (a beat; a scene is 16 beats of tune and 8 of quiet; twelve scenes)
-const HW_TUNES = [ // [beat, midi, length in beats]: sighs, a flat second, a raised leading tone, a question left hanging
-  [[0, 76, 3], [3, 75, 1], [4, 76, 3], [7, 72, 1], [8, 71, 2], [10, 69, 2], [12, 68, 4]],   // a chromatic sigh down to the leading tone
-  [[0, 69, 3], [3, 70, 1], [4, 69, 4], [8, 67, 2], [10, 68, 2], [12, 69, 4]],               // A and its flat second, circling
-  [[0, 64, 2], [2, 69, 2], [4, 72, 4], [8, 71, 2], [10, 69, 2], [12, 68, 4]],               // a lullaby that ends on the wrong note
-  [[0, 69, 3], [4, 72, 3], [8, 76, 4], [12, 75, 2], [14, 76, 2]],                           // a rising question, never answered
-  [[0, 57, 3], [3, 58, 1], [4, 57, 3], [8, 60, 2], [10, 59, 2], [12, 57, 4]],               // low and creeping
-  [[0, 81, 4], [4, 80, 2], [6, 76, 2], [8, 77, 4], [12, 76, 4]]                             // high and thin, like a ghost
-];
-const HW_KEYS = [0, 0, 5, 0, 7, 0, 5, 0, -5, 0, 7, 0]; // (semitones from A minor, scene by scene)
-const HW_PROG = [[[0, 3], [-4, 4], [5, 3], [7, 4]], [[0, 3], [5, 3], [7, 4], [0, 3]]]; // chords a bar each: [root above A, third]
-function hwSetup(a) {
-  const bus = a.createGain(), out = a.createGain(), rv = a.createConvolver(), wet = a.createGain(), comp = a.createDynamicsCompressor(), sr = a.sampleRate, L = Math.floor(sr * 3.6), ir = a.createBuffer(2, L, sr);
-  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 2.4); }
-  rv.buffer = ir; wet.gain.value = .6; comp.threshold.value = -24; comp.ratio.value = 3; comp.attack.value = .05; comp.release.value = .5;
-  out.gain.setValueAtTime(0, a.currentTime); out.gain.linearRampToValueAtTime(.8, a.currentTime + 3);
-  bus.connect(comp); bus.connect(rv).connect(wet).connect(comp); comp.connect(out); out.connect(a.destination);
-  MUS.ac = a; MUS.bus = bus; MUS.out = out; MUS.ks = {}; MUS.step = 0; MUS.next = a.currentTime + .4; MUS.kind = 'halloween'; MUS.stops = [];
-  // the wind: noise through a band that wanders up and down slowly; its strength comes and goes from scene to scene
-  const nb = a.createBuffer(1, sr * 4, sr), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
-  const ns = a.createBufferSource(), bp = a.createBiquadFilter(), wg = a.createGain(), wl = a.createOscillator(), wlg = a.createGain();
-  ns.buffer = nb; ns.loop = true; bp.type = 'bandpass'; bp.frequency.value = 480; bp.Q.value = 1.6; wg.gain.value = .07; wl.frequency.value = .09; wlg.gain.value = 240; MUS.wg = wg;
-  wl.connect(wlg).connect(bp.frequency); ns.connect(bp).connect(wg).connect(bus); ns.start(); wl.start(); MUS.stops.push(ns, wl);
-  // a warm low drone on A and E, breathing very slowly
-  const lp = a.createBiquadFilter(), dg = a.createGain(), dl = a.createOscillator(), dlg = a.createGain(); lp.type = 'lowpass'; lp.frequency.value = 220; dg.gain.value = .05; dl.frequency.value = .11; dlg.gain.value = .025;
-  dl.connect(dlg).connect(dg.gain); lp.connect(dg).connect(bus); dl.start(); MUS.stops.push(dl);
-  for (const [f, ty] of [[55, 'sine'], [82.4, 'sine'], [110, 'triangle']]) { const o = a.createOscillator(); o.type = ty; o.frequency.value = f; o.connect(lp); o.start(); MUS.stops.push(o); }
-}
-function hwTone(a, f, t, dur, type, v) {
-  const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = f;
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-  o.connect(g).connect(MUS.bus); o.start(t); o.stop(t + dur + .05);
-}
-// a soft pipe organ: a few harmonics, a gentle attack, a long release, the top rolled off; vib makes the pitch waver a little, like a tired old organ
-function hwOrgan(a, f, t, dur, v, at, vib) {
-  const g = a.createGain(), lp = a.createBiquadFilter(), e = t + dur; lp.type = 'lowpass'; lp.frequency.value = 1600;
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + at); g.gain.setValueAtTime(v, Math.max(t + at, e)); g.gain.linearRampToValueAtTime(0, e + 1.4);
-  for (const [k, am] of [[1, 1], [2, .45], [3, .22], [4, .1]]) { const o = a.createOscillator(), og = a.createGain(); o.frequency.value = f * k; og.gain.value = am; o.connect(og).connect(g); o.start(t); o.stop(e + 1.5); if (vib) { const lf = a.createOscillator(), lg = a.createGain(); lf.frequency.value = 4.3 + k * .2; lg.gain.value = f * k * .005; lf.connect(lg).connect(o.frequency); lf.start(t); lf.stop(e + 1.5); } }
-  g.connect(lp).connect(MUS.bus);
-}
-function hwStep(a, st, t) {
-  const k = st % HW_TOTAL, sc = Math.floor(k / HW_SCENE), s = k % HW_SCENE, key = HW_KEYS[sc];
-  if (s === 0) {
-    if (MUS.wg) MUS.wg.gain.setTargetAtTime(.05 + .06 * (.5 + .5 * Math.sin(sc * 1.7)), t, 3); // the wind rises and falls
-    if (sc % 3 === 0) { const f = mHz(57 + key); hwTone(a, f, t, 7, 'sine', .07); hwTone(a, f * 2.4, t, 4, 'sine', .03); hwTone(a, f * 3.8, t, 2.5, 'sine', .015); } // a far bell
-  }
-  if (s >= 16) return; // (the quiet: wind and drone alone)
-  for (const [b, m, d] of HW_TUNES[sc % 6]) if (b === s) { // the faint tune: wavering, a second voice a little out of tune, and a ghost of it an octave up a moment later
-    const f = mHz(m + key); hwOrgan(a, f, t, d * HW_PER, .05, .25, true); hwOrgan(a, f * 1.007, t, d * HW_PER, .02, .3, true); hwOrgan(a, f * 2, t + 1.3, d * HW_PER * .8, .012, .5, true);
-  }
-  if (s % 4 === 0) { // the chord of the bar, very quiet, and the root below it
-    const [rr, th] = HW_PROG[sc % 2][s / 4], root = 45 + ((key + rr + 12) % 12);
-    for (const m of [root + 12, root + 12 + th, root + 19]) hwOrgan(a, mHz(m), t, 4 * HW_PER, .03, .9);
-    hwOrgan(a, mHz(root), t, 4 * HW_PER, .04, .9);
-  }
-}
 function musicTick() {
-  const night = !!G.night && G.nightU > .5 && COURSE && COURSE.key === 'gccb';
-  if (night) { // (the night at GCC Basel: the waltz instead of the recording)
-    fileMusic(false);
-    if (!musicWanted()) { musicStop(); return; }
-    const a = AC; if (!a || a.state !== 'running') return;
-    if (MUS.ac === a && MUS.kind !== 'halloween') musicStop();
-    if (MUS.ac !== a) hwSetup(a);
-    if (MUS.next < a.currentTime) MUS.next = a.currentTime + .1;
-    while (MUS.next < a.currentTime + .7) { hwStep(a, MUS.step, MUS.next); MUS.next += HW_PER; MUS.step++; }
-    return;
-  }
   if (COURSE && COURSE.key === 'gccb') { musicStop(); fileMusic(musicWanted()); return; } // (GCC Basel: the recording)
   fileMusic(false);
   if (!musicWanted()) { musicStop(); return; }
@@ -8018,7 +7920,7 @@ function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch 
 const G = {
   state: 'title', hole: 0, C: null, strokes: 0, scores: HOLE_DEFS.map(() => null), putts: HOLE_DEFS.map(() => 0), fir: HOLE_DEFS.map(() => null), gir: HOLE_DEFS.map(() => null), pens: HOLE_DEFS.map(() => 0),
   ball: { x: 0, y: 0, z: 0 }, prev: null, surf: S.TEE, teed: true, yaw: 0, club: 0, suggested: 0, wind: [0, 0], shot: null, puttRange: 10,
-  camLook: new THREE.Vector3(), introT: 0, holedT: 0, settleT: 0, playT: 0, carry: 0, carryKey: '', shake: 0, target: null
+  camLook: new THREE.Vector3(), introT: 0, holedT: 0, settleT: 0, playT: 0, carry: 0, carryKey: '', shake: 0, target: null, night: true
 };
 const SW = {
   phase: 'idle', p: 0, pMax: 0, t0: 0, tTop: 0, startY: 0, lastY: 0, lastT: 0, vel: 0, speedN: 0, id: null, sid: null,
@@ -8106,7 +8008,7 @@ function resumeRound(course) {
   if (r.daily) { G.daily = Object.assign({}, r.daily, { wx: dailyWeatherPlan(r.daily.seed, COURSES[r.course].defs.length, r.course) }); mpRelobby(); }
   const n = HOLE_DEFS.length, arr = (a, d) => Array.isArray(a) && a.length === n ? a : HOLE_DEFS.map(() => d);
   G.tod = r.daily ? todFor(r.daily.seed) : TOD[r.tod] ? r.tod : 'day';
-  G.night = r.daily ? dayNum(r.daily.day) === DAILY_ONE : !!r.night; G.neon = G.night ? r.neon || null : null; G.nightU = G.night ? 1 : 0;
+  G.night = r.night !== false; G.neon = G.night ? r.neon || null : null; G.nightU = G.night ? 1 : 0;
   G.practice = false; G.submitted = false; G.shotLog = Array.isArray(r.log) ? r.log : []; if (r.planes != null) G.planes = r.planes;
   G.scores = arr(r.scores, null); G.putts = arr(r.putts, 0); G.fir = arr(r.fir, null); G.gir = arr(r.gir, null); G.pens = arr(r.pens, 0); G.pins = arr(r.pins, 0);
   const h = resumeHole(r), mid = r.mid && h === r.hole ? r.mid : null, pu = G.putts[h], pe = G.pens[h];
@@ -8153,7 +8055,7 @@ function startRound(daily) {
   if (!daily && G.daily) { saveRound(); G.daily = null; mpRelobby(); } // a new ordinary round: the daily challenge in play waits where it is
   clearRound(G.daily ? 'daily' : undefined);
   G.tod = G.daily ? todFor(G.daily.seed) : todPick(Math.random);
-  G.night = !!G.daily && dayNum(G.daily.day) === DAILY_ONE; G.neon = null; G.nightLook = 0; if (G.night) G.nightU = 1;
+  G.night = true; G.neon = null; G.nightLook = 0; G.nightU = COURSE.key === 'gccb' ? 1 : 0; // (GCC Basel: the floodlit night is the standard)
   G.gullDone = false; G.gullHole = Math.random() < .65 ? (Math.random() * 18) | 0 : -1; // (Pebble Beach: the hole where a gull comes to look at the ball, in about two rounds of three)
   G.practice = false; G.submitted = false; G.shotLog = []; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
@@ -9794,7 +9696,6 @@ function showDone(pickedUp) {
   $('dNext').textContent = G.practice ? 'Play again' : last ? 'Final scorecard' : 'Next hole';
   $('done').classList.add('on');
   if (!pickedUp && d <= -1) burstConfetti();
-  if ((pickedUp || d >= 1) && G.night && G.nightU > .5 && COURSE.key === 'gccb') setTimeout(spiderCrawl, 500); // (at night a bogey or worse brings the spider)
 }
 function burstConfetti() {
   if (G.night && G.nightU > .5 && COURSE.key === 'gccb') { burstSparkles(); return; } // (at night: sparkles)
