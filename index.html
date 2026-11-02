@@ -4112,7 +4112,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 12 };
+const APP_ITER = { courses: 11, n: 13 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10388,7 +10388,7 @@ async function devCheck() {
   if (DM.cur || !DL.me || !devFree()) return;
   const m = DEV_MSGS.find(x => ((x.to || []).includes(DL.me) || (x.grp && settings.mgP && mgPs().includes(x.grp) && !(x.not || []).includes(DL.me))) && !devWas(x.id));
   if (m) { devShow(Object.assign({ reply: true }, m)); return; }
-  if (!DEV_TO.includes(DL.me) && !isDevName()) return; // the developer: his devices, or a player called Florian
+  if (!isDevName()) return; // the developer's devices only
   // replies to his notes and messages from players (menu, Message), each shown once as soon as the app is open (oldest first)
   if (Date.now() - (DM.at || 0) < 30000) return; DM.at = Date.now();
   try {
@@ -10839,9 +10839,9 @@ async function loadFeatures(force) {
 }
 function frMine(f) { const p = FR.pend[f.id], s = (f.v || {})[FR.me] || 0; if (p != null && p === s) delete FR.pend[f.id]; return FR.pend[f.id] != null ? FR.pend[f.id] : s; }
 function frCount(f) { let u = 0, d = 0; for (const [k, x] of Object.entries(f.v || {})) if (k !== FR.me) { if (x > 0) u++; else if (x < 0) d++; } const m = frMine(f); if (m > 0) u++; else if (m < 0) d++; return [u, d, m]; }
-// messages to the developer: [devmsg] issue -> leaderboard/messages.json; the player called Florian (the developer) sees them, and the replies to his notes, as an inbox in the same tab
+// messages to the developer: [devmsg] issue -> leaderboard/messages.json; the developer's devices (DEV_TO) see them, and the replies to his notes, as an inbox in the same tab
 const DMI = { list: null, rep: null, at: 0, sent: [] };
-const isDevName = () => cleanName(settings.name).toLowerCase() === 'florian';
+const isDevName = () => !!DL.me && DEV_TO.includes(DL.me); // (bound to the device, not the name: anyone can call themselves Florian)
 async function loadDevInbox(force) {
   if (!force && DMI.list && Date.now() - DMI.at < 60000) return; DMI.at = Date.now();
   const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${f}?t=${Math.floor(Date.now() / 30000)}`, { cache: 'no-store' }); const j = r.ok ? await r.json() : null; return Array.isArray(j) ? j : null; } catch (e) { return null; } };
