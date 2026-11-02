@@ -80,9 +80,18 @@ jobs:
             };
             // the other devices of a merged account: p (the first partner) and ps (all of them, when an account has more than two devices)
             const mgPeers = (mg, id) => { const e = mg && mg.g && mg.g[id]; return e ? [...new Set([e.p, ...(Array.isArray(e.ps) ? e.ps : [])])].filter(x => typeof x === 'string' && x !== id) : []; };
+            const MG_MAX = 5; // devices per account
+            // a single device joins the account of anchor (a lone device or a merged group): every device of the group lists all the others in ps
+            const mgJoin = (mg, anchor, nd, n0, now) => {
+              const mem = [anchor, ...mgPeers(mg, anchor)].filter((x, i, a) => x !== nd && a.indexOf(x) === i), all = [...mem, nd], nat = (mg.g[anchor] && mg.g[anchor].nat) || now;
+              for (const id of mem) mg.g[id] = Object.assign({ n: n0, nat, at: now }, mg.g[id] || {}, { p: (mg.g[id] && mg.g[id].p) || nd, ps: all.filter(x => x !== id) });
+              mg.g[nd] = { p: anchor, ps: all.filter(x => x !== nd), n: n0, nat, at: now };
+              mg.q = mg.q.filter(x => !all.includes(x.f));
+              return all;
+            };
             if (issue.title.startsWith('[merge]') || issue.title.startsWith('[sync]')) {
               // Two devices, one account. leaderboard/merges.json: { q: [{ f, t, n, at }] (open requests: device f asks device t), g: { device: { p: partner, ps: [all partners, if more than one], n: name, nat: when the name last changed, at: merged } }, x: { name: { u } } (merged accounts opened for one more device until u) }.
-              // A request is made by the new device, the merge happens only when the device that is asked accepts it; it cannot be undone.
+              // A request is made by the new device (a single one), the merge happens only when a device of the account that is asked accepts it; it cannot be undone. Up to MG_MAX devices per account.
               // A merged pair (or a pair about to merge) also files its own stats here ([sync]) so each device can add the other's to its own.
               const who = sha8(r.dev), HX = /^[0-9a-f]{8}$/, mf = 'leaderboard/merges.json';
               const mg = rdj(mf, {}); mg.q = Array.isArray(mg.q) ? mg.q : []; mg.g = mg.g && typeof mg.g === 'object' ? mg.g : {};
@@ -107,42 +116,45 @@ jobs:
                 if (!NAMEOK.test(nm) || typeof to !== 'string' || !HX.test(to) || to === who) return finish(false, 'Invalid request.');
                 // a merged account the developer has opened for one more device (mg.x: { name: { u: open until } }): the device joins at once, nobody has to accept it
                 const ox = mg.x && mg.g[to] && !mg.g[who] && String(mg.g[to].n).toLowerCase() === nm.toLowerCase() ? mg.x[nm.toLowerCase()] : null;
-                if (ox && ox.u > now) {
-                  const mem = [to, ...mgPeers(mg, to)], all = [...mem, who], n0 = mg.g[to].n;
-                  for (const id of mem) mg.g[id] = Object.assign({}, mg.g[id] || {}, { p: (mg.g[id] && mg.g[id].p) || to, ps: all.filter(x => x !== id) });
-                  mg.g[who] = { p: to, ps: all.filter(x => x !== who), n: n0, nat: mg.g[to].nat || now, at: now };
-                  delete mg.x[nm.toLowerCase()]; mg.q = mg.q.filter(x => x.f !== who && x.t !== who);
+                if (ox && ox.u > now && 1 + mgPeers(mg, to).length < MG_MAX) {
+                  const n0 = mg.g[to].n, all = mgJoin(mg, to, who, n0, now);
+                  delete mg.x[nm.toLowerCase()];
                   fs.writeFileSync(mf, JSON.stringify(mg) + '\n');
                   files.push(...setNames(all, n0));
                   try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); files.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (err) { core.warning('overall: ' + err.message); }
                   await gitPush(files, `Accounts merged: ${n0} (device ${all.length})`); return finish(true, 'This device has joined the account.');
                 }
-                if (mg.g[who] || mg.g[to]) return finish(false, 'One of the accounts is already merged.');
+                if (mg.g[who]) return finish(false, 'This device is already merged.');
+                if (1 + mgPeers(mg, to).length >= MG_MAX) return finish(false, `That account already has ${MG_MAX} devices.`);
                 const pl = rdj('leaderboard/players.json', {});
                 let known = !!pl[to]; if (!known) for (const f of fs.readdirSync('leaderboard').filter(f => /^(gccb|alsace|augusta|rothley|stpatricks|pebblebeach|mountainvalley|fourmile|westminster|landmand|isles)\.json$/.test(f))) if ((rdj('leaderboard/' + f, []) || []).some(x => x && x.by === to)) { known = true; break; }
                 if (!known) return finish(false, 'No such player.');
-                if (pl[to] && pl[to].n && pl[to].n.toLowerCase() !== nm.toLowerCase()) return finish(false, 'The names do not match.');
-                mg.q = mg.q.filter(x => x.f !== who).concat({ f: who, t: to, n: (pl[to] && pl[to].n) || nm, at: now }).slice(-300);
+                const tn = (mg.g[to] && mg.g[to].n) || (pl[to] && pl[to].n);
+                if (tn && tn.toLowerCase() !== nm.toLowerCase()) return finish(false, 'The names do not match.');
+                mg.q = mg.q.filter(x => x.f !== who).concat({ f: who, t: to, n: tn || nm, at: now }).slice(-300);
                 fs.writeFileSync(mf, JSON.stringify(mg) + '\n'); await gitPush(files, 'Merge asked'); return finish(true, 'Request filed. It has to be accepted on the other device.');
               }
               const from = r.from;
               if (typeof from !== 'string' || !HX.test(from)) return finish(false, 'Invalid request.');
               // the request was sent to one device of the name; any device that carries the same name can answer it (the other device may have another id)
               const nmA = typeof r.name === 'string' ? r.name.trim().toLowerCase() : '';
-              const e = mg.q.find(x => x.f === from && x.t === who) || (nmA && from !== who ? mg.q.find(x => x.f === from && String(x.n).toLowerCase() === nmA) : null);
+              // (or to any device of its merged account)
+              const grp = [who, ...mgPeers(mg, who)];
+              const e = mg.q.find(x => x.f === from && grp.includes(x.t)) || (nmA && from !== who ? mg.q.find(x => x.f === from && String(x.n).toLowerCase() === nmA) : null);
               if (act === 'decline') {
                 if (!e) return finish(true, 'Nothing to decline.');
                 mg.q = mg.q.filter(x => x !== e); fs.writeFileSync(mf, JSON.stringify(mg) + '\n'); await gitPush(files, 'Merge declined'); return finish(true, 'Declined.');
               }
               if (act !== 'accept') return finish(false, 'Unknown action.');
               if (!e) return finish(false, 'There is no such request.');
-              if (mg.g[who] || mg.g[from]) return finish(false, 'One of the accounts is already merged.');
-              mg.g[who] = { p: from, n: e.n, nat: now, at: now }; mg.g[from] = { p: who, n: e.n, nat: now, at: now };
-              mg.q = mg.q.filter(x => ![who, from].includes(x.f) && ![who, from].includes(x.t));
+              if (mg.g[from] || grp.includes(from)) return finish(false, 'The other device is already merged.');
+              if (grp.length >= MG_MAX) return finish(false, `This account already has ${MG_MAX} devices.`);
+              const n0 = (mg.g[who] && mg.g[who].n) || e.n;
+              const all = mgJoin(mg, who, from, n0, now);
               fs.writeFileSync(mf, JSON.stringify(mg) + '\n');
-              files.push(...setNames([who, from], e.n));
+              files.push(...setNames(all, n0));
               try { const z = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); files.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(z)); } catch (err) { core.warning('overall: ' + err.message); }
-              await gitPush(files, `Accounts merged: ${e.n}`); return finish(true, 'The two devices are now one account.');
+              await gitPush(files, `Accounts merged: ${e.n}`); return finish(true, all.length > 2 ? `The device has joined the account (${all.length} devices).` : 'The two devices are now one account.');
             }
             if (issue.title.startsWith('[standings]')) {
               // a game that sees a closed day missing from the archive and the standings asks for them to be rebuilt (the scheduled run can be hours late, or skipped)

@@ -2,6 +2,7 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 11.15: Bis zu 5 Geräte pro Konto (`MG_MAX` in index.html und leaderboard.yml). Ein einzelnes Gerät kann jetzt auch ein schon verbundenes Konto anfragen (gleicher Name); annehmen kann jedes Gerät des Kontos, die Anfrage erscheint dort als Dialog. Server: `mgJoin` hängt das Gerät an die Gruppe (`ps` auf allen Geräten), ab 5 Geräten wird abgelehnt.
 - Build 11.14: Nachricht an ZainB (`zain2`): „I merged your other devices“ statt „the three devices now“.
 - Build 11.13: Entwickler-Inbox und Nachrichten-Popups nur noch auf Florians Geräten (`DEV_TO`: `702a2e69`, `3cf5ef77`), nicht mehr über den Namen „Florian“.
 - Build 11.12: Entwickler-Popup: Auf Florians Geräten (`DEV_TO`) und bei Spielername „Florian“ erscheint jede neue Nachricht (`messages.json`) und Antwort (`replies.json`) einmal als Popup beim Öffnen, älteste zuerst, nach „OK“ gleich die nächste. ZainB: zwei leere Alt-Geräte „ZAIN“ (`2b498881`, angelegt 20.10., und `f17cc3d8`, angelegt 25.10.; beide wollten am 25.10. mit ZainB mergen) von Hand in seine Gruppe aufgenommen (jetzt 4 Geräte); das Auto-Merge-Fenster `x.zainb` bleibt bis 16.11. offen, falls das Handy eine andere ID hat.
