@@ -4080,7 +4080,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 2 };
+const APP_ITER = { courses: 11, n: 3 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -4401,8 +4401,9 @@ function updateWeatherVisuals(dt) {
   if (G.nightU > .001) nightDress(G.nightU);
 }
 /* ---------- night at GCC Basel ---------- */
-// Started only one way: on the first tee of an ordinary round, before the first stroke, turn the aim to the clubhouse and hold it
-// there for about a second. The floodlights come on, the sky goes dark and a pop-up asks for the neon colour of the ball.
+// Night under the floodlights is the standard look at GCC Basel: every round starts in it and a pop-up asks for the neon colour of the
+// ball. On the first tee, before the first stroke, turning the aim to the clubhouse and holding it there for about a second switches to
+// the day (and holding it there again, after looking away, back to the night).
 const NEON = [{ c: 0xff2fa0, n: 'Pink' }, { c: 0x6dff2e, n: 'Lime' }, { c: 0x2ef2ff, n: 'Cyan' }, { c: 0xffb020, n: 'Amber' }];
 const TOUR = 4; // the daily Tournament: the last 4 finished daily challenges, rolling (one in, the oldest out each day; the same in daily-overall.js)
 const NIGHT_LIGHT = .3; // the night's overall brightness: 30% of the earlier look, so the players hardly make out the surroundings
@@ -4427,9 +4428,10 @@ function clubhouseOf(C) {
   return C._club = best;
 }
 function todLabel() { return G.night ? 'Night' : TOD_NAMES[G.tod] || 'Golden light'; }
-function nightStart() {
-  G.night = true; G.nightLook = 0; try { saveRound(); } catch (e) { }
-  readout('<div class="r1">Night falls over the club</div><div class="r3"><span>Pick your neon ball before the first shot</span></div>', 2.6);
+function nightToggle() {
+  G.night = !G.night; try { saveRound(); } catch (e) { }
+  if (G.night) readout('<div class="r1">Night falls over the club</div><div class="r3"><span>Pick your neon ball before the first shot</span></div>', 2.6);
+  else { $('neonAsk').classList.remove('on'); readout('<div class="r1">Daylight at the club</div><div class="r3"><span>Look at the clubhouse again for the floodlights</span></div>', 2.6); }
 }
 // the ball's neon follows the round's state (G.night, G.neon): it comes back with a resumed round and goes with a new one
 function syncNeon() {
@@ -4440,13 +4442,12 @@ function syncNeon() {
   else { m.emissive.setHex(0xffffff); m.emissiveIntensity = .17; }
 }
 function setNeon(c) { G.neon = c; syncNeon(); try { saveRound(); } catch (e) { } }
-// each frame: hold the aim on the clubhouse from the first tee to start the night, ease the lights, show the colour pop-up
+// each frame: hold the aim on the clubhouse from the first tee to switch between night and day, ease the lights, show the colour pop-up
 function nightTick(dt) {
   const C = G.C, onGccb = COURSE.key === 'gccb'; syncNeon();
-  if (!G.night && C && onGccb && !G.daily && G.hole === 0 && G.strokes === 0 && G.state === 'address') {
-    const cl = clubhouseOf(C);
-    G.nightLook = cl && Math.abs(angWrap(G.yaw - cl.yaw)) < cl.tol ? (G.nightLook || 0) + dt : 0;
-    if (G.nightLook >= NIGHT_LOOK) nightStart();
+  if (C && onGccb && G.hole === 0 && G.strokes === 0 && G.state === 'address') {
+    const cl = clubhouseOf(C), on = cl && Math.abs(angWrap(G.yaw - cl.yaw)) < cl.tol;
+    if (!on) G.nightLook = 0; else if (G.nightLook >= 0) { G.nightLook = (G.nightLook || 0) + dt; if (G.nightLook >= NIGHT_LOOK) { nightToggle(); G.nightLook = -1; } } // (-1: switched; the aim has to leave the clubhouse first)
   } else G.nightLook = 0;
   const want = G.night && onGccb ? 1 : 0;
   G.nightU = (G.nightU || 0) + (want - (G.nightU || 0)) * (1 - Math.exp(-dt / 1.6));
@@ -7919,7 +7920,7 @@ function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch 
 const G = {
   state: 'title', hole: 0, C: null, strokes: 0, scores: HOLE_DEFS.map(() => null), putts: HOLE_DEFS.map(() => 0), fir: HOLE_DEFS.map(() => null), gir: HOLE_DEFS.map(() => null), pens: HOLE_DEFS.map(() => 0),
   ball: { x: 0, y: 0, z: 0 }, prev: null, surf: S.TEE, teed: true, yaw: 0, club: 0, suggested: 0, wind: [0, 0], shot: null, puttRange: 10,
-  camLook: new THREE.Vector3(), introT: 0, holedT: 0, settleT: 0, playT: 0, carry: 0, carryKey: '', shake: 0, target: null
+  camLook: new THREE.Vector3(), introT: 0, holedT: 0, settleT: 0, playT: 0, carry: 0, carryKey: '', shake: 0, target: null, night: true
 };
 const SW = {
   phase: 'idle', p: 0, pMax: 0, t0: 0, tTop: 0, startY: 0, lastY: 0, lastT: 0, vel: 0, speedN: 0, id: null, sid: null,
@@ -8007,7 +8008,7 @@ function resumeRound(course) {
   if (r.daily) { G.daily = Object.assign({}, r.daily, { wx: dailyWeatherPlan(r.daily.seed, COURSES[r.course].defs.length, r.course) }); mpRelobby(); }
   const n = HOLE_DEFS.length, arr = (a, d) => Array.isArray(a) && a.length === n ? a : HOLE_DEFS.map(() => d);
   G.tod = r.daily ? todFor(r.daily.seed) : TOD[r.tod] ? r.tod : 'day';
-  G.night = r.daily ? dayNum(r.daily.day) === DAILY_ONE : !!r.night; G.neon = G.night ? r.neon || null : null; G.nightU = G.night ? 1 : 0;
+  G.night = r.night !== false; G.neon = G.night ? r.neon || null : null; G.nightU = G.night ? 1 : 0;
   G.practice = false; G.submitted = false; G.shotLog = Array.isArray(r.log) ? r.log : []; if (r.planes != null) G.planes = r.planes;
   G.scores = arr(r.scores, null); G.putts = arr(r.putts, 0); G.fir = arr(r.fir, null); G.gir = arr(r.gir, null); G.pens = arr(r.pens, 0); G.pins = arr(r.pins, 0);
   const h = resumeHole(r), mid = r.mid && h === r.hole ? r.mid : null, pu = G.putts[h], pe = G.pens[h];
@@ -8054,7 +8055,7 @@ function startRound(daily) {
   if (!daily && G.daily) { saveRound(); G.daily = null; mpRelobby(); } // a new ordinary round: the daily challenge in play waits where it is
   clearRound(G.daily ? 'daily' : undefined);
   G.tod = G.daily ? todFor(G.daily.seed) : todPick(Math.random);
-  G.night = !!G.daily && dayNum(G.daily.day) === DAILY_ONE; G.neon = null; G.nightLook = 0; if (G.night) G.nightU = 1;
+  G.night = true; G.neon = null; G.nightLook = 0; G.nightU = COURSE.key === 'gccb' ? 1 : 0; // (GCC Basel: the floodlit night is the standard)
   G.gullDone = false; G.gullHole = Math.random() < .65 ? (Math.random() * 18) | 0 : -1; // (Pebble Beach: the hole where a gull comes to look at the ball, in about two rounds of three)
   G.practice = false; G.submitted = false; G.shotLog = []; G.planes = [0, 0, 1, 1, 1, 2, 2][(Math.random() * 7) | 0];
   G.scores = HOLE_DEFS.map(() => null); G.putts = HOLE_DEFS.map(() => 0); G.fir = HOLE_DEFS.map(() => null); G.gir = HOLE_DEFS.map(() => null); G.pens = HOLE_DEFS.map(() => 0);
