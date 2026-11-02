@@ -2,6 +2,7 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 11.5: Flutlicht am Grün auf 50 % statt 70 % (`FLOOD_GREEN`).
 - Build 11.4: Daily Challenge auf GCC Basel immer im Flutlicht, kein Wechsel auf Tag (auch beim Fortsetzen). Flutlicht am Grün (Masten < 45 m vom Loch) auf 70 % (`FLOOD_GREEN`), Rest unverändert.
 - Build 11.3: GCC Basel startet jetzt immer in der Flutlicht-Nacht (auch Titelbild und Daily). Am ersten Abschlag vor dem ersten Schlag ~1 s aufs Clubhaus zielen schaltet auf Tag, nochmal (nach Wegschauen) zurück auf Nacht (`nightToggle`). Gespeicherte Runden behalten ihren Modus (`r.night`).
 - Build 11.2: GCC-Basel-Nachtmodus im Flutlicht-Stil statt Halloween: Masten mit Lampen entlang jeder Bahn (bis 7 echte Punktlichter, `floodTick`), Licht-Pools auf Fairway/Grün, Wald und ferne Löcher versinken im Dunkeln (Nebel 40–520 m), tiefblauer Nachthimmel. Halloween-Musik, Fledermäuse, Spinne und Heulen entfernt; nachts läuft die normale GCCB-Musik. Eule, Glühwürmchen, Neon-Ball und Funken bleiben.
