@@ -4112,7 +4112,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 13 };
+const APP_ITER = { courses: 11, n: 14 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10375,7 +10375,7 @@ const DEV_TO = ['702a2e69', '3cf5ef77']; // the developer's devices (Florian)
 const DEV_MSGS = [{ id: 'zain1', to: ['753ff0b4', '6c3f623c'], k: 'From the developer', t: 'A note for you',
   b: "Hi ZainB, thanks for playing with us! It's so cool to see this little community growing. I'm the developer of SweetSpot and I'm just letting you know that your recent daily challenge rounds have been flagged as non-mobile. Future rounds on computer devices are not eligible for daily challenges. We've implemented some changes to the play mechanics for keyboard and mouse users. We hope to see you on the daily challenges (with your mobile device) defending your #1 spot in the new Tournament mode.\n\nAll the best!\nNephlonor" }];
 DEV_MSGS.push({ id: 'zain2', grp: '753ff0b4', not: ['753ff0b4', '6c3f623c'], k: 'From the developer', t: 'Merged',
-  b: "Hey ZainB, no worries! I merged the three devices now, let me know if it worked. Great playing! See you out there!" }); // (shown on the device that joined ZainB's account)
+  b: "Hey ZainB, no worries! I merged your other devices, let me know if it worked. Great playing! See you out there!" }); // (shown on the device that joined ZainB's account)
 const DM = { cur: null, at: 0 };
 function devFree() { return !document.querySelector('.layer.on:not(#title)') && !sheetOpen() && (G.state === 'title' || G.state === 'address'); }
 function devShow(o) {
