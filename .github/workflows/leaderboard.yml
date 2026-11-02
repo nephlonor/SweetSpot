@@ -150,6 +150,9 @@ jobs:
                 for (const x of rows) if (x && x.by === who && !x.pc) { x.pc = 1; hit = true; }
                 if (hit) { fs.writeFileSync('leaderboard/' + f, JSON.stringify(rows) + '\n'); changed.push('leaderboard/' + f); }
               }
+              // and the device is noted as a computer for good: the daily challenge is closed to it
+              { const pf = 'leaderboard/pcdev.json'; let a = []; try { a = JSON.parse(fs.readFileSync(pf, 'utf8')); } catch (e) { } if (!Array.isArray(a)) a = [];
+                if (!a.includes(who)) { a.push(who); fs.writeFileSync(pf, JSON.stringify(a) + '\n'); changed.push(pf); } }
               if (!changed.length) return finish(true, 'No scores from this device to move.');
               await gitPush(changed, 'Leaderboard: a computer\'s scores move to the computer boards');
               return finish(true, 'Your scores are now on the computer boards.');
@@ -219,7 +222,7 @@ jobs:
             const name = r.name.trim(), by = crypto.createHash('sha1').update(String(typeof r.dev === 'string' && r.dev.length >= 6 && r.dev.length <= 40 ? r.dev : issue.user.login).toLowerCase()).digest('hex').slice(0, 8);
             // the compact stats profile and the best shots of the round: numbers only, from a fixed list of keys
             const PF = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'fd', 'lo', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
-            const BS = ['h', 'n', 'c', 'k', 'l', 'f', 'd', 'e', 't', 'o', 'b', 'q', 'sm', 's', 'fw', 'lp', 'p'];
+            const BS = ['h', 'n', 'c', 'k', 'l', 'f', 'd', 'e', 't', 'o', 'b', 'q', 'sm', 's', 'fw', 'lp', 'p', 'in', 'si', 'tb', 'td', 'pa', 'pc'];
             const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e8;
             const pick = (o, keys) => { const out = {}; if (o && typeof o === 'object') for (const k of keys) if (num(o[k])) out[k] = Math.round(o[k] * 100) / 100; return out; };
             // a best shot also carries its clip: the 18 numbers that let the game fly it again
@@ -228,6 +231,13 @@ jobs:
             // the scorecard: strokes and putts per hole, kept only when they are whole numbers that add up
             const ints = (a, lo, hi) => Array.isArray(a) && a.length === 18 && a.every(v => int(v) && v >= lo && v <= hi);
             const putts = ints(r.pt, 0, 9) ? r.pt : null;
+            // how every shot of the round was swung: [input 0 touch 1 mouse 2 pen 3 keyboard, strike dot input (3 unheld), backswing ms, downswing ms, path degrees, computer]
+            const sw = Array.isArray(r.sw) ? r.sw.slice(0, 200).filter(a => Array.isArray(a) && a.length === 6 && a.every(num)).map(a => [a[0] | 0, a[1] | 0, Math.round(a[2]), Math.round(a[3]), Math.round(a[4] * 10) / 10, a[5] ? 1 : 0]) : [];
+            // the devices that have ever run as a computer (their [device] report, or a computer round): the daily challenge is closed to them
+            const PCF = 'leaderboard/pcdev.json';
+            const pcDevs = () => { let a = []; try { a = JSON.parse(fs.readFileSync(PCF, 'utf8')); } catch (e) { } return Array.isArray(a) ? a : []; };
+            const isPcDev = id => pcDevs().includes(id) || fs.readdirSync('leaderboard').filter(f => /^[a-z]+\.json$/.test(f) && !/^(players|merges|features|homecourses|pcdev)\.json$/.test(f) && !f.startsWith('daily')).some(f => { try { const a = JSON.parse(fs.readFileSync('leaderboard/' + f, 'utf8')); return Array.isArray(a) && a.some(x => x && x.by === id && x.pc); } catch (e) { return false; } });
+            const notePc = () => { const a = pcDevs(); if (a.includes(by)) return null; a.push(by); fs.writeFileSync(PCF, JSON.stringify(a) + '\n'); return PCF; };
             const save = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', ...files]); await gitCommit(msg);
@@ -235,12 +245,12 @@ jobs:
             };
             const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
             const profiles = () => {
-              if (!Object.keys(pf).length && !bs.length) return null;
+              if (!Object.keys(pf).length && !bs.length && !sw.length) return null;
               const f = 'leaderboard/players.json', all = readJson(f, {}), old = all[by];
               // bs: the player's best shots over the career (top three by points); rb: the best shots of the last two rounds
               const key = x => x.cl ? x.cl.slice(7, 9).join(',') + x.cl[1] + x.cl[10] : [x.h, x.n, x.p].join('-'), seen = new Set(), career = [];
               for (const x of [...bs, ...((old && old.bs) || [])].sort((a, b) => (b.p || 0) - (a.p || 0))) { if (seen.has(key(x))) continue; seen.add(key(x)); career.push(x); }
-              const rb = (bs.length ? [{ at: r.at, bs }] : []).concat((old && old.rb) || []).slice(0, 2);
+              const rb = (bs.length || sw.length ? [Object.assign({ at: r.at, bs }, sw.length ? { sw } : {})] : []).concat((old && old.rb) || []).slice(0, 2);
               const on = ((old && old.on) || []).filter(x => x.toLowerCase() !== name.toLowerCase()); if (old && old.n && old.n.toLowerCase() !== name.toLowerCase() && !on.some(x => x.toLowerCase() === old.n.toLowerCase())) on.unshift(old.n); // other usernames used in the past
               all[by] = Object.assign({ n: name, pf, bs: career.slice(0, 3), rb, at: r.at }, on.length ? { on: on.slice(0, 10) } : {});
               const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at).slice(0, 300), out = {}; for (const k of keys) out[k] = all[k];
@@ -248,6 +258,7 @@ jobs:
             };
             if (isDaily) {
               if (r.pc) return finish(false, 'The daily challenge is played on a phone or tablet only.');
+              if (isPcDev(by)) return finish(false, 'This device has been used as a computer: the daily challenge is closed on it. Play it on your phone or tablet.');
               // the daily challenge: one chance per player and day, on the course of the day, finished within that day (US Eastern time)
               const zday = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
               const day = r.daily;
@@ -272,7 +283,8 @@ jobs:
             // one player, one entry per course and platform (mobile and computer have separate boards): their best score. A player is a name (any case) or a device id; a round that doesn't beat it is not listed.
             const sameP = x => (x.name.toLowerCase() === name.toLowerCase() || x.by === by) && !x.pc === !r.pc, better = (p, q) => p.toPar < q.toPar || (p.toPar === q.toPar && p.strokes < q.strokes);
             const old = rows.filter(sameP), best = old.reduce((m, x) => !m || better(x, m) ? x : m, null);
-            if (best && !better(r, best)) return finish(true, `Your best on the ${r.course} board stays ${best.toPar >= 0 ? '+' : ''}${best.toPar} (${best.strokes}): this round didn't beat it.`);
+            const pcf = r.pc ? notePc() : null; // a computer round: the device is noted as a computer for good
+            if (best && !better(r, best)) { if (pcf) await save([pcf], 'Leaderboard: a computer device noted'); return finish(true, `Your best on the ${r.course} board stays ${best.toPar >= 0 ? '+' : ''}${best.toPar} (${best.strokes}): this round didn't beat it.`); }
             if (rows.filter(x => x.by === by && x.at > Date.now() - 864e5).length >= 6) return finish(false, 'Too many rounds posted today from this device.');
             if (rows.filter(x => x.at > Date.now() - 36e5).length >= 120) return finish(false, 'The board is busy; try again later.');
             const holes = ints(r.h, 1, 16) && r.h.reduce((a, b) => a + b, 0) === r.strokes ? r.h : null;
@@ -281,7 +293,7 @@ jobs:
             rows.sort((a, b) => a.toPar - b.toPar || a.strokes - b.strokes || a.at - b.at); rows = rows.slice(0, 500);
             fs.writeFileSync(file, JSON.stringify(rows) + '\n');
             const rank = rows.findIndex(x => x.name === name && x.at === r.at) + 1;
-            const files = [file], pfile = profiles(); if (pfile) files.push(pfile);
+            const files = [file], pfile = profiles(); if (pfile) files.push(pfile); if (pcf) files.push(pcf);
             // (a posted score also brings the archive and the standings up to date with any day that has closed: the scheduled run can come hours late)
             try { const zd = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); files.push(...require(process.env.GITHUB_WORKSPACE + '/.github/scripts/daily-overall.js')(zd)); } catch (e) { core.warning('overall: ' + e.message); }
             await save(files, `Leaderboard: ${name} ${r.toPar >= 0 ? '+' : ''}${r.toPar} on ${r.course}`);
