@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[reply]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -156,6 +156,18 @@ jobs:
               if (!changed.length) return finish(true, 'No scores from this device to move.');
               await gitPush(changed, 'Leaderboard: a computer\'s scores move to the computer boards');
               return finish(true, 'Your scores are now on the computer boards.');
+            }
+            if (issue.title.startsWith('[reply]')) {
+              // a player's reply to a note from the developer (only the player the note went to can answer it): kept in leaderboard/replies.json, the developer's devices show it once
+              const FROM = { zain1: ['753ff0b4', '6c3f623c'] }, who = sha8(r && r.dev);
+              if (!r || typeof r.id !== 'string' || !FROM[r.id] || !FROM[r.id].includes(who)) return finish(false, 'Unknown note.');
+              if (typeof r.t !== 'string' || !r.t.trim() || r.t.length > 1000) return finish(false, 'Empty or too long.');
+              const f = 'leaderboard/replies.json'; let a = rdj(f, []); if (!Array.isArray(a)) a = [];
+              if (a.filter(x => x.id === r.id && x.by === who).length >= 5) return finish(false, 'Enough replies to this note.');
+              a.push({ id: r.id, by: who, name: typeof r.name === 'string' && NAMEOK.test(r.name.trim()) ? r.name.trim() : 'Player', t: r.t.trim(), at: Date.now() });
+              fs.writeFileSync(f, JSON.stringify(a.slice(-200)) + '\n');
+              await gitPush([f], 'A reply to a note from the developer');
+              return finish(true, 'Thanks, your reply has been delivered.');
             }
             if (issue.title.startsWith('[rename]')) {
               // a name change: every score ever posted from this device (and from the device it is merged with) takes the new name
