@@ -4083,7 +4083,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 0 };
+const APP_ITER = { courses: 11, n: 1 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -4407,6 +4407,7 @@ function updateWeatherVisuals(dt) {
 // Started only one way: on the first tee of an ordinary round, before the first stroke, turn the aim to the clubhouse and hold it
 // there for about a second. The floodlights come on, the sky goes dark and a pop-up asks for the neon colour of the ball.
 const NEON = [{ c: 0xff2fa0, n: 'Pink' }, { c: 0x6dff2e, n: 'Lime' }, { c: 0x2ef2ff, n: 'Cyan' }, { c: 0xffb020, n: 'Amber' }];
+const TOUR = 4; // the daily Tournament: the last 4 finished daily challenges, rolling (one in, the oldest out each day; the same in daily-overall.js)
 const NIGHT_LIGHT = .3; // the night's overall brightness: 30% of the earlier look, so the players hardly make out the surroundings
 const NIGHT = { bg: new THREE.Color(0x060b18).multiplyScalar(NIGHT_LIGHT), hem: new THREE.Color(0x4a64a2), gnd: new THREE.Color(0x0e1626), cloud: new THREE.Color(0x141b2e).multiplyScalar(NIGHT_LIGHT) };
 const NIGHT_LOOK = .9; // seconds the aim has to stay on the clubhouse
@@ -10868,7 +10869,7 @@ function menuTap() {
   syncMenu(); const ms = $('menuSheet'), onPrac = ms.classList.contains('on') && !!ms.querySelector('.mpg.on[data-pg="practice"]');
   openSheet('menuSheet'); if (G.practice && !onPrac) menuPage('practice');
 }
-function dailyTap() { openDaily('today'); } // the daily sheet first (Today, Yesterday, Archive, Overall); starting is one more tap there
+function dailyTap() { openDaily('today'); } // the daily sheet first (Today, Yesterday, Archive, Tournament); starting is one more tap there
 function trophyHtml(list) { // the trophies of daily challenges won: [{day, course, tp, s, n}] (a player's profile only knows the days)
   if (!list || !list.length) return '<div class="stFun"><div>Win a daily challenge to put a trophy on your shelf.</div></div>';
   const dt = d => new Date((typeof d === 'number' ? d : dayNum(d)) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -10958,6 +10959,7 @@ function dlMetaLive() {
   const today = dayId(); let idx = DL.index, ov = DL.overall;
   if (!Array.isArray(idx) || !Array.isArray(ov)) return { idx, ov };
   const have = new Set(idx.map(x => x.d)), add = [];
+  const win = new Set(Array.from({ length: TOUR }, (_, k) => dayAdd(today, -1 - k))); // the Tournament: the TOUR finished days before today
   for (const d of [dayAdd(today, -3), dayAdd(today, -2), dayAdd(today, -1)]) {
     const rows = DL.files[d]; if (!Array.isArray(rows) || !rows.length || have.has(d)) continue;
     const c = dailyCourse(d), pars = COURSES[c].defs.map(q => q.par);
@@ -10965,21 +10967,23 @@ function dlMetaLive() {
     const seen = new Set(); res = res.filter(r => { const k = r.n.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
     if (res.length) add.push({ d, c, res });
   }
-  if (!add.length) return { idx, ov };
-  dlAskRebuild(add[add.length - 1].d); // (the workflow's own files catch up: once per missing day per device, a request goes out)
-  idx = idx.concat(add.map(a => ({ d: a.d, c: a.c, n: a.res.length, w: a.res[0].n, wb: a.res[0].id, t: a.res[0].tp }))).sort((a, b) => a.d < b.d ? 1 : -1);
-  ov = ov.map(o => Object.assign({}, o, o.bys ? { bys: o.bys.slice() } : {}));
-  const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-  for (const a of add.sort((x, y) => x.d < y.d ? -1 : 1)) {
+  if (add.length) dlAskRebuild(add[add.length - 1].d); // (the workflow's own files catch up: once per missing day per device, a request goes out)
+  if (add.length) idx = idx.concat(add.map(a => ({ d: a.d, c: a.c, n: a.res.length, w: a.res[0].n, wb: a.res[0].id, t: a.res[0].tp }))).sort((a, b) => a.d < b.d ? 1 : -1);
+  // each player's places (r: {day: [place, toPar]}) are cut to the window, the live days added, and the points counted again from them
+  const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], pl = ov.filter(o => o && o.r).map(o => Object.assign({}, o, { r: Object.fromEntries(Object.entries(o.r).filter(([d]) => win.has(d))) }, o.bys ? { bys: o.bys.slice() } : {}));
+  for (const a of add) {
+    if (!win.has(a.d)) continue;
     let rank = 0;
     a.res.forEach((x, i) => {
       if (i === 0 || x.tp !== a.res[i - 1].tp) rank = i + 1;
-      const nk = x.n.toLowerCase(); let o = ov.find(q => String(q.n).toLowerCase() === nk);
-      if (!o) { o = { by: x.id, n: x.n, p: 0, d: 0, w: 0, pod: 0, best: 99 }; ov.push(o); }
-      o.p += rank <= 10 ? POINTS[rank - 1] : 1; o.d++; if (rank === 1) o.w++; if (rank <= 3) o.pod++; if (x.tp < o.best) o.best = x.tp;
+      const nk = x.n.toLowerCase(); let o = pl.find(q => String(q.n).toLowerCase() === nk);
+      if (!o) { o = { by: x.id, n: x.n, r: {} }; pl.push(o); }
+      o.r[a.d] = [rank, x.tp];
       if (x.id !== o.by) { o.bys = o.bys || [o.by]; if (!o.bys.includes(x.id)) o.bys.push(x.id); }
     });
   }
+  for (const o of pl) { const v = Object.values(o.r); o.p = v.reduce((s, [k]) => s + (k <= 10 ? POINTS[k - 1] : 1), 0); o.d = v.length; o.w = v.filter(([k]) => k === 1).length; o.pod = v.filter(([k]) => k <= 3).length; o.best = v.reduce((b, [, t]) => Math.min(b, t), 99); }
+  ov = pl.filter(o => o.p > 0); // (no points in the window: off the board)
   ov.sort((a, b) => b.p - a.p || b.w - a.w || a.d - b.d || a.best - b.best); // (level on everything: the better best round first; the workflow breaks it by who finished earlier)
   return { idx, ov };
 }
@@ -11135,7 +11139,7 @@ function fillDaily(el, inCard) {
   el.textContent = ''; if (inCard) el.dataset.daily = '1';
   const add = (tag, cls, txt) => { const x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; el.appendChild(x); return x; };
   if (!inCard) {
-    const sg = add('div', 'seg boardCourse'); for (const [k, t] of [['today', 'Today'], ['yesterday', 'Yesterday'], ['archive', 'Archive'], ['overall', 'Overall']]) { const b = document.createElement('button'); b.textContent = t; if (k === tab || (k === 'archive' && tab === 'day')) b.className = 'sel'; b.onclick = () => { DL.tab = k; if (k === 'today' || k === 'yesterday') loadDailyFile(k === 'today' ? today : yday); else loadDailyMeta(); fillDaily(el); }; sg.appendChild(b); }
+    const sg = add('div', 'seg boardCourse'); for (const [k, t] of [['today', 'Today'], ['yesterday', 'Yesterday'], ['archive', 'Archive'], ['overall', 'Tournament']]) { const b = document.createElement('button'); b.textContent = t; if (k === tab || (k === 'archive' && tab === 'day')) b.className = 'sel'; b.onclick = () => { DL.tab = k; if (k === 'today' || k === 'yesterday') loadDailyFile(k === 'today' ? today : yday); else loadDailyMeta(); fillDaily(el); }; sg.appendChild(b); }
   }
   if (!inCard && tab === 'archive') return fillArchive(el, add);
   if (!inCard && tab === 'overall') return fillOverall(el, add);
@@ -11192,14 +11196,16 @@ function fillArchive(el, add) {
 }
 function fillOverall(el, add) {
   loadDailyMeta();
-  add('div', 'dlText', 'Every finished daily challenge pays merit points: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 for places 1 to 10, and 1 point for finishing. Players level on the score share the place. A day counts once it is over.');
+  const t = dayId(), fd = d => new Date(dayNum(d) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' }); add('div', 'dlText', `The last ${TOUR} daily challenges are combined into a ${TOUR}-day Tournament. Each day the oldest challenge is replaced by the newest one. Now: ${fd(dayAdd(t, -TOUR))} to ${fd(dayAdd(t, -1))}.`);
+  add('div', 'dlText', 'Each challenge pays merit points: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 for places 1 to 10, and 1 point for finishing. Players level on the score share the place. A day you skip still counts as a round, with no points. A challenge counts once its day is over.');
   if (DL.overall === undefined) { add('div', 'empty', 'Loading the standings'); return; }
-  if (!DL.overall || !DL.overall.length) { add('div', 'empty', DL.overall === null ? 'The standings could not be reached.' : 'The standings start with the first finished day.'); return; }
+  if (!DL.overall) { add('div', 'empty', 'The standings could not be reached.'); return; }
+  const rows = dlMetaLive().ov; if (!rows.length) { add('div', 'empty', 'No one has played a Tournament challenge yet.'); return; }
   const list = add('div', 'lb'), me = dlMe(), fresh = [];
-  dlMetaLive().ov.slice(0, 100).forEach((x, i) => {
+  rows.slice(0, 100).forEach((x, i) => {
     const row = document.createElement('div'); const mineO = x.by === me || (Array.isArray(x.bys) && x.bys.includes(me)); row.className = 'row' + (mineO ? ' me own' : '') + (i === 0 ? ' top1' : ''); fresh.push({ el: row, k: (x.by || x.n) + ':' + x.p });
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
-    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.n; const sm = document.createElement('small'); sm.textContent = `${x.d} day${x.d === 1 ? '' : 's'} · ${x.w} win${x.w === 1 ? '' : 's'} · ${x.pod} podium${x.pod === 1 ? '' : 's'}`; nm.appendChild(sm);
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.n; const sm = document.createElement('small'); sm.textContent = `${x.d} of ${TOUR} rounds · ${x.w} win${x.w === 1 ? '' : 's'} · ${x.pod} podium${x.pod === 1 ? '' : 's'}`; nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = x.p; const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = 'pts';
     row.append(rk, nm, tp, sc); list.appendChild(row);
     row.onclick = () => openPlayer({ name: x.n, id: x.by, me: mineO, back: () => openDaily('overall') }); // (the player card: stats, records, highlights)
