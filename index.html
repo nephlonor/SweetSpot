@@ -4112,7 +4112,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 14 };
+const APP_ITER = { courses: 11, n: 15 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -10328,6 +10328,7 @@ function loadNames() { // the boards of every course and the profiles, once a mi
 // The name follows: the server stamps every name change (nat) and each device takes the newer name at its launch.
 const MG = { merges: null, at: 0, busy: false, dlg: null, fast: 0 };
 // the other devices of this account (an account can have more than two: settings.mgPs; mgP is the first partner)
+const MG_MAX = 5; // devices per account (the same in leaderboard.yml)
 const mgPs = () => Array.isArray(settings.mgPs) && settings.mgPs.length ? settings.mgPs : settings.mgP ? [settings.mgP] : [];
 const MG_MAP = { xp: 'xp', r: 'rounds', h: 'holes', st: 'strokes', pu: 'putts', ac: 'aces', ea: 'eagles', bi: 'birdies', pa: 'pars', bo: 'bogeys', dd: 'doubles', fh: 'fwHit', ft: 'fwTry', gh: 'gir', gt: 'girTry', sh: 'shots', di: 'dist', wa: 'water', ob: 'ob', tr: 'trees', rb: 'rainbows', ch: 'chipins', fd: 'found', lo: 'lost' };
 const MG_SUM = Object.keys(MG_MAP), MG_REC = { dr: 'drive', ho: 'holed', pt: 'putt', gs: 'girStreak', fs: 'fwStreak', bk: 'birdStreak' };
@@ -10356,7 +10357,7 @@ function mgDialog(kind, o) {
     waiting: ['Merge requested', 'Accept it on your other device', `Open Sweet Spot on your other device and accept the merge there. Until you do, nothing changes. The request can take a minute to arrive.`, '', 'OK'],
     accept: ['Merge request', 'Merge with another device?', `Another device has entered your name "${o && o.name}" and would like to merge with this account: all stats and records are combined, and both devices act as one. This can't be undone. Only accept if it is your own device.`, 'Not me', 'Merge'],
     wait: ['Merging', 'One moment', 'The two accounts are being joined. This can take a minute.', '', 'OK'],
-    done: ['Merged', 'One account', 'Your two devices now share their stats and records, and a name change on one follows on the other.', '', 'OK'],
+    done: ['Merged', 'One account', `Your devices now share their stats and records, and a name change on one follows on the others. Up to ${MG_MAX} devices can share one account.`, '', 'OK'],
     declined: ['Merge declined', 'Not merged', 'The other device did not accept the merge. The two accounts stay separate.', '', 'OK'],
     pcDevice: ['Daily challenge', 'Not on this device', "This browser has been used as a computer (with a mouse or trackpad, or as a phone view on a computer), so the daily challenge is closed on it. Play today's challenge on your phone or tablet.", '', 'OK'],
     pcDaily: ['Daily challenge', 'Mobile only', "The daily challenge is played on phones and tablets only, so everyone competes with the same controls. Open Sweet Spot Golf on your phone or iPad to play today's challenge.", '', 'OK'],
@@ -10367,7 +10368,7 @@ function mgDialog(kind, o) {
 function mgClose() { MG.dlg = null; $('mgAsk').classList.remove('on'); mgUI(); }
 function mgUI() {
   const el = $('mgNote'); if (!el) return;
-  const inc = !settings.mgP && !MG.dlg && MG.inc, t = settings.mgP ? (mgPs().length > 1 ? 'Merged: this account is shared with ' + mgPs().length + ' other devices.' : 'Merged: this account is shared with another device.') : inc ? 'A merge request is waiting for you. Tap to answer.' : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
+  const inc = !MG.dlg && MG.inc, t = inc ? 'A merge request is waiting for you. Tap to answer.' : settings.mgP ? (mgPs().length > 1 ? 'Merged: this account is shared with ' + mgPs().length + ' other devices.' : 'Merged: this account is shared with another device.') : settings.mgReq || settings.mgAcc ? 'Waiting for the merge to go through.' : '';
   el.textContent = t; el.hidden = !t; el.style.cursor = inc ? 'pointer' : ''; el.onclick = inc ? () => mgDialog('accept', { from: inc.f, name: inc.n }) : null;
 }
 // a note from the developer to one player (by device hash), shown once, with a reply field; the reply goes to the developer's devices ([reply] issue -> leaderboard/replies.json), shown there once
@@ -10416,7 +10417,8 @@ async function mgNameCheck() {
   const nm = cleanName(settings.name); if (!nm || settings.mgP || settings.mgReq || settings.mgAcc || MG.dlg || !ghKey()) return;
   if ((settings.mgDecl || []).includes(nm.toLowerCase())) return;
   await loadPlayers(true); const mg = await loadMerges(true); if (cleanName(settings.name) !== nm || MG.dlg) return;
-  const free = nameOwners(nm).filter(id => !mg.g[id]).sort((a, b) => ((DL.players[b] || {}).at || 0) - ((DL.players[a] || {}).at || 0));
+  const gsize = id => { const e = mg.g[id]; return e ? 1 + new Set([e.p, ...(Array.isArray(e.ps) ? e.ps : [])].filter(x => x && x !== id)).size : 1; };
+  const free = nameOwners(nm).filter(id => gsize(id) < MG_MAX).sort((a, b) => ((DL.players[b] || {}).at || 0) - ((DL.players[a] || {}).at || 0));
   if (free.length) mgDialog('ask', { to: free[0], name: nm });
 }
 // add the other device's share to this one's stats (counters add, records take the best); what was added last time is remembered, so only the change is added now
@@ -10487,9 +10489,12 @@ async function mgCheck() {
     const mg = await loadMerges(true), me = dlMe(), mine = mg.g[me]; if (!MG.ok) return; // (no answer from the server: nothing is decided)
     if (mine && Date.now() - (MG.pAt || 0) > 100000) { MG.pAt = Date.now(); await loadPlayers(true); }
     if (mine) {
-      const wasPending = !!(settings.mgReq || settings.mgAcc);
-      const auto = settings.mgReq && settings.mgReq.auto; settings.mgP = mine.p; settings.mgPs = [...new Set([mine.p, ...(Array.isArray(mine.ps) ? mine.ps : [])])].filter(x => typeof x === 'string' && x !== me); delete settings.mgReq; delete settings.mgAcc; if (!settings.nameSent && cleanName(settings.name)) settings.nameSent = cleanName(settings.name); saveSettings(); // (a later name change is then filed)
-      MG.inc = null;
+      const ps = [...new Set([mine.p, ...(Array.isArray(mine.ps) ? mine.ps : [])])].filter(x => typeof x === 'string' && x !== me);
+      // done: this device has just joined (it asked, or accepted while on its own), or a device it accepted (already merged) is now in the account
+      const fresh = !settings.mgP, accDone = !!(settings.mgAcc && ps.includes(settings.mgAcc.from)), wasPending = !!((fresh && (settings.mgReq || settings.mgAcc)) || accDone);
+      const auto = settings.mgReq && settings.mgReq.auto; settings.mgP = mine.p; settings.mgPs = ps; delete settings.mgReq;
+      if (fresh || accDone || (settings.mgAcc && Date.now() - settings.mgAcc.at > 360000)) delete settings.mgAcc;
+      if (!settings.nameSent && cleanName(settings.name)) settings.nameSent = cleanName(settings.name); saveSettings(); // (a later name change is then filed)
       // the name follows: the newer change wins (the server stamps each one)
       if (mine.n && mine.n !== settings.name && (mine.nat || 0) > (settings.nameAt || 0)) {
         settings.name = mine.n; settings.nameSent = mine.n; settings.nameAt = mine.nat; saveSettings();
@@ -10500,6 +10505,12 @@ async function mgCheck() {
       for (const p of mgPs()) { mgAbsorb((DL.players || {})[p], p); loadAcct(p).then(ex => { mgAbsorbEx(ex, p); if (!settings.mgSigAt) mgSyncSend(); }); } loadDailyFile(dayId());
       if (auto) { if (MG.dlg && MG.dlg.kind === 'waiting') mgClose(); } // (joined an account the developer opened: the developer's note says so)
       else if (wasPending && !MG.dlg) mgDialog('done'); else if (wasPending && MG.dlg && (MG.dlg.kind === 'waiting' || MG.dlg.kind === 'wait')) mgDialog('done');
+      // one more device asks to join this account (addressed to any of its devices, or to its name), while there is room
+      const grp = [me, ...ps], nm = cleanName(settings.name).toLowerCase();
+      const inc = grp.length < MG_MAX ? mg.q.find(x => !grp.includes(x.f) && !mg.g[x.f] && (grp.includes(x.t) || (nm && String(x.n).toLowerCase() === nm))) : null;
+      MG.inc = inc || null;
+      const calm = $('title').classList.contains('on') || (G.state === 'address' && SW.phase === 'idle');
+      if (inc && !MG.dlg && !settings.mgAcc && calm && !document.querySelector('.sheet.on')) mgDialog('accept', { from: inc.f, name: inc.n });
     } else {
       for (const key of ['mgReq', 'mgAcc']) {
         const q = settings[key]; if (!q) continue;
