@@ -10,5 +10,6 @@ Single-file mobile browser golf game (`index.html`, three.js r128). The real cou
 ## Arbeitsweise
 - Antworte auf Deutsch, knapp. Eine Session = eine Aufgabe, lange Aufgaben in Phasen.
 - Beim Start zuerst `handoff.md` lesen, am Ende aktualisieren, committen und pushen.
+- PRs nach dem Erstellen immer direkt nach `main` mergen (squash), damit der User testen kann; nicht vorher nachfragen.
 - Bei neuer Projektidee, Feature oder mehrstufigem Bugfix (ohne laufende `handoff.md`): lies `.claude/workflow.md` und folge dem Planen-Ablauf. Kleine Änderungen direkt ausführen.
 - Modell: Haiku/Sonnet für Routine, Opus nur für Architektur und schwierige Fehler.
