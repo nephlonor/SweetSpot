@@ -4112,7 +4112,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 17 };
+const APP_ITER = { courses: 11, n: 18 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -11054,6 +11054,7 @@ async function loadDailyMeta(force) {
   const get = async f => { const r = await fetch(`https://raw.githubusercontent.com/${GH_REPO}/main/leaderboard/${f}?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' }); return r.status === 404 ? [] : r.ok ? r.json() : null; };
   for (const k of [1, 2, 3]) loadDailyFile(dayAdd(dayId(), -k)); // (the last days' own files: see dlMetaLive)
   try { const [a, o] = await Promise.all([get('daily-index.json'), get('daily-overall.json')]); if (Array.isArray(a)) DL.index = a; if (Array.isArray(o)) DL.overall = o; if (!a && !o) throw 0; } catch (e) { if (!DL.index) DL.index = null; DL.metaAt = 0; }
+  dlTrophyCheck(); // (a day won on another device, or shared with others, comes with the index)
   if ($('dailySheet').classList.contains('on') && (DL.tab === 'archive' || DL.tab === 'overall')) fillDaily($('dailyBody'));
 }
 async function loadPlayers(force) {
@@ -11089,7 +11090,7 @@ const dlHoles = () => (G.daily && G.scores ? G.scores.filter(v => v != null).len
 let _dlMin = 0;
 function dlTick(dt) {
   DL.t -= dt; if (DL.t > 0) return; DL.t = 1;
-  const d = dayId(); if (d !== DL.day) { DL.day = d; DL.tab = 'today'; if (MP.client && MP.st === 'on') dlSubscribe(MP.client); loadDailyFile(d); loadDailyFile(dayAdd(d, -1)); }
+  const d = dayId(); if (d !== DL.day) { DL.day = d; DL.tab = 'today'; if (MP.client && MP.st === 'on') dlSubscribe(MP.client); loadDailyFile(d); loadDailyFile(dayAdd(d, -1)); loadDailyMeta(); }
   if (UI.instPend && !sheetOpen() && !$('done').classList.contains('on') && G.state !== 'spec') { UI.instPend = false; setTimeout(() => { if (!sheetOpen()) openInstall(); }, 1200); }
   dlCards(); dlPanel(); if (++_dlMin >= 30) { _dlMin = 0; if ($('dailySheet').classList.contains('on')) fillDaily($('dailyBody')); }
 }
