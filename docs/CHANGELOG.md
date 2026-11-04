@@ -2,6 +2,7 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 11.19: Florian kann jedem Spieler schreiben: Im Spielerprofil (Name antippen) unten **Send a message** (nur auf `DEV_TO`-Geräten; der Server prüft das Gerät beim `[note]`-Issue nochmal). Gespeichert in `leaderboard/notes.json` (`to` = Gerät + verbundene Geräte), der Spieler sieht die Nachricht einmal als Popup mit Antwortfeld; die Antwort geht per `[reply]` nach `replies.json` und erscheint in Florians Inbox mit dem Originaltext. Feature-Request 954 „Computer is OP“ als erledigt markiert.
 - Build 11.18: Rückwirkende Daily-Pokale kamen nicht an: Die App lädt `daily-index.json` jetzt beim Start (nicht nur im Archiv/Tournament-Tab) und prüft danach die Pokale. `daily-index.json` von Hand neu gebaut (03.11.: 4 Sieger, ein weiterer Gleichstand ULRICH/ZainB).
 - Build 11.17: Geteilter Sieg im Daily: Alle Spieler mit dem besten Ergebnis sind Sieger. Jeder bekommt den Pokal (auch rückwirkend über `daily-index.json`, das jetzt bei Gleichstand `ws`/`wbs` mit allen Siegern führt), der Tages-Banner nennt alle („Joint winners“), das Archiv zeigt den eigenen Namen in Gold bzw. den ersten Sieger mit „+N“.
 - Build 11.16: Daily-Rangliste (Today/Yesterday/Archiv-Tag) und Live-Panel zeigen geteilte Plätze: Gleichstand teilt den Platz, der nächste bekommt den richtigen Platz dahinter (1, 1, 1, 1, 5 …; `dlPlaces`). Alle Erstplatzierten bekommen ★. Punkte waren schon so gerechnet.

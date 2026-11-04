@@ -31,7 +31,7 @@ jobs:
           git add leaderboard
           git diff --cached --quiet || { git commit -m 'Daily overall standings'; for i in 1 2 3 4; do git push origin HEAD:main && break || git pull --rebase origin main; done; }
   record:
-    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[reply]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]') || startsWith(github.event.issue.title, '[devmsg]'))
+    if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[reply]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]') || startsWith(github.event.issue.title, '[devmsg]') || startsWith(github.event.issue.title, '[note]'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -194,10 +194,25 @@ jobs:
               await gitPush([f], 'A message to the developer');
               return finish(true, 'Thanks, your message has been delivered.');
             }
+            if (issue.title.startsWith('[note]')) {
+              // a note from the developer to one player (the player's profile, button at the bottom): only from the developer's devices; kept in leaderboard/notes.json,
+              // shown once on the player's devices (the device and the devices merged with it) with a reply field
+              const DEV_TO = ['702a2e69', '3cf5ef77'], who = sha8(r && r.dev);
+              if (!DEV_TO.includes(who)) return finish(false, 'Not allowed.');
+              const t = r && typeof r.t === 'string' ? r.t.trim() : '', to = r && typeof r.to === 'string' && /^[0-9a-f]{8}$/.test(r.to) ? r.to : '';
+              if (!to || DEV_TO.includes(to)) return finish(false, 'Unknown player.');
+              if (!t || t.length > 1000) return finish(false, 'Empty or too long.');
+              const mg = rdj('leaderboard/merges.json', {}), f = 'leaderboard/notes.json'; let a = rdj(f, []); if (!Array.isArray(a)) a = [];
+              a.push({ id: 'n' + Date.now().toString(36), to: [to, ...mgPeers(mg, to)], name: typeof r.name === 'string' && NAMEOK.test(r.name.trim()) ? r.name.trim() : 'Player', t, at: Date.now() });
+              fs.writeFileSync(f, JSON.stringify(a.slice(-300)) + '\n');
+              await gitPush([f], 'A note from the developer to a player');
+              return finish(true, 'The note has been delivered.');
+            }
             if (issue.title.startsWith('[reply]')) {
               // a player's reply to a note from the developer (only the player the note went to can answer it): kept in leaderboard/replies.json, the developer's devices show it once
               const FROM = { zain1: ['753ff0b4', '6c3f623c'] }, who = sha8(r && r.dev);
-              if (!r || typeof r.id !== 'string' || !FROM[r.id] || !FROM[r.id].includes(who)) return finish(false, 'Unknown note.');
+              for (const x of rdj('leaderboard/notes.json', [])) if (x && typeof x.id === 'string' && Array.isArray(x.to)) FROM[x.id] = x.to;
+              if (!r || typeof r.id !== 'string' || !Object.prototype.hasOwnProperty.call(FROM, r.id) || !FROM[r.id].includes(who)) return finish(false, 'Unknown note.');
               if (typeof r.t !== 'string' || !r.t.trim() || r.t.length > 1000) return finish(false, 'Empty or too long.');
               const f = 'leaderboard/replies.json'; let a = rdj(f, []); if (!Array.isArray(a)) a = [];
               if (a.filter(x => x.id === r.id && x.by === who).length >= 5) return finish(false, 'Enough replies to this note.');
