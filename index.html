@@ -4112,7 +4112,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 16 };
+const APP_ITER = { courses: 11, n: 17 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -11030,7 +11030,7 @@ function dlMetaLive() {
     if (res.length) add.push({ d, c, res });
   }
   if (add.length) dlAskRebuild(add[add.length - 1].d); // (the workflow's own files catch up: once per missing day per device, a request goes out)
-  if (add.length) idx = idx.concat(add.map(a => ({ d: a.d, c: a.c, n: a.res.length, w: a.res[0].n, wb: a.res[0].id, t: a.res[0].tp }))).sort((a, b) => a.d < b.d ? 1 : -1);
+  if (add.length) idx = idx.concat(add.map(a => { const w = a.res.filter(x => x.tp === a.res[0].tp); return Object.assign({ d: a.d, c: a.c, n: a.res.length, w: a.res[0].n, wb: a.res[0].id, t: a.res[0].tp }, w.length > 1 ? { ws: w.map(x => x.n), wbs: w.map(x => x.id) } : {}); })).sort((a, b) => a.d < b.d ? 1 : -1);
   // each player's places (r: {day: [place, toPar]}) are cut to the window, the live days added, and the points counted again from them
   const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], pl = ov.filter(o => o && o.r).map(o => Object.assign({}, o, { r: Object.fromEntries(Object.entries(o.r).filter(([d]) => win.has(d))) }, o.bys ? { bys: o.bys.slice() } : {}));
   for (const a of add) {
@@ -11114,6 +11114,8 @@ async function dlPost(rec) {
     if (!res.ok) return false; rec.posted = true; dlSet(rec); settings.nameSent = playerName(); saveSettings(); setTimeout(() => loadDailyFile(rec.day, true), 40000); return true;
   } catch (e) { return false; }
 }
+// did I (or my merged account) win this archive day? Players level on the best score all won it (wbs)
+const dlWonIdx = x => (x.wbs || [x.wb]).some(b => b && (b === dlMe() || mgPs().includes(b)));
 // the winner of a closed day gets a trophy: checked once the day's file is in (a few minutes after it closed), then kept in the stats
 function dlTrophyCheck() {
   const today = dayId(), rec = dlRecs(); let got = null;
@@ -11121,10 +11123,10 @@ function dlTrophyCheck() {
     const r = rec[day]; if (day >= today || r.trophyChecked || r.status !== 'done' || !r.posted || dayId(Date.now() - 10 * 6e4) <= day) continue; // (posted, and the day closed ten minutes ago)
     if (!Array.isArray(DL.files[day])) { loadDailyFile(day); continue; } // not in yet: look again later
     const st = dlStanding(day, 18, r.course).filter(x => x.fin); r.trophyChecked = true; dlSet(r);
-    if (st.length && st[0].e.mine && !ST.trophies.some(t => t.day === day)) { ST.trophies.push({ day, course: r.course, tp: r.tp, s: r.strokes, n: st.length }); saveStats(); got = r; }
+    if (st.some(x => x.tp === st[0].tp && x.e.mine) && !ST.trophies.some(t => t.day === day)) { ST.trophies.push({ day, course: r.course, tp: r.tp, s: r.strokes, n: st.length }); saveStats(); got = r; }
   }
   // a merged account: a day won on the partner device is a trophy here too (the closed days' winners come with daily-index.json)
-  for (const x of DL.index || []) if (x && x.wb && x.d < today && (x.wb === dlMe() || mgPs().includes(x.wb)) && COURSES[x.c] && !ST.trophies.some(t => t.day === x.d)) { ST.trophies.push({ day: x.d, course: x.c, tp: x.t, s: x.t + (COURSES[x.c].defs || []).reduce((a, d) => a + d.par, 0), n: x.n }); ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1); saveStats(); }
+  for (const x of DL.index || []) if (x && x.wb && x.d < today && dlWonIdx(x) && COURSES[x.c] && !ST.trophies.some(t => t.day === x.d)) { ST.trophies.push({ day: x.d, course: x.c, tp: x.t, s: x.t + (COURSES[x.c].defs || []).reduce((a, d) => a + d.par, 0), n: x.n }); ST.trophies.sort((a, b) => a.day < b.day ? -1 : 1); saveStats(); }
   if (got && G.state === 'title') recordCard('Daily champion', 'You won the daily challenge', fmtToPar(got.tp), COURSES[got.course].name, ['#fff3b0', '#ffd36a', '#e8a317', '#3a1d00']);
 }
 // results of the last day and a half that never reached the repository (no network): tried again at start
@@ -11214,7 +11216,7 @@ function fillDaily(el, inCard) {
   const head = add('div', 'dlHead'); const l1 = document.createElement('b'); l1.textContent = `${CO.name}`; const l2 = document.createElement('small');
   const dt = new Date(dayNum(day) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   l2.textContent = tab === 'today' ? `${dt} · closes in ${fmtLeft(dayLeftSec())} (11:59 pm US Eastern)` : `${dt} · final result`; head.append(l1, l2);
-  if (past) { const w = dlStanding(day, 18, course).filter(x => x.fin)[0]; if (w) { const wb = add('div', 'trophy'); wb.innerHTML = `<i class="ic">${ICONS.trophy}</i><div><b></b><small>Winner of the daily challenge</small></div>`; wb.querySelector('b').textContent = w.e.n + ' · ' + fmtToPar(w.tp) + ' (' + w.s + ')'; } }
+  if (past) { const fin = dlStanding(day, 18, course).filter(x => x.fin), w = fin[0]; if (w) { const ws = fin.filter(x => x.tp === w.tp), nm = ws.map(x => x.e.n), wb = add('div', 'trophy'); wb.innerHTML = `<i class="ic">${ICONS.trophy}</i><div><b></b><small>${ws.length > 1 ? 'Joint winners' : 'Winner'} of the daily challenge</small></div>`; wb.querySelector('b').textContent = (nm.length > 1 ? nm.slice(0, -1).join(', ') + ' & ' + nm[nm.length - 1] : nm[0]) + ' · ' + fmtToPar(w.tp) + ' (' + w.s + ')'; } }
   const playing = rec && rec.status === 'playing', done = rec && rec.status === 'done';
   if (tab === 'today' && !rec) {
     add('div', 'dlText', 'One chance a day. Everyone plays the same course with the same pins, wind and weather, and has to finish all 18 holes before the day ends. While you play, the board shows everyone\'s score after the holes you have finished: someone who posted hours ago plays through again as you go, and anyone still out there climbs it live. The full board opens when your round is done.');
@@ -11254,8 +11256,10 @@ function fillArchive(el, add) {
     const row = document.createElement('div'); row.className = 'row'; row.style.cursor = 'pointer';
     const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = fmt(x.d).split(' ').slice(1).join(' ');
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (COURSES[x.c] ? COURSES[x.c].short : x.c); const sm = document.createElement('small'); sm.textContent = `${fmt(x.d).split(' ')[0]} · ${x.n} player${x.n === 1 ? '' : 's'}${mine[x.d] && mine[x.d].status === 'done' ? ' · played' : ''}`; nm.appendChild(sm);
-    const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.t); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.w;
-    if (x.wb ? x.wb === dlMe() || mgPs().includes(x.wb) : String(x.w).toLowerCase() === cleanName(settings.name).toLowerCase()) sc.classList.add('ownName'); // my own win: the winner's name in gold
+    const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.t); const sc = document.createElement('span'); sc.className = 'st';
+    const ws = x.ws || [x.w], wbs = x.wbs || [x.wb], mi = x.wb ? wbs.findIndex(b => b && (b === dlMe() || mgPs().includes(b))) : ws.findIndex(n => String(n).toLowerCase() === cleanName(settings.name).toLowerCase());
+    sc.textContent = (mi >= 0 ? ws[mi] : x.w) + (ws.length > 1 ? ' +' + (ws.length - 1) : ''); // joint winners: the first (or me) and how many more
+    if (mi >= 0) sc.classList.add('ownName'); // my own win: the winner's name in gold
     row.append(rk, nm, tp, sc); row.onclick = () => { DL.tab = 'day'; DL.arch = x.d; loadDailyFile(x.d); fillDaily(el); }; list.appendChild(row);
   });
 }
