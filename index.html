@@ -4112,7 +4112,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 11, n: 15 };
+const APP_ITER = { courses: 11, n: 16 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -11083,6 +11083,8 @@ function dlStanding(day, k, course) {
     .filter(x => x.thru > 0 || x.e.mine).sort((a, b) => a.tp - b.tp || b.thru - a.thru || (a.e.at || 0) - (b.e.at || 0))
     .filter((x, i, a) => a.findIndex(y => String(y.e.n).toLowerCase() === String(x.e.n).toLowerCase()) === i); // a name is one player, even on two devices: the better result
 }
+// shared places: players level on the score share it, and the next one takes the place after all of them (1, 1, 1, 4)
+const dlPlaces = st => { const r = []; st.forEach((x, i) => r.push(i && x.tp === st[i - 1].tp ? r[i - 1] : i + 1)); return r; };
 const dlHoles = () => (G.daily && G.scores ? G.scores.filter(v => v != null).length : 0);
 let _dlMin = 0;
 function dlTick(dt) {
@@ -11186,12 +11188,12 @@ function dlPanel() {
   const on = !!d && !G.practice && k > 0 && G.state !== 'title' && G.state !== 'intro' && !MP.spec && !(G.scores && G.scores.every(v => v != null));
   el.classList.toggle('on', on); if (!on) return;
   { const ro = $('readout'), rr = ro.getBoundingClientRect(); let y = $('topbar').getBoundingClientRect().bottom + 8; if (ro.classList.contains('on') && rr.left < el.offsetWidth + 20) y = Math.max(y, rr.bottom + 8); el.style.top = y + 'px'; }
-  const st = dlStanding(d.day, k, d.course), me = st.findIndex(x => x.e.mine), rows = st.slice(0, 3);
+  const st = dlStanding(d.day, k, d.course), me = st.findIndex(x => x.e.mine), rows = st.slice(0, 3), pl = dlPlaces(st);
   if (me > 2) rows.push(st[me]);
   const sig = k + '|' + rows.map(x => [x.e.id, x.tp, x.thru].join(',')).join(';') + '|' + me + '|' + st.length; if (el._sig === sig) return; el._sig = sig;
   el.textContent = ''; const h = document.createElement('div'); h.className = 'mph'; h.textContent = `Daily · after hole ${k}`; el.appendChild(h);
   for (const x of rows) {
-    const r = document.createElement('div'); r.className = 'mpr' + (x.e.mine ? ' me' : ''); const rk = document.createElement('i'); rk.textContent = st.indexOf(x) + 1;
+    const r = document.createElement('div'); r.className = 'mpr' + (x.e.mine ? ' me' : ''); const rk = document.createElement('i'); rk.textContent = pl[st.indexOf(x)];
     const n = document.createElement('span'); n.className = 'n'; n.textContent = x.e.n; const t = document.createElement('span'); t.className = 't'; t.textContent = fmtToPar(x.tp);
     const hh = document.createElement('span'); hh.className = 'h'; hh.textContent = x.thru < k ? 'H' + x.thru : ''; r.append(rk, n, t, hh); el.appendChild(r);
   }
@@ -11228,10 +11230,10 @@ function fillDaily(el, inCard) {
   if (note) add('div', 'dlText', note);
   const list = add('div', 'lb'), st = dlStanding(day, k, course);
   if (!st.length) { add('div', 'empty', past ? (DL.files[day] === null && !(DL.rows[day] && DL.rows[day].size) ? 'This board could not be reached.' : 'No one played this challenge.') : k ? 'No one else on the board yet.' : 'Finish hole 1 and the board shows up.'); }
-  const fresh = []; // new on this board: a player turning up, and a player's final score
+  const fresh = [], pl = dlPlaces(st); // new on this board: a player turning up, and a player's final score
   st.slice(0, 40).forEach((x, i) => {
-    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me own' : '') + (i === 0 ? ' top1' : '') + (x.e.done ? '' : ' unfin'); row.style.cursor = 'pointer'; fresh.push({ el: row, k: (x.e.id || x.e.n) + (x.fin ? ':f' + x.s : '') });
-    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i === 0 ? '★' : i + 1;
+    const row = document.createElement('div'); row.className = 'row' + (x.e.mine ? ' me own' : '') + (pl[i] === 1 ? ' top1' : '') + (x.e.done ? '' : ' unfin'); row.style.cursor = 'pointer'; fresh.push({ el: row, k: (x.e.id || x.e.n) + (x.fin ? ':f' + x.s : '') });
+    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = pl[i] === 1 ? '★' : pl[i];
     const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = x.e.n; const sm = document.createElement('small'); sm.textContent = x.fin ? 'Final' : x.thru >= 18 ? 'Playing' : `Thru ${x.thru}` + (x.thru < k || !x.e.done ? '' : ''); nm.appendChild(sm);
     const tp = document.createElement('span'); tp.className = 'tp'; tp.textContent = fmtToPar(x.tp); const sc = document.createElement('span'); sc.className = 'st'; sc.textContent = x.s || '';
     row.append(rk, nm, tp, sc); row.onclick = () => openPlayer({ name: x.e.n, id: x.e.id, pf: x.e.pf, rbs: x.e.bs, card: { course: x.e.c, h: x.e.h, pt: x.e.pt, at: x.e.at }, me: x.e.mine, back: () => { openDaily(tab); } }); list.appendChild(row);
