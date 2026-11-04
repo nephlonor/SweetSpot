@@ -2,6 +2,7 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 11.17: Geteilter Sieg im Daily: Alle Spieler mit dem besten Ergebnis sind Sieger. Jeder bekommt den Pokal (auch rückwirkend über `daily-index.json`, das jetzt bei Gleichstand `ws`/`wbs` mit allen Siegern führt), der Tages-Banner nennt alle („Joint winners“), das Archiv zeigt den eigenen Namen in Gold bzw. den ersten Sieger mit „+N“.
 - Build 11.16: Daily-Rangliste (Today/Yesterday/Archiv-Tag) und Live-Panel zeigen geteilte Plätze: Gleichstand teilt den Platz, der nächste bekommt den richtigen Platz dahinter (1, 1, 1, 1, 5 …; `dlPlaces`). Alle Erstplatzierten bekommen ★. Punkte waren schon so gerechnet.
 - Build 11.15: Bis zu 5 Geräte pro Konto (`MG_MAX` in index.html und leaderboard.yml). Ein einzelnes Gerät kann jetzt auch ein schon verbundenes Konto anfragen (gleicher Name); annehmen kann jedes Gerät des Kontos, die Anfrage erscheint dort als Dialog. Server: `mgJoin` hängt das Gerät an die Gruppe (`ps` auf allen Geräten), ab 5 Geräten wird abgelehnt.
 - Build 11.14: Nachricht an ZainB (`zain2`): „I merged your other devices“ statt „the three devices now“.
