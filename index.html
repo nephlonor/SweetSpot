@@ -795,7 +795,7 @@ SURF[S.SAND] = { name: 'Bunker', k: .12, e: .04, keep: .12, spinStop: 30000, mu:
 SURF[S.WATER] = { name: 'Water', k: 0, e: 0, keep: 0, spinStop: 1, mu: 9, lie: { speed: .5, spin: .5, launch: 0, wig: 1.5 } };
 SURF[S.PATH] = { name: 'Cart path', k: .004, e: .55, keep: .84, spinStop: 30000, mu: .05, lie: { speed: .95, spin: .9, launch: 0, wig: 1.1 } };
 
-const surfName = s => G.C && G.C.def && G.C.def.city && !G.C.def.wild && s === S.DEEP ? 'Street' : SURF[s].name; // (Metropolis: beyond the turf it is the street)
+const surfName = s => SURF[s].name;
 
 /* ---------- weather ---------- */
 // Weather only changes how the ball rolls on the fairway: how hard it bounces, how much pace it keeps and how far it runs out.
@@ -983,8 +983,6 @@ function cupZone(C, o, x, yb, z, vx, vy, vz, t, fr, ev, mu, air, w) {
 // what the last tree query hit: 'crown', 'trunk' (centre and radius) or 'box' (a building)
 const HIT = { kind: '', x: 0, z: 0, r: 0 };
 const _g2 = [0, 0], _w3 = [0, 0, 0];
-// Metropolis: a ball off a building keeps this share of its pace; BOXQ is where the last box test put it (the face's normal, the point just outside it)
-const BOX_KEEP = .93, BOXQ = { top: false, bot: false, nx: 0, nz: 0, px: 0, pz: 0, id: 0 };
 function simulateShot(C, o) {
   const dt = o.dt || 1 / 240, maxT = o.maxT || 40; // predictions may step coarser
   let x = o.x, y = o.y, z = o.z, vx = o.v[0], vy = o.v[1], vz = o.v[2];
@@ -1066,18 +1064,6 @@ function simulateShot(C, o) {
         const n = C.wallN, vn = vx * n[0] + vz * n[1];
         if (vn < 0) { const s = Math.hypot(vx, vy, vz); vx -= 1.5 * vn * n[0]; vz -= 1.5 * vn * n[1]; vx *= .75; vz *= .75; vy *= .8; wx *= .4; wy *= .4; wz *= .4; if (t - lastTreeT > .25) { lastTreeT = t; ev.push({ t, type: 'tree', x, y, z, s, id: 100001 }); } }
         x = C.wallP[0] + n[0] * .53; z = C.wallP[1] + n[1] * .53;
-      }
-      // Metropolis: the buildings are solid. A ball hitting a wall comes off it like off a cushion, keeping 93 % of its pace; one coming down on a roof out of play is out of bounds
-      if (C.boxHit && !o.noTrees) {
-        const b = C.boxHit(x, y, z, BOXQ);
-        if (b) {
-          const s = Math.hypot(vx, vy, vz);
-          if (BOXQ.top && b.out) { res.ob = true; ev.push({ t, type: 'tree', x, y, z, s, id: b.id }); fr.push(t, x, y, z, 0); break; }
-          if (BOXQ.top) { vy = -vy; y = b.y1 + .02; } else if (BOXQ.bot) { vy = -Math.abs(vy); y = b.y0 - .02; }
-          else { const vn = vx * BOXQ.nx + vz * BOXQ.nz; if (vn < 0) { vx -= 2 * vn * BOXQ.nx; vz -= 2 * vn * BOXQ.nz; } x = BOXQ.px; z = BOXQ.pz; }
-          vx *= BOX_KEEP; vy *= BOX_KEEP; vz *= BOX_KEEP; wx *= .5; wy *= .5; wz *= .5;
-          if (t - lastTreeT > .12) { lastTreeT = t; ev.push({ t, type: 'tree', x, y, z, s, id: b.id, bank: true }); }
-        }
       }
       // down near the hole: the cup takes over (it holds the lower part of the stick as well)
       if (cup) {
@@ -1171,11 +1157,6 @@ function simulateShot(C, o) {
         const n = C.wallN, vn = vx * n[0] + vz * n[1];
         if (vn < 0) { vx -= 1.5 * vn * n[0]; vz -= 1.5 * vn * n[1]; vx *= .8; vz *= .8; if (sp > .4 && t - lastTreeT > .25) { lastTreeT = t; ev.push({ t, type: 'tree', x, y, z, s: sp, id: 100001 }); } }
         x = C.wallP[0] + n[0] * .53; z = C.wallP[1] + n[1] * .53; y = C.h(x, z);
-      }
-      if (C.boxHit && !o.noTrees && C.boxHit(x, Math.min(y, yR0) + .05, z, BOXQ) && !BOXQ.top) { // (rolling into a wall, or into the side of a higher roof: it comes back off it)
-        const vn = vx * BOXQ.nx + vz * BOXQ.nz; if (vn < 0) { vx -= 2 * vn * BOXQ.nx; vz -= 2 * vn * BOXQ.nz; } vx *= BOX_KEEP; vz *= BOX_KEEP;
-        x = BOXQ.px; z = BOXQ.pz; y = C.h(x, z);
-        if (sp > .4 && t - lastTreeT > .25) { lastTreeT = t; ev.push({ t, type: 'tree', x, y, z, s: sp, id: BOXQ.id, bank: true }); }
       }
       sp = Math.hypot(vx, vz);
       if (cup) {
@@ -2425,7 +2406,6 @@ function makeCourse(idx, pin) {
   const island = def.island ? mkBlob(def.island, rng) : null; C.island = island;
   C.fairways = fairways; C.pods = pods; C.green = green; C.bunkers = bunkers; C.waters = waters; C.creeks = creeks; C.paths = paths; C.coast = coast;
   C.coastS = coast ? (x, z) => polySigned(coast.poly, x, z) : () => -1e6;
-  if (def.city) metroPrep(C); // (Metropolis: the rooftops the holes are played on, the line of the street canyon)
   // bounds of the playable area
   let minX = 1e9, maxX = -1e9, maxF = 0;
   const allPts = [];
@@ -2434,7 +2414,7 @@ function makeCourse(idx, pin) {
   allPts.push([def.green.x - def.green.rx - 10, def.green.f], [def.green.x + def.green.rx + 10, def.green.f + def.green.rz + 10]);
   allPts.push([def.tee.x - 10, def.tee.f]);
   for (const p of allPts) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); maxF = Math.max(maxF, p[1]); }
-  const mg = def.margin || 75, inner = { minX: Math.floor((minX - mg) / 5) * 5, maxX: Math.ceil((maxX + mg) / 5) * 5, minZ: -Math.ceil((maxF + Math.max(65, mg - 10)) / 5) * 5, maxZ: def.city ? Math.max(50, mg - 20) : 50 };
+  const mg = def.margin || 75, inner = { minX: Math.floor((minX - mg) / 5) * 5, maxX: Math.ceil((maxX + mg) / 5) * 5, minZ: -Math.ceil((maxF + Math.max(65, mg - 10)) / 5) * 5, maxZ: 50 };
   C.inner = inner;
   const tee = def.tee;
   function fwDist(x, z) {
@@ -2456,7 +2436,6 @@ function makeCourse(idx, pin) {
     let wm = 1;
     for (let i = 0; i < creeks.length; i++) { const c = creeks[i], d = _cd[i] = polyQ(c, x, z, 60).d; if (d < c.hw + 50) wm *= smooth(c.hw + 6, c.hw + 50, d); }
     for (let i = 0; i < waters.length; i++) { const w = waters[i], s = _ps[i] = blobS(w, x, z); if (s < 1 + 40 / w.R) wm *= smooth(1 + 5 / w.R, 1 + 40 / w.R, s); }
-    if (def.city) { _dOut = 0; return def.shape(x, f) + metroRoofH(C, x, z) + .1 * small; } // (Metropolis: flat streets, the rooftops, no hills round the hole)
     if (wm > 0) h += wm * ROLL_A * fbm(x * .0075, f * .0075, seed + 111, 3);
     h += def.shape(x, f);
     const ox = Math.max(inner.minX - x, 0, x - inner.maxX), oz = Math.max(inner.minZ - z, 0, z - inner.maxZ);
@@ -2565,7 +2544,6 @@ function makeCourse(idx, pin) {
     if (gs < 1) { info.surf = S.GREEN; return info; }
     if (gs < 1 + 1.5 / green.R) { info.surf = S.FRINGE; return info; }
     if (teeDist(x, z) < 0) { info.surf = S.TEE; return info; }
-    if (def.city && C.offRoof(x, z)) { info.surf = S.DEEP; return info; } // (Metropolis, a rooftop hole: the street down below)
     for (let i = 0; i < paths.length; i++) if (polyQ(paths[i], x, z, 3).d < 1.3) { info.surf = S.PATH; return info; }
     let dfw = 1e6, along = 0;
     for (let i = 0; i < fairways.length; i++) { const q = polyQ(fairways[i], x, z, 30); const d = q.d - q.w; if (d < dfw) { dfw = d; along = q.along + i * 1000; } }
@@ -2575,8 +2553,8 @@ function makeCourse(idx, pin) {
     if (!nearCreek && dfw < 0) { info.surf = S.FAIR; info.stripe = Math.floor(along / 12) & 1; info.fwAlong = along; return info; }
     if (dfw < 2.8 || gs < 1 + 6 / green.R || teeDist(x, z) < 3) { info.surf = S.FIRST; return info; }
     if (nearCreek) { info.surf = S.ROUGH; return info; }
-    const deepEdge = def.city ? (C.roofs.length ? 1e9 : def.turf) : 22 + 6 * vnoise(x * .03, z * .03, seed + 5);
-    if (dfw > deepEdge && gs > 1 + (def.city ? def.turf + 4 : 26) / green.R && teeDist(x, z) > (def.city ? def.turf : 20)) { info.surf = S.DEEP; return info; } // (Metropolis: the deep rough is the street)
+    const deepEdge = 22 + 6 * vnoise(x * .03, z * .03, seed + 5);
+    if (dfw > deepEdge && gs > 1 + 26 / green.R && teeDist(x, z) > 20) { info.surf = S.DEEP; return info; }
     info.surf = S.ROUGH; return info;
   }
   C.surfInfo = surfInfo;
@@ -2591,13 +2569,12 @@ function makeCourse(idx, pin) {
     dfw -= 2.4 * vnoise(x * .035, z * .035, seed + 21) + .8 * vnoise(x * .11, z * .11, seed + 22);
     for (let i = 0; i < islands.length; i++) { const b = islands[i], s = blobS(b, x, z); if (s < 2) dfw = Math.max(dfw, Math.min((1 - s) * b.R, 1)); }
     const gs = blobS(green, x, z), gd = (gs - 1) * green.R, td = teeDist(x, z);
-    let fw = dfw, first = Math.min(dfw - 2.8, gd - 6, td - 3), deep = def.city ? (C.roofs.length ? -1e3 : Math.min(dfw - def.turf, gd - def.turf - 4, td - def.turf)) : Math.min(dfw - (22 + 6 * vnoise(x * .03, z * .03, seed + 5)), gd - 26, td - 20);
+    let fw = dfw, first = Math.min(dfw - 2.8, gd - 6, td - 3), deep = Math.min(dfw - (22 + 6 * vnoise(x * .03, z * .03, seed + 5)), gd - 26, td - 20);
     for (let i = 0; i < creeks.length; i++) { const c = creeks[i], nb = polyQ(c, x, z, 12).d - (c.hw + 4.5); if (nb < 10) { fw = Math.max(fw, -nb); deep = Math.min(deep, nb); } }
     let sand = 1e6, waste = 1e6; for (let i = 0; i < bunkers.length; i++) { const b = bunkers[i], d = (blobS(b, x, z) - 1) * b.R; if (d < sand) sand = d; if (b.o.waste && d < waste) waste = d; }
     let path = 1e6; for (let i = 0; i < paths.length; i++) { const d = polyQ(paths[i], x, z, 3).d - 1.3; if (d < path) path = d; }
     let grn = gd, tee = td;
     if (coast) { const cb = polySigned(coast.poly, x, z) + 2.5; if (cb > -10) { fw = Math.max(fw, cb); first = Math.max(first, cb); deep = Math.min(deep, -cb); grn = Math.max(grn, cb); tee = Math.max(tee, cb); path = Math.max(path, cb); sand = Math.max(sand, cb); } }
-    if (def.city && C.offRoof(x, z)) { fw = Math.max(fw, 4); first = Math.max(first, 4); deep = Math.max(deep, 4); }
     F.fw = fw; F.first = first; F.deep = deep; F.green = grn; F.sand = sand; F.waste = waste; F.tee = tee; F.path = path;
     F.stripe = Math.sin(Math.PI * along / 12); F.wl = C.wl(x, z);
     return F;
@@ -2625,7 +2602,6 @@ function makeCourse(idx, pin) {
   C.center = mkPoly(def.route, null);
   C.length = C.center.L;
   C.treeHit = null;
-  if (def.city) metroFinish(C); // (Metropolis: out of bounds among the buildings, the buildings' colliders)
   return C;
 }
 // position along a polyline at distance s (world coords)
@@ -4139,9 +4115,9 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 12, n: 0 };
+const APP_ITER = { courses: 12, n: 1 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
-const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', metro: 'data-metro.js' }, DATA = { ok: {}, p: {}, busy: 0 };
+const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
 function loadData(k) {
   if (dataReady(k)) return Promise.resolve(); if (DATA.p[k]) return DATA.p[k];
@@ -4168,8 +4144,6 @@ function useRealData(key) {
   for (const k of Object.keys(GC)) delete GC[k]; GC.ready = false;
   W.life = null; // the old hole's scenery belongs to the old course's data
 }
-/* global metroDefs, metroPrep, metroRoofH, metroFinish, metroBuild */ // (Metropolis Links: defined in data-metro.js, loaded before the course is used)
-const METRO_PARS = [3, 5, 4, 4, 4, 5, 4, 5, 3, 5, 3, 4, 4, 5, 3, 4, 3, 5].map(par => ({ par })); // (until data-metro.js is in: the scorecard's pars)
 const COURSES = {
   gccb: { key: 'gccb', name: 'Golf & Country Club Basel', short: 'GCC Basel', defs: GCCB_DEFS, best: 'ssg-best-gccb', board: 'ssg-board-gccb', coll: 'rounds-gccb' },
   alsace: { key: 'alsace', name: 'Alsace Golf Club, Rouffach', short: 'Alsace', defs: ALSACE_DEFS, best: 'ssg-best-alsace', board: 'ssg-board-alsace', coll: 'rounds-alsace' },
@@ -4182,8 +4156,6 @@ const COURSES = {
   westminster: { key: 'westminster', name: 'Westminster National Golf Course', short: 'Westminster National', defs: WESTMINSTER_DEFS, best: 'ssg-best-westminster', board: 'ssg-board-westminster', coll: 'rounds-westminster' },
   landmand: { key: 'landmand', name: 'Landmand Golf Club', short: 'Landmand', defs: LANDMAND_DEFS, best: 'ssg-best-landmand', board: 'ssg-board-landmand', coll: 'rounds-landmand' },
   ledgeview: { key: 'ledgeview', name: 'Ledgeview Golf Course', short: 'Ledgeview', defs: LEDGEVIEW_DEFS, best: 'ssg-best-ledgeview', board: 'ssg-board-ledgeview', coll: 'rounds-ledgeview' },
-  // Metropolis Links: a made-up course through six cities, three holes each (the holes, buildings and landmarks are in data-metro.js). Still in test: only Florian sees it
-  metro: { key: 'metro', name: 'Metropolis Links', short: 'Metropolis', get defs() { return typeof metroDefs === 'function' ? metroDefs() : METRO_PARS; }, best: 'ssg-best-metro', board: 'ssg-board-metro', coll: 'rounds-metro', beta: true },
   isles: { key: 'isles', name: 'The Isles', short: 'The Isles', get defs() { return islesDefs(); }, best: 'ssg-best-isles', board: 'ssg-board-isles', coll: 'rounds-isles', secret: true },
   legacy: { key: 'legacy', name: 'The Legacy Course', short: 'Legacy', defs: LEGACY_DEFS, best: 'ssg-best-18', board: 'ssg-board-18', coll: 'rounds' }
 };
@@ -4871,7 +4843,7 @@ function buildHole(C) {
   if (C.real) { buildRealHole(C, grp); return; }
   if (C.isles) { buildIslesHole(C, grp); return; }
   const I = C.inner;
-  const ext = C.dem ? 3600 : 1100, xs = axisCoords(I.minX, I.maxX, 2.5, ext), zs = axisCoords(I.minZ, I.maxZ, 2.5, ext); // (Metropolis on the hills: the ground out to the mountains)
+  const ext = 1100, xs = axisCoords(I.minX, I.maxX, 2.5, ext), zs = axisCoords(I.minZ, I.maxZ, 2.5, ext);
   const nx = xs.length, nz = zs.length;
   const PX = new Float32Array(nx * nz), PZ = new Float32Array(nx * nz), PY = new Float32Array(nx * nz);
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
@@ -4885,10 +4857,9 @@ function buildHole(C) {
   // smooth-shaded indexed grid; surface colours are worked out per pixel from distance fields, so edges stay crisp
   const pos = new Float32Array(nx * nz * 3);
   for (let k = 0; k < nx * nz; k++) { pos[k * 3] = PX[k]; pos[k * 3 + 1] = PY[k]; pos[k * 3 + 2] = PZ[k]; }
-  const cull = !!(C.roofs && C.roofs.length), index = new Uint32Array((nx - 1) * (nz - 1) * 6); let q = 0;
+  const index = new Uint32Array((nx - 1) * (nz - 1) * 6); let q = 0;
   for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) {
     const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1;
-    if (cull && Math.max(PY[a], PY[b], PY[c], PY[d]) - Math.min(PY[a], PY[b], PY[c], PY[d]) > 2.5) continue; // (Metropolis, a rooftop hole: no ground drawn down the side of a building; its wall is there)
     if ((i + j) & 1) { index[q++] = a; index[q++] = c; index[q++] = b; index[q++] = b; index[q++] = c; index[q++] = d; }
     else { index[q++] = a; index[q++] = c; index[q++] = d; index[q++] = a; index[q++] = d; index[q++] = b; }
   }
@@ -4899,7 +4870,6 @@ function buildHole(C) {
   buildWater(C, grp);
   buildTrees(C, grp);
   buildDecor(C, grp);
-  if (C.def.city) metroBuild(C, grp); // (Metropolis: the buildings, the landmarks, the street furniture)
   buildSlopeArrows(C, grp);
   mergeStatic(grp);
   C.plan = renderPlan(C);
@@ -5169,7 +5139,7 @@ function terrainMaterial(C) {
     T[k + 2] = Math.round(clamp(.5 + .6 * fbm(x * .012, z * .012, seed + 40, 2), 0, 1) * 255);
     T[k + 3] = Math.round(clamp(.5 + .6 * fbm(x * .05, z * .05, seed + 41, 2), 0, 1) * 255);
   }
-  return terrainMatFrom({ A, B, T, w, h, x0, z0, res, R, wlo, whi, sea: C.coast ? C.coast.sea : null, links: C.def.links, rocky: C.def.rocky, city: C.def.city, wild: C.def.wild });
+  return terrainMatFrom({ A, B, T, w, h, x0, z0, res, R, wlo, whi, sea: C.coast ? C.coast.sea : null, links: C.def.links, rocky: C.def.rocky });
 }
 const NO_FAR = { tex: null };
 // the shared terrain material: per-texel distance fields (A, B), stripes / water level / noise (T) and, for the real
@@ -5253,7 +5223,6 @@ function terrainMatFrom(o) {
   if (o.isles) { // The Isles: pale beach sand, grey-gold rock, a sandy seabed that turns teal with depth
     U.cSand.value = v3(hslToRgb(.12, .5, .88)); U.cWaste.value = v3(hslToRgb(.12, .48, .84)); U.cBed1.value = v3(hslToRgb(.12, .42, .78)); U.cBed2.value = v3(hslToRgb(.57, .5, .3)); U.cRock.value = v3(hslToRgb(.085, .13, .6)); U.cGranite.value = v3(hslToRgb(.08, .08, .55));
   }
-  if (o.city && !o.wild) { U.cDeep.value = v3(hslToRgb(.6, .05, .4)); U.cPath.value = v3(hslToRgb(.08, .1, .72)); } // Metropolis: grey asphalt beyond the turf, pale paving stones
   const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x000000, shininess: 1 });
   mat.extensions = { derivatives: true };
   mat.customProgramCacheKey = () => 'terrain-fields-11';
@@ -5402,7 +5371,7 @@ function buildTrees(C, grp) {
     return true;
   };
   // about one tree in five grows tall (to ~18 m)
-  const add = (x, z, willow, cypress) => { const y = C.h(x, z), s = rng() < .2 ? 1.45 + rng() * .6 : .85 + rng() * .65, type = def.blossom ? 0 : cypress ? 3 : willow ? 2 : (rng() < .68 ? 1 : 0); trees.push({ x, z, y, s, type, col: def.blossom ? [0xf7c6d9, 0xf4b3cc, 0xfad7e4, 0xeeb0c8][(rng() * 4) | 0] : type === 0 ? LEAF_COLS[(rng() * LEAF_COLS.length) | 0] : TREE_COLS[(rng() * TREE_COLS.length) | 0] }); }; // (Metropolis, Asakusa: cherry blossom)
+  const add = (x, z, willow, cypress) => { const y = C.h(x, z), s = rng() < .2 ? 1.45 + rng() * .6 : .85 + rng() * .65, type = cypress ? 3 : willow ? 2 : (rng() < .68 ? 1 : 0); trees.push({ x, z, y, s, type, col: type === 0 ? LEAF_COLS[(rng() * LEAF_COLS.length) | 0] : TREE_COLS[(rng() * TREE_COLS.length) | 0] }); };
   for (const L of def.treeLines) {
     const pl = mkPoly(L.pts, null);
     for (let s = 0; s <= pl.L; s += L.gap * (L.sparse ? 1.8 : 1)) { const p = polyAt(pl, s), x = p[0] + (rng() - .5) * 2 * L.jit, z = p[1] + (rng() - .5) * 2 * L.jit; if (ok(x, z, 5)) add(x, z, false); }
@@ -5411,7 +5380,7 @@ function buildTrees(C, grp) {
     let placed = 0;
     for (let k = 0; k < cl.n * 4 && placed < cl.n; k++) { const a = rng() * TAU, d = Math.sqrt(rng()) * cl.r, x = cl.x + Math.cos(a) * d, z = -(cl.f + Math.sin(a) * d); if (ok(x, z, cl.willow || cl.cypress ? 7 : 4.5)) { add(x, z, !!cl.willow, !!cl.cypress); placed++; } }
   }
-  for (let k = 0; k < (def.city ? 0 : 150); k++) {
+  for (let k = 0; k < 150; k++) {
     const x = lerp(C.inner.minX - 220, C.inner.maxX + 220, rng()), z = lerp(C.inner.minZ - 240, C.inner.maxZ + 160, rng());
     if (x > C.inner.minX + 10 && x < C.inner.maxX - 10 && z > C.inner.minZ + 10 && z < C.inner.maxZ - 10) continue;
     if (C.coast && C.coastS(x, z) > -14) continue;
@@ -5586,7 +5555,7 @@ function buildDecor(C, grp) {
   const tufts = new THREE.InstancedMesh(tuftG, lambert(0xffffff), NT), fls = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.12, 1), lambert(0xffffff), NF);
   tufts.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NT * 3), 3); fls.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NF * 3), 3);
   tufts.count = 0; fls.count = 0; const M = new THREE.Matrix4(), cc = new THREE.Color(), FL = [0xffc2d1, 0xfff1a8, 0xffffff, 0xd7c6ff], SV = new THREE.Vector3();
-  for (let k = 0; k < (def.city ? 0 : 9000) && tufts.count < NT; k++) {
+  for (let k = 0; k < 9000 && tufts.count < NT; k++) {
     const x = lerp(C.inner.minX, C.inner.maxX, r()), z = lerp(C.inner.minZ, C.inner.maxZ, r()), s = C.surf(x, z);
     if (s !== S.DEEP && !(def.links && s === S.ROUGH)) continue;
     const y = C.h(x, z), sc2 = .8 + r() * .9, links = !!def.links;
@@ -5600,14 +5569,14 @@ function buildDecor(C, grp) {
   const back = new THREE.Mesh(new THREE.BoxGeometry(.08, .45, 1.8), wood); back.position.set(bx + .25, by + .78, bz); grp.add(back);
   for (const o of [-.75, .75]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(.45, .5, .08), wood); leg.position.set(bx, by + .25, bz + o); grp.add(leg); }
   const hg = new THREE.IcosahedronGeometry(1, 1), hr = mulberry32(99);
-  for (let k = 0; k < (def.city ? 0 : 30); k++) {
+  for (let k = 0; k < 30; k++) {
     const a = k / 30 * TAU + hr() * .15, d = 1050 + hr() * 350, cx = (C.inner.minX + C.inner.maxX) / 2, cz = (C.inner.minZ + C.inner.maxZ) / 2;
     if (C.coast && C.coastS(cx + Math.cos(a) * d, cz + Math.sin(a) * d) > -150) continue;
     const m = new THREE.Mesh(hg, lambert([0x6fae58, 0x7cba62, 0x5f9f50, 0x88c26c, 0x6aa565][k % 5]));
     const s = 170 + hr() * 230; m.scale.set(s * 1.5, s * (.55 + hr() * .5), s); m.rotation.y = hr() * TAU; m.position.set(cx + Math.cos(a) * d, -s * .12, cz + Math.sin(a) * d); grp.add(m);
   }
   buildExtras(C, grp);
-  buildWalls(C, grp); buildBuildings(C, grp); buildProps(C, grp); if (!def.city) buildDetails(C, grp); buildLife(C, grp);
+  buildWalls(C, grp); buildBuildings(C, grp); buildProps(C, grp); buildDetails(C, grp); buildLife(C, grp);
 }
 // hole furniture beyond the basics: scrub in waste areas, links aiming posts, the clubhouse
 function buildExtras(C, grp) {
@@ -5771,7 +5740,6 @@ function renderPlan(C) {
     if (RDC.ledge) for (const k in LEDGE_OFF) { const f = LEDGE_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
     if (RDC.coast) for (const k in PEB_OFF) { const f = PEB_OFF[k]; colOf[S[k]] = pcc(S[k], f[0] + (k === 'FAIR' ? .01 : 0), f[1], f[2]); }
   }
-  if (C.def.city && !C.def.wild) { colOf[S.DEEP] = hslToRgb(.6, .05, .4); colOf[S.PATH] = hslToRgb(.08, .1, .72); } // (Metropolis: the street, the paving)
   // heights first, for a soft hillshade so slopes and hummocks read on the yardage map
   const Hs = new Float32Array(w * h);
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) Hs[j * w + i] = C.h(x0 + (i + .5) * mpp, z0 + (j + .5) * mpp);
@@ -5791,10 +5759,6 @@ function renderPlan(C) {
   for (const t of W.trees) {
     if (t.far) continue; const px = (t.x - x0) / mpp, py = (t.z - z0) / mpp;
     ctx.fillStyle = '#' + new THREE.Color(t.col).offsetHSL(0, -.05, -.12).getHexString(); ctx.beginPath(); ctx.arc(px, py, Math.max(1.6, (t.r || 2.4) / mpp), 0, TAU); ctx.fill();
-  }
-  for (const b of C.boxes || []) { // Metropolis: the buildings and the landmarks' footprints
-    if (b.roof || !b.P || b.minh > 3) continue; ctx.fillStyle = b.mon ? '#8b8478' : '#5d636b'; ctx.beginPath();
-    for (let t = 0; t < b.P.length; t += 2) ctx[t ? 'lineTo' : 'moveTo']((b.P[t] - x0) / mpp, (b.P[t + 1] - z0) / mpp); ctx.fill();
   }
   return { cv, x0, z0, mpp, w, h };
 }
@@ -6763,7 +6727,7 @@ function buildLife(C, grp) {
   W.life = L; W.birds = null;
   try {
     initGround(L, grp);
-    if (C.isles) initMarine(L); else if (!RDC.coast && !C.def.city) { L.ents.push(makeDeer(L, true), makeDeer(L, false), makeRabbit(L), makeRabbit(L), makeRabbit(L)); if (RDC.ledge) { const fawn = makeDeer(L, false); fawn.scale = .62; L.ents.push(makeDeer(L, false), fawn); } } // (Pebble Beach: no deer or rabbits, only gulls; Ledgeview: white-tailed deer, the club's emblem, a doe and her fawn more)
+    if (C.isles) initMarine(L); else if (!RDC.coast) { L.ents.push(makeDeer(L, true), makeDeer(L, false), makeRabbit(L), makeRabbit(L), makeRabbit(L)); if (RDC.ledge) { const fawn = makeDeer(L, false); fawn.scale = .62; L.ents.push(makeDeer(L, false), fawn); } } // (Pebble Beach: no deer or rabbits, only gulls; Ledgeview: white-tailed deer, the club's emblem, a doe and her fawn more)
     initBirds(L, grp);
     L.plane = makePlane(L); L.glider = makeGlider(L); L.ents.push(L.plane, L.glider);
   } catch (e) { console.error('life', e); W.life = null; }

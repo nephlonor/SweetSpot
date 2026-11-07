@@ -49,6 +49,7 @@ Scripts: `parse.py`, `lidar.py`, `gm.py` / `gme.py`.
    - **Check:** min and max height, no NaNs. Render a hillshade, or the "trough map" `G − median_filter(G, 9)`, and look at it.
 3. **Aerial mosaic:** 0.5 m per pixel, north up (`gm.py e0 n0 e1 n1 zoom res out.jpg`). Fetch both sources.
    - **Check:** overlay the OSM hole lines on the mosaic (`ov.py` pattern). The lines must run down the fairways. If they're offset, fix the projection before anything else.
+   - **Pitfall: an upside-down review image.** The mosaic is north up (row 0 = north); the masks from `raster()` are south up and are flipped with `[::-1]` before the overlay. Flip only the masks, never the photo. Until Ledgeview, the `prep.py` of Westminster, Landmand and Mountain Valley flipped the photo too: the overlay showed "ponds missing from OSM" that were the mirror images of the real ones. Test it: sample the photo at the centre of an OSM pond. It must be dark (water). If it's dark only at the mirrored row, the image is flipped.
 
 - **Pitfall: the 3DEP ImageServer ground can be out of register with the point cloud** (Pebble Beach: up to 40 m shifts that change across the site, canopy heights of -24 m). Check the grid against the LiDAR before using it: fit shifts of the two over a few windows. When they disagree, build the ground from the point cloud's own ground class (`pebblebeach/gnd.py`, class 2, cell mean, gaps filled from the nearest ground cell and smoothed) so ground and canopy share one registration.
 - **Water the lidar cannot see:** the sea has no ground returns, so the filled ground under it is the cliff height. `build.py` sets it to the waterline and lets it fall away from the shore.
@@ -169,7 +170,13 @@ These come from the canopy model, in `build.py`:
 
 ## 9. Visual identity: make it look like the place
 
-Work from the club photos and Google Images. Write down what is **specific** to this course, then build each item:
+**Three rules for every new course. None of them is optional:**
+1. **Its own sound.** An original music piece written for this course (its own title, key, form and instruments, drawn from the place's music: a reel in Maryland, a cowboy waltz in Nebraska, a polka in Wisconsin), its own ambient bed in `ambSetup` (the place's wind, water, insects), and its own local sounds in `ambStep` (the region's birds and landmarks). Never reuse another course's piece or bed. Add new instruments and calls (`amb*` functions) when the existing ones don't fit. Render it offline (`tests/snd.js`) and match the peak level to the other courses.
+2. **Its own flora and fauna.** List the trees, shrubs, grasses and wildflowers, and the birds and animals, that really live at this place and in this season. Look them up for the region; don't guess. Give them their own colour tables in `index.html` (trees by kind, tufts, flowers, gust particles), their own tree mix in `build.py` (`kind_of`), and their own birds in `BIRD_SET` (add `BIRD_KINDS` where needed) and ground animals. A local emblem (the club's logo animal, a state bird) is worth including.
+3. **Colours from photographs found online.** Look for real photographs of the course: the club website, GolfPass, AllSquare Golf, Google/Bing Images, Instagram and Facebook posts, and Street View from the road. Club websites often show **stock photos**; check that a photo shows this course before using it. Sample the colours from the photos (median over a patch: fairway, light and dark stripe, rough, sand, conifers, broadleaves, sky) and derive the `*_OFF` offsets from them. Then render a tee shot in fine weather (`rot.js` with the weather set to fine) **next to the photo and next to two other courses**. It must match the photo and differ visibly from the other courses. The game's warm light shifts greens toward olive: keep the hue a little greener than the photo's.
+   - **Pitfall (Ledgeview):** offsets taken straight from the photo's HSL came out dull olive in the game, close to Westminster. Only the side-by-side render showed it.
+
+Then write down everything else that is **specific** to this course and build each item:
 
 - **Turf and colours** (`AUT_OFF`-style colour offsets per surface; `terrainMatFrom`, the yardage map's `colOf`, trees, tufts, reeds):
   - pick a colour scheme that no other course uses;
