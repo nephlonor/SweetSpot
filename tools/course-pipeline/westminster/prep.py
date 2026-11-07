@@ -93,7 +93,7 @@ json.dump({'boundary': BND, 'greens': {str(k): v for k, v in GREEN.items()}, 'ot
 print('fair', len(FAIR), 'sand', len(SAND), 'tees', len(TEES), 'ponds', len(PONDS), 'streams', len(STREAMS), 'other greens', len(OTHERG), 'buildings', len(BLD), 'bnd pts', len(BND))
 print('total', round(sum(plen(L) for L in HL.values())), 'card', round(sum(v[2] for v in CARD.values())*.9144))
 # ---------------- review image
-im0 = Image.open('course_esri.jpg').convert('RGB'); o = np.asarray(im0.resize((W, H), Image.BILINEAR), float)[::-1].copy()*.7
+im0 = Image.open('course_esri.jpg').convert('RGB'); o = np.asarray(im0.resize((W, H), Image.BILINEAR), float).copy()*.7   # (the photo is north up, like the masks after [::-1])
 for mm, c in ((raster(FAIR), (60, 200, 60)), (raster(SAND), (255, 255, 255)), (raster(list(GREEN.values())+OTHERG), (255, 0, 255)), (raster(TEES), (0, 255, 255)), (raster(PONDS), (40, 90, 200))):
     q = mm[::-1]; o[q] = o[q]*.35 + np.array(c)*.65
 img = Image.fromarray(o.astype(np.uint8)); dr = ImageDraw.Draw(img)

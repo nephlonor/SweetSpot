@@ -21,7 +21,3 @@ Westminster National (MD) und Landmand (NE) fertigbauen. Beide sind für alle sp
 - Noch nicht gemacht (Guide Schritte 2–7): Grüns von Hand nachzeichnen, Bunker-Review, Abschläge auf den Luftbildern prüfen (4 und 11 sind um 16 m nach hinten verlängert), Baum-Tweaks pro Abschlag, Drohnenansicht gegen Fotos.
 - Unbestätigt: Fahnenfarbe (gold mit grüner Zahl nach den Club-Farben, kein Foto der echten Fahnen gefunden). RED (Heimkurs) fragen.
 - Nicht in der Daily-Rotation.
-
-# Metropolis Links (Test, nur Florian)
-- Pipeline `tools/course-pipeline/metro/` (README dort). Daten neu: `python3 build.py write` (braucht OSM-Cache `/tmp/metro-osm` → `fetchall.py`, SRTM in `/tmp/metro-dem`).
-- Offen: Rückmeldung von Florian zu den Bahnen. `data-metro.js` ist 1,8 MB (Gebäude bis 430 m um die Bahn); bei Bedarf `keep` in `cfg.py` kleiner. Big-Ben-Modell nicht gesetzt (OSM-Teile ohne Namen, der Turm steht als OSM-Gebäude). Montmartre/Rio-Gelände aus SRTM (30 m, in Städten teils mit Gebäuden verrauscht).
