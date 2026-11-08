@@ -4,7 +4,7 @@
 // r: {day: [place, toPar]}, so the game can move the window on by itself when the rebuild is late.
 const fs = require('fs');
 const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], TOUR = 4;
-const COURSES = ['gccb', 'alsace', 'augusta'], COURSES4 = ['rothley', 'gccb', 'alsace', 'augusta'], D4 = 20745, COURSES5 = ['stpatricks', 'gccb', 'alsace', 'augusta', 'rothley'], D5 = 20746, COURSES7 = ['pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], D7 = 20750, COURSES8 = ['fourmile', 'pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], D8 = 20758; // Rothley Park joins the turn on 2026-10-19, St Patrick's on 2026-10-20
+const COURSES = ['gccb', 'alsace', 'augusta'], COURSES4 = ['rothley', 'gccb', 'alsace', 'augusta'], D4 = 20745, COURSES5 = ['stpatricks', 'gccb', 'alsace', 'augusta', 'rothley'], D5 = 20746, COURSES7 = ['pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], D7 = 20750, COURSES8 = ['fourmile', 'pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], D8 = 20758, COURSES11 = ['ledgeview', 'westminster', 'landmand', 'fourmile', 'pebblebeach', 'mountainvalley', 'rothley', 'stpatricks', 'gccb', 'alsace', 'augusta'], D11 = 20765; // from 2026-11-08 every course but The Isles; Rothley Park joins the turn on 2026-10-19, St Patrick's on 2026-10-20
 // players level on the best score all won the day: ws/wbs list every winner (only when there are several)
 const tieW = rows => { const w = rows.filter(x => x.toPar === rows[0].toPar); return w.length > 1 ? { ws: w.map(x => x.name), wbs: w.map(x => x.by) } : {}; };
 module.exports = function build(today) {
@@ -16,7 +16,7 @@ module.exports = function build(today) {
     rows = rows.slice().sort((a, b) => a.toPar - b.toPar || a.at - b.at);
     { const seen = new Set(); rows = rows.filter(x => { const k = String(x.name).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }); } // one player per name and day: the better result
     const dn = dnum(d);
-    index.push(Object.assign({ d, c: dn >= D8 ? COURSES8[(dn - D8) % 8] : dn === 20757 ? 'gccb' : dn >= D7 ? COURSES7[(dn - D7) % 7] : dn >= D5 ? COURSES5[(dn - D5) % 5] : dn >= D4 ? COURSES4[(dn - D4) % 4] : COURSES[dn % 3], n: rows.length, w: rows[0].name, wb: rows[0].by, t: rows[0].toPar }, tieW(rows)));
+    index.push(Object.assign({ d, c: dn >= D11 ? COURSES11[(dn - D11) % 11] : dn >= D8 ? COURSES8[(dn - D8) % 8] : dn === 20757 ? 'gccb' : dn >= D7 ? COURSES7[(dn - D7) % 7] : dn >= D5 ? COURSES5[(dn - D5) % 5] : dn >= D4 ? COURSES4[(dn - D4) % 4] : COURSES[dn % 3], n: rows.length, w: rows[0].name, wb: rows[0].by, t: rows[0].toPar }, tieW(rows)));
     if (dn < first) continue; // older than the window: archive only
     let rank = 0;
     rows.forEach((x, i) => {
