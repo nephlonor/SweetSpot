@@ -6105,7 +6105,7 @@ const _lm = new THREE.Matrix4(), _lm2 = new THREE.Matrix4(), _ld = new THREE.Obj
 // vertex-coloured lambert; the instanced grass sways in the wind
 const LIFE_CAM = { value: new THREE.Vector3() };
 function lifeMat(sway, far, fade) {
-  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, flatShading: !sway, transparent: !sway });
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, transparent: !sway });
   if (sway) m.onBeforeCompile = sh => {
     sh.uniforms.uT = LIFE_T; sh.uniforms.uCam = LIFE_CAM; sh.uniforms.uFar = { value: far || 120 }; sh.uniforms.uFade = { value: fade || 40 };
     sh.vertexShader = 'uniform float uT; uniform vec3 uCam; uniform float uFar; uniform float uFade;\n' + sh.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = vec3( position );
