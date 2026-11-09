@@ -17,6 +17,7 @@ Westminster National (MD) und Landmand (NE) fertigbauen. Beide sind für alle sp
 
 # Fields Ranch East (TX), seit Build 13.0 für alle spielbar, „im Bau“-Hinweis an
 - Pipeline `tools/course-pipeline/fieldsranch/` (Reihenfolge im README). Kein LiDAR vom gebauten Platz: Gelände Esri World Elevation (vor dem Bau), Bäume aus dem Esri-Luftbild (`chm_img.py`, Wohnsiedlung `RESIDENTIAL` ausgenommen). Wenn TxGIO/3DEP neueres LiDAR veröffentlicht (Kachel 3396501c2), Gelände und Bäume daraus neu bauen; dann fehlen auch die Grün- und Bunkerkonturen nicht mehr.
+- Grüns auf höchstens 2,5 % Neigung begrenzt (13.3, `greenFlat` in `RDS.fieldsranch`); mit echtem LiDAR später wieder lockern.
 - Erledigt in 13.2: Abschläge geprüft (11 von Hand, `TEE_BOX`), Grüns geprüft, 5 Sandflächen ergänzt (`SAND_HAND`), Bäume gesäubert, Farben/Fahne/Mähmuster nach Spielerfotos.
 - Längen: 18 spielt 524 m statt 509 m (OSM-Abschlag hinten), 11 nur 334 m statt 358 m (die I-Box liegt nicht weiter hinten; die Kartenlänge gilt wohl für eine Box, die OSM nicht kennt).
 - Offen: Baumdichte am Panther Creek grob (aus dem Foto geschätzt, Höhen synthetisch); die Fotos zeigen einen offeneren Platz. Grüne Konturen fehlen im Gelände (Vorbau-Relief). Drohnenansicht nicht geprüft.
