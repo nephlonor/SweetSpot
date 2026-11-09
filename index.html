@@ -4137,14 +4137,17 @@ const RDS = {
   // a parkland on the ledge above the Fox River valley: bright yellow-green turf striped on the diagonal, peach-buff sand, tall dark spruces and round maples and ash in the rough, the brooks are penalty areas
   ledgeview: { ledge: true, creek: true, lostWood: 45, data: RD_LEDGEVIEW, alti: RD_LEDGEVIEW.alti, z0: RD_LEDGEVIEW.z0, gr: RD_LEDGEVIEW.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 },
   // Gil Hanse's prairie course over the Panther Creek bottoms: bermuda fairways cut in a plaid, native prairie grass beyond the rough, red cedars, post oaks and cedar elms, the creeks are penalty areas
-  fieldsranch: { tx: true, creek: true, lostWood: 45, data: RD_FIELDSRANCH, alti: RD_FIELDSRANCH.alti, z0: RD_FIELDSRANCH.z0, gr: RD_FIELDSRANCH.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 },
+  fieldsranch: { tx: true, creek: true, lostWood: 45, data: RD_FIELDSRANCH, alti: RD_FIELDSRANCH.alti, z0: RD_FIELDSRANCH.z0, gr: RD_FIELDSRANCH.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 ,
+    // the ground is from before the course was built, so the greens lie on the old pasture's slopes (up to 9 % at the 5th, 13th and 15th, the ball would not stay):
+    // every green keeps the direction of its fall and a third of its contours, at most a 2.5 % tilt (the contours measured from the real plane)
+    greenFlat: { all: [.3, .025, 1] } },
   pebblebeach: { coast: true, data: RD_PEBBLEBEACH, alti: RD_PEBBLEBEACH.alti, z0: RD_PEBBLEBEACH.z0, gr: RD_PEBBLEBEACH.gr, tweak: {}, tiers: [], tierCut: {}, benches: [], greenK: .8 }
 };
 // Alsace, Augusta, Rothley Park and St Patrick's bring their terrain, features, trees and relief as separate files (data-<course>.js), fetched the first time the course is used and then kept
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 13, n: 2 };
+const APP_ITER = { courses: 13, n: 3 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
