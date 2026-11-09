@@ -222,8 +222,9 @@ for j, i in zip(js, is_):
     d = max(3.0, min(16.0, (2*float(np.mean(rs))+0.6)*1.15)); e = ME0 + i + .5; n = MN0 + j + .5
     trees.append((e, n, d, kind_of(hgt, e, n, j, i, d), hgt))
 rng = np.random.default_rng(7); tk = cKDTree(np.array([(t[0], t[1]) for t in trees])); fill = []
-for jn in np.arange(4, MH_-4, 7.0):
-    for ie in np.arange(4, MW_-4, 7.0):
+FILL = 11.0 if KEY == 'fieldsranch' else 7.0   # (Fields Ranch: the creek woods are open bottomland, not closed forest)
+for jn in np.arange(4, MH_-4, FILL):
+    for ie in np.arange(4, MW_-4, FILL):
         j = int(jn + rng.uniform(-3, 3)); i = int(ie + rng.uniform(-3, 3)); hh = float(Hs[j, i])
         if hh < 7.0: continue
         e = ME0 + i + .5; n = MN0 + j + .5
