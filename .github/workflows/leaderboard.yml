@@ -14,14 +14,25 @@ on:
 permissions:
   contents: write
   issues: write
-concurrency:
-  group: leaderboard
-  cancel-in-progress: false
+  actions: read
 jobs:
   overall:
     if: github.event_name != 'issues'
     runs-on: ubuntu-latest
     steps:
+      # One run at a time, in the order they were started. (A concurrency group would do this too, but it keeps only ONE run waiting: when three results
+      # arrive within seconds the middle one is cancelled and its issue stays open, the result lost.) Each run waits for the earlier ones to finish.
+      - uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            for (let t = 0; t < 100; t++) {
+              const { data } = await github.rest.actions.listWorkflowRuns({ ...context.repo, workflow_id: 'leaderboard.yml', per_page: 50 });
+              const ahead = data.workflow_runs.filter(x => x.status !== 'completed' && x.run_number < context.runNumber);
+              if (!ahead.length) return;
+              core.info('waiting for run ' + ahead.map(x => '#' + x.run_number).join(', '));
+              await new Promise(r => setTimeout(r, 3000));
+            }
       - uses: actions/checkout@v4
         with:
           ref: main
@@ -34,6 +45,19 @@ jobs:
     if: github.event_name == 'issues' && (startsWith(github.event.issue.title, '[score]') || startsWith(github.event.issue.title, '[daily]') || startsWith(github.event.issue.title, '[rename]') || startsWith(github.event.issue.title, '[reply]') || startsWith(github.event.issue.title, '[home]') || startsWith(github.event.issue.title, '[feature]') || startsWith(github.event.issue.title, '[vote]') || startsWith(github.event.issue.title, '[standings]') || startsWith(github.event.issue.title, '[merge]') || startsWith(github.event.issue.title, '[sync]') || startsWith(github.event.issue.title, '[device]') || startsWith(github.event.issue.title, '[devmsg]') || startsWith(github.event.issue.title, '[note]'))
     runs-on: ubuntu-latest
     steps:
+      # One run at a time, in the order they were started. (A concurrency group would do this too, but it keeps only ONE run waiting: when three results
+      # arrive within seconds the middle one is cancelled and its issue stays open, the result lost.) Each run waits for the earlier ones to finish.
+      - uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            for (let t = 0; t < 100; t++) {
+              const { data } = await github.rest.actions.listWorkflowRuns({ ...context.repo, workflow_id: 'leaderboard.yml', per_page: 50 });
+              const ahead = data.workflow_runs.filter(x => x.status !== 'completed' && x.run_number < context.runNumber);
+              if (!ahead.length) return;
+              core.info('waiting for run ' + ahead.map(x => '#' + x.run_number).join(', '));
+              await new Promise(r => setTimeout(r, 3000));
+            }
       - uses: actions/checkout@v4
         with:
           ref: main
@@ -48,6 +72,8 @@ jobs:
             };
             // a repeated vote or an unchanged file leaves nothing staged: skip the commit (it would fail the run) and the push
             const gitCommit = async msg => { if ((await exec.exec('git', ['diff', '--cached', '--quiet'], { ignoreReturnCode: true })) !== 0) await exec.exec('git', ['commit', '-m', msg]); };
+            // push to main; another run may have pushed in between: rebase and try again. A push that never gets through fails the run (the issue stays open) instead of telling the player it was saved
+            const pushMain = async () => { for (let k = 0; ; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); return; } catch (e) { if (k >= 4) throw e; await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } } };
             const m = /```json\s*([\s\S]*?)```/.exec(issue.body || '');
             let r; try { r = JSON.parse(m[1]); } catch (e) { return finish(false, 'No valid score JSON found in this issue.'); }
             // ---- helpers shared by the name change and the account merge
@@ -57,7 +83,7 @@ jobs:
             const gitPush = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', ...files]); await gitCommit(msg);
-              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              await pushMain();
             };
             // every score ever posted from these devices (the device id, not the name, is the player) and their profiles take the name; returns the files changed
             const setNames = (devs, nn) => {
@@ -164,7 +190,7 @@ jobs:
               if (!dirty) return finish(true, 'The archive and the standings are up to date.');
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', ...sf]); await gitCommit('Daily archive and standings rebuilt');
-              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              await pushMain();
               return finish(true, 'The archive and the standings were rebuilt.');
             }
             if (issue.title.startsWith('[device]')) {
@@ -244,7 +270,7 @@ jobs:
               fs.writeFileSync('leaderboard/homecourses.json', JSON.stringify(hf) + '\n');
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', 'leaderboard/homecourses.json']); await gitCommit('Home course noted');
-              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              await pushMain();
               return finish(true, 'Thanks! Your home course is noted.');
             }
             if (issue.title.startsWith('[feature]') || issue.title.startsWith('[vote]')) {
@@ -272,7 +298,7 @@ jobs:
               fs.writeFileSync('leaderboard/features.json', JSON.stringify(ff) + '\n');
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', 'leaderboard/features.json']); await gitCommit('Feature requests updated');
-              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              await pushMain();
               return finish(true, msg);
             }
             const COURSES = { gccb: 72, alsace: 72, augusta: 72, rothley: 71, stpatricks: 71, pebblebeach: 72, mountainvalley: 72, fourmile: 72, westminster: 71, landmand: 73, ledgeview: 72, fieldsranch: 72, isles: 72 };
@@ -305,7 +331,7 @@ jobs:
             const save = async (files, msg) => {
               await exec.exec('git', ['config', 'user.name', 'github-actions[bot]']); await exec.exec('git', ['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
               await exec.exec('git', ['add', ...files]); await gitCommit(msg);
-              for (let k = 0; k < 4; k++) { try { await exec.exec('git', ['push', 'origin', 'HEAD:main']); break; } catch (e) { await exec.exec('git', ['pull', '--rebase', 'origin', 'main']); } }
+              await pushMain();
             };
             const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };
             const profiles = () => {

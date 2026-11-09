@@ -4150,7 +4150,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 13, n: 4 };
+const APP_ITER = { courses: 13, n: 5 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -5652,7 +5652,7 @@ function gableRoof(w, d, h, over) {
 function buildClubhouse(C, grp, ch) {
   const g = new THREE.Group(), cx = ch.x, cz = -ch.f, rot = (ch.rot || 0) * DEG;
   let base = -1e9; for (let i = -12; i <= 12; i += 3) for (let j = -7; j <= 7; j += 3) { const x = cx + i * Math.cos(rot) + j * Math.sin(rot), z = cz - i * Math.sin(rot) + j * Math.cos(rot); base = Math.max(base, C.h(x, z)); }
-  const wallM = lambert(0xf4ecd9), stone = lambert(0xcfc5b4), roofM = new THREE.MeshLambertMaterial({ color: 0xb9574a, side: THREE.DoubleSide, flatShading: true }), trim = lambert(0xffffff), glass = lambert(0x47636e);
+  const wallM = lambert(0xf4ecd9), stone = lambert(0xcfc5b4), roofM = new THREE.MeshLambertMaterial({ color: 0xb9574a, side: THREE.DoubleSide }), trim = lambert(0xffffff), glass = lambert(0x47636e);
   const box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); g.add(o); return o; };
   box(25, 3, 12, stone, 0, -1.4, 0);                       // plinth down into the slope
   box(22, 5.2, 10, wallM, 0, 2.6, 0);                     // main hall
@@ -5888,7 +5888,7 @@ function buildBuildings(C, grp) {
     if (b.style === 'shed') {
       // long tarred-timber railway sheds: dark green boards, grey slate roof, white-framed windows, sliding doors
       const tex = windowTex(Math.round(w / 3.2), 1, '#2f4b3c', '#cfe0e6', '#f3f1ea'); tex.repeat.set(1, 1);
-      const side = new THREE.MeshLambertMaterial({ map: tex }), endM = lambert(0x2f4b3c), roofM = new THREE.MeshLambertMaterial({ color: 0x6b7780, side: THREE.DoubleSide, flatShading: true });
+      const side = new THREE.MeshLambertMaterial({ map: tex }), endM = lambert(0x2f4b3c), roofM = new THREE.MeshLambertMaterial({ color: 0x6b7780, side: THREE.DoubleSide });
       const walls = new THREE.Mesh(unitBox, [endM, endM, endM, endM, side, side]); walls.scale.set(w, h * .62, d); walls.position.y = h * .31; g.add(walls);
       box(w + .6, 1.2, d + .6, lambert(0x8f8a80), 0, -.4, 0);
       const roof = new THREE.Mesh(gableRoof(w, d, h * .38, .5), roofM); roof.position.y = h * .62; g.add(roof); // ridge along the length
@@ -5900,7 +5900,7 @@ function buildBuildings(C, grp) {
       const sideM = new THREE.MeshLambertMaterial({ map: tex }), endM = new THREE.MeshLambertMaterial({ map: texE });
       const body = new THREE.Mesh(unitBox, [endM, endM, lambert(0xe9dcc6), lambert(0xe9dcc6), sideM, sideM]); body.scale.set(w, h * .8, d); body.position.y = h * .4; g.add(body);
       box(w + .8, 2, d + .8, lambert(0xcfc3ad), 0, -.6, 0);
-      const roof = new THREE.Mesh(gableRoof(w - 2, d - 2, h * .2, .6), new THREE.MeshLambertMaterial({ color: 0x56606a, side: THREE.DoubleSide, flatShading: true })); roof.position.y = h * .8; g.add(roof);
+      const roof = new THREE.Mesh(gableRoof(w - 2, d - 2, h * .2, .6), new THREE.MeshLambertMaterial({ color: 0x56606a, side: THREE.DoubleSide })); roof.position.y = h * .8; g.add(roof);
       for (const cx of [-w * .3, 0, w * .3]) box(1.4, 3, 1.4, lambert(0xd9cdb6), cx, h * .95, -d * .1);
       box(w * .5, .3, 2.4, lambert(0xffffff), 0, 3.4, d / 2 + 1.2);
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08, .1, 7, 6), lambert(0xffffff)); pole.position.set(w * .42, h + 3.5, 0); g.add(pole);
@@ -6036,7 +6036,7 @@ function buildProps(C, grp) {
     if (p.kind === 'bench') {
       box(1.9, .08, .5, wood, 0, .5, 0); box(1.9, .42, .07, wood, 0, .78, -.24); for (const o of [-.8, .8]) box(.08, .5, .46, dark, o, .25, 0);
     } else if (p.kind === 'hut') {
-      box(3.2, 2.4, 2.6, lambert(0xd9c3a3), 0, 1.2, 0); const rf = new THREE.Mesh(gableRoof(3.2, 2.6, 1.2, .35), new THREE.MeshLambertMaterial({ color: 0x9a5a48, side: THREE.DoubleSide, flatShading: true })); rf.position.y = 2.4; g.add(rf);
+      box(3.2, 2.4, 2.6, lambert(0xd9c3a3), 0, 1.2, 0); const rf = new THREE.Mesh(gableRoof(3.2, 2.6, 1.2, .35), new THREE.MeshLambertMaterial({ color: 0x9a5a48, side: THREE.DoubleSide })); rf.position.y = 2.4; g.add(rf);
       box(1, 1.8, .08, dark, -.6, .9, 1.31); box(.9, .7, .06, lambert(0x8fb3c0), .8, 1.5, 1.31);
     } else if (p.kind === 'scoreboard') {
       const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160; const x = cv.getContext('2d');
@@ -6049,7 +6049,7 @@ function buildProps(C, grp) {
       box(1.8, .16, len, wood, 0, lv + .5 - C.h(p.x, -p.f), len / 2);
       for (let k = 0; k <= len; k += 2.4) for (const o of [-.8, .8]) box(.16, 1.6, .16, dark, o, lv - .2 - C.h(p.x, -p.f), k);
     } else if (p.kind === 'boathouse') {
-      box(5, 2.8, 4, lambert(0xf2e9d8), 0, 1.4, 0); const rf = new THREE.Mesh(gableRoof(5, 4, 1.6, .4), new THREE.MeshLambertMaterial({ color: 0x4f7a8c, side: THREE.DoubleSide, flatShading: true })); rf.position.y = 2.8; g.add(rf);
+      box(5, 2.8, 4, lambert(0xf2e9d8), 0, 1.4, 0); const rf = new THREE.Mesh(gableRoof(5, 4, 1.6, .4), new THREE.MeshLambertMaterial({ color: 0x4f7a8c, side: THREE.DoubleSide })); rf.position.y = 2.8; g.add(rf);
       box(2.2, 2, .08, lambert(0x4f7a8c), 0, 1, 2.02);
     } else if (p.kind === 'stand') {
       const w = p.w || 10; for (let k = 0; k < 4; k++) { box(w, .14, .8, lambert(0xe9eef0), 0, .55 + k * .55, -k * .8); box(w, .55 + k * .55, .08, lambert(0x2f6b35), 0, (.55 + k * .55) / 2, -k * .8 + .4); }
@@ -6105,7 +6105,7 @@ const _lm = new THREE.Matrix4(), _lm2 = new THREE.Matrix4(), _ld = new THREE.Obj
 // vertex-coloured lambert; the instanced grass sways in the wind
 const LIFE_CAM = { value: new THREE.Vector3() };
 function lifeMat(sway, far, fade) {
-  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, flatShading: !sway, transparent: !sway });
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, transparent: !sway });
   if (sway) m.onBeforeCompile = sh => {
     sh.uniforms.uT = LIFE_T; sh.uniforms.uCam = LIFE_CAM; sh.uniforms.uFar = { value: far || 120 }; sh.uniforms.uFade = { value: fade || 40 };
     sh.vertexShader = 'uniform float uT; uniform vec3 uCam; uniform float uFar; uniform float uFade;\n' + sh.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = vec3( position );
@@ -10510,7 +10510,7 @@ function nameHint() {
 let _namesAt = 0;
 function loadNames() { // the boards of every course and the profiles, once a minute at most, so the check knows the names in use
   if (Date.now() - _namesAt < 60000) return; _namesAt = Date.now();
-  Promise.all([loadPlayers(), ...Object.keys(COURSES).map(k => loadWorld(false, k))]).then(nameHint, () => { });
+  Promise.all([loadPlayers(), ...Object.keys(COURSES).filter(k => k !== 'legacy' || LEGACY_ON).map(k => loadWorld(false, k))]).then(nameHint, () => { });
 }
 // ---- two devices, one account
 // A second device that enters a name another player already has is asked whether it is the same player. If so it files a merge request (an issue, like a name

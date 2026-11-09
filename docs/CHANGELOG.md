@@ -65,3 +65,4 @@ Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Lea
 - `isles` steht seit Build 9.11 im Leaderboard-Workflow (`leaderboard.yml`: Par 72); `leaderboard/isles.json` füllt sich mit den ersten Runden.
 - Testen ohne Beschränkung: `settings.name = 'Florian'; setCourse('isles')` in der Konsole.
 - Der User will PRs in diesem Repo automatisch gemergt haben.
+- Build 13.5: Leaderboard-Workflow: Läufe warten jetzt der Reihe nach aufeinander (eigener Warteschritt statt `concurrency`-Gruppe, die nur EINEN wartenden Lauf hält: bei drei Ergebnissen in wenigen Sekunden wurde der mittlere abgebrochen, z. B. Run 797 / Issue #1094). Ein Push, der nie durchkommt, lässt den Lauf scheitern, statt „Posted“ zu melden (`pushMain`). Spiel: kein Abruf von `legacy.json` mehr beim Start (404), wirkungsloses `flatShading` an den Lambert-Dächern entfernt (11 Konsolenwarnungen).
