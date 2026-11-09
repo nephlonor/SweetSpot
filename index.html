@@ -4139,7 +4139,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 13, n: 0 };
+const APP_ITER = { courses: 13, n: 1 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -8268,7 +8268,7 @@ function resumeRound(course) {
   return true;
 }
 // a new course that is still being built: a note says so when a round starts there (and the first time a hole is practised in a session). Set a course's key to true here to show its note; the note is hidden for every course now
-const PBN_SHOW = { fourmile: false, westminster: false, landmand: false, ledgeview: false, fieldsranch: false };
+const PBN_SHOW = { fourmile: false, westminster: false, landmand: false, ledgeview: false, fieldsranch: true };
 const PBN = { practice: false };
 function pbNotice(practice) {
   if (!COURSE || !PBN_SHOW[COURSE.key]) return;
