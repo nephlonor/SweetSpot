@@ -13,6 +13,19 @@ m = Image.new('L', (im.shape[1], im.shape[0]), 0); d = ImageDraw.Draw(m)
 for p in F['ponds'] + F['fair'] + list(F['greens'].values()) + F['tees'] + F['sand'] + F['buildings']:
     d.polygon([((x-E0)*2, (N0+H-y)*2) for x, y in p], fill=255)
 tree &= ~ndi.binary_dilation(np.array(m) > 0, iterations=4)
+# not in the housing and along the streets outside the course: the lawns and the young street trees read like canopy (OSM roads and buildings, 22 m either side, outside the course's own outline)
+import math, xml.etree.ElementTree as ET
+KX = 111320*math.cos(math.radians(LAT0)); KY = 111132.0
+R_ = ET.parse('r.osm').getroot(); nd = {n.get('id'): ((float(n.get('lon'))-LON0)*KX, (float(n.get('lat'))-LAT0)*KY) for n in R_.findall('node')}
+rd = Image.new('L', (im.shape[1], im.shape[0]), 0); dr = ImageDraw.Draw(rd)
+for w in R_.findall('way'):
+    tg = {k.get('k'): k.get('v') for k in w.findall('tag')}
+    if tg.get('highway') in ('residential', 'living_street', 'tertiary', 'secondary', 'primary', 'unclassified', 'service') or tg.get('building'):
+        p = [nd[x.get('ref')] for x in w.findall('nd') if x.get('ref') in nd]
+        if len(p) > 1: dr.line([((x-E0)*2, (N0+H-y)*2) for x, y in p], fill=255, width=88)
+own = Image.new('L', (im.shape[1], im.shape[0]), 0); ImageDraw.Draw(own).polygon([((x-E0)*2, (N0+H-y)*2) for x, y in json.load(open('feat.json'))['out']['boundary'][0]['pts']], fill=255)
+ImageDraw.Draw(rd).polygon([((x-E0)*2, (N0+H-y)*2) for x, y in RESIDENTIAL], fill=255)
+tree &= ~((np.array(rd) > 0) & ~ndi.binary_dilation(np.array(own) > 0, iterations=10))
 tree = ndi.binary_opening(ndi.binary_closing(ndi.median_filter(tree, 5), iterations=3), iterations=5)
 lab, n = ndi.label(tree); sz = np.bincount(lab.ravel()); tree &= sz[lab] >= 40   # (>= 10 m2)
 tree = tree.reshape(H, 2, W, 2).mean(axis=(1, 3)) > .5   # to the 1 m grid, north up
