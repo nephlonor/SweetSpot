@@ -51,6 +51,11 @@ for ref, L in HL.items():
 OTHERG = [chaikin(g['pts'], 1) for g in O['green'] if g['id'] not in gid and near(g['pts'], 120)]
 FAIR = [chaikin(w['pts'], 1) for w in O['fair'] if near(w['pts'], 120)]
 SAND = [chaikin(w['pts'], 1) if len(w['pts']) < 80 else w['pts'][:-1] for w in O['sand'] if near(w['pts'], 90)]
+SAND += [list(map(tuple, p)) for p in globals().get('SAND_HAND', [])]
+# a green never runs into a bunker (OSM's 17th green overlaps its right-hand bunker): cut the sand out, 0.5 m clear
+for ref, g in list(GREEN.items()):
+    gm = raster([g]); cut = gm & ~raster(SAND, 1)
+    if (gm & ~cut).sum() > 2: GREEN[ref] = chaikin(poly_of(cut, .6, 20)[0], 1); print(ref, 'green clear of the sand,', int((gm & ~cut).sum()), 'm2 cut')
 TEES = [w['pts'][:-1] for w in O['tee'] if near(w['pts'], 90)]
 PONDS = [w['pts'][:-1] for w in O['water'] if w['tags'].get('natural') == 'water' and w['tags'].get('intermittent') != 'yes' and w['tags'].get('water') != 'stream' and near(w['pts'], 150)]
 PONDS += [list(p) for p in globals().get('PONDS_HAND', [])]
@@ -77,7 +82,7 @@ for ref, L in HL.items():
     if short > 1.5 and ref not in TEE_BOX:   # (a tee placed by hand stays where it was put)
         ux, uy = tee[0]-nxp[0], tee[1]-nxp[1]; ul = math.hypot(ux, uy); ux /= ul; uy /= ul; tee = (tee[0] + ux*short, tee[1] + uy*short)
     L[0] = [tee[0], tee[1]]
-    print(ref, 'par', CARD[ref][0], 'tee', [round(v) for v in tee], 'length', round(plen(L)), 'card', round(tgt), 'extended %d m' % round(short) if short > 1.5 else '')
+    print(ref, 'par', CARD[ref][0], 'tee', [round(v) for v in tee], 'length', round(plen(L)), 'card', round(tgt), 'set by hand, %d m short of the card' % round(short) if ref in TEE_BOX else 'extended %d m' % round(short) if short > 1.5 else '')
 # ---------------- the boundary: the club's OSM outline, cut down to the playing corridor (55 m round the holes and their features, joined across gaps up to 150 m)
 m = raster(FAIR + list(GREEN.values()) + OTHERG + SAND + TEES + PONDS, 0)
 im = Image.new('L', (W, H), 0); d = ImageDraw.Draw(im)
