@@ -30,6 +30,9 @@ tree = ndi.binary_opening(ndi.binary_closing(ndi.median_filter(tree, 5), iterati
 lab, n = ndi.label(tree); sz = np.bincount(lab.ravel()); tree &= sz[lab] >= 40   # (>= 10 m2)
 tree = tree.reshape(H, 2, W, 2).mean(axis=(1, 3)) > .5   # to the 1 m grid, north up
 tree = ndi.binary_opening(tree, structure=np.ones((3, 3)), iterations=2)   # (drops thin lines: path and kerb edges)
+# only real stands of trees: the open prairie is dotted with sumac, plum and young cedar clumps that read dark on the winter photo but stand no higher than a man
+# (players' photographs: the course is open, the trees stand along Panther Creek and in a few groves). A patch counts from 150 m2 of canopy
+lab, n = ndi.label(tree); sz = np.bincount(lab.ravel()); tree &= sz[lab] >= 150
 dist = ndi.distance_transform_edt(tree)
 rng = np.random.default_rng(3); jitter = ndi.gaussian_filter(rng.standard_normal(tree.shape), 3); jitter /= jitter.std()
 h = np.where(tree, np.clip(5 + 1.6*dist + 1.5*jitter, 3, 15), 0)
