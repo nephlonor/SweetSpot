@@ -20,6 +20,7 @@ Westminster National (MD) und Landmand (NE) fertigbauen. Beide sind für alle sp
 - Scorecard: I-Abschläge (18Birdies, 7.467 yd). Die zweite Abschlagsreihe in `cfg.py` (6.851 yd, Hole19) ist ohne Namen veröffentlicht. Loch 18 spielt 524 m statt 509 m (OSM-Abschlag liegt hinten), 10 und 12 je ~8 m lang.
 - Unbestätigt (keine Fotos geprüft): Fahnenfarbe (weiß mit marineblauer Zahl), Rasen- und Sandfarben (`TX_OFF`), Mähmuster (Karo). Fotos vom Platz suchen und nach Guide Schritt 9 vergleichen.
 - Noch nicht gemacht (Guide Schritte 2–7): Grüns von Hand nachzeichnen, Bunker-Review, Abschläge auf den Luftbildern prüfen, Baum-Tweaks pro Abschlag (Baumerkennung aus dem Luftbild ist grob), Drohnenansicht gegen Fotos.
+- „Im Bau“-Hinweis an (`PBN_SHOW.fieldsranch`); ausschalten, wenn der Platz fertig ist.
 - Nicht in der Daily-Rotation.
 
 # Ledgeview (WI), seit Build 12.0 für alle spielbar
