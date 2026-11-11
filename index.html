@@ -4150,7 +4150,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 13, n: 5 };
+const APP_ITER = { courses: 13, n: 6 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -7670,19 +7670,24 @@ function ambPheasant(a, t) { // a cock pheasant in the long grass, far off: a lo
   bp.type = 'bandpass'; bp.frequency.value = 600; bp.Q.value = .8; am.frequency.value = 18; ag.gain.value = .004; am.connect(ag).connect(g.gain);
   g.gain.setValueAtTime(.006, tt); g.gain.linearRampToValueAtTime(0, tt + .7); nb.connect(bp).connect(g).connect(MUS.bus); nb.start(tt); nb.stop(tt + .75); am.start(tt); am.stop(tt + .75);
 }
-function ambSteel(a, m, t, dur, v) { // a pedal steel guitar: the bar slides up into the note from a whole tone below, a slow volume-pedal swell, a long singing sustain with a gentle bar vibrato
+function ambSteel(a, m, t, dur, v) { // a pedal steel guitar, far off: the bar eases up into the note from a semitone below, a slow volume-pedal swell, a long singing sustain with a gentle bar vibrato
   const f = mHz(m), o = a.createOscillator(), o2 = a.createOscillator(), o3 = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(), vib = a.createOscillator(), vg = a.createGain();
-  o.type = 'sine'; o2.type = 'triangle'; o3.type = 'sine'; o3.detune.value = 6; lp.type = 'lowpass'; lp.frequency.value = 2400; lp.Q.value = .7;
-  for (const [x, k] of [[o, 1], [o2, 2], [o3, 1]]) { x.frequency.setValueAtTime(f * k * .891, t); x.frequency.exponentialRampToValueAtTime(f * k, t + .13); }
-  vib.frequency.value = 4.6; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * .004, t + Math.min(.8, dur * .6)); vib.connect(vg); vg.connect(o.frequency); vg.connect(o3.frequency);
-  const g2 = a.createGain(); g2.gain.value = .22; const L = Math.max(.3, dur);
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + Math.min(.16, L * .4)); g.gain.setValueAtTime(v * .9, t + L * .8); g.gain.linearRampToValueAtTime(0, t + L + .25);
-  o.connect(g); o3.connect(g); o2.connect(g2).connect(g); g.connect(lp).connect(MUS.bus); for (const x of [o, o2, o3, vib]) { x.start(t); x.stop(t + L + .3); }
+  o.type = 'sine'; o2.type = 'triangle'; o3.type = 'sine'; o3.detune.value = 6; lp.type = 'lowpass'; lp.frequency.value = 1900; lp.Q.value = .5;
+  for (const [x, k] of [[o, 1], [o2, 2], [o3, 1]]) { x.frequency.setValueAtTime(f * k * .944, t); x.frequency.exponentialRampToValueAtTime(f * k, t + .3); }
+  vib.frequency.value = 4.4; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * .0035, t + Math.min(1.2, dur * .7)); vib.connect(vg); vg.connect(o.frequency); vg.connect(o3.frequency);
+  const g2 = a.createGain(); g2.gain.value = .16; const L = Math.max(.5, dur), att = Math.min(.55, L * .45);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.setValueAtTime(v, t + Math.max(att, L * .65)); g.gain.linearRampToValueAtTime(0, t + L + .5);
+  o.connect(g); o3.connect(g); o2.connect(g2).connect(g); g.connect(lp).connect(MUS.bus); for (const x of [o, o2, o3, vib]) { x.start(t); x.stop(t + L + .55); }
 }
-function ambChop(a, notes, t, v) { // the rhythm guitar's 'chop' on two and four: a short, muted strum, the strings damped as soon as they sound
-  notes.forEach((m, k) => ambGuitar(a, m, t + k * .012, v, .16));
-  const s = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(); s.buffer = mkNoise(a, 1); bp.type = 'bandpass'; bp.frequency.value = 2500; bp.Q.value = 1.2;
-  g.gain.setValueAtTime(v * .5, t); g.gain.exponentialRampToValueAtTime(.0001, t + .06); s.connect(bp).connect(g).connect(MUS.bus); s.start(t); s.stop(t + .08);
+function ambEPiano(a, m, t, dur, v) { // an electric piano, played softly: a round, bell-like tone (two sines a few cents apart, a little octave), the tine's quick high 'ting' on the attack, a long even fade
+  const f = mHz(m), g = a.createGain(), lp = a.createBiquadFilter(), L = Math.max(1.8, dur + 1.4); lp.type = 'lowpass'; lp.frequency.value = 2100; lp.Q.value = .3;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .012); g.gain.exponentialRampToValueAtTime(v * .42, t + .55); g.gain.exponentialRampToValueAtTime(.0001, t + L);
+  for (const [mul, amp, det, dec] of [[1, .6, -3, 0], [1, .6, 3, 0], [2, .14, 0, 0], [4, .09, 0, .22], [7, .03, 0, .09]]) {
+    const o = a.createOscillator(), og = a.createGain(); o.type = 'sine'; o.frequency.value = f * mul; o.detune.value = det;
+    if (dec) { og.gain.setValueAtTime(amp, t); og.gain.exponentialRampToValueAtTime(.0001, t + dec); } else og.gain.value = amp;
+    o.connect(og).connect(g); o.start(t); o.stop(dec ? t + dec + .05 : t + L + .05);
+  }
+  g.connect(lp).connect(MUS.bus);
 }
 function ambMockingbird(a, t) { // a northern mockingbird on a post oak: phrase after phrase borrowed from other birds, each sung two or three times before the next
   let tt = t; const n = 3 + ((Math.random() * 3) | 0);
@@ -7838,18 +7843,25 @@ const AMB = {
       [[0, 79, 2], [2, 78, 2], [4, 76, 4], [8, 74, 2], [10, 73, 2], [12, 71, 4]], [[0, 73, 4], [4, 71, 4], [8, 69, 8]]],
     // each time round: the banjo alone, the whole band, the creek and the birds (no tune), the fiddle slow and alone
     vars: ['slow', 'banjo', 'creek', 'band', 'slow', 'banjo', 'creek', 'slow'] },
-  // Fields Ranch: 'Panther Creek Shuffle', an easy Texas shuffle in A of the dance halls: a pedal steel sings the tune over a walking upright bass and the rhythm guitar's chop on two and four,
-  // the fiddle takes a turn. 4/4 swung, a step is an eighth, eight to a bar; AABB, sixteen bars
-  fieldsranch: { per: .27, echo: .8, level: .5,
-    ch: { A: [45, [57, 61, 64]], A7: [45, [55, 61, 64]], D: [38, [57, 62, 66]], Dm: [38, [57, 62, 65]], E7: [40, [56, 62, 64]], Fm: [42, [57, 61, 66]], B7: [47, [57, 63, 66]] },
-    prog: ['A', 'A', 'D', 'A', 'A', 'Fm', 'B7', 'E7', 'A', 'A7', 'D', 'Dm', 'A', 'E7', 'A', 'A'],
+  // Fields Ranch: 'Bluestem Evening', a slow, quiet ballad in E for the hour when the wind drops and the prairie turns gold: a warm electric piano plays the tune, unhurried, over a
+  // softly fingerpicked guitar, a low held bass note and a faint pad; a pedal steel far off answers at the end of each phrase with two notes swelling in. 4/4 at 54 bpm, a step is an eighth,
+  // eight to a bar; four phrases of four bars (the tune, the tune lifted, a rise through A, home), sixteen bars
+  fieldsranch: { per: .555, echo: 1.11, level: .4,
+    // chord = [bass, the guitar's five notes]; 'Bs' is the suspended B that settles into B halfway through its bar, 'AB' is A then B, 'EB' is E over B then B
+    ch: { E: [40, [52, 59, 64, 68, 71]], EG: [44, [56, 59, 64, 68, 71]], A: [45, [57, 61, 64, 69, 71]], B: [47, [54, 59, 63, 66, 71]], Bs: [47, [54, 59, 64, 66, 71]], Cm: [49, [56, 61, 64, 68, 71]], Fm: [42, [54, 57, 61, 64, 69]], EB: [47, [56, 59, 64, 68, 71]] },
+    prog: ['E', 'EG', 'A', 'Bs', 'E', 'Cm', 'AB', 'E', 'A', 'EG', 'Fm', 'B', 'Cm', 'A', 'EB', 'E'],
     // the tune, bar by bar: [eighth, note, length in eighths]
-    mel: [[[0, 76, 2], [2, 73, 1], [3, 76, 1], [4, 81, 3], [7, 78, 1]], [[0, 76, 4], [4, 73, 2], [6, 71, 2]], [[0, 74, 2], [2, 78, 2], [4, 81, 2], [6, 78, 2]], [[0, 76, 6], [6, 73, 2]],
-      [[0, 69, 1], [1, 71, 1], [2, 73, 2], [4, 76, 2], [6, 78, 2]], [[0, 81, 3], [3, 78, 1], [4, 76, 2], [6, 73, 2]], [[0, 75, 2], [2, 78, 2], [4, 81, 2], [6, 78, 2]], [[0, 76, 6], [6, 74, 2]],
-      [[0, 73, 2], [2, 76, 2], [4, 81, 2], [6, 85, 2]], [[0, 83, 2], [2, 81, 2], [4, 79, 4]], [[0, 78, 3], [3, 81, 1], [4, 78, 2], [6, 74, 2]], [[0, 77, 4], [4, 74, 2], [6, 77, 2]],
-      [[0, 76, 2], [2, 73, 2], [4, 69, 2], [6, 73, 2]], [[0, 71, 2], [2, 74, 2], [4, 80, 2], [6, 76, 2]], [[0, 76, 4], [4, 73, 2], [6, 71, 2]], [[0, 69, 8]]],
-    // each time round: the band with the steel, the band with the fiddle, the creek (no tune: the steel swells over the chords, mockingbirds and quail), the steel an octave down, the band, the creek, the steel up high
-    vars: ['band', 'band', 'fiddle', 'creek', 'band', 'low', 'creek', 'up'] },
+    mel: [[[2, 71, 2], [4, 76, 3], [7, 75, 1]], [[0, 73, 4], [4, 71, 2], [6, 68, 2]], [[0, 69, 3], [3, 71, 1], [4, 73, 4]], [[0, 71, 6]],
+      [[2, 71, 2], [4, 76, 3], [7, 78, 1]], [[0, 80, 4], [4, 76, 2], [6, 73, 2]], [[0, 73, 3], [3, 71, 1], [4, 69, 2], [6, 66, 2]], [[0, 68, 3], [3, 66, 1], [4, 64, 4]],
+      [[0, 73, 2], [2, 76, 2], [4, 81, 4]], [[0, 80, 3], [3, 78, 1], [4, 76, 4]], [[0, 73, 2], [2, 76, 2], [4, 78, 3], [7, 76, 1]], [[0, 75, 6]],
+      [[0, 76, 3], [3, 75, 1], [4, 73, 2], [6, 71, 2]], [[0, 73, 4], [4, 69, 2], [6, 68, 2]], [[0, 66, 2], [2, 68, 2], [4, 71, 3], [7, 66, 1]], [[0, 64, 8]]],
+    // the steel's answers at the phrase ends: bar -> [eighth, the two notes, length in eighths]
+    ans: { 3: [4, [75, 78], 5], 7: [5, [68, 71], 4], 11: [4, [78, 83], 5], 15: [2, [76, 80], 7] },
+    // the guitar's picking patterns (chord-note index per eighth, -1 rest): rising and resting, turning, sparse
+    pat: [[0, 1, 2, 3, 4, -1, 3, -1], [0, 2, 1, 3, -1, 4, -1, 2], [0, -1, 2, -1, 3, -1, 4, -1], [0, 1, 3, 2, 4, -1, 2, -1]],
+    // each time round: the tune, the tune again, the prairie (no tune: the guitar alone, the steel over the chords, the birds), the steel sings the tune's long notes, the tune, the tune sparse
+    // over a thinner guitar, the prairie, the tune with its second half an octave up, quietly
+    vars: ['plain', 'plain', 'prairie', 'steel', 'plain', 'sparse', 'prairie', 'up'] },
   // Ledgeview: 'Scray Hill Polka' (Scray Hill: the rise the club sits on), a slow porch polka in F of the Wisconsin dance halls, played gently on a summer evening: a concertina carries the tune
   // and plays the 'pah' on the off-beats, a tuba far back plays the 'oom' (root and fifth by turns). 2/4 time, a step is an eighth, four to a bar; AABB, sixteen bars
   ledgeview: { per: .34, echo: .7, level: .52,
@@ -7972,19 +7984,27 @@ function ambStep(a, kind, st, t) {
     return;
   }
   if (kind === 'fieldsranch') {
-    // eight steps (swung eighths) to a bar of 4/4, sixteen bars to a time round; the off-beat eighths come late (the shuffle)
-    const cyc = Math.floor(st / 128), bar = Math.floor(st / 8) % 16, e = st % 8, v = K.vars[cyc % 8], [bass, chord] = K.ch[K.prog[bar]], intro = cyc === 0 ? Math.min(1, (bar + 1) / 4) : 1; // (never 0: an exponential ramp can't start from silence)
-    const tt = t + (e % 2 ? K.per * .34 : 0), band = v !== 'creek';
-    if (e % 2 === 0) ambBass(a, [bass, bass + 4, bass + 7, bass + 9][e / 2] - (K.prog[bar] === 'Dm' && e === 2 ? 1 : 0), t, (band ? .13 : .08) * intro);   // the walking bass: root, third, fifth, sixth
-    if (band && (e === 2 || e === 6)) ambChop(a, chord, t, .05 * intro);                                                                             // the chop on two and four
-    if (band && (cyc > 0 || bar >= 2)) for (const [pos, m, len] of K.mel[bar]) {
-      if (pos !== e) continue; const mm = m + (v === 'up' && bar >= 8 ? 12 : 0) - (v === 'low' ? 12 : 0);
-      if (v === 'fiddle') ambFiddle(a, mm, tt + hum() * .3, len * K.per * .95, .024 * intro); else ambSteel(a, mm, tt + hum() * .3, len * K.per * 1.05, .03 * intro);
+    // eight steps (eighths) to a bar of 4/4, sixteen bars to a time round
+    const cyc = Math.floor(st / 128), bar = Math.floor(st / 8) % 16, e = st % 8, v = K.vars[cyc % 8], pn = K.prog[bar], intro = cyc === 0 ? Math.min(1, (bar + 1) / 4) : 1; // (never 0: an exponential ramp can't start from silence)
+    const [bass, chord] = K.ch[pn === 'AB' ? (e < 4 ? 'A' : 'B') : (pn === 'Bs' || pn === 'EB') && e >= 4 ? 'B' : pn], tune = v !== 'prairie', thin = v === 'sparse' || v === 'prairie';
+    if (e === 0) { ambTone(a, bass, t, K.per * 8.6, .05 * intro); ambPad(a, chord.slice(1, 4), t, K.per * 9.5, .028 * intro, 850); }   // a held bass note and a faint pad under the bar
+    if (e === 4 && pn === 'AB') ambTone(a, bass, t, K.per * 4.4, .04 * intro);
+    // the guitar, fingerpicked: the bass string on the beat, the rest light
+    const ix = K.pat[thin ? 2 : (cyc + Math.floor(bar / 4)) % 4][e];
+    if (ix >= 0) ambGuitar(a, chord[ix], t + hum() * .6, (e === 0 ? .075 : e === 4 ? .055 : .042) * intro, 2.8);
+    // the tune: the electric piano; on 'steel' rounds the pedal steel sings its long notes
+    if (tune && (cyc > 0 || bar >= 4)) for (const [pos, m, len] of K.mel[bar]) {
+      if (pos !== e || (v === 'sparse' && len < 2)) continue; const up = v === 'up' && bar >= 8, mm = m + (up ? 12 : 0);
+      if (v === 'steel') { if (len >= 2) ambSteel(a, m, t + hum() * .3, (len + 1) * K.per, .03 * intro); }
+      else ambEPiano(a, mm, t + hum() * .5, len * K.per, (up ? .06 : .085) * intro);
     }
-    if (!band && e === 0 && bar % 2 === 0) ambSteel(a, chord[2] + 12, t, K.per * 14, .02), ambSteel(a, chord[0] + 12, t + .08, K.per * 14, .016);
-    if (e === 0 && Math.random() < (band ? .02 : .14)) ambMockingbird(a, t + Math.random() * 1.2);
-    if (e === 4 && Math.random() < (band ? .006 : .05)) ambBobwhite(a, t + Math.random());
-    if (st % 128 === 64 && (!band || Math.random() < .25)) ambDove(a, t + Math.random());
+    // the steel far off: an answer at the end of each phrase; on the prairie rounds it swells over every second chord instead
+    const an = K.ans[bar];
+    if (tune && v !== 'steel' && an && an[0] === e && (cyc > 0 || bar >= 4)) an[1].forEach((m, k) => ambSteel(a, m, t + k * .09, an[2] * K.per, (k ? .014 : .017) * intro));
+    if (!tune && e === 2 && bar % 2 === 0) { ambSteel(a, chord[3] + 12, t, K.per * 11, .02); ambSteel(a, chord[2] + 12, t + .12, K.per * 11, .015); }
+    if (e === 0 && Math.random() < (tune ? .012 : .1)) ambMockingbird(a, t + Math.random() * 1.2);
+    if (e === 4 && Math.random() < (tune ? .004 : .04)) ambBobwhite(a, t + Math.random());
+    if (st % 128 === 64 && (!tune || Math.random() < .3)) ambDove(a, t + Math.random());
     return;
   }
   if (kind === 'ledgeview') {
