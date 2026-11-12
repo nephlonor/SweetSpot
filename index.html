@@ -3261,7 +3261,7 @@ function buildRealHole(C, grp) {
   buildRealTrees(C, grp);
   buildRealDecor(C, grp);
   buildSlopeArrows(C, grp);
-  mergeStatic(grp);
+  mergeStatic(grp); shadeBake(C);
   C.plan = renderPlan(C);
 }
 function gccbFarTex() {
@@ -3401,8 +3401,8 @@ function buildRealTrees(C, grp) {
   const trunkF = new THREE.CylinderGeometry(.22, .32, 1, 4, 1, true); trunkF.translate(0, .5, 0);
   const blobN = new THREE.IcosahedronGeometry(1, 1), blobF = new THREE.IcosahedronGeometry(1, 0), coneG = new THREE.ConeGeometry(1, 1, 10); coneG.translate(0, .5, 0);
   const coneF = new THREE.ConeGeometry(1, 1, 6, 1, true); coneF.translate(0, .5, 0);
-  const mk = (geo, cnt, shadow) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
-  const trN = mk(trunkG, nN, true), trF = mk(trunkF, nF, false), blN = mk(blobN, nN * (RDC.autumn || RDC.coast ? 8 : 4), true), blF = mk(blobF, nF * (RDC.autumn || RDC.coast ? 4 : 2), false), coN = mk(coneG, nN * 3, true), coF = mk(coneF, nF * 2, false);
+  const mk = (geo, cnt, shadow, mat) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, mat || lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
+  const trN = mk(trunkG, nN, true), trF = mk(trunkF, nF, false), blN = mk(blobN, nN * (RDC.autumn || RDC.coast ? 8 : 4), true, leafMat(-1, 1)), blF = mk(blobF, nF * (RDC.autumn || RDC.coast ? 4 : 2), false, leafMat(-1, 1)), coN = mk(coneG, nN * 3, true, leafMat(0, 1)), coF = mk(coneF, nF * 2, false, leafMat(0, 1));
   // pines: one instance of a whole crown (vertex-coloured; the instance colour only tints it)
   const pv = (t, i) => (hash2(i, 13, 7) * (t.near ? 4 : 2)) | 0, pc = { near: [0, 0, 0, 0], far: [0, 0] };
   all.forEach((t, i) => { if (t.kind === 4 || t.kind === 8) pc[t.near ? 'near' : 'far'][pv(t, i)]++; });
@@ -3760,15 +3760,17 @@ function buildRealDecor(C, grp) {
   // grass tufts in the deep rough
   let tuftG = new THREE.ConeGeometry(.2, .5, 6); tuftG.translate(0, .2, 0);
   if (RDC.marram) tuftG = marramGeo(13); // St Patrick's: marram tussocks over the whole hole (the ground scatter adds more near the camera)
-  const NT = RDC.marram ? 2200 : RDC.prairie ? 1600 : 700, tufts = new THREE.InstancedMesh(tuftG, RDC.marram ? lifeMat(true, 3000, 10) : lambert(0xffffff), NT); tufts.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NT * 3), 3); tufts.count = 0;
+  const NT = RDC.marram ? 2200 : RDC.prairie ? 1600 : 700, tuftsN = new THREE.InstancedMesh(tuftG, RDC.marram ? lifeMat(true, 3000, 10) : lambert(0xffffff), NT); tuftsN.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NT * 3), 3); tuftsN.count = 0;
+  // (St Patrick's: beyond 45 m of the line of play a tussock is only ever seen small, so those are the light ones)
+  const tuftsF = RDC.marram ? new THREE.InstancedMesh(marramGeo(13, true), lifeMat(true, 3000, 10), NT) : null; if (tuftsF) { tuftsF.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NT * 3), 3); tuftsF.count = 0; }
   const Mt = new THREE.Matrix4(), cc = new THREE.Color(), SV = new THREE.Vector3();
-  for (let k = 0; k < (RDC.marram ? 22000 : RDC.prairie ? 16000 : 9000) && tufts.count < NT; k++) {
+  for (let k = 0, nT = 0; k < (RDC.marram ? 22000 : RDC.prairie ? 16000 : 9000) && nT < NT; k++) {
     const x = lerp(I.minX, I.maxX, r()), z = lerp(I.minZ, I.maxZ, r());
     if (C.surf(x, z) !== S.DEEP || strawAt(C, x, z) > .3) continue;
-    const y = C.h(x, z), s2 = .8 + r() * .9; Mt.makeRotationY(r() * TAU); Mt.scale(SV.set(s2 * (RDC.prairie ? 1.6 : 1), s2 * (RDC.marram ? 1 : RDC.prairie ? 1.6 + r() * .7 : 1.5), s2 * (RDC.prairie ? 1.6 : 1))); Mt.setPosition(x, y, z);
+    const y = C.h(x, z), s2 = .8 + r() * .9, tufts = tuftsF && polyQ(C.center, x, z, 80).d > 45 ? tuftsF : tuftsN; nT++; Mt.makeRotationY(r() * TAU); Mt.scale(SV.set(s2 * (RDC.prairie ? 1.6 : 1), s2 * (RDC.marram ? 1 : RDC.prairie ? 1.6 + r() * .7 : 1.5), s2 * (RDC.prairie ? 1.6 : 1))); Mt.setPosition(x, y, z);
     tufts.setMatrixAt(tufts.count, Mt); if (RDC.marram) { const w = .85 + r() * .25; cc.setRGB(w * (1 + r() * .05), w, w * (1 - r() * .06)); } else if (RDC.desert) cc.setHex(DESERT_TUFT[(r() * DESERT_TUFT.length) | 0]); else if (RDC.prairie) cc.setHex(PRAIRIE_TUFT[(r() * PRAIRIE_TUFT.length) | 0]).offsetHSL(0, 0, (r() - .5) * .06); else if (RDC.pied) cc.setHex(PIED_TUFT[(r() * PIED_TUFT.length) | 0]); else if (RDC.ledge) cc.setHex(LEDGE_TUFT[(r() * LEDGE_TUFT.length) | 0]).offsetHSL(0, 0, (r() - .5) * .05); else if (RDC.tx) cc.setHex(TX_TUFT[(r() * TX_TUFT.length) | 0]).offsetHSL(0, 0, (r() - .5) * .05); else cc.setHex(LEAF_COLS[(r() * LEAF_COLS.length) | 0]).offsetHSL(RDC.dry ? -.04 : 0, RDC.dry ? -.08 : RDC.autumn ? -.06 : -.05, RDC.dry ? .06 : RDC.autumn ? -.05 : -.01); tufts.setColorAt(tufts.count, cc); tufts.count++;
   }
-  tufts.instanceMatrix.needsUpdate = true; tufts.instanceColor.needsUpdate = true; grp.add(tufts);
+  for (const t of [tuftsN, tuftsF]) if (t) { t.instanceMatrix.needsUpdate = true; t.instanceColor.needsUpdate = true; grp.add(t); }
   // timber fairway bridges (real-course data): a raised plank deck (the terrain is lifted under it), rails and posts along both sides, abutment beams on the banks
   const BR = new THREE.MeshLambertMaterial({ color: 0x8a6c4e }), mkBox = (sx, sy, sz, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), BR); m.position.set(x, y, z); m.rotation.y = ry; m.castShadow = true; grp.add(m); };
   let plankTex = null;
@@ -4150,7 +4152,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 13, n: 6 };
+const APP_ITER = { courses: 13, n: 7 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -4262,6 +4264,20 @@ const LEAF_COLS = [0x7dbb5e, 0x8cc76a, 0x6fae57, 0x9acb6e, 0x79b86a];
 const W = { scene: null, cam: null, ren: null, sun: null, holeGroup: null, trees: [] };
 
 function lambert(c) { return new THREE.MeshLambertMaterial({ color: c }); }
+// Tree crowns and bushes: each blob or cone (its own height running from lo to hi) is sunlit and a touch warmer at the top, darker and cooler
+// underneath, so a crown reads as a volume with the light coming from above and not as one flat colour.
+function leafMat(lo, hi) {
+  const m = lambert(0xffffff);
+  m.onBeforeCompile = sh => {
+    THREE.Material.prototype.onBeforeCompile.call(m, sh);
+    sh.vertexShader = sh.vertexShader.replace('#include <color_vertex>', `#include <color_vertex>
+      #if defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )
+      vColor.xyz *= mix( vec3( .68, .74, .86 ), vec3( 1.1, 1.07, .98 ), smoothstep( ${lo.toFixed(2)}, ${hi.toFixed(2)}, position.y ) );
+      #endif`);
+  };
+  m.customProgramCacheKey = () => 'leaf' + lo + '_' + hi;
+  return m;
+}
 // golf-ball skin: hexagonal dimples on a geodesic layout (12 pentagons + 150 hexagons), white on white with soft grey hollows.
 // Baked once into an equirectangular height map (bump) and a faint colour map, matching SphereGeometry's UVs.
 const BALL_BUMP = .018;
@@ -4304,6 +4320,32 @@ function makeBallTextures() {
 }
 // 4 pm golden hour: the sun hangs low (about 14 degrees) behind the golfer's left shoulder and throws long shadows down the hole
 const SUN_OFF = [-118, 36, 82];
+/* ---------- light ---------- */
+// One set of uniforms shared by every material: where the sun stands (seen from the camera, and in the world) and how strongly its light
+// scatters in the haze. With it the fog of every built-in material glows toward the sun, as the sky does, instead of one flat colour all round.
+const GFX = { sunV: { value: new THREE.Vector3(0, 1, 0) }, sunW: { value: new THREE.Vector3(0, 1, 0) }, sunC: { value: new THREE.Vector4(1, .8, .5, 0) }, disc: { value: 0 } };
+THREE.Material.prototype.onBeforeCompile = function (sh) { sh.uniforms.gSunV = GFX.sunV; sh.uniforms.gSunC = GFX.sunC; };
+{
+  const SC = THREE.ShaderChunk;
+  SC.fog_pars_vertex = '#ifdef USE_FOG\n\tvarying float fogDepth;\n\tvarying vec3 vFogP;\n#endif';
+  SC.fog_vertex = '#ifdef USE_FOG\n\tfogDepth = - mvPosition.z;\n\tvFogP = mvPosition.xyz;\n#endif';
+  SC.fog_pars_fragment = SC.fog_pars_fragment.replace('varying float fogDepth;', 'varying float fogDepth;\n\tvarying vec3 vFogP;\n\tuniform vec3 gSunV;\n\tuniform vec4 gSunC;');
+  SC.fog_fragment = `#ifdef USE_FOG
+	#ifdef FOG_EXP2
+		float fogFactor = 1.0 - exp( - fogDensity * fogDensity * fogDepth * fogDepth );
+	#else
+		float fogFactor = smoothstep( fogNear, fogFar, fogDepth );
+	#endif
+	float gSd = max( dot( normalize( vFogP ), gSunV ), 0. ), gS2 = gSd * gSd, gS8 = gS2 * gS2 * gS2 * gS2;
+	gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor + gSunC.rgb * ( gSunC.a * ( .35 * gS2 + .65 * gS8 * gS8 ) ), fogFactor );
+#endif`;
+}
+// the sun's direction for the shaders, once per frame before the scene is drawn
+function gfxSync() {
+  W.cam.updateMatrixWorld();
+  GFX.sunW.value.set(SUN_OFF[0], SUN_OFF[1], SUN_OFF[2]).normalize();
+  GFX.sunV.value.copy(GFX.sunW.value).transformDirection(W.cam.matrixWorldInverse);
+}
 /* ---------- tilt-shift ---------- */
 // the scene is drawn into a target and redrawn through a blur that grows with the screen distance from a horizontal focus band;
 // the band sits on the target line (the aim ring while aiming, the ball in flight), so the line of play stays sharp and the
@@ -4326,14 +4368,21 @@ function initTiltShift() {
         if (uDisp > .5 && dot(off, off) > 1e-9) { c = vec3(texture2D(tD, uvd + off * .12).r, c.g, texture2D(tD, uvd - off * .12).b); c *= 1. + streak; }
         if (r > .35) {
           float wsum = 1.;
-          for (int i = 0; i < 32; i++) {
-            float a = float(i) * 2.39996, rr = sqrt((float(i) + .5) / 32.) * r;
+          // as many taps as the radius needs: 10 for a blur of a pixel or two, 24 at its widest (it was 32 everywhere)
+          float nT = clamp(floor(8. + r * 2.), 10., 24.);
+          for (int i = 0; i < 24; i++) {
+            if (float(i) >= nT) break;
+            float a = float(i) * 2.39996, rr = sqrt((float(i) + .5) / nT) * r;
             c += texture2D(tD, uvd + vec2(cos(a), sin(a)) * rr * px).rgb; wsum += 1.;
           }
           c /= wsum;
         }
         float l = dot(c, vec3(.299, .587, .114));
         c = mix(vec3(l), c, 1. + .14 * smoothstep(band, band + fall, abs(vUv.y - fy)));
+        // the grade: a little more contrast through the middle, the lights a touch warmer and the shadows cooler, the corners drawn in softly
+        c = mix(c, c * c * (3. - 2. * c), .16);
+        c *= mix(vec3(.965, .99, 1.045), vec3(1.03, 1.008, .965), smoothstep(.12, .8, l));
+        vec2 vq = vUv - .5; c *= 1. - .2 * smoothstep(.2, .58, dot(vq, vq));
         gl_FragColor = vec4(c, 1.);
       }`,
     depthTest: false, depthWrite: false
@@ -4363,7 +4412,7 @@ function resizeTiltShift() {
 }
 function renderTiltShift(dt) {
   const P = W.post;
-  if (PERF.lite) { W.ren.setRenderTarget(null); W.ren.render(W.scene, W.cam); return; }
+  if (PERF.lite) { gfxSync(); W.ren.setRenderTarget(null); W.ren.render(W.scene, W.cam); return; }
   // focus row: the aim ring (or the ball once it is away), eased so the band glides rather than snaps
   let want = .55;
   const sh = G.shot, inAir = G.state === 'flight' || G.state === 'holed', lp = inAir && sh && sh.res ? (sh.res.land || sh.res.final) : null;
@@ -4382,7 +4431,7 @@ function renderTiltShift(dt) {
   P.t0 = nowT; P.prev.copy(cp);
   const flying = G.state === 'flight' && G.shot && !G.shot.L.putt, wantMb = flying ? smooth(12, 45, P.spd) * .1 : 0;
   P.mb += (wantMb - P.mb) * (1 - Math.exp(-dt * 6));
-  W.ren.setRenderTarget(P.rt); W.ren.render(W.scene, W.cam);
+  gfxSync(); W.ren.setRenderTarget(P.rt); W.ren.render(W.scene, W.cam);
   if (P.mb > .004) {
     P.mbMat.uniforms.k.value = P.mb; W.ren.setRenderTarget(P.rt2); W.ren.render(P.mbSc, P.cam); P.mat.uniforms.tD.value = P.rt2.texture;
   } else P.mat.uniforms.tD.value = P.rt.texture;
@@ -4445,7 +4494,7 @@ function initRain() {
   W.rain = { mesh, U, last: 0, pos: new THREE.Vector3(), vel: new THREE.Vector3() };
 }
 const WX_WARM = { bg: new THREE.Color(0xf3d9b4), grey: new THREE.Color(0xa9b1b6), cloudW: new THREE.Color(0xffe3c2), cloudG: new THREE.Color(0xaab0b6), emW: new THREE.Color(0xffc58a), emG: new THREE.Color(0x4e535a),
-  sunW: new THREE.Color(0xffb65c), sunG: new THREE.Color(0xdde3ea), hemW: new THREE.Color(0xffe4c4), hemG: new THREE.Color(0xc9d3dc) };
+  sunW: new THREE.Color(0xffb65c), sunG: new THREE.Color(0xdde3ea), hemW: new THREE.Color(0xebe0d6), hemG: new THREE.Color(0xc9d3dc) };
 // Time of day: ordinary rounds are mostly midday-golden, some start at dawn (pink light, low sun, mist) or dusk (deep orange, low sun).
 // The daily challenge draws its time of day from the day's seed, so everyone plays under the same sky.
 const TOD = {
@@ -4463,9 +4512,12 @@ function updateWeatherVisuals(dt) {
   G.cloud += (T.cloud - G.cloud) * (1 - Math.exp(-dt / 14)); G.rainLvl += (T.rain - G.rainLvl) * (1 - Math.exp(-dt / 9));
   const c = clamp(G.cloud, 0, 1), g = smooth(.2, 1, c), TD = TOD[G.tod] || TOD.day, P = TD.P;
   if (G.todOn !== TD) { G.todOn = TD; SUN_OFF[0] = TD.sun[0]; SUN_OFF[1] = TD.sun[1]; SUN_OFF[2] = TD.sun[2]; }
+  if (SHADE.C && SHADE.C === G.C && SHADE.key !== SUN_OFF.join()) shadeBake(G.C);
   // mist: thick at dawn, thinner at dusk, and the first holes after rain steam a little
   const mt = Math.max(TD.mist, G.sinceRain === 0 ? .3 : G.sinceRain === 1 ? .22 : 0, WX.id === 'damp' ? .18 : 0); G.mist = G.mist == null ? mt : G.mist + (mt - G.mist) * (1 - Math.exp(-dt / 5)); const mi = G.mist;
-  W.sun.intensity = 1.05 * TD.k * (1 - .68 * g); W.sun.color.copy(P.sunW).lerp(P.sunG, g); W.hemi.intensity = .5 + .16 * g; W.hemi.color.copy(P.hemW).lerp(P.hemG, g);
+  W.sun.intensity = 1.3 * TD.k * (1 - .74 * g); W.sun.color.copy(P.sunW).lerp(P.sunG, g); W.hemi.intensity = .47 + .19 * g; W.hemi.color.copy(P.hemW).lerp(P.hemG, g); W.hemi.groundColor.setHex(0x6b7a45);
+  // how much the haze and the sky glow toward the sun (most at dawn and dusk, gone under cloud and at night) and how bright its disc is
+  { const cl = (1 - g) * (1 - (G.nightU || 0)); GFX.sunC.value.set(W.sun.color.r, W.sun.color.g * .92, W.sun.color.b * .8, (TD === TOD.day ? .3 : .44) * cl * (1 - .4 * mi)); GFX.disc.value = cl * cl * (1 - .5 * mi); }
   const bg = W.scene.background; bg.copy(P.bg).lerp(P.grey, g * .85).lerp(_mistC, mi * .22); W.scene.fog.color.copy(bg); const fk = G.C && G.C.fogK || 1; W.scene.fog.near = (330 - 150 * g) * (1 - .6 * mi) * fk; W.scene.fog.far = (1400 - 650 * g) * (1 - .42 * mi) * fk; // (fogK: Rio's mountains stay in sight)
   { W.sky.material.color.setRGB((1 - .38 * g) * Math.min(1.1, P.bg.r / .953), (1 - .34 * g) * Math.min(1.1, P.bg.g / .851), (1 - .28 * g) * Math.min(1.1, P.bg.b / .706)); }
   const cm = W.cloudMat; cm.color.copy(P.cloudW).lerp(P.cloudG, g); cm.emissive.copy(P.emW).lerp(P.emG, g); cm.emissiveIntensity = .45 - .2 * g;
@@ -4739,7 +4791,8 @@ function initThree() {
   const cv = document.getElementById('gl');
   const ren = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
   ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  ren.shadowMap.enabled = true; ren.shadowMap.type = THREE.PCFSoftShadowMap;
+  ren.shadowMap.enabled = true; ren.shadowMap.type = THREE.PCFSoftShadowMap; ren.shadowMap.autoUpdate = false; // (drawn when sunFollow asks for it)
+  ren.debug.checkShaderErrors = /[?&]gldebug/.test(location.search); // asking the driver for each program's status makes every new shader wait for its compile: holes load faster without (add ?gldebug to see shader errors)
   const scene = new THREE.Scene();
   const fogC = 0xf3d9b4; scene.background = new THREE.Color(fogC); scene.fog = new THREE.Fog(fogC, 330, 1400);
   const cam = new THREE.PerspectiveCamera(55, 1, .25, 3200);
@@ -4751,7 +4804,23 @@ function initThree() {
   const skyG = new THREE.SphereGeometry(2000, 24, 12), cols = [], top = new THREE.Color(0x9db8d6), hor = new THREE.Color(fogC);
   const pa = skyG.attributes.position; for (let i = 0; i < pa.count; i++) { const y = pa.getY(i) / 2000, c = hor.clone().lerp(top, clamp(y * 2.2, 0, 1)); cols.push(c.r, c.g, c.b); }
   skyG.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-  W.sky = new THREE.Mesh(skyG, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  // the dome is shaded per pixel: haze at the horizon rising quickly into blue, a warm glow round the sun (the same glow the fog carries, so the far
+  // hills melt into it) and the sun itself, a small disc in a tight halo. material.color tints it all, as the weather and the night set it
+  const skyM = new THREE.ShaderMaterial({ side: THREE.BackSide, fog: false, depthWrite: false,
+    uniforms: { uTint: { value: new THREE.Color(1, 1, 1) }, uHor: { value: hor.clone() }, uTop: { value: top.clone() }, gSunW: GFX.sunW, gSunC: GFX.sunC, uDisc: GFX.disc },
+    vertexShader: 'varying vec3 vD; void main(){ vD = (modelMatrix * vec4(position, 1.)).xyz - cameraPosition; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform vec3 uTint, uHor, uTop, gSunW; uniform vec4 gSunC; uniform float uDisc; varying vec3 vD;
+      void main(){
+        vec3 d = normalize(vD);
+        float h = clamp(d.y * 2.2, 0., 1.); h = h * (1.6 - .6 * h);
+        vec3 c = mix(uHor, uTop * vec3(.9, .97, 1.06), h) * uTint;
+        float sd = max(dot(d, gSunW), 0.), s2 = sd * sd, s8 = s2 * s2 * s2 * s2, s64 = s8 * s8; s64 *= s64; s64 *= s64;
+        c += gSunC.rgb * (gSunC.a * (.35 * s2 + .65 * s8 * s8) * (1. - .7 * h));
+        c += gSunC.rgb * uDisc * (smoothstep(.9996, .99988, sd) * 1.5 + s64 * s64 * s64 * .45);
+        gl_FragColor = vec4(c, 1.);
+      }` });
+  skyM.color = skyM.uniforms.uTint.value;
+  W.sky = new THREE.Mesh(skyG, skyM);
   scene.add(W.sky);
   // clouds
   const cg = new THREE.IcosahedronGeometry(1, 2), cm = new THREE.MeshLambertMaterial({ color: 0xffe3c2, emissive: 0xffc58a, emissiveIntensity: .45 });
@@ -4907,7 +4976,7 @@ function buildHole(C) {
   buildTrees(C, grp);
   buildDecor(C, grp);
   buildSlopeArrows(C, grp);
-  mergeStatic(grp);
+  mergeStatic(grp); shadeBake(C);
   C.plan = renderPlan(C);
 }
 const ISL_CLS = [4, 2, 9, 1, 0, 3, 3, 5, 6]; // surface -> class of the far map (see GCL)
@@ -4987,7 +5056,7 @@ function buildIslesHole(C, grp) {
   }
   islesSea(C, grp);
   W.trees = [];
-  buildDecor(C, grp); buildSlopeArrows(C, grp); mergeStatic(grp);
+  buildDecor(C, grp); buildSlopeArrows(C, grp); mergeStatic(grp); shadeBake(C);
   islesExtras(C, grp);
   C.plan = renderPlan(C);
   C.buildMs = performance.now() - t0;
@@ -5070,7 +5139,9 @@ function islesFlowers(C, grp, loc, cx, cz) {
 /* ---------- terrain shading: smooth light, crisp per-pixel surface edges ---------- */
 const TERRAIN_GLSL = `
 uniform sampler2D tFA, tFB, tFC, tFar; uniform vec2 fO, fN; uniform float fInv, fR, wLo, wHi, seaLv, hasCoast, isLinks, isRocky, hasFar, isStraw, isCheck, isMar, isPeb, isIsle, isLedge;
-uniform vec4 farA, farB, cupP;
+uniform vec4 farA, farB, cupP, shA;
+uniform sampler2D tDet, tSh;
+vec4 gDf, gDm; vec2 gBump; // fine and broad detail noise (see detailTex) and the tilt it gives the surface
 uniform vec3 cStraw, cRough, cDeep, cFirst, cFairA, cFairB, cGreenA, cGreenB, cFringe, cSand, cWaste, cTee, cPath, cBeach, cPond, cRock, cBed1, cBed2, cDune, cGranite;
 varying vec3 vWPos; varying vec3 vWN;
 float dcF(float v) { return (v * 2. - 1.) * fR; }
@@ -5094,24 +5165,36 @@ vec3 farColor() {
   if (isIsle > .5 && c > 5.5 && c < 6.5) col = mix(cBed1, cBed2, tf.g);
   return col;
 }
+// the turf is never one flat colour: every surface is mottled in patches and grained close up (k: how rough it is, 1 = uncut rough), the rough
+// with paler, drier patches in it; the same noise tilts the surface a little, so the low sun picks out its relief
+vec3 detail(vec3 col, float k) {
+  gBump = ((gDf.ba - .5) * .15 + (gDm.ba - .5) * .09) * k;
+  col *= 1. + k * ((gDm.g - .5) * .2 + (gDf.r - .5) * .11);
+  return mix(col, col * vec3(1.07, 1.03, .84), smoothstep(.55, .8, gDm.g) * max(k - .5, 0.) * .6);
+}
 vec3 surfaceColor() {
+  gDf = texture2D(tDet, vWPos.xz * .29); gDm = texture2D(tDet, vWPos.zx * .041 + .37);
   vec2 uv = ((vWPos.xz - fO) * fInv + .5) / fN;
   vec4 a = texture2D(tFA, uv), b = texture2D(tFB, uv), c = texture2D(tFC, uv);
   float inF = step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.);
   if (hasFar > .5 && inF < .5) {
     vec3 fc = farColor();
+    fc = detail(fc, .7);
     if (isIsle > .5) { float ny0 = normalize(vWN).y; fc = mix(fc, cRock * (vWPos.y < seaLv + 2. ? .84 : 1.), smoothstep(.72, .6, ny0)); fc = mix(fc, vec3(.93, .97, 1.), (1. - smoothstep(.0, .3, abs(vWPos.y - seaLv - .02))) * .5); }
     return fc;
   }
   float fw = mix(9., dcF(a.r), inF), first = mix(9., dcF(a.g), inF), deep = mix(9., dcF(a.b), inF), gr = mix(9., dcF(a.a), inF);
   float sand = mix(9., dcF(b.r), inF), waste = mix(9., dcF(b.g), inF), tee = mix(9., dcF(b.b), inF), path = mix(9., dcF(b.a), inF);
-  vec3 col = mix(cDeep, cRough, ins(deep));
+  // each mask is worked out once (they are used many times below)
+  float iDeep = ins(deep), iFw = ins(fw), iPath = ins(path), iTee = ins(tee), iFr = ins(gr - 1.5), iGr = ins(gr), iSand = ins(sand);
+  float open = (1. - iFw) * (1. - iFr) * (1. - iTee) * (1. - iPath), wild = open * (1. - iSand);
+  vec3 col = mix(cDeep, cRough, iDeep);
   col *= 1. + (mix(.5, c.b, inF) - .5) * .16 + (mix(.5, c.a, inF) - .5) * .06;
   // St Patrick's: in the marram the ground between the tussocks shows bare, pale sand in patches and runnels (smooth noise at 1-4 m)
   if (isMar > .5) {
     vec2 q = vWPos.xz;
     float nd = vn(q * .9) * .6 + vn(q * .27) * .4, bare = (mix(.5, c.a, inF) - .5) * 1.6 + (nd - .5) * 1.1 + (1. - normalize(vWN).y) * .5;
-    col = mix(col, cSand * (.84 + .14 * nd), smoothstep(.25, .6, bare) * ins(deep) * .6);
+    col = mix(col, cSand * (.84 + .14 * nd), smoothstep(.25, .6, bare) * iDeep * .6);
   }
   col = mix(col, cFirst, ins(first));
   // pine straw (the waste channel carries it on a straw course)
@@ -5125,27 +5208,29 @@ vec3 surfaceColor() {
   col *= 1. + isCheck * .03 * clamp(sin(vWPos.z * .2244) * 5., -1., 1.);
   // Ledgeview: the fairways mown in long passes 7 m wide at 30 degrees either side of north-south, the one way stronger than the other, so the stripes cross into long argyle diamonds
   vec3 fair = isLedge > .5 ? mix(cFairB, cFairA, ledgeCut(vWPos.xz)) : isCheck > .5 ? lastPass(mix(cFairB, cFairA, crossCut(vWPos.xz, .7854, 9.)), vWPos.xz, .7854, 9.) : isPeb > .5 ? mix(cFairB, cFairA, band(dot(vWPos.xz, vec2(.8693, -.4942)) * 3.14159 / 3.4) * .8 + .2 * band(dot(vWPos.xz, vec2(.4942, .8693)) * 3.14159 / 13.)) : mix(cFairB, cFairA, ins(c.r * 2. - 1.));
-  col = mix(col, fair, ins(fw));
+  col = mix(col, fair, iFw);
   col *= 1. - .07 * lineAt(fw, .13);
-  col = mix(col, cPath, ins(path));
-  col = mix(col, cTee, ins(tee));
+  col = mix(col, cPath, iPath);
+  col = mix(col, cTee, iTee);
   col *= 1. - .05 * lineAt(tee, .09);
-  col = mix(col, cFringe, ins(gr - 1.5));
+  col = mix(col, cFringe, iFr);
   vec3 grn = isCheck > .5 ? lastPass(mix(cGreenB, cGreenA, crossCut(vWPos.xz, .785, 1.8)), vWPos.xz, .785, 1.8) : mix(cGreenB, cGreenA, ins(sin((vWPos.x + vWPos.z) * .98175)));
-  col = mix(col, grn, ins(gr));
+  col = mix(col, grn, iGr);
   col *= 1. + .06 * lineAt(gr, .08);
   float isW = step(waste, sand + .02);
   col *= 1. - .16 * lineAt(sand - .2, .2) * (1. - isW);
-  col = mix(col, mix(cSand, cWaste, isW), ins(sand));
+  col = mix(col, mix(cSand, cWaste, isW), iSand);
+  // detail by surface: the rough shaggy and patchy, paths and sand grainy, the mown turf smooth and the greens smoothest
+  col = detail(col, mix(mix(mix(mix(mix(1., .34, iFw), .55, iPath), .32, iTee), .26, iFr), .17, iGr) * (1. - iSand) + .5 * iSand);
   // shoreline: damp sand just above the water, darker bed below it
   float hasW = step(.5 / 255., c.g) * inF, wl = wLo + (c.g * 255. - 1.) / 254. * (wHi - wLo);
-  col = mix(col, cBeach, ins(vWPos.y - (wl + .15)) * hasW * (1. - ins(fw)) * (1. - ins(gr - 1.5)) * (1. - ins(tee)) * (1. - ins(path)));
+  col = mix(col, cBeach, ins(vWPos.y - (wl + .15)) * hasW * open);
   col = mix(col, mix(cBeach * .9, cPond, clamp((wl - vWPos.y) / 1.2, 0., 1.)), ins(vWPos.y - (wl - .08)) * hasW);
   float ny = normalize(vWN).y;
-  if (isLinks > .5) col = mix(col, cDune, smoothstep(.975, .9, ny) * (1. - ins(fw)) * (1. - ins(gr - 1.5)) * (1. - ins(sand)) * (1. - ins(tee)) * (1. - ins(path)));
-  if (isRocky > .5) col = mix(col, cGranite * (.86 + .28 * mix(.5, c.a, inF)), smoothstep(.9, .76, ny) * (1. - ins(fw)) * (1. - ins(gr - 1.5)) * (1. - ins(sand)) * (1. - ins(tee)) * (1. - ins(path)));
+  if (isLinks > .5) col = mix(col, cDune, smoothstep(.975, .9, ny) * wild);
+  if (isRocky > .5) col = mix(col, cGranite * (.86 + .28 * mix(.5, c.a, inF)), smoothstep(.9, .76, ny) * wild);
   if (isPeb > .5) { // the clifftops: grey granite and sandstone where the ground falls away, a little lichen-orange in it
-    float cl = smoothstep(.86, .7, ny) * (1. - ins(fw)) * (1. - ins(gr - 1.5)) * (1. - ins(sand)) * (1. - ins(tee)) * (1. - ins(path));
+    float cl = smoothstep(.86, .7, ny) * wild;
     float lich = vn(vWPos.xz * .6);
     col = mix(col, mix(cGranite, vec3(.62, .46, .3), smoothstep(.62, .8, lich) * .55) * (.82 + .3 * mix(.5, c.a, inF)), cl);
   }
@@ -5178,6 +5263,58 @@ function terrainMaterial(C) {
   return terrainMatFrom({ A, B, T, w, h, x0, z0, res, R, wlo, whi, sea: C.coast ? C.coast.sea : null, links: C.def.links, rocky: C.def.rocky });
 }
 const NO_FAR = { tex: null };
+// The detail noise, one small texture that tiles: R a fine grain, G soft clumps (four octaves), B and A the slope of the clumps east and south
+// (which tilts the surface in the light). With mipmaps, so it melts away with distance instead of shimmering.
+function detailTex() {
+  if (detailTex.u) return detailTex.u;
+  const N = 128, r = mulberry32(911), F = new Float32Array(N * N), d = new Uint8Array(N * N * 4);
+  for (const [p, w] of [[4, .5], [8, .27], [16, .15], [32, .08]]) {
+    const a = new Float32Array(p * p); for (let i = 0; i < a.length; i++) a[i] = r();
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const x = i / N * p, y = j / N * p, i0 = x | 0, j0 = y | 0, i1 = (i0 + 1) % p, j1 = (j0 + 1) % p; let fx = x - i0, fy = y - j0; fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+      F[j * N + i] += w * ((a[j0 * p + i0] * (1 - fx) + a[j0 * p + i1] * fx) * (1 - fy) + (a[j1 * p + i0] * (1 - fx) + a[j1 * p + i1] * fx) * fy);
+    }
+  }
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = (j * N + i) * 4, at = (a, b) => F[((b + N) % N) * N + (a + N) % N];
+    d[k] = r() * 255; d[k + 1] = clamp(.5 + (F[j * N + i] - .5) * 1.7, 0, 1) * 255;
+    d[k + 2] = clamp(.5 + (at(i + 1, j) - at(i - 1, j)) * 7, 0, 1) * 255; d[k + 3] = clamp(.5 + (at(i, j + 1) - at(i, j - 1)) * 7, 0, 1) * 255;
+  }
+  const t = new THREE.DataTexture(d, N, N, THREE.RGBAFormat); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = 4; t.needsUpdate = true;
+  return detailTex.u = { value: t };
+}
+// Far shadows. The shadow map only reaches the ground round the line of play, and only the trees near it cast into it; every other tree stood on
+// the grass without a shadow. So the shadow of each tree is also drawn once into a course map (2 m cells): a soft streak away from the sun, as long
+// as the sun is low. R holds the trees that cast no real shadow, G those that do; the ground takes G only beyond the shadow map (and everywhere in
+// Saver mode, which has no shadow map), so near the ball the real shadows stay as they are. It only dims the sunlight, never the sky's light.
+const SHADE = { tex: { value: null }, A: { value: new THREE.Vector4(0, 0, 1, 1) }, key: '' };
+{ const t = new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat); t.needsUpdate = true; SHADE.tex.value = SHADE.none = t; }
+function shadeBake(C) {
+  const T = W.trees || [], I = C.inner, res = 2, pad = T.length ? 240 : 0, x0 = I.minX - pad, z0 = I.minZ - pad;
+  const w = T.length ? Math.min(1024, Math.ceil((I.maxX + pad - x0) / res)) : 1, h = T.length ? Math.min(1024, Math.ceil((I.maxZ + pad - z0) / res)) : 1, d = new Uint8Array(w * h * 4);
+  const sl = Math.hypot(SUN_OFF[0], SUN_OFF[2]), ux = -SUN_OFF[0] / sl, uz = -SUN_OFF[2] / sl, cot = sl / Math.max(4, SUN_OFF[1]);
+  for (const t of T) {
+    const r = t.r || t.R || 2.7 * (t.s || 1), H = t.H || (C.real ? clamp(r * 2.4 + 4, 6, 24) : 7.5 * (t.s || 1)), L = Math.min(H * cot, 64), ch = C.real && !t.far ? 1 : C.real ? 0 : 1;
+    const ax = t.x, az = t.z, bx = ax + ux * L, bz = az + uz * L, m = r + 5;
+    const i0 = Math.max(0, Math.floor((Math.min(ax, bx) - m - x0) / res)), i1 = Math.min(w - 1, Math.ceil((Math.max(ax, bx) + m - x0) / res)), j0 = Math.max(0, Math.floor((Math.min(az, bz) - m - z0) / res)), j1 = Math.min(h - 1, Math.ceil((Math.max(az, bz) + m - z0) / res));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const px = x0 + (i + .5) * res - ax, pz = z0 + (j + .5) * res - az, u = clamp((px * ux + pz * uz) / L, 0, 1), dd = Math.hypot(px - ux * L * u, pz - uz * L * u);
+      const wd = r * (1 - .25 * u), soft = 1.6 + 3.2 * u, v = (.86 - .4 * u) * clamp((wd + soft * .5 - dd) / soft, 0, 1); if (v <= 0) continue;
+      const k = (j * w + i) * 4 + ch, b = v * v * (3 - 2 * v) * 255; if (b > d[k]) d[k] = b;
+    }
+  }
+  const tex = new THREE.DataTexture(d, w, h, THREE.RGBAFormat); tex.magFilter = tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
+  if (SHADE.tex.value !== SHADE.none) SHADE.tex.value.dispose(); SHADE.tex.value = tex; SHADE.A.value.set(x0, z0, 1 / (w * res), 1 / (h * res)); SHADE.C = C; SHADE.key = SUN_OFF.join();
+}
+// the sunlight on the ground, dimmed by the far shadows (lights_fragment_begin with one line more for the sun)
+const TERRAIN_LIGHTS = THREE.ShaderChunk.lights_fragment_begin.replace('getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );', `getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );
+		{
+			vec4 gSh = texture2D( tSh, ( vWPos.xz - shA.xy ) * shA.zw ); float gIn = 0.;
+			#if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS )
+			if ( receiveShadow ) { vec3 gSc = vDirectionalShadowCoord[ i ].xyz / vDirectionalShadowCoord[ i ].w; vec2 gE = abs( gSc.xy - .5 ) * 2.; gIn = ( 1. - smoothstep( .8, .97, max( gE.x, gE.y ) ) ) * step( gSc.z, 1. ); }
+			#endif
+			directLight.color *= 1. - max( gSh.r, gSh.g * ( 1. - gIn ) );
+		}`);
 // the shared terrain material: per-texel distance fields (A, B), stripes / water level / noise (T) and, for the real
 // course, an optional course-wide class map for everything beyond the fields
 // Rothley Park in October: [dl, ds, dh] on the base colours. Cool, damp emerald turf (hue toward blue-green, richer), the deep rough gone over to bronze and
@@ -5217,7 +5354,7 @@ function terrainMatFrom(o) {
   const U = {
     tFA: { value: tex(A) }, tFB: { value: tex(B) }, tFC: { value: tex(T) }, fO: { value: new THREE.Vector2(x0, z0) }, fN: { value: new THREE.Vector2(w, h) }, fInv: { value: 1 / res }, fR: { value: R },
     wLo: { value: wlo }, wHi: { value: whi }, seaLv: { value: o.sea != null ? o.sea : -1e4 }, hasCoast: { value: o.sea != null ? 1 : 0 }, isLinks: { value: o.links ? 1 : 0 }, isRocky: { value: o.rocky ? 1 : 0 },
-    tFar: { value: far ? far.tex : NO_FAR.tex }, hasFar: { value: far ? 1 : 0 }, farA: { value: far ? far.A : new THREE.Vector4() }, farB: { value: far ? far.B : new THREE.Vector4(0, 0, 1, 1) }, cupP: CUP_U,
+    tFar: { value: far ? far.tex : NO_FAR.tex }, hasFar: { value: far ? 1 : 0 }, farA: { value: far ? far.A : new THREE.Vector4() }, farB: { value: far ? far.B : new THREE.Vector4(0, 0, 1, 1) }, cupP: CUP_U, tDet: detailTex(), tSh: SHADE.tex, shA: SHADE.A,
     // dry = a links-style course: sun-bleached, more olive and straw in the rough, a touch drier on the fairways (greens stay healthy)
     cRough: { value: pc(S.ROUGH, dr * .035, -dr * .05, -dr * .04) }, cDeep: { value: pc(S.DEEP, dr * .045, -dr * .06, -dr * .052) }, cFirst: { value: pc(S.FIRST, dr * .03, -dr * .035, -dr * .036) }, cFairA: { value: pc(S.FAIR, .045 + dr * .035, -dr * .03, -dr * .04) }, cFairB: { value: pc(S.FAIR, -.025 + dr * .025, -dr * .03, -dr * .04) },
     cGreenA: { value: pc(S.GREEN, .02 + dr * .008, -dr * .012, -dr * .026) }, cGreenB: { value: pc(S.GREEN, -.008 + dr * .008, -dr * .012, -dr * .026) }, cFringe: { value: pc(S.FRINGE, dr * .012, -dr * .025, -dr * .032) }, cSand: { value: pc(S.SAND) }, cWaste: { value: pc(S.SAND, -.05, -.08, .012) },
@@ -5264,11 +5401,13 @@ function terrainMatFrom(o) {
   }
   const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x000000, shininess: 1 });
   mat.extensions = { derivatives: true };
-  mat.customProgramCacheKey = () => 'terrain-fields-13';
+  mat.customProgramCacheKey = () => 'terrain-fields-14';
   mat.onBeforeCompile = sh => {
-    Object.assign(sh.uniforms, U);
+    Object.assign(sh.uniforms, U); sh.uniforms.gSunV = GFX.sunV; sh.uniforms.gSunC = GFX.sunC;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = position; vWN = normal;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + TERRAIN_GLSL).replace('#include <color_fragment>', 'if (cupP.w > .5 && length(vWPos.xz - cupP.xy) < cupP.z) discard;\ndiffuseColor.rgb *= surfaceColor();');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + TERRAIN_GLSL).replace('#include <color_fragment>', 'if (cupP.w > .5 && length(vWPos.xz - cupP.xy) < cupP.z) discard;\ndiffuseColor.rgb *= surfaceColor();')
+      .replace('#include <normal_fragment_maps>', 'normal = normalize(normal + (viewMatrix * vec4(gBump.x, 0., gBump.y, 0.)).xyz);')
+      .replace('#include <lights_fragment_begin>', TERRAIN_LIGHTS);
   };
   mat.userData.disposeTex = () => { U.tFA.value.dispose(); U.tFB.value.dispose(); U.tFC.value.dispose(); };
   return mat;
@@ -5430,8 +5569,8 @@ function buildTrees(C, grp) {
   const trunkG = new THREE.CylinderGeometry(.22, .32, 1, 6); trunkG.translate(0, .5, 0);
   const roundG = new THREE.IcosahedronGeometry(1, 1), pineG = new THREE.ConeGeometry(1, 1, 12); pineG.translate(0, .5, 0);
   const willowG = new THREE.SphereGeometry(1, 14, 8, 0, TAU, 0, Math.PI * .62);
-  const mk = (geo, cnt) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = true; m.count = 0; grp.add(m); return m; };
-  const trunks = mk(trunkG, n), rounds = mk(roundG, n * 4), pines = mk(pineG, n * 3), wills = mk(willowG, n);
+  const mk = (geo, cnt, mat) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, mat || lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = true; m.count = 0; grp.add(m); return m; };
+  const trunks = mk(trunkG, n), rounds = mk(roundG, n * 4, leafMat(-1, 1)), pines = mk(pineG, n * 3, leafMat(0, 1)), wills = mk(willowG, n, leafMat(-.4, 1));
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), col = new THREE.Color(), tcol = new THREE.Color(0x8a6a52);
   // colliders: canopy ellipsoids (ky squashes them vertically) plus a trunk column up to tk; t = tree index so one tree counts as one hit
   const colliders = [];
@@ -5557,7 +5696,7 @@ function buildDecor(C, grp) {
   if (def.azaleas) {
     // flowering azaleas framing the amphitheatre
     const ar = mulberry32(def.seed + 91), tot = def.azaleas.reduce((a, b) => a + b.n, 0);
-    const az = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), lambert(0xffffff), tot);
+    const az = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), leafMat(-1, 1), tot);
     az.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(tot * 3), 3); az.count = 0; az.castShadow = true;
     const AC = [0xff7eb6, 0xff9fcb, 0xffffff, 0xe85c9e, 0xffc6df, 0xf04f8f], Mz = new THREE.Matrix4(), Qz = new THREE.Quaternion(), Vz = new THREE.Vector3(), Sz = new THREE.Vector3(), cz2 = new THREE.Color();
     for (const g of def.azaleas) {
@@ -5623,7 +5762,7 @@ function buildExtras(C, grp) {
   const waste = C.bunkers.filter(b => b.o.waste);
   if (waste.length) {
     const tot = waste.reduce((a, b) => a + Math.ceil(b.rx * b.rz / 26), 0);
-    const bush = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), lambert(0xffffff), tot); bush.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(tot * 3), 3); bush.count = 0; bush.castShadow = true;
+    const bush = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), leafMat(-1, 1), tot); bush.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(tot * 3), 3); bush.count = 0; bush.castShadow = true;
     const BC = [0x6f8447, 0x7d9152, 0x5f7440, 0x8a9a5b, 0x667d43];
     for (const b of waste) {
       const want = Math.ceil(b.rx * b.rz / 26);
@@ -6144,22 +6283,23 @@ const LIFE_MAT = () => lifeMat(false);
 // St Patrick's grasses, as they stand in October. Vertex colours are real colours here (the instance colour only shades them):
 // marram (Ammophila): a dense tussock of stiff, rolled, grey-green leaves arching out and up to a metre, a third of them dead and bleached
 // to straw, and a few tall stems with the pale, tight spike of seed head
-function marramGeo(seed) {
-  const r = mulberry32(seed || 77), P = [], K = [];
+// (lite: the same tussock for far away, a third of the leaves, each twice as wide and in two segments: 46 triangles for 226)
+function marramGeo(seed, lite) {
+  const r = mulberry32(seed || 77), P = [], K = [], NL = lite ? 9 : 26, NS = lite ? 2 : 4;
   const quad = (a, b, c, d, ca, cb) => { P.push(...a, ...b, ...c, ...a, ...c, ...d); K.push(...ca, ...ca, ...cb, ...ca, ...cb, ...cb); };
   const GRN = [[.56, .66, .54], [.62, .72, .58], [.68, .74, .6]], DEAD = [[.98, .9, .68], [.9, .82, .6], [1.02, .96, .78]];
-  for (let i = 0; i < 26; i++) {
-    const dead = r() < .34, a = r() * TAU, d = r() * .1, H = .55 + r() * .5, w = .016 + r() * .012, out = .25 + r() * .55, c0 = dead ? DEAD[(r() * 3) | 0] : GRN[(r() * 3) | 0];
+  for (let i = 0; i < NL; i++) {
+    const dead = r() < .34, a = r() * TAU, d = r() * .1, H = .55 + r() * .5, w = (.016 + r() * .012) * (lite ? 2.2 : 1), out = .25 + r() * .55, c0 = dead ? DEAD[(r() * 3) | 0] : GRN[(r() * 3) | 0];
     const ca = Math.cos(a), sa = Math.sin(a), px = -sa * w, pz = ca * w;
     let x0 = ca * d, z0 = sa * d, y0 = 0, wPrev = 1;
-    for (let k = 1; k <= 4; k++) { // four segments, the leaf bowing outward more toward its tip
-      const t = k / 4, x1 = ca * (d + out * H * t * t * .9), z1 = sa * (d + out * H * t * t * .9), y1 = H * (t - out * .35 * t * t * t), wk = 1 - t * .9;
+    for (let k = 1; k <= NS; k++) { // four segments, the leaf bowing outward more toward its tip
+      const t = k / NS, x1 = ca * (d + out * H * t * t * .9), z1 = sa * (d + out * H * t * t * .9), y1 = H * (t - out * .35 * t * t * t), wk = 1 - t * .9;
       const cb = c0.map((v, j) => dead ? v * (.9 + .15 * t) : v * (.75 + .35 * t) + (j === 0 ? .12 : j === 1 ? .08 : 0) * t * t); // greener at the base, tips paling
       quad([x0 - px * wPrev, y0, z0 - pz * wPrev], [x0 + px * wPrev, y0, z0 + pz * wPrev], [x1 + px * wk, y1, z1 + pz * wk], [x1 - px * wk, y1, z1 - pz * wk], k === 1 ? c0.map(v => v * .6) : c0, cb);
       x0 = x1; z0 = z1; y0 = y1; wPrev = wk;
     }
   }
-  for (let i = 0; i < 3; i++) { // flowering stems: a thin stalk and a narrow spike, 12-16 cm, the colour of oat straw
+  for (let i = 0; i < (lite ? 1 : 3); i++) { // flowering stems: a thin stalk and a narrow spike, 12-16 cm, the colour of oat straw
     const a = r() * TAU, lean = .05 + r() * .1, H = .95 + r() * .3, x1 = Math.cos(a) * lean * H, z1 = Math.sin(a) * lean * H, w = .006, sp = .05 + r() * .03, L = .12 + r() * .05;
     const st = [.8, .74, .55], hd = [.96, .9, .72], px = -Math.sin(a), pz = Math.cos(a);
     quad([-px * w, 0, -pz * w], [px * w, 0, pz * w], [x1 + px * w, H - L, z1 + pz * w], [x1 - px * w, H - L, z1 - pz * w], st.map(v => v * .7), st);
@@ -6214,7 +6354,8 @@ function initGround(L, grp) {
   for (const m of [L.gMesh, L.sMesh, L.hMesh]) { m.userData.keep = true; grp.add(m); }
   if (RDC.marram) { // St Patrick's: the marram tussocks on the dunes are their own mesh
     const NM = PERF.lite ? 2500 : 6000; L.mMesh = new THREE.InstancedMesh(marramGeo(), lifeMat(true, 128, 40), NM); L.mMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NM * 3), 3); L.mMesh.count = 0; L.mMesh.frustumCulled = false; L.mMesh.userData.keep = true; grp.add(L.mMesh); L.NM = NM;
-  } else L.mMesh = null;
+    L.mMeshF = new THREE.InstancedMesh(marramGeo(77, true), lifeMat(true, 128, 40), NM); L.mMeshF.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NM * 3), 3); L.mMeshF.count = 0; L.mMeshF.frustumCulled = false; L.mMeshF.userData.keep = true; grp.add(L.mMeshF); // (the outer ring, 72 m and more away, in the light tussock)
+  } else L.mMesh = L.mMeshF = null;
   L.gx = 1e9; L.gz = 1e9; L.gT = -9; L.gBall = [1e9, 1e9]; L.NG = NG; L.NF = NF; L.job = null;
   // the next scatter is built in the background a slice per frame, then swapped in whole
   L.st = { gM: new Float32Array(NG * 16), gC: new Float32Array(NG * 3), sM: new Float32Array(NF * 16), hC: new Float32Array(NF * 3), mM: L.mMesh ? new Float32Array(L.NM * 16) : null, mC: L.mMesh ? new Float32Array(L.NM * 3) : null };
@@ -6228,9 +6369,10 @@ const FLOWER_COLS = [0xffffff, 0xffffff, 0xfff3a6, 0xffd23f, 0xff9fb8, 0xd9b8ff,
 // Everything is keyed to world cells (stable) and shrinks to nothing at its range in the shader, so nothing pops in or out.
 function* groundJob(L, fx, fz) {
   const C = L.C, cell0 = 1.5, bx0 = G.ball.x, bz0 = G.ball.z, cam = W.cam.position, sdx = bx0 - cam.x, sdz = bz0 - cam.z, sl2 = Math.max(.01, sdx * sdx + sdz * sdz), ST = L.st, M = new THREE.Matrix4(), Q = new THREE.Matrix4(), sc = new THREE.Vector3(), col = new THREE.Color();
-  let ng = 0, nf = 0, nm = 0, budget = 0; const flying = G.state === 'flight';
+  let ng = 0, nf = 0, nm = 0, nm0 = -1, budget = 0; const flying = G.state === 'flight';
   const au = RDC.autumn && C.real, mar = RDC.marram && C.real, thick = (au || mar) && L.NG > 9000;
   for (const ring of [{ cell: thick ? 1.05 : cell0, r0: 0, r1: 72, mul: 1, dm: 1, tag: 0 }, { cell: thick ? 2.5 : 3.4, r0: 72, r1: 134, mul: 1.75, dm: .8, tag: 1 }]) {
+    if (ring.tag) nm0 = nm; // (the marram from here on is the outer ring)
     const cell = ring.cell, R1 = ring.r1, gi0 = Math.floor((fx - R1) / cell), gi1 = Math.floor((fx + R1) / cell), gj0 = Math.floor((fz - R1) / cell), gj1 = Math.floor((fz + R1) / cell);
     for (let gj = gj0; gj <= gj1; gj++) for (let gi = gi0; gi <= gi1; gi++) {
       if (++budget > (thick ? 1100 : 650)) { budget = 0; yield; }
@@ -6290,7 +6432,11 @@ function* groundJob(L, fx, fz) {
   // swap in
   L.gMesh.instanceMatrix.array.set(ST.gM.subarray(0, ng * 16)); L.gMesh.instanceColor.array.set(ST.gC.subarray(0, ng * 3)); L.gMesh.count = ng;
   L.sMesh.instanceMatrix.array.set(ST.sM.subarray(0, nf * 16)); L.hMesh.instanceMatrix.array.set(ST.sM.subarray(0, nf * 16)); L.hMesh.instanceColor.array.set(ST.hC.subarray(0, nf * 3)); L.sMesh.count = au ? 0 : nf; L.hMesh.count = nf; // (fallen leaves: the heads alone, flattened)
-  if (L.mMesh) { L.mMesh.instanceMatrix.array.set(ST.mM.subarray(0, nm * 16)); L.mMesh.instanceColor.array.set(ST.mC.subarray(0, nm * 3)); L.mMesh.count = nm; L.mMesh.instanceMatrix.needsUpdate = true; L.mMesh.instanceColor.needsUpdate = true; }
+  if (L.mMesh) {
+    if (nm0 < 0) nm0 = nm;
+    L.mMesh.instanceMatrix.array.set(ST.mM.subarray(0, nm0 * 16)); L.mMesh.instanceColor.array.set(ST.mC.subarray(0, nm0 * 3)); L.mMesh.count = nm0; L.mMesh.instanceMatrix.needsUpdate = true; L.mMesh.instanceColor.needsUpdate = true;
+    L.mMeshF.instanceMatrix.array.set(ST.mM.subarray(nm0 * 16, nm * 16)); L.mMeshF.instanceColor.array.set(ST.mC.subarray(nm0 * 3, nm * 3)); L.mMeshF.count = nm - nm0; L.mMeshF.instanceMatrix.needsUpdate = true; L.mMeshF.instanceColor.needsUpdate = true;
+  }
   L.gMesh.instanceMatrix.needsUpdate = true; L.gMesh.instanceColor.needsUpdate = true; L.sMesh.instanceMatrix.needsUpdate = true; L.hMesh.instanceMatrix.needsUpdate = true; L.hMesh.instanceColor.needsUpdate = true;
   L.gx = fx; L.gz = fz; L.gBall = [bx0, bz0];
 }
@@ -9971,7 +10117,7 @@ function captureTopDown(C) {
   const P = C && C.plan; if (!P || !W.ren || !W.scene) return;
   const key = C.def.seed + '|' + (G.tod || 'day') + '|' + (G.weather ? G.weather.id : '') + '|' + ((G.pins || [])[G.hole] | 0) + '|' + (PERF.lite ? 1 : 0);
   if (P.top && P.topKey === key) return;
-  let hide, was = null, fog, fn, ff, bg, sp, st, sc, sz, prev;
+  let hide, was = null, fog, fn, ff, bg, sp, st, sc, sz, prev, shT;
   try {
     const ww = P.w * P.mpp, hh = P.h * P.mpp, mpp = Math.max(.5, ww / 640, hh / 1700), pw = Math.round(ww / mpp), ph = Math.round(hh / mpp);
     if (!_topRT || _topRT.width !== pw || _topRT.height !== ph) { if (_topRT) _topRT.dispose(); _topRT = new THREE.WebGLRenderTarget(pw, ph, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true }); }
@@ -9984,6 +10130,7 @@ function captureTopDown(C) {
     fog.near = 1e6; fog.far = 2e6; W.scene.background.setHex(0x9fbf8a);
     const ext = Math.max(ww, hh) * .55; W.sun.target.position.set(cx, 0, cz); { const hx = SUN_OFF[0], hz = SUN_OFF[2], hl = Math.hypot(hx, hz); W.sun.position.set(cx + hx / hl * 300, 430, cz + hz / hl * 300); } W.sun.target.updateMatrixWorld(); // a high sun: short, soft shadows read better from above
     sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = 1400; sc.updateProjectionMatrix(); W.sun.updateMatrixWorld();
+    shT = SHADE.tex.value; SHADE.tex.value = SHADE.none; W.ren.shadowMap.needsUpdate = true;
     prev = W.ren.getRenderTarget(); W.ren.setRenderTarget(_topRT); W.ren.render(W.scene, cam);
     const buf = new Uint8Array(pw * ph * 4); W.ren.readRenderTargetPixels(_topRT, 0, 0, pw, ph, buf); W.ren.setRenderTarget(prev); prev = undefined;
     restore();
@@ -9995,6 +10142,7 @@ function captureTopDown(C) {
   function restore() {
     if (!was) return; hide.forEach((o, i) => { if (o) o.visible = was[i]; }); was = null; fog.near = fn; fog.far = ff; W.scene.background.copy(bg);
     W.sun.position.copy(sp); W.sun.target.position.copy(st); [sc.left, sc.right, sc.top, sc.bottom, sc.far] = sz; sc.updateProjectionMatrix();
+    if (shT) SHADE.tex.value = shT; if (W.shd) W.shd.key = '';
   }
 }
 function planFit(cv, W2, H2, pad) {
@@ -11849,7 +11997,7 @@ function frame(now) {
     const ext = G.state === 'intro' ? 300 : 75, sc = W.sun.shadow.camera;
     if (sc.right !== ext) { sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = ext > 100 ? 900 : 420; sc.updateProjectionMatrix(); }
   }
-  if (C) { const t = G.camLook; W.sun.position.set(t.x + SUN_OFF[0], t.y + SUN_OFF[1], t.z + SUN_OFF[2]); W.sun.target.position.copy(t); }
+  if (C) sunFollow(dt);
   const tt = now / 1000;
   if (W.windDot) W.windDot.visible = W.windLine.visible = !!W.windOn && W.ring.visible && !isPutt();
   if (W.ring.visible) { const k = 1 + Math.sin(tt * 3) * .05; W.ringPulse.scale.set(k, k, 1); }
@@ -11863,6 +12011,23 @@ function frame(now) {
   if (!hudOff && G.state === 'search') { if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height); } // the search for a lost ball: no strike dial, no shot chips, nothing drawn over the view
   else if (!hudOff) { if (G.state === 'spec') mpDrawRemote(now); else { drawTempo(now); drawStrike(now); drawFx(now); } } else if (UI.fxc) UI.fxc.clearRect(0, 0, UI.fxc.canvas.width, UI.fxc.canvas.height);
   renderTiltShift(dt);
+}
+// The sun and its shadow map follow the view in steps, not every frame: the map stays where it is until the view has moved a sixth of its reach
+// away, and it then moves by whole texels, so the shadow edges never crawl. It is drawn again only when something in it can have changed: on
+// such a step, every frame while a ball flies (or the flyover runs), otherwise eight times a second (the flag, the animals). Before, every
+// frame drew all the trees a second time for it.
+function sunFollow(dt) {
+  const S = W.shd || (W.shd = { c: new THREE.Vector3(), key: '', t: 0, x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3() }), t = G.camLook, sc = W.sun.shadow.camera;
+  const key = SUN_OFF.join() + '|' + sc.right + '|' + (W.holeGroup ? W.holeGroup.id : 0) + '|' + W.ren.shadowMap.enabled;
+  let draw = false;
+  if (key !== S.key || S.c.distanceTo(t) > sc.right * .16) {
+    S.key = key; S.z.set(SUN_OFF[0], SUN_OFF[1], SUN_OFF[2]).normalize(); S.x.set(0, 1, 0).cross(S.z).normalize(); S.y.crossVectors(S.z, S.x);
+    const tx = 2 * sc.right / W.sun.shadow.mapSize.x, a = t.dot(S.x), b = t.dot(S.y);
+    S.c.copy(t).addScaledVector(S.x, Math.round(a / tx) * tx - a).addScaledVector(S.y, Math.round(b / tx) * tx - b);
+    W.sun.position.set(S.c.x + SUN_OFF[0], S.c.y + SUN_OFF[1], S.c.z + SUN_OFF[2]); W.sun.target.position.copy(S.c); draw = true;
+  }
+  S.t += dt;
+  if (draw || S.t > .12 || G.state === 'flight' || G.state === 'holed' || G.state === 'intro' || G.state === 'spec') { S.t = 0; W.ren.shadowMap.needsUpdate = true; }
 }
 // the first hole of the course in play behind the title screen
 function showTitleHole() {
