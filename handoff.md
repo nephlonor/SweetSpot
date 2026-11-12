@@ -29,3 +29,8 @@ Westminster National (MD) und Landmand (NE) fertigbauen. Beide sind für alle sp
 - Noch nicht gemacht (Guide Schritte 2–7): Grüns von Hand nachzeichnen, Bunker-Review, Abschläge auf den Luftbildern prüfen (4 und 11 sind um 16 m nach hinten verlängert), Baum-Tweaks pro Abschlag, Drohnenansicht gegen Fotos.
 - Unbestätigt: Fahnenfarbe (gold mit grüner Zahl nach den Club-Farben, kein Foto der echten Fahnen gefunden). RED (Heimkurs) fragen.
 - Seit 08.11.2026 in der Daily-Rotation.
+
+# Grafik-Update (Build 13.7)
+- Auf echten Geräten prüfen (nur im Headless-Chromium getestet): Bildrate auf iPhone/Android in Auto und High, Fernschatten und Boden-Details bei Dawn/Dusk, Blick zur Sonne (Sonnenscheibe, Dunst).
+- Farben: Sonne stärker, Himmelslicht kühler, dazu die Farbabstimmung im letzten Durchgang. Die an Fotos abgeglichenen Platzfarben (Fields Ranch, Ledgeview, Landmand …) wirken etwas satter; falls zu kräftig: `hemW`/Sonnenstärke in `updateWeatherVisuals` oder die Grade-Zeilen im Tilt-Shift-Shader zurücknehmen.
+- Fernschatten nehmen die Baumhöhe aus dem Kronenradius (echte Plätze) und ignorieren das Gelände; wenn Schatten an Hängen falsch liegen, Höhe in `plan` mitgeben.
