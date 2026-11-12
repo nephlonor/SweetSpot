@@ -30,7 +30,8 @@ Westminster National (MD) und Landmand (NE) fertigbauen. Beide sind für alle sp
 - Unbestätigt: Fahnenfarbe (gold mit grüner Zahl nach den Club-Farben, kein Foto der echten Fahnen gefunden). RED (Heimkurs) fragen.
 - Seit 08.11.2026 in der Daily-Rotation.
 
-# Grafik-Update (Build 13.7)
+# Grafik-Update (Builds 13.7, 13.8)
 - Auf echten Geräten prüfen (nur im Headless-Chromium getestet): Bildrate auf iPhone/Android in Auto und High, Fernschatten und Boden-Details bei Dawn/Dusk, Blick zur Sonne (Sonnenscheibe, Dunst).
 - Farben: Sonne stärker, Himmelslicht kühler, dazu die Farbabstimmung im letzten Durchgang. Die an Fotos abgeglichenen Platzfarben (Fields Ranch, Ledgeview, Landmand …) wirken etwas satter; falls zu kräftig: `hemW`/Sonnenstärke in `updateWeatherVisuals` oder die Grade-Zeilen im Tilt-Shift-Shader zurücknehmen.
 - Fernschatten nehmen die Baumhöhe aus dem Kronenradius (echte Plätze) und ignorieren das Gelände; wenn Schatten an Hängen falsch liegen, Höhe in `plan` mitgeben.
+- 13.8: Neue Baum-/Fels-/Wolkenmodelle und Unterwuchs nur im Headless-Chromium geprüft. Liegende Stämme, Stümpfe, Farne und Steine haben keine Kollision; falls das beim Spielen stört, Kollider ergänzen oder weiter von der Spiellinie weg setzen (`buildUndergrowth`). Menschengemachte Objekte (Bank, Schilder, Abfalleimer, Gebäude, Brücken) sind noch die alten.
