@@ -3397,12 +3397,10 @@ function buildRealTrees(C, grp) {
   };
   GC.trees.forEach((t, i) => add(t, 330, i)); GC.fill.forEach((t, i) => add(t, 480, i + 7919));
   let nN = 0, nF = 0; for (const t of all) { t.near = t.tier === 0; if (t.near) nN++; else nF++; }
-  const trunkG = new THREE.CylinderGeometry(.22, .32, 1, 6, 1, true); trunkG.translate(0, .5, 0);
-  const trunkF = new THREE.CylinderGeometry(.22, .32, 1, 4, 1, true); trunkF.translate(0, .5, 0);
-  const blobN = new THREE.IcosahedronGeometry(1, 1), blobF = new THREE.IcosahedronGeometry(1, 0), coneG = new THREE.ConeGeometry(1, 1, 10); coneG.translate(0, .5, 0);
-  const coneF = new THREE.ConeGeometry(1, 1, 6, 1, true); coneF.translate(0, .5, 0);
-  const mk = (geo, cnt, shadow, mat) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, mat || lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
-  const trN = mk(trunkG, nN, true), trF = mk(trunkF, nF, false), blN = mk(blobN, nN * (RDC.autumn || RDC.coast ? 8 : 4), true, leafMat(-1, 1)), blF = mk(blobF, nF * (RDC.autumn || RDC.coast ? 4 : 2), false, leafMat(-1, 1)), coN = mk(coneG, nN * 3, true, leafMat(0, 1)), coF = mk(coneF, nF * 2, false, leafMat(0, 1));
+  const trunkG = trunkGeo(true), trunkF = trunkGeo(false);
+  const blobN = lobeGeo(1, 3), blobF = lobeGeo(0, 5), coneG = tierGeo(true), coneF = tierGeo(false);
+  const mk = (geo, cnt, shadow, mat) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, mat || vcMat(), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = shadow; m.count = 0; grp.add(m); return m; };
+  const trN = mk(trunkG, nN, true), trF = mk(trunkF, nF, false), blN = mk(blobN, nN * (RDC.autumn || RDC.coast ? 8 : 6), true, leafMat(-1, 1)), blF = mk(blobF, nF * (RDC.autumn || RDC.coast ? 4 : 2), false, leafMat(-1, 1)), coN = mk(coneG, nN * 3, true, leafMat(0, 1)), coF = mk(coneF, nF * 2, false, leafMat(0, 1));
   // pines: one instance of a whole crown (vertex-coloured; the instance colour only tints it)
   const pv = (t, i) => (hash2(i, 13, 7) * (t.near ? 4 : 2)) | 0, pc = { near: [0, 0, 0, 0], far: [0, 0] };
   all.forEach((t, i) => { if (t.kind === 4 || t.kind === 8) pc[t.near ? 'near' : 'far'][pv(t, i)]++; });
@@ -3552,6 +3550,11 @@ function buildRealTrees(C, grp) {
       const a = ry, o = .45 * Rh;
       put(bl, t.X + Math.cos(a) * o, cy + .28 * R, t.Z + Math.sin(a) * o, .62 * Rh, .55 * R, .62 * Rh, col.clone().offsetHSL(0, 0, .04), ry + .7);
       put(bl, t.X - Math.cos(a + .6) * o, cy + .12 * R, t.Z - Math.sin(a + .6) * o, .58 * Rh, .52 * R, .58 * Rh, col.clone().offsetHSL(.01, 0, -.02), ry + 1.5);
+      // and a sunlit top knot and a low bough to one side, so no two crowns have the same outline
+      put(bl, t.X + (hv - .5) * .5 * Rh, cy + .62 * R, t.Z + (hash2(i, 3, 43) - .5) * .5 * Rh, .5 * Rh, .42 * R, .5 * Rh, col.clone().offsetHSL(0, .02, .055), ry + 2.3);
+      put(bl, t.X + Math.cos(a + 2.4) * o * 1.25, cy - .2 * R, t.Z + Math.sin(a + 2.4) * o * 1.25, .5 * Rh, .4 * R, .5 * Rh, col.clone().offsetHSL(-.005, 0, -.045), ry + 3.1);
+    } else if (!t.near && t.tier === 1 && t.kind === 0 && !RDC.autumn) {
+      put(bl, t.X + (hv - .5) * .6 * Rh, cy + .5 * R, t.Z + (hash2(i, 3, 43) - .5) * .6 * Rh, .6 * Rh, .5 * R, .6 * Rh, col.clone().offsetHSL(0, .01, .045), ry + 2.3); // (trees further off: a second lobe on top)
     }
     if (t.kind === 5) {
       // dogwood in flower: creamy white bracts over the leaves
@@ -3562,6 +3565,7 @@ function buildRealTrees(C, grp) {
     if (refs) occ.push({ x: t.X, z: t.Z, y0: y, y1: cy + .9 * R, r: Rh * 1.05, refs, hid: false });
   });
   refs = null;
+  buildUndergrowth(C, grp, all);
   [trN, trF, blN, blF, coN, coF, ...piN, ...piF].forEach(m => { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; if (!m.count) m.visible = false; });
   // trees the camera would look through step aside (see updateTreeOcc)
   const oc = 12, oh = new Map();
@@ -3901,8 +3905,8 @@ function buildAzaleas(C, grp) {
     list.push({ X, Z, r: f.r, c: f.c });
   }
   if (!list.length) return;
-  const geo = new THREE.IcosahedronGeometry(1, 1), n = list.length * 4;
-  const im = new THREE.InstancedMesh(geo, lambert(0xffffff), n); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3); im.count = 0;
+  const geo = lobeGeo(1, 7), n = list.length * 4;
+  const im = new THREE.InstancedMesh(geo, leafMat(-1, 1), n); im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3); im.count = 0;
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), col = new THREE.Color(), leaf = new THREE.Color(0x3f6b37), r = mulberry32(C.def.seed + 515);
   const put = (x, y, z, sx, sy, sz, c) => { Q.setFromAxisAngle(V.set(0, 1, 0), r() * TAU); M.compose(V.set(x, y, z), Q, Sc.set(sx, sy, sz)); im.setMatrixAt(im.count, M); im.setColorAt(im.count, c); im.count++; };
   for (const f of list) {
@@ -4152,7 +4156,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 13, n: 7 };
+const APP_ITER = { courses: 13, n: 8 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -4264,10 +4268,119 @@ const LEAF_COLS = [0x7dbb5e, 0x8cc76a, 0x6fae57, 0x9acb6e, 0x79b86a];
 const W = { scene: null, cam: null, ren: null, sun: null, holeGroup: null, trees: [] };
 
 function lambert(c) { return new THREE.MeshLambertMaterial({ color: c }); }
+/* ---------- low-poly models ---------- */
+// Trees, bushes, rocks and clouds are not plain spheres, cones and cylinders any more. Each model keeps the size of the primitive it replaced
+// (so every placement, collider and shadow stays as it was) but has a shape of its own, softly faceted, with light and dark in its vertex colours.
+const _mN = (x, y, z, s) => Math.sin(x * 2.9 + s) * Math.sin(y * 3.3 + s * 1.7) * Math.sin(z * 3.1 + s * .6) + .5 * Math.sin(x * 6.1 + z * 5.3 + s * 2.3) * Math.sin(y * 5.7 + s);
+function vcMat() { return new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true }); }
+// warp: where each vertex goes; soft: 0 = hard facets .. 1 = smooth (the normal leans toward the direction out from the middle, or out from
+// the axis with axis set); tone(x, y, z, face, faceNormalY): the vertex colour, a grey or [r, g, b]
+function shapeGeo(g, warp, soft, tone, axis) {
+  if (g.index) g = g.toNonIndexed();
+  const P = g.attributes.position.array, n = P.length / 3, N = new Float32Array(n * 3), K = new Float32Array(n * 3);
+  if (warp) for (let i = 0; i < n; i++) { const q = warp(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); P[i * 3] = q[0]; P[i * 3 + 1] = q[1]; P[i * 3 + 2] = q[2]; }
+  for (let f = 0; f < n; f += 3) {
+    const a = f * 3, ux = P[a + 3] - P[a], uy = P[a + 4] - P[a + 1], uz = P[a + 5] - P[a + 2], vx = P[a + 6] - P[a], vy = P[a + 7] - P[a + 1], vz = P[a + 8] - P[a + 2];
+    let fx = uy * vz - uz * vy, fy = uz * vx - ux * vz, fz = ux * vy - uy * vx; const fl = Math.hypot(fx, fy, fz) || 1; fx /= fl; fy /= fl; fz /= fl;
+    for (let k = 0; k < 3; k++) {
+      const i = a + k * 3, x = P[i], y = P[i + 1], z = P[i + 2]; let sx = x, sy = axis ? .3 * Math.hypot(x, z) : y, sz = z; const sl = Math.hypot(sx, sy, sz) || 1;
+      let nx = fx * (1 - soft) + sx / sl * soft, ny = fy * (1 - soft) + sy / sl * soft, nz = fz * (1 - soft) + sz / sl * soft; const nl = Math.hypot(nx, ny, nz) || 1;
+      N[i] = nx / nl; N[i + 1] = ny / nl; N[i + 2] = nz / nl;
+      const t = tone ? tone(x, y, z, f / 3, fy) : 1; if (t.length) { K[i] = t[0]; K[i + 1] = t[1]; K[i + 2] = t[2]; } else K[i] = K[i + 1] = K[i + 2] = t;
+    }
+  }
+  g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.setAttribute('color', new THREE.BufferAttribute(K, 3)); return g;
+}
+// a shape turned on the y axis: rings [y, r, dr, dy] from the bottom up, n points round; every second point of a ring is moved by dr and dy
+// (which makes scalloped rims and buttressed feet); bend(y) = [x, z] shifts the axis
+function latheTris(rings, n, bend) {
+  const T = [], pt = (R, i) => { const a = i / n * TAU, o = (i % n) & 1, r = R[1] + (o ? R[2] || 0 : 0), y = R[0] + (o ? R[3] || 0 : 0), b = bend ? bend(y) : [0, 0]; return [Math.cos(a) * r + b[0], y, Math.sin(a) * r + b[1]]; };
+  for (let k = 0; k < rings.length - 1; k++) for (let i = 0; i < n; i++) {
+    const A = pt(rings[k], i), B = pt(rings[k], i + 1), C2 = pt(rings[k + 1], i), D = pt(rings[k + 1], i + 1);
+    if (rings[k + 1][1] > 0 || rings[k + 1][2]) T.push(...A, ...C2, ...D); if (rings[k][1] > 0 || rings[k][2]) T.push(...A, ...D, ...B);
+  }
+  return T;
+}
+const trisGeo = T => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(T), 3)); return g; };
+const _fh = f => { const v = Math.sin(f * 12.9898) * 43758.5453; return v - Math.floor(v); };
+// a lobe of foliage (radius 1): lumpy, a little flat underneath, the hollows darker and the bumps lighter, leaf to leaf a slightly different green
+function lobeGeo(detail, seed) {
+  const amp = detail ? .14 : .1;
+  return shapeGeo(new THREE.IcosahedronGeometry(1, detail), (x, y, z) => { const d = .96 + amp * _mN(x, y, z, seed); let yy = y * d; if (yy < -.3) yy = -.3 + (yy + .3) * .55; return [x * d, yy, z * d]; },
+    detail ? .5 : .35, (x, y, z, f, fy) => clamp(.96 + .55 * (Math.hypot(x, y, z) - .93) + .1 * (_fh(f + seed) - .5), .78, 1.14) * (fy < -.45 ? .8 : 1));
+}
+// a trunk (1 high, as the cylinder before): a buttressed foot, a taper, a slight lean and bend, and near the camera two limbs forking into the crown
+function trunkGeo(near) {
+  const bend = y => [.07 * Math.sin(y * 3.1), .05 * Math.sin(y * 4.3 + 1)];
+  const T = latheTris(near ? [[0, .52, -.16], [.05, .37, -.04], [.17, .3], [.56, .25], [1, .2]] : [[0, .42], [.12, .3], [1, .21]], near ? 6 : 4, bend);
+  if (near) for (const [a, y0, y1, out] of [[.6, .66, 1.02, .52], [3.9, .74, 1.0, .44]]) { // limbs: thin four-sided tubes up and outward
+    const b0 = bend(y0), p0 = [b0[0], y0, b0[1]], p1 = [Math.cos(a) * out, y1, Math.sin(a) * out], sx = -Math.sin(a), sz = Math.cos(a), c = [];
+    for (const [p, r] of [[p0, .12], [p1, .055]]) c.push([p[0] + sx * r, p[1], p[2] + sz * r], [p[0] - Math.cos(a) * r * .3, p[1] + r, p[2] - Math.sin(a) * r * .3], [p[0] - sx * r, p[1], p[2] - sz * r], [p[0] + Math.cos(a) * r * .3, p[1] - r, p[2] + Math.sin(a) * r * .3]);
+    for (let i = 0; i < 4; i++) { const j = (i + 1) % 4; T.push(...c[i], ...c[4 + i], ...c[4 + j], ...c[i], ...c[4 + j], ...c[j]); }
+  }
+  return shapeGeo(trisGeo(T), null, near ? .45 : .7, (x, y, z, f) => (.8 + .26 * clamp(y, 0, 1)) * (.95 + .1 * _fh(f)), true);
+}
+// one tier of a conifer (radius 1 at the foot, 1 high, as the cone before): the boughs sweep down and out to a ragged, scalloped hem, dark underneath, the tips light
+function tierGeo(near) {
+  const T = latheTris(near ? [[.2, 0], [-.02, 1, -.26, .12], [.42, .5, -.07], [1, 0]] : [[0, 1, -.22, .08], [1, 0]], near ? 10 : 6);
+  return shapeGeo(trisGeo(T), null, .45, (x, y, z, f, fy) => fy < -.2 ? .58 : clamp(.86 + .24 * Math.hypot(x, z) + .08 * (_fh(f) - .5), .8, 1.14), true);
+}
+// a weeping crown (the willow): a dome whose hem hangs in long and short points
+function willowGeo() {
+  return shapeGeo(trisGeo(latheTris([[-.46, .9, -.1, .18], [.05, 1], [.5, .88], [.86, .52], [1, 0]], 12)), null, .6, (x, y, z, f) => clamp(.84 + .16 * y + .1 * (_fh(f) - .5), .72, 1.1), true);
+}
+// a rock (radius about 1): hard facets, no two faces the same grey, darker toward the ground
+function rockGeo(seed) {
+  return shapeGeo(new THREE.DodecahedronGeometry(1, 0), (x, y, z) => { const d = .9 + .2 * _mN(x * .8, y * .8, z * .8, seed); return [x * d * 1.06, y * d * .92, z * d]; }, .12, (x, y, z, f) => (.84 + .26 * _fh(Math.floor(f / 3) + seed)) * (.9 + .1 * clamp(y + .4, 0, 1)));
+}
+// a puff of cloud: rounded on top, flat underneath, the underside shaded a cool grey
+function cloudGeo() {
+  return shapeGeo(new THREE.IcosahedronGeometry(1, 1), (x, y, z) => { const d = .95 + .09 * _mN(x, y, z, 4); let yy = y * d; if (yy < -.28) yy = -.28 + (yy + .28) * .22; return [x * d, yy, z * d]; }, .82,
+    (x, y) => { const t = clamp((y + .3) / .9, 0, 1); return [.74 + .26 * t, .77 + .23 * t, .86 + .14 * t]; });
+}
+// a fern: seven fronds arching out from the middle and four shorter ones standing in it, dark at the heart, the tips light
+function fernGeo() {
+  const T = [], frond = (a, R, H, w, tilt) => { const c = Math.cos(a), s = Math.sin(a), mx = c * R * .5, mz = s * R * .5, px = -s * w, pz = c * w; T.push(0, 0, 0, mx + px, H, mz + pz, mx - px, H, mz - pz, mx - px, H, mz - pz, mx + px, H, mz + pz, c * R, H * tilt, s * R); };
+  for (let i = 0; i < 7; i++) frond(i / 7 * TAU + .3 * Math.sin(i * 5.1), .78 + .2 * Math.sin(i * 3.7), .3 + .06 * Math.sin(i * 2.3), .13, .45);
+  for (let i = 0; i < 4; i++) frond(i / 4 * TAU + .5, .36, .34, .08, 1.5);
+  const g = trisGeo(T); g.computeVertexNormals();
+  const P = g.attributes.position.array, K = new Float32Array(P.length); for (let i = 0; i < P.length; i += 3) { const t = clamp(Math.hypot(P[i], P[i + 2]) * 1.5, 0, 1); K[i] = K[i + 1] = K[i + 2] = .62 + .46 * t; }
+  g.setAttribute('color', new THREE.BufferAttribute(K, 3)); return g;
+}
+// a fallen log (lying along x, 1 long) and a stump: bark round the sides, pale wood on the sawn ends
+function logGeo() { const g = new THREE.CylinderGeometry(.5, .56, 1, 7); g.rotateZ(Math.PI / 2); return shapeGeo(g, (x, y, z) => [x, y * (1 + .12 * Math.sin(x * 7)), z], .35, (x, y, z, f, fy) => Math.abs(x) > .499 && Math.abs(fy) < .3 && Math.hypot(y, z) < .57 && f >= 14 ? [1.75, 1.5, 1.05] : .8 + .3 * _fh(f)); }
+function stumpGeo() { return shapeGeo(new THREE.CylinderGeometry(.42, .62, 1, 7), (x, y, z) => { const k = y < 0 ? 1 + .3 * Math.abs(Math.sin(Math.atan2(z, x) * 3.5)) : 1; return [x * k, y + .5, z * k]; }, .3, (x, y, z, f, fy) => fy > .7 ? [1.8, 1.55, 1.1] : .8 + .3 * _fh(f)); }
+// The ground under the trees is dressed too: ferns round the trunks in the woods, here and there a fallen log or a stump, loose stones in the long grass
+// (on the dry courses stones only). Only ever in the deep rough, never where a ball is played from mown grass; none of it stops a ball.
+function buildUndergrowth(C, grp, all) {
+  const arid = RDC.desert || RDC.prairie || RDC.tx || RDC.marram || RDC.dry, turned = RDC.autumn || RDC.ridge, fm = vcMat(); fm.side = THREE.DoubleSide;
+  const ferns = instancer(grp, fernGeo(), arid ? 1 : PERF.lite ? 500 : 1200, fm, true), stones = instancer(grp, rockGeo(8), arid ? 520 : 320, vcMat(), true), logs = instancer(grp, logGeo(), arid ? 1 : 70, vcMat()), stumps = instancer(grp, stumpGeo(), arid ? 1 : 50, vcMat());
+  const FC = turned ? [0x8f6c34, 0x6f7a3a, 0xa67c3a, 0x7d6a30] : [0x4a7a38, 0x5a8a40, 0x3f6e36, 0x648f46], deep = (x, z) => C.surf(x, z) === S.DEEP;
+  const SC = RDC.desert ? [0xb7a58c, 0xc9b89c, 0xa39178] : RDC.marram || RDC.dry ? [0xb9b3a6, 0xa8a294, 0xc8c2b4] : [0x8c8a82, 0x9c9a90, 0x7b7972, 0xa8a59a], bark = new THREE.Color(0x6e5644);
+  all.forEach((t, i) => {
+    if (t.dd > 140) return;
+    if (!arid && t.kind !== 1) for (let k = 0; k < 3; k++) {
+      if (hash2(i, k, 73) > (t.fill ? .55 : .36)) continue;
+      const a = hash2(i, k, 75) * TAU, d = .8 + hash2(i, k, 77) * 2.1, x = t.X + Math.cos(a) * d, z = t.Z + Math.sin(a) * d; if (!deep(x, z)) continue;
+      const sc = .75 + hash2(i, k, 79) * .85; ferns.add(x, C.h(x, z) - .04, z, sc, sc * (.8 + hash2(i, k, 83) * .5), sc, a * 3, FC[(hash2(i, k, 85) * FC.length) | 0]);
+    }
+    if (hash2(i, 81, 7) < (arid ? .34 : .13)) {
+      const a = hash2(i, 87, 3) * TAU, d = 1 + hash2(i, 89, 5) * 3.4, x = t.X + Math.cos(a) * d, z = t.Z + Math.sin(a) * d;
+      if (deep(x, z)) { const sc = .14 + hash2(i, 91, 9) * .3; stones.add(x, C.h(x, z) - sc * .3, z, sc * 1.3, sc * .8, sc, a, SC[(hash2(i, 93, 1) * SC.length) | 0], a, a * 2); }
+    }
+    const hh = hash2(i, 71, 5);
+    if (!arid && (hh < .04 || hh > .972)) {
+      const a = hash2(i, 95, 3) * TAU, d = 2.2 + hash2(i, 97, 5) * 2.6, x = t.X + Math.cos(a) * d, z = t.Z + Math.sin(a) * d; if (!deep(x, z) || !deep(x + 1.5, z) || !deep(x - 1.5, z) || !deep(x, z + 1.5) || !deep(x, z - 1.5)) return;
+      if (hh < .04) { const L = 2 + hash2(i, 99, 7) * 2.4, th = .3 + hash2(i, 101, 9) * .22; logs.add(x, C.h(x, z) + th * .34, z, L, th, th, a * 2.7, bark); }
+      else { const w = .55 + hash2(i, 103, 3) * .5; stumps.add(x, C.h(x, z) - .08, z, w, .3 + hash2(i, 105, 5) * .35, w, a, bark); }
+    }
+  });
+  for (const o of [ferns, stones, logs, stumps]) o.done();
+}
 // Tree crowns and bushes: each blob or cone (its own height running from lo to hi) is sunlit and a touch warmer at the top, darker and cooler
 // underneath, so a crown reads as a volume with the light coming from above and not as one flat colour.
 function leafMat(lo, hi) {
-  const m = lambert(0xffffff);
+  const m = vcMat(); // (every foliage model carries vertex colours)
   m.onBeforeCompile = sh => {
     THREE.Material.prototype.onBeforeCompile.call(m, sh);
     sh.vertexShader = sh.vertexShader.replace('#include <color_vertex>', `#include <color_vertex>
@@ -4823,11 +4936,13 @@ function initThree() {
   W.sky = new THREE.Mesh(skyG, skyM);
   scene.add(W.sky);
   // clouds
-  const cg = new THREE.IcosahedronGeometry(1, 2), cm = new THREE.MeshLambertMaterial({ color: 0xffe3c2, emissive: 0xffc58a, emissiveIntensity: .45 });
+  const cg = cloudGeo(), cm = new THREE.MeshLambertMaterial({ color: 0xffe3c2, emissive: 0xffc58a, emissiveIntensity: .45, vertexColors: true });
   W.clouds = new THREE.Group(); W.cloudMat = cm; const r = mulberry32(5);
   for (let i = 0; i < 44; i++) {
     const g = new THREE.Group(), n = 3 + (r() * 3 | 0);
-    for (let k = 0; k < n; k++) { const m = new THREE.Mesh(cg, cm); const s = 10 + r() * 14; m.scale.set(s * 1.4, s * .8, s); m.position.set((k - n / 2) * 14 + r() * 6, r() * 5, r() * 8); g.add(m); }
+    // a row of puffs on one flat base, the biggest in the middle, and one or two smaller ones riding on top
+    for (let k = 0; k < n; k++) { const m = new THREE.Mesh(cg, cm), mid = 1 - Math.abs((k + .5) / n - .5) * 1.1, s = (9 + r() * 9) * (.6 + .7 * mid); m.scale.set(s * 1.45, s * .95, s * 1.1); m.position.set((k - (n - 1) / 2) * 13 + r() * 5, s * .27, (r() - .5) * 8); m.rotation.y = r() * TAU; g.add(m); }
+    for (let k = 0; k < 1 + (r() * 2 | 0); k++) { const m = new THREE.Mesh(cg, cm), s = 8 + r() * 6; m.scale.set(s * 1.2, s, s); m.position.set((r() - .5) * n * 9, 7 + r() * 4, (r() - .5) * 5); m.rotation.y = r() * TAU; g.add(m); }
     const a = r() * TAU, d = 500 + r() * 600; g.position.set(Math.cos(a) * d, 120 + r() * 140, Math.sin(a) * d - 250); g.userData.sp = .6 + r(); g.userData.rank = (i * .6180339) % 1; g.userData.y0 = g.position.y;
     W.clouds.add(g);
   }
@@ -5091,7 +5206,7 @@ function islesExtras(C, grp) {
     const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide, color: 0xffffff })); m.userData.keep = true; m.castShadow = true; m.receiveShadow = true; grp.add(m);
   }
   // boulders: round the islets, along the cliffs of the high islands and here and there on the low ones
-  const rocks = instancer(grp, new THREE.DodecahedronGeometry(1, 0), 900), RC = [0x8c8478, 0x9a9184, 0x7d766b, 0xa59c8e, 0x6f6a62];
+  const rocks = instancer(grp, rockGeo(2), 900, vcMat()), RC = [0x8c8478, 0x9a9184, 0x7d766b, 0xa59c8e, 0x6f6a62];
   const edge = (I2, step, fn) => { const P = I2.P, n = P.length / 2; for (let k = 0; k < n; k++) { const ax = P[2 * k], ay = P[2 * k + 1], bx = P[2 * ((k + 1) % n)], by = P[2 * ((k + 1) % n) + 1], L = Math.hypot(bx - ax, by - ay); for (let s = r() * step; s < L; s += step) fn(ax + (bx - ax) * s / L, ay + (by - ay) * s / L, (bx - ax) / L, (by - ay) / L); } };
   for (const I2 of wd.isl) {
     if (I2.central) continue;
@@ -5141,7 +5256,7 @@ const TERRAIN_GLSL = `
 uniform sampler2D tFA, tFB, tFC, tFar; uniform vec2 fO, fN; uniform float fInv, fR, wLo, wHi, seaLv, hasCoast, isLinks, isRocky, hasFar, isStraw, isCheck, isMar, isPeb, isIsle, isLedge;
 uniform vec4 farA, farB, cupP, shA;
 uniform sampler2D tDet, tSh;
-vec4 gDf, gDm; vec2 gBump; // fine and broad detail noise (see detailTex) and the tilt it gives the surface
+vec4 gDf, gDm, gDl; vec2 gBump; // fine and broad detail noise (see detailTex) and the tilt it gives the surface
 uniform vec3 cStraw, cRough, cDeep, cFirst, cFairA, cFairB, cGreenA, cGreenB, cFringe, cSand, cWaste, cTee, cPath, cBeach, cPond, cRock, cBed1, cBed2, cDune, cGranite;
 varying vec3 vWPos; varying vec3 vWN;
 float dcF(float v) { return (v * 2. - 1.) * fR; }
@@ -5167,13 +5282,19 @@ vec3 farColor() {
 }
 // the turf is never one flat colour: every surface is mottled in patches and grained close up (k: how rough it is, 1 = uncut rough), the rough
 // with paler, drier patches in it; the same noise tilts the surface a little, so the low sun picks out its relief
+// The patches must not repeat when seen from the air (the flyover): the 27 m pattern is mixed with a third, much broader one (164 m, turned the
+// other way) that also makes it stronger here and fainter there, so no stretch of ground looks like the next. The fine grain and the tilt belong
+// to the ground close by and fade from 18 to 85 m; the patches stay, a little softer.
 vec3 detail(vec3 col, float k) {
-  gBump = ((gDf.ba - .5) * .15 + (gDm.ba - .5) * .09) * k;
-  col *= 1. + k * ((gDm.g - .5) * .2 + (gDf.r - .5) * .11);
-  return mix(col, col * vec3(1.07, 1.03, .84), smoothstep(.55, .8, gDm.g) * max(k - .5, 0.) * .6);
+  float nr = 1. - smoothstep(18., 85., distance(vWPos, cameraPosition));
+  float pat = (gDm.g - .5) * (.3 + 1.1 * gDl.g) + (gDl.g - .5) * .75;
+  gBump = ((gDf.ba - .5) * .15 + (gDm.ba - .5) * .09) * k * nr;
+  col *= 1. + k * (pat * .2 * (.62 + .38 * nr) + (gDf.r - .5) * .11 * nr);
+  return mix(col, col * vec3(1.07, 1.03, .84), smoothstep(.06, .3, pat) * max(k - .5, 0.) * .6 * (.6 + .4 * nr));
 }
 vec3 surfaceColor() {
-  gDf = texture2D(tDet, vWPos.xz * .29); gDm = texture2D(tDet, vWPos.zx * .041 + .37);
+  gDf = texture2D(tDet, vWPos.xz * .29); gDm = texture2D(tDet, vec2(vWPos.x * .8 + vWPos.z * .6, vWPos.z * .8 - vWPos.x * .6) * .037 + .37); // (the broad one turned 37 degrees, so its repeat never lines up with the mowing or the view)
+  gDl = texture2D(tDet, vec2(vWPos.x * .47 - vWPos.z * .88, vWPos.z * .47 + vWPos.x * .88) * .0061 + .11);
   vec2 uv = ((vWPos.xz - fO) * fInv + .5) / fN;
   vec4 a = texture2D(tFA, uv), b = texture2D(tFB, uv), c = texture2D(tFC, uv);
   float inF = step(0., uv.x) * step(uv.x, 1.) * step(0., uv.y) * step(uv.y, 1.);
@@ -5401,7 +5522,7 @@ function terrainMatFrom(o) {
   }
   const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x000000, shininess: 1 });
   mat.extensions = { derivatives: true };
-  mat.customProgramCacheKey = () => 'terrain-fields-14';
+  mat.customProgramCacheKey = () => 'terrain-fields-16';
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U); sh.uniforms.gSunV = GFX.sunV; sh.uniforms.gSunC = GFX.sunC;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = position; vWN = normal;');
@@ -5566,10 +5687,8 @@ function buildTrees(C, grp) {
   }
   W.trees = trees;
   const n = trees.length;
-  const trunkG = new THREE.CylinderGeometry(.22, .32, 1, 6); trunkG.translate(0, .5, 0);
-  const roundG = new THREE.IcosahedronGeometry(1, 1), pineG = new THREE.ConeGeometry(1, 1, 12); pineG.translate(0, .5, 0);
-  const willowG = new THREE.SphereGeometry(1, 14, 8, 0, TAU, 0, Math.PI * .62);
-  const mk = (geo, cnt, mat) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, mat || lambert(0xffffff), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = true; m.count = 0; grp.add(m); return m; };
+  const trunkG = trunkGeo(true), roundG = lobeGeo(1, 3), pineG = tierGeo(true), willowG = willowGeo();
+  const mk = (geo, cnt, mat) => { const c2 = Math.max(1, cnt); const m = new THREE.InstancedMesh(geo, mat || vcMat(), c2); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(c2 * 3), 3); m.castShadow = true; m.count = 0; grp.add(m); return m; };
   const trunks = mk(trunkG, n), rounds = mk(roundG, n * 4, leafMat(-1, 1)), pines = mk(pineG, n * 3, leafMat(0, 1)), wills = mk(willowG, n, leafMat(-.4, 1));
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), col = new THREE.Color(), tcol = new THREE.Color(0x8a6a52);
   // colliders: canopy ellipsoids (ky squashes them vertically) plus a trunk column up to tk; t = tree index so one tree counts as one hit
@@ -5696,7 +5815,7 @@ function buildDecor(C, grp) {
   if (def.azaleas) {
     // flowering azaleas framing the amphitheatre
     const ar = mulberry32(def.seed + 91), tot = def.azaleas.reduce((a, b) => a + b.n, 0);
-    const az = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), leafMat(-1, 1), tot);
+    const az = new THREE.InstancedMesh(lobeGeo(1, 7), leafMat(-1, 1), tot);
     az.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(tot * 3), 3); az.count = 0; az.castShadow = true;
     const AC = [0xff7eb6, 0xff9fcb, 0xffffff, 0xe85c9e, 0xffc6df, 0xf04f8f], Mz = new THREE.Matrix4(), Qz = new THREE.Quaternion(), Vz = new THREE.Vector3(), Sz = new THREE.Vector3(), cz2 = new THREE.Color();
     for (const g of def.azaleas) {
@@ -5762,7 +5881,7 @@ function buildExtras(C, grp) {
   const waste = C.bunkers.filter(b => b.o.waste);
   if (waste.length) {
     const tot = waste.reduce((a, b) => a + Math.ceil(b.rx * b.rz / 26), 0);
-    const bush = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), leafMat(-1, 1), tot); bush.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(tot * 3), 3); bush.count = 0; bush.castShadow = true;
+    const bush = new THREE.InstancedMesh(lobeGeo(1, 9), leafMat(-1, 1), tot); bush.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(tot * 3), 3); bush.count = 0; bush.castShadow = true;
     const BC = [0x6f8447, 0x7d9152, 0x5f7440, 0x8a9a5b, 0x667d43];
     for (const b of waste) {
       const want = Math.ceil(b.rx * b.rz / 26);
@@ -5843,7 +5962,7 @@ function updateSlopeArrows(t) {
 /* ---------- coastline dressing: penalty stakes, rocks, sea stacks, lighthouse ---------- */
 function buildCoast(C, grp, stake) {
   const def = C.def, co = C.coast, I = C.inner, r = mulberry32(def.seed + 501), poly = co.poly;
-  const rocks = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), lambert(0xffffff), 280);
+  const rocks = new THREE.InstancedMesh(rockGeo(6), vcMat(), 280);
   rocks.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(280 * 3), 3); rocks.count = 0; rocks.castShadow = true;
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), col = new THREE.Color();
   for (let i = 0; i < poly.length; i++) {
@@ -6106,7 +6225,7 @@ function buildDetails(C, grp) {
   }
   reeds.done(); heads.done();
   // boulders: scattered in the rough well off the line of play; mountain holes get whole screes of them
-  const bould = instancer(grp, new THREE.DodecahedronGeometry(1, 0), def.rocky ? 260 : 70);
+  const bould = instancer(grp, rockGeo(4), def.rocky ? 260 : 70, vcMat());
   const want = def.rocky ? 240 : (def.links ? 26 : 44);
   for (let k = 0, placed = 0; k < want * 12 && placed < want; k++) {
     const x = lerp(I.minX + 6, I.maxX - 6, r()), z = lerp(I.minZ + 6, I.maxZ - 4, r());
@@ -6117,7 +6236,7 @@ function buildDetails(C, grp) {
   }
   bould.done();
   // shrubs at the feet of the trees; gorse in flower on the links
-  const shrubG = new THREE.IcosahedronGeometry(1, 1), shrubs = instancer(grp, shrubG, 260), bloom = instancer(grp, new THREE.IcosahedronGeometry(.13, 0), 900, null, true);
+  const shrubG = lobeGeo(1, 11), shrubs = instancer(grp, shrubG, 260, leafMat(-1, 1)), bloom = instancer(grp, new THREE.IcosahedronGeometry(.13, 0), 900, null, true);
   const SC = [0x3f7445, 0x4d8248, 0x5a8f4f, 0x356a42, 0x6b9a55];
   for (const t of W.trees) {
     if (t.far || t.lm || r() < .45) continue;
