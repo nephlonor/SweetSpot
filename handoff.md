@@ -17,7 +17,7 @@ Westminster National (MD) und Landmand (NE) fertigbauen. Beide sind für alle sp
 
 # TPC Sawgrass (FL), seit Build 14.0 für alle spielbar, „im Bau“-Hinweis an
 - Pipeline `tools/course-pipeline/sawgrass/` (Reihenfolge im README). OSM vollständig, LiDAR 3DEP St Johns 2018. Tribünen von `build.py` automatisch gesetzt (nicht die echten Turnier-Standorte), Publikum-Jubel in `crowdReact`/`crowdBuf`.
-- Auf echten Geräten prüfen: Lautstärke und Klang von Jubel/Applaus/Raunen, Bildrate an 16–18 (bis ~2500 Fans je Loch), Erzeugung der Klangpuffer (~0,8 s in Headless, wird 2,5 s nach Lochaufbau vorab gerechnet).
+- Auf echten Geräten prüfen: Lautstärke der Publikums-Aufnahmen (14.2) gegen Musik/Schlag, Bildrate an 16–18 (bis ~2500 Fans je Loch), Erzeugung der Klangpuffer (~0,8 s in Headless, wird 2,5 s nach Lochaufbau vorab gerechnet).
 - Noch nicht gemacht (Guide Schritte 2–7, 9): Grüns von Hand nachzeichnen, Bunker-Review, Abschläge auf den Luftbildern prüfen (2, 6, 9, 12 um 15–23 m verlängert), Baum-Tweaks pro Abschlag, Mähmuster, Drohnenansicht, Farbvergleich mit Fotos, Fahnenfarbe (rot mit weißer Zahl, unbestätigt).
 - Wenn fertig: `PBN_SHOW.sawgrass` auf `false`, Daily-Rotation ab einem künftigen Datum erweitern.
 
