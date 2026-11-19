@@ -126,6 +126,7 @@ jobs:
                 const PF = ['xp', 'r', 'h', 'st', 'pu', 'ac', 'ea', 'bi', 'pa', 'bo', 'dd', 'fh', 'ft', 'gh', 'gt', 'sh', 'di', 'wa', 'ob', 'tr', 'rb', 'ch', 'fd', 'lo', 'dr', 'ho', 'pt', 'br', 'gs', 'fs', 'bk'];
                 const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e8;
                 const pf = {}; if (r.pf && typeof r.pf === 'object') for (const k of PF) if (num(r.pf[k])) pf[k] = Math.round(r.pf[k] * 100) / 100;
+                if (r.pf && Array.isArray(r.pf.tw)) { const tw = r.pf.tw.filter(num).slice(-40); if (tw.length) pf.tw = tw; } // (the days of daily challenges won)
                 if (!Object.keys(pf).length) return finish(false, 'No stats.');
                 const f = 'leaderboard/players.json', all = rdj(f, {}), old = all[who] || {}, files = [f];
                 const af = 'leaderboard/acct/' + who + '.json', exJs = r.ex && typeof r.ex === 'object' && !Array.isArray(r.ex) ? JSON.stringify(r.ex) : null;

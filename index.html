@@ -4310,7 +4310,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 14, n: 2 };
+const APP_ITER = { courses: 14, n: 3 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', sawgrass: 'data-sawgrass.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -11657,7 +11657,7 @@ function dailyTap() { openDaily('today'); } // the daily sheet first (Today, Yes
 function trophyHtml(list) { // the trophies of daily challenges won: [{day, course, tp, s, n}] (a player's profile only knows the days)
   if (!list || !list.length) return '<div class="stFun"><div>Win a daily challenge to put a trophy on your shelf.</div></div>';
   const dt = d => new Date((typeof d === 'number' ? d : dayNum(d)) * 864e5 + 12 * 36e5).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-  return '<div class="trophies">' + list.slice().reverse().map(t => { const days = typeof t === 'number'; return `<div class="trophy"><i class="ic">${ICONS.trophy}</i><div><b>Daily champion</b><small>${days ? dt(t) : (COURSES[t.course] ? COURSES[t.course].short : '') + ' · ' + dt(t.day) + ' · ' + fmtToPar(t.tp) + ' (' + t.s + ')' + (t.n > 1 ? ' · of ' + t.n : '')}</small></div></div>`; }).join('') + '</div>';
+  return '<div class="trophies">' + list.slice().reverse().map(t => { const days = typeof t === 'number'; return `<div class="trophy"><i class="ic">${ICONS.trophy}</i><div><b>Daily champion</b><small>${days ? dt(t) : (COURSES[t.course] ? COURSES[t.course].short : '') + ' · ' + dt(t.day) + ' · ' + fmtToPar(t.tp) + (t.s != null ? ' (' + t.s + ')' : '') + (t.n > 1 ? ' · of ' + t.n : '')}</small></div></div>`; }).join('') + '</div>';
 }
 /* ================= DAILY CHALLENGE ================= */
 // One round a day, the same for everyone: the course of the day, its pins, wind and weather. One chance, finished before the day ends
@@ -12047,9 +12047,24 @@ function openPlayer(o) {
   const el = $('playerBody'); $('plName').textContent = o.name || 'Player'; $('plBack').style.display = o.back ? '' : 'none'; $('plBack').onclick = () => { if (o.back) o.back(); };
   let home = o.me && settings.homeC ? { c: settings.homeC, r: settings.homeR } : null;
   const escH = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  // daily challenges won: the days in the profile, and every day the archive (daily-index.json) names one of the player's devices as winner
+  const wIds = o.me ? [dlMe(), ...mgPs()] : o.id ? [o.id] : [];
+  const addIds = a => { for (const k of a) if (typeof k === 'string' && !wIds.includes(k)) wIds.push(k); };
+  const addMg = () => { const g = MG.merges && MG.merges.g; if (g) for (const k of wIds.slice()) { const v = g[k]; if (v) addIds([v.p].concat(Array.isArray(v.ps) ? v.ps : [])); } };
+  addMg();
+  const winsOf = tw => {
+    const m = new Map(); for (const d of tw || []) if (Number.isFinite(d)) m.set(d, d);
+    for (const x of Array.isArray(DL.index) ? DL.index : []) if (x && typeof x.d === 'string' && COURSES[x.c] && (x.wbs || [x.wb]).some(b => b && wIds.includes(b))) {
+      const par = (COURSES[x.c].defs || []).reduce((a, d) => a + d.par, 0);
+      m.set(dayNum(x.d), { day: x.d, course: x.c, tp: x.t, s: par ? x.t + par : null, n: x.n });
+    }
+    return [...m.entries()].sort((a, b) => a[0] - b[0]).map(e => e[1]);
+  };
   const canMsg = !o.me && isDevName() && typeof o.id === 'string' && /^[0-9a-f]{8}$/.test(o.id) && !DEV_TO.includes(o.id);
+  let lastArgs = null;
   const render = (pf, bs, rs, on) => {
-    const S = pf || {}, pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+    lastArgs = [pf, bs, rs, on];
+    const S = pf || {}, tl = winsOf(S.tw), pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
     const lv = levelOf(S.xp != null ? S.xp : (S.h || 0) * 10 + (S.r || 0) * 30);
     const card = (k, e, v, n, rk) => `<div class="stCard"><span class="em">${ICONS[e] || ''}</span><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}${rk ? `<div class="n rk" data-rk="${rk}"></div>` : ''}</div>`;
     $('plSub').textContent = pf ? lv.name : '';
@@ -12063,7 +12078,7 @@ function openPlayer(o) {
       <div class="stRow"><span>Eagles or better</span><span>${(S.ea || 0) + (S.ac || 0)}</span></div><div class="stRow"><span>Birdies</span><span>${S.bi || 0}</span></div><div class="stRow"><span>Pars</span><span>${S.pa || 0}</span></div><div class="stRow"><span>Bogeys</span><span>${S.bo || 0}</span></div><div class="stRow"><span>Double or worse</span><span>${S.dd || 0}</span></div>
       <div class="stRow"><span>Fairways hit</span><span>${pct(S.fh, S.ft)}</span></div><div class="stRow"><span>Greens in regulation</span><span>${pct(S.gh, S.gt)}</span></div><div class="stRow"><span>Putts per hole</span><span>${S.h && S.pu != null ? (S.pu / S.h).toFixed(2) : '–'}</span></div><div class="stRow"><span>Strokes per hole</span><span>${S.h && S.st != null ? (S.st / S.h).toFixed(2) : '–'}</span></div>
       <div class="stRow"><span>Water · out of bounds · trees</span><span>${S.wa || 0} · ${S.ob || 0} · ${S.tr || 0}</span></div><div class="stRow"><span>Balls found · lost</span><span>${S.fd || 0} · ${S.lo || 0}</span></div><div class="stRow"><span>Rainbows seen</span><span>${S.rb || 0}</span></div>` : '')
-      + (pf ? `<div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${(S.tw || []).length}</span></div>${S.tw && S.tw.length ? trophyHtml(S.tw) : ''}` : '')
+      + (pf ? `<div class="sub"><span>Achievements</span></div><div class="stRow"><span>Daily challenges won</span><span>${tl.length}</span></div>${tl.length ? trophyHtml(tl) : ''}` : '')
       + (on && on.length ? `<div class="sub"><span>Other usernames used in the past</span></div>${on.map(n => `<div class="stRow"><span>${String(n).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span><span></span></div>`).join('')}` : '') + (o.me ? '<div class="mbtns"><button class="mbtn dark wide" id="plStats">Open my full stats</button></div>' : '')
       + (canMsg ? '<div class="mbtns"><button class="mbtn dark wide" id="plMsg">Send a message</button></div>' : ''); // (the developer's devices only)
     if (o.me && $('plStats')) $('plStats').onclick = () => openStats();
@@ -12079,6 +12094,7 @@ function openPlayer(o) {
     if (o.id) Promise.all([loadPlayers(), loadHomes()]).then(([all, homes]) => {
       const q = all && all[o.id];
       const ids = [o.id]; if (q && all) for (const [k, v] of Object.entries(all)) if (v && v !== q && String(v.n).toLowerCase() === String(q.n).toLowerCase()) ids.push(k);
+      addIds(ids); addMg();
       const hs = ids.map(k => homes && homes[k]).filter(h => h && h.c).sort((a, b) => (b.at || 0) - (a.at || 0))[0];
       if (hs) home = { c: String(hs.c), r: String(hs.r || '') };
       if (!q && hs && $('playerSheet').classList.contains('on') && $('plName').textContent === (o.name || 'Player')) { render(cleanPf(o.pf), clean(o.bs), roundOf(null)); return; }
@@ -12089,6 +12105,7 @@ function openPlayer(o) {
     });
   }
   if (o.me) loadPlayers().then(() => { if ($('playerSheet').classList.contains('on') && PL_LAST === o) render(profileCompact(), reelList().slice(0, 3), roundOf(null), settings.oldNames); });
+  if (!Array.isArray(DL.index)) Promise.resolve(loadDailyMeta(true)).then(() => { if (lastArgs && Array.isArray(DL.index) && $('playerSheet').classList.contains('on') && PL_LAST === o) { addMg(); render(...lastArgs); } }).catch(() => { });
   openSheet('playerSheet');
 }
 
