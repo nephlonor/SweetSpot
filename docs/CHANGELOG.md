@@ -2,6 +2,7 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 14.6: TYWO: drittes Gerät `7eb32bba` (offene Merge-Anfrage) von Hand in die Gruppe `556b02d9`/`f5479c4a` aufgenommen (`ps` auf allen drei), Anfrage aus `q` entfernt, Name in `players.json` auf „TYWO“ vereinheitlicht.
 - Build 14.5: Konto-Wiederherstellung TYWO (Cache gelöscht, altes Gerät `556b02d9` verloren): `merges.json` → `g.556b02d9` als Ein-Geräte-Konto angelegt und Auto-Merge-Fenster `x.tywo` bis 03.12.2026 geöffnet. Ein Handy/Tablet, das sich „TYWO“ nennt, tritt von selbst bei und übernimmt Stats (`players.json` → pf) und Profil; Scorecard-Verlauf und Schlag-Clips lagen nur lokal und sind weg.
 - Build 14.4: Siege aus dem Daily-Archiv gelten jetzt überall: auch in den eigenen Stats („Open my full stats“, eigenes Gerät + verbundene Konten) und bei Spielern ohne veröffentlichte Statistik (`dailyWins`). Geprüft für alle Sieger im Archiv.
 - Build 14.3: Spielerprofil zeigt „Daily challenges won“ richtig: gezählt werden zusätzlich alle Tage, an denen `daily-index.json` eins der Geräte des Spielers (gleicher Name, verbundene Konten aus `merges.json`) als Sieger nennt, mit Platz und Score. Ursache: der `[sync]`-Pfad in `leaderboard.yml` (verbundene Konten) schrieb das Profil ohne `tw` (Siegtage) neu; jetzt bleibt `tw` erhalten.
