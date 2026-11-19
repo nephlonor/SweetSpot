@@ -2,6 +2,7 @@
 
 Alles Erledigte aus `handoff.md` wandert hierher (neueste oben). Dazu: Lobby-Leaderboard zeigt die eigene beste Runde als Geist „Name · PB" (Builds 9.18–9.20).
 
+- Build 14.8: Daily-Live-Board: Geräte eines verbundenen Kontos zeigen den Kontonamen aus `merges.json` statt des Namens in ihrer gespeicherten Live-Nachricht (MQTT, retained), z. B. TYWO statt „TyWO2“ von vor dem Merge (`dlAll`).
 - Build 14.7: TYWO: alter Name „TyWO2“ in `homecourses.json` (Gerät `f5479c4a`) auf „TYWO“ geändert.
 - Build 14.6: TYWO: drittes Gerät `7eb32bba` (offene Merge-Anfrage) von Hand in die Gruppe `556b02d9`/`f5479c4a` aufgenommen (`ps` auf allen drei), Anfrage aus `q` entfernt, Name in `players.json` auf „TYWO“ vereinheitlicht.
 - Build 14.5: Konto-Wiederherstellung TYWO (Cache gelöscht, altes Gerät `556b02d9` verloren): `merges.json` → `g.556b02d9` als Ein-Geräte-Konto angelegt und Auto-Merge-Fenster `x.tywo` bis 03.12.2026 geöffnet. Ein Handy/Tablet, das sich „TYWO“ nennt, tritt von selbst bei und übernimmt Stats (`players.json` → pf) und Profil; Scorecard-Verlauf und Schlag-Clips lagen nur lokal und sind weg.

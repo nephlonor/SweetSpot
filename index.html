@@ -4310,7 +4310,7 @@ const RDS = {
 // by the service worker; GCC Basel is part of the page. Until a course's file is in, nothing may build that course: needData(key, fn) waits for it, then runs fn.
 // the build number: the number of courses, then the iteration since the last course was added (7.1: seven courses, the first iteration; the next course makes it 8.0).
 // APP_ITER says which course count the iteration belongs to, so adding a course resets it to .0 by itself; after an update without a new course, raise APP_ITER.n
-const APP_ITER = { courses: 14, n: 7 };
+const APP_ITER = { courses: 14, n: 8 };
 function buildNo() { const n = Object.keys(COURSES).filter(k => k !== 'legacy' && !COURSES[k].beta).length; return n + '.' + (n === APP_ITER.courses ? APP_ITER.n : 0); }
 const DATA_FILES = { alsace: 'data-alsace.js', augusta: 'data-augusta.js', rothley: 'data-rothley.js', stpatricks: 'data-stpatricks.js', pebblebeach: 'data-pebblebeach.js', mountainvalley: 'data-mountainvalley.js', fourmile: 'data-fourmile.js', westminster: 'data-westminster.js', landmand: 'data-landmand.js', ledgeview: 'data-ledgeview.js', fieldsranch: 'data-fieldsranch.js', sawgrass: 'data-sawgrass.js', }, DATA = { ok: {}, p: {}, busy: 0 };
 const dataReady = k => !DATA_FILES[k] || !!DATA.ok[k];
@@ -11809,6 +11809,9 @@ function dlAll(day) {
   const m = DL.rows[day]; if (m) for (const [id, e] of m) { const o = out.get(id); if (!o || e.th > o.th || (e.done && !o.done) || (e.done && o.done && e.pf && !o.pf)) out.set(id, Object.assign({ id }, e, o && !e.pf ? { pf: o.pf } : {}, o && o.pt ? { pt: o.pt } : {})); }
   const rec = dlRec(day);
   if (rec && rec.h) { const th = rec.h.filter(v => v > 0).length, o = out.get(me); if (!o || th >= o.th) out.set(me, { id: me, n: playerName(), c: rec.course, h: rec.h, pt: rec.pt || (o && o.pt) || null, th, done: rec.status === 'done', at: rec.at || 0, pf: rec.pf || (o && o.pf) || null, bs: rec.bs || (o && o.bs) || [], mine: true }); else o.mine = true; }
+  // a device of a merged account shows the account's name (a live entry keeps the name it was sent with, e.g. one from before a merge or a rename)
+  const g = (MG.merges && MG.merges.g) || {};
+  for (const [id, e] of out) { const an = !e.mine && g[id] && cleanName(g[id].n); if (an && an !== e.n) out.set(id, Object.assign({}, e, { n: an })); }
   // a day that is over keeps only the rounds finished in time: one that was started and not finished is gone from the board
   return [...out.values()].filter(e => day >= dayId() || e.done);
 }
@@ -11928,7 +11931,7 @@ function dlPanel() {
   { const ro = $('readout'), rr = ro.getBoundingClientRect(); let y = $('topbar').getBoundingClientRect().bottom + 8; if (ro.classList.contains('on') && rr.left < el.offsetWidth + 20) y = Math.max(y, rr.bottom + 8); el.style.top = y + 'px'; }
   const st = dlStanding(d.day, k, d.course), me = st.findIndex(x => x.e.mine), rows = st.slice(0, 3), pl = dlPlaces(st);
   if (me > 2) rows.push(st[me]);
-  const sig = k + '|' + rows.map(x => [x.e.id, x.tp, x.thru].join(',')).join(';') + '|' + me + '|' + st.length; if (el._sig === sig) return; el._sig = sig;
+  const sig = k + '|' + rows.map(x => [x.e.id, x.e.n, x.tp, x.thru].join(',')).join(';') + '|' + me + '|' + st.length; if (el._sig === sig) return; el._sig = sig;
   el.textContent = ''; const h = document.createElement('div'); h.className = 'mph'; h.textContent = `Daily · after hole ${k}`; el.appendChild(h);
   for (const x of rows) {
     const r = document.createElement('div'); r.className = 'mpr' + (x.e.mine ? ' me' : ''); const rk = document.createElement('i'); rk.textContent = pl[st.indexOf(x)];
